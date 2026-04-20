@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import BookingBadge from "@/components/BookingBadge";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -19,7 +20,7 @@ export default function Navbar() {
           {session?.user && (
             <>
               <Link href="/sell" className="text-sm text-white hover:text-blue-200">Sell</Link>
-              <Link href="/bookings" className="text-sm text-white hover:text-blue-200">Bookings</Link>
+              <BookingBadge />
             </>
           )}
         </div>

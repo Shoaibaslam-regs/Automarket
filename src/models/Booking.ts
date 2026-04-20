@@ -8,6 +8,9 @@ export interface IBooking extends Document {
   totalAmount: number;
   deposit: number;
   status: "PENDING" | "CONFIRMED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+  seenByRenter: boolean;
+  deletedByOwner: boolean;
+  deletedByRenter: boolean;
   createdAt: Date;
 }
 
@@ -24,9 +27,13 @@ const BookingSchema = new Schema<IBooking>(
       enum: ["PENDING", "CONFIRMED", "ACTIVE", "COMPLETED", "CANCELLED"],
       default: "PENDING",
     },
+    seenByRenter: { type: Boolean, default: false },
+    deletedByOwner: { type: Boolean, default: false },
+    deletedByRenter: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 export const Booking =
-  mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema);
+  mongoose.models.Booking ||
+  mongoose.model<IBooking>("Booking", BookingSchema);

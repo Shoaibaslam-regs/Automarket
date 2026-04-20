@@ -6,7 +6,7 @@ import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
 import { Inspection } from "@/models/Inspection";
 import { auth } from "@/lib/auth";
-import mongoose from "mongoose"; 
+import mongoose from "mongoose";
 import ImageGallery from "@/components/ui/ImageGallery";
 
 export default async function ListingDetailPage({
@@ -129,10 +129,10 @@ export default async function ListingDetailPage({
                 </div>
               )}
             </div> */}
-{/* Images */}
-<div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-  <ImageGallery images={l.images ?? []} title={l.title} />
-</div>
+            {/* Images */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <ImageGallery images={l.images ?? []} title={l.title} />
+            </div>
             {/* Title + price */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-start justify-between">
@@ -202,8 +202,8 @@ export default async function ListingDetailPage({
                       Call seller
                     </a>
                   )}
-                  
-                    <a href={`https://wa.me/${l.sellerId.phone?.replace(/\D/g, "")}?text=Hi, I'm interested in: ${l.title}`}
+
+                  <a href={`https://wa.me/${l.sellerId.phone?.replace(/\D/g, "")}?text=Hi, I'm interested in: ${l.title}`}
                     target="_blank" rel="noreferrer"
                     className="mt-2 w-full block text-center py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition">
                     WhatsApp
@@ -240,10 +240,21 @@ export default async function ListingDetailPage({
                     <span className="font-medium">PKR {rental.deposit.toLocaleString()}</span>
                   </div>
                 </div>
+
                 {!isOwner && session?.user && (
-                  <Link href={`/rentals/${l._id}/book`}
-                    className="mt-4 w-full block text-center py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">
+                  <Link
+                    href={`/rentals/${l._id}/book`}
+                    className="mt-4 w-full block text-center py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
+                  >
                     Book now
+                  </Link>
+                )}
+                {!isOwner && !session?.user && (
+                  <Link
+                    href="/login"
+                    style={{ display: "block", marginTop: "12px", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "#57606a", textDecoration: "none" }}
+                  >
+                    🔒 Login first for online booking
                   </Link>
                 )}
               </div>

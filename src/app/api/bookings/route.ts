@@ -18,17 +18,42 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role");
 
-    const query = role === "owner"
-      ? {}
-      : { renterId: session.user.id };
+    let bookings;
 
-    const bookings = await Booking.find(query)
-      .populate("rentalId")
-      .populate("renterId", "name email phone")
-      .sort({ createdAt: -1 })
-      .lean();
+    if (role === "owner") {
+      const myRentals = await Rental.find({ ownerId: session.user.id }).select("_id listingId").lean();
+      const rentalIds = myRentals.map((r) => r._id);
+      bookings = await Booking.find({
+        rentalId: { $in: rentalIds },
+        deletedByOwner: { $ne: true },
+      })
+        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location" } })
+        .populate("renterId", "name email phone")
+        .sort({ createdAt: -1 })
+        .lean();
+    } else {
+      bookings = await Booking.find({
+        renterId: session.user.id,
+        deletedByRenter: { $ne: true },
+      })
+        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location" } })
+        .populate("renterId", "name email phone")
+        .sort({ createdAt: -1 })
+        .lean();
+    }
 
-    return NextResponse.json({ bookings });
+    const enriched = await Promise.all(
+      (bookings as Array<Record<string, unknown>>).map(async (b) => {
+        const rental = b.rentalId as { ownerId: { toString: () => string } } | null;
+        if (rental?.ownerId) {
+          const owner = await User.findById(rental.ownerId).select("name email phone").lean();
+          return { ...b, owner };
+        }
+        return b;
+      })
+    );
+
+    return NextResponse.json({ bookings: enriched });
   } catch (error) {
     console.error("Get bookings error:", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
@@ -93,7 +118,6 @@ export async function POST(req: NextRequest) {
       status: "PENDING",
     });
 
-    // Send email notification to owner
     try {
       const listing = await Listing.findOne({ _id: rental.listingId }).lean() as { title: string } | null;
       const owner = await User.findById(rental.ownerId).lean() as { name?: string; email: string } | null;
