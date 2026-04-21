@@ -9,8 +9,8 @@ const geist = Geist({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "AutoMarket — Buy, Sell & Rent Vehicles",
   description: "Pakistan's premier automobile marketplace",
-  icons: {
-    icon: "/favicon.ico"
+   icons: {
+    icon: "/3+Lines+02.webp"
   },
 };
 

@@ -11,6 +11,8 @@ export interface IBooking extends Document {
   seenByRenter: boolean;
   deletedByOwner: boolean;
   deletedByRenter: boolean;
+  confirmedAt?: Date;
+  cancelledAt?: Date;
   createdAt: Date;
 }
 
@@ -30,6 +32,8 @@ const BookingSchema = new Schema<IBooking>(
     seenByRenter: { type: Boolean, default: false },
     deletedByOwner: { type: Boolean, default: false },
     deletedByRenter: { type: Boolean, default: false },
+    confirmedAt: { type: Date },
+    cancelledAt: { type: Date },
   },
   { timestamps: true }
 );

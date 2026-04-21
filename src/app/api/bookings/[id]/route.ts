@@ -36,6 +36,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Renters can only cancel" }, { status: 403 });
     }
     booking.status = status;
+    if (status === "CONFIRMED") booking.confirmedAt = new Date();
+    if (status === "CANCELLED") booking.cancelledAt = new Date();
     if (isOwner && (status === "CONFIRMED" || status === "CANCELLED")) {
       booking.seenByRenter = false;
     }
@@ -62,8 +64,8 @@ export async function PATCH(
       }
     }
     return NextResponse.json({ booking });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
 
@@ -80,32 +82,26 @@ export async function DELETE(
     await connectDB();
     const booking = await Booking.findById(id).populate("rentalId");
     if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-
     const rental = booking.rentalId as { ownerId: { toString: () => string } };
     const isOwner = rental.ownerId.toString() === session.user.id;
     const isRenter = booking.renterId.toString() === session.user.id;
-
     if (!isOwner && !isRenter) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
     if (!["COMPLETED", "CANCELLED"].includes(booking.status)) {
-      return NextResponse.json({ error: "Only completed or cancelled bookings can be deleted" }, { status: 400 });
+      return NextResponse.json({ error: "Only completed or cancelled bookings can be removed" }, { status: 400 });
     }
-
     if (isOwner) booking.deletedByOwner = true;
     if (isRenter) booking.deletedByRenter = true;
-
     if (booking.deletedByOwner && booking.deletedByRenter) {
       await Booking.findByIdAndDelete(id);
     } else {
       await booking.save();
     }
-
     return NextResponse.json({ ok: true });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }

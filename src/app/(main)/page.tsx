@@ -30,7 +30,7 @@ export default async function HomePage() {
       {/* Hero */}
       <section style={{ background: "#ffffff", borderBottom: "1px solid #e1e4e8", padding: "64px 24px" }}>
         <div style={{ maxWidth: "860px", margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "inline-block", background: "#f6f8fa", color: "#57606a", fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "20px", marginBottom: "20px", border: "1px solid #e1e4e8" }}>
+          <div style={{ display: "inline-block", background: "#3434340f", color: "#57606a", fontSize: "12px", fontWeight: 500, padding: "8px 16px", borderRadius: "8px", marginBottom: "20px" }}>
             Pakistan&apos;s trusted automobile marketplace
           </div>
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 800, color: "#0d1117", lineHeight: 1.2, marginBottom: "16px", letterSpacing: "-0.5px" }}>
@@ -59,7 +59,7 @@ export default async function HomePage() {
       </section>
 
       {/* Stats */}
-      <section style={{ background: "#0d1117", padding: "14px 24px" }}>
+      <section style={{background: "#ffffff", padding: "14px 24px"}}>
         <div style={{ maxWidth: "860px", margin: "0 auto", display: "flex", justifyContent: "center", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
           {[
             { label: "Active listings", value: stats.total },
@@ -67,15 +67,15 @@ export default async function HomePage() {
             { label: "For rent", value: stats.totalRent },
           ].map((s, i) => (
             <div key={s.label} style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-              {i > 0 && <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.15)" }} />}
+              {i > 0 && <div style={{ width: "1px", height: "20px", background: "#0d1117" }} />}
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "20px", fontWeight: 700, color: "white" }}>{s.value.toLocaleString()}</div>
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{s.label}</div>
+                <div style={{ fontSize: "20px", fontWeight: 700, color: "black" }}>{s.value.toLocaleString()}</div>
+                <div style={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.61)" }}>{s.label}</div>
               </div>
             </div>
           ))}
-          <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.15)" }} />
-          <Link href="/sell" style={{ padding: "7px 16px", background: "white", color: "#0d1117", borderRadius: "7px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
+          <div style={{ width: "1px", height: "20px", background: "#0d1117" }} />
+          <Link href="/sell" style={{ padding: "7px 16px", background: "#0000000f", color: "#0d1117", borderRadius: "7px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
             + Post free ad
           </Link>
         </div>
