@@ -75,7 +75,7 @@ export default function ListingsPage() {
                 {([["", "All types"], ["SALE", "For Sale"], ["RENT", "For Rent"], ["BOTH", "Sale & Rent"]] as [string, string][]).map(([val, label]) => (
                   <button key={val} onClick={() => { setType(val); setPage(1); }}
                     className={`w-full text-left px-3 py-2 text-sm rounded-lg transition ${
-                      type === val ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                      type === val ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
                     }`}>
                     {label}
                   </button>

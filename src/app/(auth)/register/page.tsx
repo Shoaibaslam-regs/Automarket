@@ -69,7 +69,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {[
-              { label: "Full name", name: "name", type: "text", placeholder: "John Smith" },
+              { label: "Full name", name: "name", type: "text", placeholder: "Full Name" },
               { label: "Email", name: "email", type: "email", placeholder: "you@example.com" },
               { label: "Phone number", name: "phone", type: "tel", placeholder: "+92 300 0000000" },
               { label: "Password", name: "password", type: "password", placeholder: "Min 6 characters" },

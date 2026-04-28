@@ -23,7 +23,7 @@ export default function BookingBadge() {
   }
 
   return (
-    <Link href="/bookings" className="text-sm text-black/80 hover:text-black transition">
+    <Link href="/bookings" className="relative text-sm text-black/70 hover:text-black transition flex items-center gap-1">
       Bookings
       {total > 0 && (
         <span style={{

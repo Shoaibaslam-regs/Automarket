@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import ImageGallery from "@/components/ui/ImageGallery";
 
+
 export default async function ListingDetailPage({
   params,
 }: {
@@ -95,41 +96,7 @@ export default async function ListingDetailPage({
 
           {/* Left */}
           <div className="lg:col-span-2 space-y-6">
-
-            {/* Images */}
-            {/* <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="relative h-80">
-                {l.images?.[0] ? (
-                  <Image
-                    src={l.images[0]}
-                    alt={l.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full bg-gray-100 text-gray-400">
-                    No image available
-                  </div>
-                )}
-              </div>
-              {l.images?.length > 1 && (
-                <div className="flex gap-2 p-3 overflow-x-auto">
-                  {l.images.slice(1).map((img, i) => (
-                    <div key={i} className="relative w-20 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                      <Image
-                        src={img}
-                        alt=""
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div> */}
-            {/* Images */}
+          {/* Images */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <ImageGallery images={l.images ?? []} title={l.title} />
             </div>
@@ -208,6 +175,14 @@ export default async function ListingDetailPage({
                     className="mt-2 w-full block text-center py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition">
                     WhatsApp
                   </a>
+                  {session?.user && !isOwner && (
+  <Link
+    href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`}
+    style={{ display: "block", marginTop: "8px", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "#0d1117", textDecoration: "none", fontWeight: 500 }}
+  >
+    💬 Message seller
+  </Link>
+)}
                 </>
               ) : (
                 <p className="text-sm text-gray-400">Seller info unavailable</p>

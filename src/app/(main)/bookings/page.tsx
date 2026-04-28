@@ -62,16 +62,15 @@ function generateSlip(booking: Booking, tab: string) {
       <title>Booking Slip — AutoMarket</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; color: #0d1117; padding: 0 20px; }
-        .header { text-align: center; border-bottom: 2px solid #0d1117; padding-bottom: 20px; margin-bottom: 24px; }
+        .header { text-align: center; border-bottom: 1.5px solid #4242427b; padding-bottom: 20px; margin-bottom: 24px; }
         .logo { font-size: 24px; font-weight: 800; }
-        .slip-title { font-size: 14px; color: #57606a; margin-top: 4px; }
-        .slip-id { font-size: 11px; color: #8c959f; margin-top: 4px; }
+         .slip-id { font-size: 11px; color: #8c959f; margin-top: 4px; }
         .section { margin-bottom: 20px; }
         .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #171819; margin-bottom: 10px; border-bottom: 1px solid #e1e4e8; padding-bottom: 6px; }
         .row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
         .label { color: #57606a; }
         .value { font-weight: 400;  color: #141312eb; }
-        .total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding: 12px 0; border-top: 2px solid #0d1117; margin-top: 8px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding: 12px 0; border-top: 1.5px solid #4242427b; margin-top: 8px; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${STATUS_COLORS[booking.status]?.bg}; color: ${STATUS_COLORS[booking.status]?.color}; }
         .footer { text-align: center; font-size: 11px; color: #8c959f; margin-top: 32px; border-top: 1px solid #e1e4e8; padding-top: 16px; }
         @media print { body { margin: 20px; } }
@@ -84,8 +83,7 @@ function generateSlip(booking: Booking, tab: string) {
     <body>
       <div class="header">
         <div class="logo"><img src="/logo-1771205663069.png" alt="AutoMarket" /></div>
-        <div class="slip-title">Rental Booking Slip</div>
-        <div class="slip-id">Booking ID: ${booking._id}</div>
+         <div class="slip-id">Booking ID: ${booking._id}</div>
       </div>
 
       <div class="section">
