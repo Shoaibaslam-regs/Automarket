@@ -64,7 +64,7 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-2 w-48 backdrop-blur-md bg-white/90 rounded-xl border border-black/10 shadow-lg py-1 z-50">
                   <Link href="/dashboard" onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Dashboard</Link>
-                  <Link href="/bookings" onClick={() => setMenuOpen(false)}
+                    <Link href="/bookings" onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Bookings</Link>
                   <Link href="/sell" onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Post listing</Link>
@@ -72,10 +72,14 @@ export default function Navbar() {
   className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">
   Messages
 </Link>
+<Link href="/profile" onClick={() => setMenuOpen(false)}
+  className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">
+  Profile & settings
+</Link>
                       {session.user.role === "ADMIN" && (
   <Link href="/admin" onClick={() => setMenuOpen(false)}
-  className="block px-4 py-2 text-sm text-amber-600 hover:bg-black/5 font-medium">
-    Admin dashboard
+  className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">
+    Admin Panel <span style={{float:"right"}}>✯</span>
   </Link>
 )}
 <hr className="my-1 border-black/10" />
