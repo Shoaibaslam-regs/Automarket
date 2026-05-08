@@ -1,262 +1,254 @@
-import Link from "next/link";
-import { connectDB } from "@/lib/mongodb";
-import { Listing } from "@/models/Listing";
-import { IListing } from "@/models/Listing"; 
-  
+"use client";
 
-type ListingWithId = IListing & { _id: string };
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
-const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Hyundai", "Kia"];
+export default function LandingPage() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLDivElement>(null);
 
-async function getData() {
-  await connectDB();
-  const forSale = await Listing.find({ status: "ACTIVE", type: { $in: ["SALE", "BOTH"] } })
-    .sort({ createdAt: -1 }).limit(6).lean() as unknown as ListingWithId[];
-  const forRent = await Listing.find({ status: "ACTIVE", type: { $in: ["RENT", "BOTH"] } })
-    .sort({ createdAt: -1 }).limit(4).lean() as unknown as ListingWithId[];
-  const total = await Listing.countDocuments({ status: "ACTIVE" });
-  const totalSale = await Listing.countDocuments({ status: "ACTIVE", type: { $in: ["SALE", "BOTH"] } });
-  const totalRent = await Listing.countDocuments({ status: "ACTIVE", type: { $in: ["RENT", "BOTH"] } });
-  return { forSale, forRent, stats: { total, totalSale, totalRent } };
-}
+  useEffect(() => {
+    setMounted(true);
+    const handleMouse = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouse);
+    return () => window.removeEventListener("mousemove", handleMouse);
+  }, []);
 
-export default async function HomePage() {
-  const { forSale, forRent, stats } = await getData();
+  const features = [
+    { icon: "🚗", title: "Buy & Sell", desc: "Find your perfect vehicle or list yours in minutes" },
+    { icon: "🔑", title: "Rent Vehicles", desc: "Flexible short & long-term rentals across Pakistan" },
+    { icon: "🤖", title: "AI Inspection", desc: "Upload photos — get instant damage reports & valuations" },
+    { icon: "💬", title: "Direct Chat", desc: "Message sellers directly — no middlemen" },
+    { icon: "🔒", title: "Secure Bookings", desc: "Verified listings and safe booking system" },
+    { icon: "📍", title: "Pakistan-wide", desc: "Listings from every major city in Pakistan" },
+  ];
+
+  const stats = [
+    { value: "10K+", label: "Active listings" },
+    { value: "50K+", label: "Happy users" },
+    { value: "100+", label: "Cities covered" },
+    { value: "99%", label: "Satisfaction rate" },
+  ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0d1117", color: "white", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", overflow: "hidden" }}>
+
+      {/* Animated background gradient */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0,
+        background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(29,78,216,0.08), transparent 80%)`,
+        pointerEvents: "none", transition: "background 0.1s"
+      }} />
+
+      {/* Grid pattern */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0, opacity: 0.03,
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+        backgroundSize: "50px 50px",
+        pointerEvents: "none",
+      }} />
+
+      {/* Navbar */}
+      <nav style={{ position: "relative", zIndex: 10, padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Image src="/logo-1771205663069.png" alt="AutoMarket" width={130} height={36} style={{ width: "auto", height: "36px", filter: "brightness(0.5) invert(1)" }} />
+        </div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button onClick={() => router.push("/login")}
+            style={{ padding: "8px 20px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", color: "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+            Sign in
+          </button>
+          <button onClick={() => router.push("/register")}
+            style={{ padding: "8px 20px", background: "white", border: "none", borderRadius: "8px", color: "#0d1117", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Get started
+          </button>
+        </div>
+      </nav>
 
       {/* Hero */}
-      <section style={{ background: "#ffffff", borderBottom: "1px solid #e1e4e8", padding: "64px 24px" }}>
-        <div style={{ maxWidth: "860px", margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "inline-block", background: "#3434340f", color: "#57606a", fontSize: "12px", fontWeight: 500, padding: "8px 16px", borderRadius: "8px", marginBottom: "20px" }}>
-            Pakistan&apos;s trusted automobile marketplace
-          </div>
-          <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 800, color: "#0d1117", lineHeight: 1.2, marginBottom: "16px", letterSpacing: "-0.5px" }}>
-            Buy, Sell & Rent Vehicles
-          </h1>
-          <p style={{ fontSize: "17px", color: "#57606a", marginBottom: "36px", lineHeight: 1.6 }}>
-            Find your perfect car or bike. List yours in minutes. AI-powered inspection included.
-          </p>
+      <section ref={heroRef} style={{ position: "relative", zIndex: 1, padding: "80px 24px 60px", textAlign: "center", maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* Search */}
-          <form action="/listings" method="GET" style={{ maxWidth: "600px", margin: "0 auto" }}>
-            <div style={{ display: "flex", background: "#ffffff", border: "1px solid #d0d7de", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <select name="type" style={{ padding: "14px 16px", border: "none", borderRight: "1px solid #d0d7de", background: "transparent", fontSize: "14px", color: "#57606a", cursor: "pointer", outline: "none" }}>
-                <option value="">All types</option>
-                <option value="SALE">For Sale</option>
-                <option value="RENT">For Rent</option>
-              </select>
-              <input name="search" type="text" placeholder="Search by make, model, or city..."
-                style={{ flex: 1, padding: "14px 16px", border: "none", background: "transparent", fontSize: "14px", color: "#0d1117", outline: "none" }} />
-              <button type="submit" style={{ padding: "14px 24px", background: "#0d1117", color: "white", border: "none", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
-                Search
-              </button>
+        {/* Badge */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "6px",
+          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "20px", padding: "6px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)",
+          marginBottom: "32px",
+          opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(10px)",
+          transition: "all 0.6s ease",
+        }}>
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2da44e", display: "inline-block" }} />
+          Pakistan&apos;s #1 Automobile Marketplace
+        </div>
+
+        {/* Heading */}
+        <h1 style={{
+          fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 800, lineHeight: 1.1,
+          letterSpacing: "-2px", marginBottom: "24px",
+          opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)",
+          transition: "all 0.7s ease 0.1s",
+        }}>
+          Buy, Sell &<br />
+          <span style={{ background: "linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            Rent Vehicles
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p style={{
+          fontSize: "18px", color: "rgba(255,255,255,0.5)", lineHeight: 1.7,
+          maxWidth: "560px", margin: "0 auto 48px",
+          opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)",
+          transition: "all 0.7s ease 0.2s",
+        }}>
+          Find your perfect car or bike across Pakistan. AI-powered inspection, secure bookings, and direct seller chat.
+        </p>
+
+        {/* CTA Button */}
+        <div style={{
+          opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)",
+          transition: "all 0.7s ease 0.3s",
+        }}>
+          <button
+            onClick={() => router.push("/home")}
+            style={{
+              position: "relative", padding: "18px 48px",
+              background: "linear-gradient(135deg, #1d4ed8, #7c3aed)",
+              border: "none", borderRadius: "14px",
+              color: "white", fontSize: "16px", fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+              boxShadow: "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(99,102,241,0.15)",
+              transition: "transform 0.2s, box-shadow 0.2s",
+            }}
+            onMouseEnter={e => {
+              (e.target as HTMLButtonElement).style.transform = "scale(1.04)";
+              (e.target as HTMLButtonElement).style.boxShadow = "0 0 60px rgba(99,102,241,0.6), 0 0 100px rgba(99,102,241,0.2)";
+            }}
+            onMouseLeave={e => {
+              (e.target as HTMLButtonElement).style.transform = "scale(1)";
+              (e.target as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(99,102,241,0.15)";
+            }}
+          >
+            Explore AutoMarket →
+          </button>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", marginTop: "14px" }}>
+            Free to browse • No account required
+          </p>
+        </div>
+
+        {/* Floating car mockup */}
+        <div style={{
+          marginTop: "64px", position: "relative",
+          opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(30px)",
+          transition: "all 0.8s ease 0.4s",
+        }}>
+          <div style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "16px", padding: "24px", maxWidth: "680px", margin: "0 auto",
+            backdropFilter: "blur(12px)",
+          }}>
+            {/* Mock UI */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              {["#ff5f57", "#ffbd2e", "#28c840"].map(c => (
+                <div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c }} />
+              ))}
             </div>
-          </form>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+              {[
+                { make: "Toyota", model: "Corolla 2022", price: "PKR 52L", color: "#60a5fa" },
+                { make: "Honda", model: "Civic 2021", price: "PKR 48L", color: "#a78bfa" },
+                { make: "Suzuki", model: "Swift 2023", price: "PKR 28L", color: "#34d399" },
+              ].map(car => (
+                <div key={car.make} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "14px" }}>
+                  <div style={{ width: "100%", height: "60px", background: `linear-gradient(135deg, ${car.color}22, ${car.color}11)`, borderRadius: "6px", marginBottom: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>
+                    🚗
+                  </div>
+                  <p style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "2px" }}>{car.make} {car.model}</p>
+                  <p style={{ fontSize: "11px", color: car.color, fontWeight: 700 }}>{car.price}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Glow under mockup */}
+          <div style={{ position: "absolute", bottom: "-20px", left: "50%", transform: "translateX(-50%)", width: "60%", height: "40px", background: "rgba(99,102,241,0.2)", filter: "blur(20px)", borderRadius: "50%" }} />
         </div>
       </section>
 
       {/* Stats */}
-      <section style={{background: "#ffffff", padding: "14px 24px"}}>
-        <div style={{ maxWidth: "860px", margin: "0 auto", display: "flex", justifyContent: "center", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
-          {[
-            { label: "Active listings", value: stats.total },
-            { label: "For sale", value: stats.totalSale },
-            { label: "For rent", value: stats.totalRent },
-          ].map((s, i) => (
-            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-              {i > 0 && <div style={{ width: "1px", height: "20px", background: "#0d1117" }} />}
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "20px", fontWeight: 700, color: "black" }}>{s.value.toLocaleString()}</div>
-                <div style={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.61)" }}>{s.label}</div>
-              </div>
+      <section style={{ position: "relative", zIndex: 1, padding: "48px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", textAlign: "center" }}>
+          {stats.map((stat, i) => (
+            <div key={stat.label} style={{
+              opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: `all 0.6s ease ${0.5 + i * 0.1}s`,
+            }}>
+              <p style={{ fontSize: "32px", fontWeight: 800, background: "linear-gradient(135deg, white, rgba(255,255,255,0.6))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{stat.value}</p>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>{stat.label}</p>
             </div>
           ))}
-          <div style={{ width: "1px", height: "20px", background: "#0d1117" }} />
-          <Link href="/sell" style={{ padding: "7px 16px", background: "#0000000f", color: "#0d1117", borderRadius: "7px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-            + Post free ad
-          </Link>
         </div>
       </section>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 24px" }}>
-
-        {/* Browse by make */}
-        <section style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "16px" }}>Browse by make</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: "10px" }}>
-            {MAKES.map(make => (
-              <Link key={make} href={`/listings?make=${make}`}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", padding: "12px 8px", border: "1px solid #e1e4e8", borderRadius: "8px", textDecoration: "none", background: "#f6f8fa" }}>
-                <div style={{ width: "36px", height: "36px", background: "#0d1117", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "13px", fontWeight: 700 }}>
-                  {make[0]}
-                </div>
-                <span style={{ fontSize: "11px", color: "#57606a", fontWeight: 500 }}>{make}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Two column */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "24px" }}>
-
-          {/* Main */}
-          <div>
-            <section style={{ marginBottom: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>Latest for sale</h2>
-                <Link href="/listings?type=SALE" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>View all →</Link>
-              </div>
-              {forSale.length === 0 ? (
-                <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "40px", textAlign: "center", color: "#57606a", fontSize: "14px" }}>
-                  No listings yet — <Link href="/sell" style={{ color: "#0d1117", fontWeight: 600 }}>be the first to post</Link>
-                </div>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                  {forSale.map(listing => (
-                    <Link key={listing._id} href={`/listings/${listing._id}`} style={{ textDecoration: "none" }}>
-                      <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", overflow: "hidden" }}>
-                        <div style={{ height: "155px", background: "#f6f8fa", overflow: "hidden", position: "relative" }}>
-                          {listing.images?.[0] ? (
-                            <img src={listing.images[0]} alt={listing.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#8c959f", fontSize: "12px" }}>No image</div>
-                          )}
-                          <div style={{ position: "absolute", top: "8px", left: "8px", background: listing.type === "RENT" ? "#2da44e" : "#0d1117", color: "white", fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "20px" }}>
-                            {listing.type === "SALE" ? "For Sale" : listing.type === "RENT" ? "For Rent" : "Sale & Rent"}
-                          </div>
-                        </div>
-                        <div style={{ padding: "12px" }}>
-                          <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
-                          <p style={{ fontSize: "11px", color: "#57606a", marginBottom: "8px" }}>{listing.make} {listing.model} · {listing.year}</p>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117" }}>PKR {listing.price.toLocaleString()}</span>
-                            <span style={{ fontSize: "11px", color: "#8c959f" }}>{listing.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* How it works */}
-            <section style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "24px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "20px" }}>How it works</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "24px" }}>
-                {[
-                  { n: "01", title: "Post your ad", desc: "Fill in vehicle details, upload photos and set your price in 3 minutes." },
-                  { n: "02", title: "Get contacted", desc: "Buyers reach you directly via call or WhatsApp — no middleman." },
-                  { n: "03", title: "Close the deal", desc: "Meet, inspect with AI, and complete the transaction safely." },
-                ].map(item => (
-                  <div key={item.n}>
-                    <div style={{ fontSize: "22px", fontWeight: 800, color: "#d0d7de", marginBottom: "8px" }}>{item.n}</div>
-                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "5px" }}>{item.title}</p>
-                    <p style={{ fontSize: "12px", color: "#57606a", lineHeight: 1.6 }}>{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Sidebar */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
-            {/* For rent */}
-            <section>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>For rent</h2>
-                <Link href="/listings?type=RENT" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>View all →</Link>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {forRent.length === 0 ? (
-                  <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", padding: "20px", textAlign: "center", color: "#57606a", fontSize: "12px" }}>No rentals yet</div>
-                ) : forRent.map(listing => (
-                  <Link key={listing._id} href={`/listings/${listing._id}`} style={{ textDecoration: "none" }}>
-                    <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", padding: "10px", display: "flex", gap: "10px" }}>
-                      <div style={{ width: "68px", height: "52px", borderRadius: "6px", background: "#f6f8fa", flexShrink: 0, overflow: "hidden" }}>
-                        {listing.images?.[0] ? (
-                          <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f", fontSize: "10px" }}>No img</div>
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px" }}>{listing.title}</p>
-                        <p style={{ fontSize: "11px", color: "#57606a", marginBottom: "3px" }}>{listing.make} · {listing.year}</p>
-                        <p style={{ fontSize: "12px", fontWeight: 700, color: "#2da44e" }}>PKR {listing.price.toLocaleString()}<span style={{ fontSize: "10px", fontWeight: 400, color: "#57606a" }}></span></p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
-            {/* Post CTA */}
-            <section style={{ background: "#0d1117", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
-              <p style={{ fontSize: "14px", fontWeight: 600, color: "white", marginBottom: "6px" }}>Sell your vehicle</p>
-              <p style={{ fontSize: "12px", color: "#8c959f", marginBottom: "16px", lineHeight: 1.5 }}>Post a free ad and reach thousands of buyers today</p>
-              <Link href="/sell" style={{ display: "block", padding: "10px", background: "white", color: "#0d1117", borderRadius: "8px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-                Post free ad
-              </Link>
-            </section>
-
-            {/* AI Inspection */}
-            <section style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
-              <div style={{ width: "40px", height: "40px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: "20px" }}>🔍</div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>AI vehicle inspection</p>
-              <p style={{ fontSize: "12px", color: "#57606a", marginBottom: "16px", lineHeight: 1.5 }}>Upload photos — get instant damage reports & value estimates</p>
-              <Link href="/sell" style={{ display: "block", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", color: "#0d1117", borderRadius: "8px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-                Try AI inspection
-              </Link>
-            </section>
-
-            {/* Cities */}
-            <section style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "16px 20px" }}>
-              <h2 style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "10px" }}>Browse by city</h2>
-              {CITIES.map(city => (
-                <Link key={city} href={`/listings?location=${city}`}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 8px", borderRadius: "6px", textDecoration: "none", color: "#57606a", fontSize: "13px" }}>
-                  <span>{city}</span>
-                  <span style={{ fontSize: "11px" }}>→</span>
-                </Link>
-              ))}
-            </section>
-          </div>
+      {/* Features */}
+      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: "1100px", margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: "56px" }}>
+          <p style={{ fontSize: "12px", fontWeight: 600, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "2px", marginBottom: "12px" }}>Everything you need</p>
+          <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-1px" }}>Built for Pakistan&apos;s<br />automobile market</h2>
         </div>
-      </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+          {features.map((f, i) => (
+            <div key={f.title} style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: "14px", padding: "24px",
+              opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)",
+              transition: `all 0.6s ease ${0.6 + i * 0.08}s`,
+              cursor: "default",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+            >
+              <div style={{ fontSize: "28px", marginBottom: "14px" }}>{f.icon}</div>
+              <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>{f.title}</p>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: "560px", margin: "0 auto" }}>
+          <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-1px", marginBottom: "16px" }}>
+            Ready to find your<br />next vehicle?
+          </h2>
+          <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.45)", marginBottom: "36px" }}>
+            Join thousands of buyers and sellers across Pakistan.
+          </p>
+          <button
+            onClick={() => router.push("/sell")}
+            style={{
+              padding: "16px 40px", background: "white", border: "none", borderRadius: "12px",
+              color: "#0d1117", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+              transition: "transform 0.2s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.03)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            Browse listings →
+          </button>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer style={{ background: "white", borderTop: "1px solid #e1e4e8", marginTop: "40px", padding: "40px 24px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "32px", marginBottom: "32px" }}>
-            <div>
-              <p style={{ fontSize: "15px", fontWeight: 700, color: "#0d1117", marginBottom: "8px" }}>AutoMarket</p>
-              <p style={{ fontSize: "13px", color: "#57606a", lineHeight: 1.6, maxWidth: "240px" }}>
-                Pakistan&apos;s trusted platform to buy, sell and rent cars & bikes.
-              </p>
-            </div>
-            {[
-              { title: "Buy", links: [["Cars for sale", "/listings?type=SALE"], ["Bikes", "/listings?search=bike"], ["All listings", "/listings"]] },
-              { title: "Rent", links: [["Rent a car", "/listings?type=RENT"], ["Rent a bike", "/listings?type=RENT&search=bike"]] },
-              { title: "Sell", links: [["Post a listing", "/sell"], ["Dashboard", "/dashboard"], ["Register", "/register"]] },
-            ].map(col => (
-              <div key={col.title}>
-                <p style={{ fontSize: "11px", fontWeight: 600, color: "#0d1117", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>{col.title}</p>
-                {col.links.map(([label, href]) => (
-                  <Link key={label} href={href} style={{ display: "block", fontSize: "13px", color: "#57606a", textDecoration: "none", marginBottom: "8px" }}>{label}</Link>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: "1px solid #e1e4e8", paddingTop: "20px", textAlign: "center" }}>
-            <p style={{ fontSize: "12px", color: "#8c959f" }}>© 2025 AutoMarket Pakistan. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <div style={{ position: "relative", zIndex: 1, padding: "24px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>© 2025 AutoMarket Pakistan. All rights reserved.</p>
+      </div>
     </div>
   );
 }

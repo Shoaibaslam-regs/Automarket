@@ -1,3 +1,233 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ── GLOBAL RESPONSIVE UTILITIES ── */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Hide/show helpers */
+.desktop-only { display: flex !important; }
+.mobile-only { display: none !important; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
+}
+
+/* ── NAVBAR ── */
+.nav-dropdown {
+  animation: fadeDown 0.15s ease;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── LISTINGS PAGE ── */
+.listings-page-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+}
+
+.listings-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .listings-page-grid {
+    grid-template-columns: 1fr;
+  }
+  .listings-sidebar {
+    display: none !important;
+  }
+  .listings-mobile-filters {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .listings-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+  .container {
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .listings-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── HOME PAGE ── */
+.home-two-col {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+}
+
+.home-makes-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+}
+
+.home-sale-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1024px) {
+  .home-two-col {
+    grid-template-columns: 1fr 260px;
+  }
+}
+
+@media (max-width: 860px) {
+  .home-two-col {
+    grid-template-columns: 1fr;
+  }
+  .home-sidebar-hidden {
+    display: none !important;
+  }
+  .home-makes-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .home-makes-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px;
+  }
+  .home-sale-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+}
+
+/* ── MESSAGES PAGE ── */
+.messages-layout {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+.messages-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid #e1e4e8;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .messages-layout {
+    height: calc(100vh - 64px);
+  }
+  .messages-sidebar {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+  }
+  .messages-sidebar.hidden-mobile {
+    display: none;
+  }
+  .messages-main.hidden-mobile {
+    display: none;
+  }
+}
+
+/* ── BOOKING PAGE ── */
+.booking-two-col {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .booking-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── SELL PAGE ── */
+.sell-container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+/* ── DASHBOARD ── */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── CARD HOVER ── */
+.card-hover {
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.card-hover:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8c959f; }
+
+/* ── FOCUS VISIBLE ── */
+*:focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: 2px;
+}
