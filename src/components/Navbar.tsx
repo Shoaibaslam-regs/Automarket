@@ -97,7 +97,7 @@ export default function Navbar() {
                       </Link>
                     )}
                     <div className="border-t border-black/5 mt-1 pt-1">
-                      <button onClick={() => signOut({ callbackUrl: "/landing" })}
+                      <button onClick={() => signOut({ callbackUrl: "/home" })}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition">
                         ↩ Sign out
                       </button>
@@ -168,7 +168,7 @@ export default function Navbar() {
                       ⚡ Admin panel
                     </Link>
                   )}
-                  <button onClick={() => signOut({ callbackUrl: "/landing" })}
+                  <button onClick={() => signOut({ callbackUrl: "/home" })}
                     className="w-full text-left px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-lg mt-1">
                     Sign out
                   </button>

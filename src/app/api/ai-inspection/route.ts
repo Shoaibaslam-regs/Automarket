@@ -1,78 +1,240 @@
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { Inspection } from "@/models/Inspection";
-import { Listing } from "@/models/Listing";
-import { auth } from "@/lib/auth";
+ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-async function analyzeWithGemini(images: string[]) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+import { connectDB } from "@/lib/mongodb";
+import { auth } from "@/lib/auth";
+
+import { Inspection } from "@/models/Inspection";
+import { Listing } from "@/models/Listing";
+
+type GeminiReport = {
+  make: string;
+  model: string;
+  year: number | null;
+  condition: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+  damageScore: number;
+  estimate: number;
+  damages: string[];
+  positives: string[];
+  summary: string;
+};
+
+function clampDamageScore(score: number) {
+  return Math.max(0, Math.min(10, Number(score) || 0));
+}
+
+async function analyzeWithGemini(
+  images: string[]
+): Promise<GeminiReport> {
+  const genAI = new GoogleGenerativeAI(
+    process.env.GEMINI_API_KEY!
+  );
+
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+  });
 
   const imageParts = await Promise.all(
     images.slice(0, 4).map(async (url: string) => {
-      const res = await fetch(url);
-      const buffer = await res.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString("base64");
-      const mimeType = res.headers.get("content-type") || "image/jpeg";
-      return { inlineData: { data: base64, mimeType } };
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch image");
+      }
+
+      const buffer = await response.arrayBuffer();
+
+      const mimeType =
+        response.headers.get("content-type") ||
+        "image/jpeg";
+
+      return {
+        inlineData: {
+          data: Buffer.from(buffer).toString("base64"),
+          mimeType,
+        },
+      };
     })
   );
 
-  const prompt = `You are an expert automobile inspector in Pakistan. Analyze these vehicle images and provide a detailed inspection report.
+  const prompt = `
+You are a professional automobile inspection AI in Pakistan.
 
-Respond ONLY with a valid JSON object, no markdown, no extra text:
+Analyze the provided car images carefully.
+
+Inspect:
+- dents
+- scratches
+- paint condition
+- bumper damage
+- headlights
+- body panels
+- exterior condition
+
+IMPORTANT RULES:
+- Do NOT hallucinate damage.
+- Mention only visually confident observations.
+- If something is unclear, say "not clearly visible".
+- Focus only on visible exterior condition.
+
+Return ONLY valid JSON.
+No markdown.
+No explanation.
+
 {
-  "make": "detected vehicle make or Unknown",
-  "model": "detected vehicle model or Unknown",
-  "year": estimated year as number or null,
-  "condition": "EXCELLENT" or "GOOD" or "FAIR" or "POOR",
-  "damageScore": number from 0 to 10,
-  "estimate": estimated market value in PKR as number,
-  "damages": ["visible damage 1", "visible damage 2"],
-  "positives": ["good feature 1", "good feature 2"],
-  "summary": "2-3 sentence overall assessment"
-}`;
+  "make": "Toyota",
+  "model": "Corolla",
+  "year": 2020,
+  "condition": "GOOD",
+  "damageScore": 3,
+  "estimate": 3500000,
+  "damages": ["Minor bumper scratches"],
+  "positives": ["Clean exterior"],
+  "summary": "Vehicle appears in good condition overall."
+}
+`;
 
-  const result = await model.generateContent([prompt, ...imageParts]);
-  return result.response.text();
+  const result = await model.generateContent([
+    prompt,
+    ...imageParts,
+  ]);
+
+  const text = result.response
+    .text()
+    .replace(/```json|```/g, "")
+    .trim();
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Invalid AI JSON response");
+  }
+
+  if (
+    !parsed.make ||
+    !parsed.model ||
+    !parsed.condition
+  ) {
+    throw new Error("Incomplete AI response");
+  }
+
+  return {
+    make: parsed.make || "Unknown",
+    model: parsed.model || "Unknown",
+    year: parsed.year || null,
+    condition: parsed.condition || "GOOD",
+    damageScore: clampDamageScore(
+      parsed.damageScore
+    ),
+    estimate: Number(parsed.estimate) || 0,
+    damages: Array.isArray(parsed.damages)
+      ? parsed.damages
+      : [],
+    positives: Array.isArray(parsed.positives)
+      ? parsed.positives
+      : [],
+    summary:
+      parsed.summary ||
+      "Vehicle inspection completed.",
+  };
 }
 
-function generateDemoReport(listing: { make: string; model: string; year: number; condition: string; mileage?: number }) {
-  const conditionMap: Record<string, { score: number; condition: string }> = {
-    NEW:       { score: 0, condition: "EXCELLENT" },
-    EXCELLENT: { score: 1, condition: "EXCELLENT" },
-    GOOD:      { score: 3, condition: "GOOD" },
-    FAIR:      { score: 6, condition: "FAIR" },
-    POOR:      { score: 8, condition: "POOR" },
+function generateDemoReport(listing: {
+  make: string;
+  model: string;
+  year: number;
+  condition: string;
+  mileage?: number;
+}): GeminiReport & { _isDemo: boolean } {
+  const currentYear = new Date().getFullYear();
+
+  const conditionMap: Record<
+    string,
+    { score: number; condition: GeminiReport["condition"] }
+  > = {
+    NEW: {
+      score: 0,
+      condition: "EXCELLENT",
+    },
+    EXCELLENT: {
+      score: 1,
+      condition: "EXCELLENT",
+    },
+    GOOD: {
+      score: 3,
+      condition: "GOOD",
+    },
+    FAIR: {
+      score: 6,
+      condition: "FAIR",
+    },
+    POOR: {
+      score: 8,
+      condition: "POOR",
+    },
   };
-  const c = conditionMap[listing.condition] || conditionMap.GOOD;
-  const basePrice = listing.make === "Toyota" ? 3500000 :
-    listing.make === "Honda" ? 3200000 :
-    listing.make === "Suzuki" ? 2000000 :
-    listing.make === "BMW" ? 8000000 : 2500000;
-  const yearFactor = Math.max(0.5, 1 - (2025 - listing.year) * 0.05);
-  const estimate = Math.round(basePrice * yearFactor * (1 - c.score * 0.05));
+
+  const selected =
+    conditionMap[listing.condition] ||
+    conditionMap.GOOD;
+
+  const basePrice =
+    listing.make === "Toyota"
+      ? 3500000
+      : listing.make === "Honda"
+      ? 3200000
+      : listing.make === "Suzuki"
+      ? 2000000
+      : listing.make === "BMW"
+      ? 8000000
+      : 2500000;
+
+  const yearFactor = Math.max(
+    0.5,
+    1 - (currentYear - listing.year) * 0.05
+  );
+
+  const estimate = Math.round(
+    basePrice *
+      yearFactor *
+      (1 - selected.score * 0.05)
+  );
 
   return {
     make: listing.make,
     model: listing.model,
     year: listing.year,
-    condition: c.condition,
-    damageScore: c.score,
+    condition: selected.condition,
+    damageScore: selected.score,
     estimate,
-    damages: c.score > 5
-      ? ["Minor scratches on bumper", "Small dent on rear panel", "Windshield has minor chips"]
-      : c.score > 2
-      ? ["Minor surface scratches", "Slight wear on tires"]
-      : ["No significant damage detected"],
+
+    damages:
+      selected.score > 5
+        ? [
+            "Minor scratches on bumper",
+            "Small dent on rear panel",
+            "Paint wear visible",
+          ]
+        : selected.score > 2
+        ? [
+            "Minor cosmetic scratches",
+            "Normal exterior wear",
+          ]
+        : ["No significant damage detected"],
+
     positives: [
-      "Engine appears to be in good working condition",
-      "Interior is clean and well maintained",
-      "Tires have adequate tread depth",
-      listing.mileage && listing.mileage < 50000 ? "Low mileage vehicle" : "Regular maintenance evident",
+      "Exterior appears maintained",
+      "Body alignment looks proper",
+      listing.mileage &&
+      listing.mileage < 50000
+        ? "Low mileage vehicle"
+        : "Regular usage condition",
     ],
-    summary: `This ${listing.year} ${listing.make} ${listing.model} is in ${c.condition.toLowerCase()} condition with a damage score of ${c.score}/10. ${c.score <= 2 ? "The vehicle shows minimal wear and is well maintained." : c.score <= 5 ? "Some minor cosmetic issues are present but nothing major." : "Several areas need attention before purchase."} Based on current market conditions in Pakistan, the estimated value is PKR ${estimate.toLocaleString()}.`,
+
+    summary: `This ${listing.year} ${listing.make} ${listing.model} appears in ${selected.condition.toLowerCase()} condition. Estimated market value in Pakistan is approximately PKR ${estimate.toLocaleString()}.`,
+
     _isDemo: true,
   };
 }
@@ -80,77 +242,135 @@ function generateDemoReport(listing: { make: string; model: string; year: number
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     await connectDB();
-    const { listingId, images } = await req.json();
 
-    if (!listingId || !images || images.length === 0) {
-      return NextResponse.json({ error: "Listing ID and images are required" }, { status: 400 });
+    const body = await req.json();
+
+    const listingId = body.listingId;
+    const images = body.images;
+
+    if (
+      !listingId ||
+      !Array.isArray(images) ||
+      images.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Listing ID and images are required",
+        },
+        { status: 400 }
+      );
     }
 
-    const listing = await Listing.findById(listingId);
+    const listing = await Listing.findById(
+      listingId
+    );
+
     if (!listing) {
-      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Listing not found" },
+        { status: 404 }
+      );
     }
 
-    if (listing.sellerId.toString() !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (
+      listing.sellerId.toString() !==
+      session.user.id
+    ) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    let parsed;
+    let report;
     let isDemo = false;
 
-    // Try Gemini if key exists
     if (process.env.GEMINI_API_KEY) {
       try {
-        const raw = await analyzeWithGemini(images);
-        const clean = raw.replace(/```json|```/g, "").trim();
-        parsed = JSON.parse(clean);
-      } catch (err) {
-        console.error("Gemini failed, using demo report:", err);
-        parsed = generateDemoReport({
+        report = await analyzeWithGemini(images);
+      } catch (error) {
+        console.error(
+          "Gemini failed. Using demo report:",
+          error
+        );
+
+        report = generateDemoReport({
           make: listing.make,
           model: listing.model,
           year: listing.year,
           condition: listing.condition,
           mileage: listing.mileage,
         });
+
         isDemo = true;
       }
     } else {
-      parsed = generateDemoReport({
+      report = generateDemoReport({
         make: listing.make,
         model: listing.model,
         year: listing.year,
         condition: listing.condition,
         mileage: listing.mileage,
       });
+
       isDemo = true;
     }
 
-    const inspection = await Inspection.findOneAndUpdate(
-      { listingId },
-      {
-        listingId,
-        images,
-        make: parsed.make,
-        model: parsed.model,
-        year: parsed.year,
-        condition: parsed.condition,
-        damageScore: parsed.damageScore,
-        estimate: parsed.estimate,
-        rawResponse: parsed,
-      },
-      { upsert: true, new: true }
+    const inspection =
+      await Inspection.findOneAndUpdate(
+        { listingId },
+
+        {
+          listingId,
+          images,
+
+          make: report.make,
+          model: report.model,
+          year: report.year,
+
+          condition: report.condition,
+          damageScore: report.damageScore,
+          estimate: report.estimate,
+
+          rawResponse: report,
+        },
+
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
+    return NextResponse.json({
+      success: true,
+      inspection,
+      report,
+      isDemo,
+    });
+  } catch (error: unknown) {
+    console.error(
+      "AI inspection error:",
+      error
     );
 
-    return NextResponse.json({ inspection, report: parsed, isDemo });
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error("AI inspection error:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Inspection failed",
+      },
+      { status: 500 }
+    );
   }
 }

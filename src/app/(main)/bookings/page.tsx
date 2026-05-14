@@ -168,8 +168,8 @@ function ConfirmPopup({ message, onConfirm, onCancel, loading }: {
               Cancel
             </button>
             <button onClick={onConfirm} disabled={loading}
-              style={{ padding: "8px 18px", background: "#cf222e", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", gap: "6px" }}>
-              {loading ? (
+              style={{ padding: "8px 18px", background: "#cf222e", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", gap: "6px"}}>
+              {loading ? ( 
                 <>
                   <span style={{ width: "14px", height: "14px", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
                   Removing...
