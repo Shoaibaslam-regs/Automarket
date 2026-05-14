@@ -3,8 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest, 
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;

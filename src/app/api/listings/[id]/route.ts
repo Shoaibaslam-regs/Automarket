@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } } 
+ context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -23,8 +23,8 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest, 
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
