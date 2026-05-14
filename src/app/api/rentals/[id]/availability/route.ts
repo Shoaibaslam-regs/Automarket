@@ -4,7 +4,7 @@ import { Booking } from "@/models/Booking";
 
 export async function GET(
   req: NextRequest, 
-  context: { params: Promise<{ id: string }> }
+   { params }: { params: { id: string } }
 ) {
   try {
     const { id } = await params;
