@@ -32,8 +32,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+   context: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -62,7 +61,8 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-   { params }: { params: { id: string } }) {
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await context.params; // ✅ FIX
 

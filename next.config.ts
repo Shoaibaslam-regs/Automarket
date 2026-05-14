@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "utfs.io" },
       { protocol: "https", hostname: "*.ufs.sh" },
     ],
+      domains: ["res.cloudinary.com", "lh3.googleusercontent.com"],
   },
 };
 
