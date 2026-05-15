@@ -15,13 +15,10 @@ export default function MessageBadge() {
 
     // const channel = getPusherClient()?.subscribe(`user-${session.user.id}`);
      const pusher = getPusherClient();
-    if (!pusher) return;
-
-    const channel = pusher.subscribe(
+     const channel = pusher.subscribe(
       `user-${session.user.id}`
     );
-    if (!channel) return;
-
+ 
     channel.bind("new-notification", (data: { type: string }) => {
       if (data.type === "message") {
         setCount(prev => prev + 1);
@@ -30,7 +27,7 @@ export default function MessageBadge() {
 
     return () => {
       channel.unbind_all();
-      getPusherClient()?.unsubscribe(`user-${session.user.id}`);
+      pusher.unsubscribe(`user-${session.user.id}`);
     };
   }, [session?.user?.id]);
 
