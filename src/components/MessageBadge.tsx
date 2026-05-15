@@ -13,7 +13,14 @@ export default function MessageBadge() {
     if (!session?.user?.id) return;
     fetchCount();
 
-    const channel = getPusherClient()?.subscribe(`user-${session.user.id}`);
+    // const channel = getPusherClient()?.subscribe(`user-${session.user.id}`);
+     const pusher = getPusherClient();
+    if (!pusher) return;
+
+    const channel = pusher.subscribe(
+      `user-${session.user.id}`
+    );
+
     channel.bind("new-notification", (data: { type: string }) => {
       if (data.type === "message") {
         setCount(prev => prev + 1);
