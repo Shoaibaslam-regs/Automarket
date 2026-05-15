@@ -6,6 +6,7 @@ import {
   Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
 } from "recharts";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -267,6 +268,7 @@ export default function AnalyticsPage() {
         </div>
 
       </div>
+      <Footer/>
     </div>
   );
 }

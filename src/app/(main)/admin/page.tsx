@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 type Stats = {
     totalUsers: number;
@@ -240,5 +241,5 @@ export default function AdminPage() {
                 </div>
             </div>
         </div>
-    );
+   );
 }

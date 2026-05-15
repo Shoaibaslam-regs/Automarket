@@ -9,7 +9,7 @@ import { sendBookingConfirmedEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest, 
-   { params }: { params: { id: string } }
+ { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -71,7 +71,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest, 
-   { params }: { params: { id: string } }
+ { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();

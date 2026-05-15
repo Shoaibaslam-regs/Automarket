@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { IListing } from "@/models/Listing";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 type ListingWithId = IListing & { _id: string };
 
@@ -296,33 +297,7 @@ export default async function HomePage() {
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
-            <footer style={{ background: "white", borderTop: "1px solid #e1e4e8", marginTop: "40px", padding: "32px 24px" }}>
-                <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "24px", marginBottom: "24px" }}>
-                        <div>
-                            <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", marginBottom: "8px" }}>AutoMarket</p>
-                            <p style={{ fontSize: "12px", color: "#57606a", lineHeight: 1.6 }}>Pakistan&apos;s trusted platform to buy, sell and rent cars & bikes.</p>
-                        </div>
-                        {[
-                            { title: "Buy", links: [["Cars for sale", "/listings?type=SALE"], ["Bikes", "/listings?search=bike"], ["All listings", "/listings"]] },
-                            { title: "Rent", links: [["Rent a car", "/listings?type=RENT"], ["Rent a bike", "/listings?type=RENT&search=bike"]] },
-                            { title: "Sell", links: [["Post a listing", "/sell"], ["Dashboard", "/dashboard"], ["Register", "/register"]] },
-                        ].map(col => (
-                            <div key={col.title}>
-                                <p style={{ fontSize: "11px", fontWeight: 600, color: "#0d1117", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px" }}>{col.title}</p>
-                                {col.links.map(([label, href]) => (
-                                    <Link key={label} href={href} style={{ display: "block", fontSize: "13px", color: "#57606a", textDecoration: "none", marginBottom: "7px" }}>{label}</Link>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                    <div style={{ borderTop: "1px solid #e1e4e8", paddingTop: "16px", textAlign: "center" }}>
-                        <p style={{ fontSize: "12px", color: "#8c959f" }}>© 2025 AutoMarket Pakistan. All rights reserved.</p>
-                    </div>
-                </div>
-            </footer>
-        </div>
+<Footer/>
+      </div>
     );
 }
