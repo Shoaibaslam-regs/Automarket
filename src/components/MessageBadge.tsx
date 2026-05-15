@@ -20,6 +20,7 @@ export default function MessageBadge() {
     const channel = pusher.subscribe(
       `user-${session.user.id}`
     );
+    if (!channel) return;
 
     channel.bind("new-notification", (data: { type: string }) => {
       if (data.type === "message") {
