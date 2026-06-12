@@ -15,6 +15,8 @@ export default function MessageBadge() {
 
     // const channel = getPusherClient()?.subscribe(`user-${session.user.id}`);
      const pusher = getPusherClient();
+     if (!pusher) return;
+
      const channel = pusher.subscribe( 
       `user-${session.user.id}`
     );
