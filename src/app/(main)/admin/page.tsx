@@ -98,7 +98,8 @@ export default function AdminPage() {
                   <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>Recent users</h2>
                   <Link href="/admin/users" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>View all →</Link>
                 </div>
-                <div style={{ divide: "y" }}>
+                <div>
+
                   {recentUsers.map(user => (
                     <div key={user._id} style={{ padding: "12px 20px", borderBottom: "1px solid #f6f8fa", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
