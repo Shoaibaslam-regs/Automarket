@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
-import Image from "next/image";
 import MessageBadge from "@/components/MessageBadge";
+import ModeToggle from "@/components/ModeToggle";
+import Image from "next/image";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -18,84 +21,343 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); setMenuOpen(false); }, []);
+
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-black/10 shadow-sm">
-      <div className={`max-w-7xl mx-auto px-4 flex items-center justify-between transition-all duration-300 ${scrolled ? "h-14" : "h-20"}`}>
+    <>
+      <style>{`
+        .nav-desktop { display: flex; }
+        .nav-mobile-btn { display: none; }
+        .nav-mobile-menu { display: none; }
+        @media (max-width: 768px) {
+          .nav-desktop { display: none !important; }
+          .nav-desktop-right { display: none !important; }
+          .nav-mobile-btn { display: flex !important; }
+          .nav-mobile-menu.open { display: flex !important; }
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeDown {
+          from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .nav-link {
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(0,0,0,0.65);
+          text-decoration: none;
+          padding: 6px 10px;
+          border-radius: 8px;
+          transition: all 0.15s;
+          white-space: nowrap;
+        }
+        .nav-link:hover { color: #0d1117; background: rgba(0,0,0,0.04); }
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 14px;
+          font-size: 13px;
+          color: rgba(0,0,0,0.7);
+          text-decoration: none;
+          border-radius: 8px;
+          transition: background 0.12s;
+          font-weight: 500;
+          width: 100%;
+          text-align: left;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-family: inherit;
+        }
+        .dropdown-item:hover { background: rgba(0,0,0,0.05); color: #0d1117; }
+        .mobile-nav-link {
+          display: block;
+          padding: 13px 20px;
+          font-size: 15px;
+          font-weight: 500;
+          color: rgba(0,0,0,0.75);
+          text-decoration: none;
+          border-bottom: 1px solid rgba(0,0,0,0.05);
+          transition: background 0.1s;
+        }
+        .mobile-nav-link:hover { background: rgba(0,0,0,0.03); }
+        .mobile-nav-link:last-child { border-bottom: none; }
+      `}</style>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/logo-1771205663069.png"
-            alt="AutoMarket"
-            width={140}
-            height={40}
-            style={{ width: "auto", height: scrolled ? "36px" : "44px", transition: "height 0.3s" }}
-            priority
-          />
-        </Link>
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 100,
+        background: "rgba(255,255,255,0.88)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      }}>
+        <div style={{
+          maxWidth: "1280px", margin: "0 auto",
+          padding: "0 20px",
+          height: scrolled ? "56px" : "64px",
+          transition: "height 0.3s",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: "12px",
+        }}>
 
-        {/* Nav links */}
-        <div className="hidden md:flex items-center gap-6">
-          <Link href="/listings" className="text-sm text-black/70 hover:text-black transition">Browse</Link>
-          <Link href="/listings?type=RENT" className="text-sm text-black/70 hover:text-black transition">Rentals</Link>
-          {session?.user && (
-            <>
-              <Link href="/sell" className="text-sm text-black/70 hover:text-black transition">Sell</Link>
-              <BookingBadge />
-              <MessageBadge />
-            </>
-          )}
+          {/* ── LOGO ── */}
+          <Link href="/" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+            <Image
+              src="/logo-1771205663069.png"
+              alt="AutoMarket"
+              width={140}
+              height={40}
+              style={{ width: "auto", height: scrolled ? "30px" : "36px", transition: "height 0.3s" }}
+              priority
+            />
+          </Link>
+
+          {/* ── DESKTOP CENTER LINKS ── */}
+          <div className="nav-desktop" style={{ alignItems: "center", gap: "2px", flex: 1, justifyContent: "center" }}>
+            <Link href="/listings" className="nav-link">Browse</Link>
+            <Link href="/listings?type=RENT" className="nav-link">Rentals</Link>
+            {session?.user && (
+              <>
+                <Link href="/sell" className="nav-link">Sell</Link>
+                <ModeToggle />
+              </>
+            )}
+          </div>
+
+          {/* ── DESKTOP RIGHT ── */}
+          <div className="nav-desktop nav-desktop-right" style={{ alignItems: "center", gap: "10px", flexShrink: 0 }}>
+            {session?.user ? (
+              <div ref={dropdownRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "6px 10px 6px 6px",
+                    background: menuOpen ? "rgba(0,0,0,0.05)" : "transparent",
+                    border: "1px solid",
+                    borderColor: menuOpen ? "rgba(0,0,0,0.1)" : "transparent",
+                    borderRadius: "40px", cursor: "pointer",
+                    fontFamily: "inherit", transition: "all 0.15s",
+                  }}>
+                  <div style={{
+                    width: "30px", height: "30px", borderRadius: "50%",
+                    background: "#0d1117", color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "12px", fontWeight: 700, flexShrink: 0,
+                  }}>
+                    {session.user.name?.[0]?.toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {session.user.name?.split(" ")[0]}
+                  </span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                    style={{ transition: "transform 0.2s", transform: menuOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>
+                    <path d="M2 4l4 4 4-4" stroke="#8c959f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                {menuOpen && (
+                  <div style={{
+                    position: "absolute", right: 0, top: "calc(100% + 8px)",
+                    width: "230px", background: "white",
+                    border: "1px solid rgba(0,0,0,0.1)", borderRadius: "14px",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)", padding: "6px",
+                    animation: "fadeDown 0.15s ease", zIndex: 200,
+                  }}>
+                    {/* User info */}
+                    <div style={{ padding: "10px 14px 10px", marginBottom: "4px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
+                      <p style={{ fontSize: "11px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
+                    </div>
+
+                    {[
+                      { href: "/dashboard", icon: "▦", label: "Dashboard" },
+                      { href: "/bookings", icon: "📅", label: "My bookings" },
+                      { href: "/messages", icon: "💬", label: "Messages" },
+                      { href: "/profile", icon: "⚙️", label: "Profile & settings" },
+                    ].map(item => (
+                      <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="dropdown-item">
+                        <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>{item.icon}</span>
+                        {item.label}
+                      </Link>
+                    ))}
+
+                    {session.user.role === "ADMIN" && (
+                      <>
+                        <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
+                        <Link href="/admin" onClick={() => setMenuOpen(false)} className="dropdown-item" style={{ color: "#d97706" }}>
+                          <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>⚡</span>
+                          Admin panel
+                        </Link>
+                      </>
+                    )}
+
+                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
+                    <button onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                      className="dropdown-item" style={{ color: "#dc2626" }}>
+                      <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>↩</span>
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Link href="/login" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "#0d1117", textDecoration: "none", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.12)" }}>
+                  Sign in
+                </Link>
+                <Link href="/register" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "white", textDecoration: "none", borderRadius: "8px", background: "#0d1117" }}>
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* ── MOBILE RIGHT: badges + hamburger ── */}
+          <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
+            {session?.user && (
+              <div style={{ display: "flex", gap: "2px" }}>
+              </div>
+            )}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              style={{
+                width: "40px", height: "40px", display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: "5px",
+                background: mobileOpen ? "rgba(0,0,0,0.06)" : "transparent",
+                border: "none", cursor: "pointer", borderRadius: "10px", padding: "8px",
+              }}>
+              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", opacity: mobileOpen ? 0 : 1, transition: "opacity 0.15s" }} />
+              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+            </button>
+          </div>
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-3">
-          {session?.user ? (
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 text-sm text-black/80 hover:text-black transition">
-                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-semibold text-xs">
-                  {session.user.name?.[0]?.toUpperCase()}
-                </div>
-                <span className="hidden md:block">{session.user.name}</span>
-              </button>
+        {/* ── MOBILE MENU DRAWER ── */}
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <div onClick={() => setMobileOpen(false)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 80, top: "64px" }} />
 
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-48 backdrop-blur-md bg-white/90 rounded-xl border border-black/10 shadow-lg py-1 z-50">
-                  <Link href="/dashboard" onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Dashboard</Link>
-                  <Link href="/bookings" onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Bookings</Link>
-                  <Link href="/sell" onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">Post listing</Link>
-                    <Link href="/messages" onClick={() => setMenuOpen(false)}
-  className="block px-4 py-2 text-sm text-black/80 hover:bg-black/5">
-  Messages
-</Link>
-{session.user.role === "ADMIN" && (
-  <Link href="/admin" onClick={() => setMenuOpen(false)}
-    className="block px-4 py-2 text-sm text-amber-600 hover:bg-black/5 font-medium">
-    ⚡ Admin dashboard
-  </Link>
-)}
-                  <hr className="my-1 border-black/10" />
-                  <button onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-black/5">
-                    Sign out
-                  </button>
+            {/* Drawer */}
+            <div className="nav-mobile-menu open"
+              style={{
+                position: "fixed", top: scrolled ? "56px" : "64px", left: 0, right: 0,
+                background: "white", zIndex: 90, flexDirection: "column",
+                borderBottom: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                animation: "slideDown 0.2s ease",
+                maxHeight: "calc(100vh - 64px)", overflowY: "auto",
+              }}>
+
+              {/* User info banner */}
+              {session?.user && (
+                <div style={{ padding: "14px 20px 12px", background: "#f6f8fa", borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>
+                    {session.user.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
+                    <p style={{ fontSize: "12px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
+                  </div>
                 </div>
               )}
+
+              {/* Nav links */}
+              <div style={{ padding: "8px 12px" }}>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Browse</p>
+                {[
+                  { href: "/listings", label: "Browse vehicles", icon: "🔍" },
+                  { href: "/listings?type=RENT", label: "Rentals", icon: "🔑" },
+                ].map(item => (
+                  <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
+                    <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
+                    {item.label}
+                  </Link>
+                ))}
+
+                {session?.user && (
+                  <>
+                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
+                    <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>My account</p>
+                    {[
+                      { href: "/sell", label: "Sell a vehicle", icon: "🚗" },
+                      { href: "/dashboard", label: "Dashboard", icon: "▦" },
+                      { href: "/bookings", label: "My bookings", icon: "📅" },
+                      { href: "/messages", label: "Messages", icon: "💬" },
+                      { href: "/profile", label: "Profile & settings", icon: "⚙️" },
+                    ].map(item => (
+                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                        style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
+                        <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
+                        {item.label}
+                      </Link>
+                    ))}
+
+                    {/* Mode toggle in mobile */}
+                    <div style={{ padding: "8px 8px", margin: "4px 0" }}>
+                      <ModeToggle />
+                    </div>
+
+                    {session.user.role === "ADMIN" && (
+                      <>
+                        <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
+                        <Link href="/admin" onClick={() => setMobileOpen(false)}
+                          style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 600, color: "#d97706", textDecoration: "none", borderRadius: "8px" }}>
+                          <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>⚡</span>
+                          Admin panel
+                        </Link>
+                      </>
+                    )}
+
+                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
+                    <button onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
+                      style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#dc2626", background: "none", border: "none", cursor: "pointer", width: "100%", fontFamily: "inherit", borderRadius: "8px" }}>
+                      <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>↩</span>
+                      Sign out
+                    </button>
+                  </>
+                )}
+
+                {!session?.user && (
+                  <>
+                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "12px 0 8px" }} />
+                    <div style={{ display: "flex", gap: "8px", padding: "4px 8px 12px" }}>
+                      <Link href="/login" onClick={() => setMobileOpen(false)}
+                        style={{ flex: 1, textAlign: "center", padding: "12px", fontSize: "14px", fontWeight: 600, color: "#0d1117", textDecoration: "none", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "10px" }}>
+                        Sign in
+                      </Link>
+                      <Link href="/register" onClick={() => setMobileOpen(false)}
+                        style={{ flex: 1, textAlign: "center", padding: "12px", fontSize: "14px", fontWeight: 600, color: "white", textDecoration: "none", background: "#0d1117", borderRadius: "10px" }}>
+                        Register
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm text-black/70 hover:text-black transition">Sign in</Link>
-              <Link href="/register" className="text-sm bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
-                Register
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
+          </>
+        )}
+      </nav>
+    </>
   );
 }

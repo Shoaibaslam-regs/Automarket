@@ -9,6 +9,13 @@ export default function MessageBadge() {
   const { data: session } = useSession();
   const [count, setCount] = useState(0);
 
+  async function fetchCount() {
+    try {
+      const res = await fetch("/api/messages/unread");
+      const data = await res.json();
+      setCount(data.count || 0);
+    } catch { setCount(0); }
+  }
   useEffect(() => {
     if (!session?.user?.id) return;
     fetchCount();
@@ -31,13 +38,6 @@ export default function MessageBadge() {
     };
   }, [session?.user?.id]);
 
-  async function fetchCount() {
-    try {
-      const res = await fetch("/api/messages/unread");
-      const data = await res.json();
-      setCount(data.count || 0);
-    } catch { setCount(0); }
-  }
 
   return (
     <Link href="/messages" className="relative text-sm text-black/70 hover:text-black transition flex items-center gap-1">

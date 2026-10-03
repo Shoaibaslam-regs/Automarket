@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  async function fetchUsers() {
+async function fetchUsers() {
     const res = await fetch("/api/admin/users");
     const data = await res.json();
     setUsers(data.users || []);
