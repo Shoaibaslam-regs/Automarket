@@ -135,7 +135,8 @@ export default function Navbar() {
             {session?.user && (
               <>
                 <Link href="/sell" className="nav-link">Sell</Link>
-                <ModeToggle />
+              <BookingBadge /> 
+
               </>
             )}
           </div>
@@ -184,11 +185,14 @@ export default function Navbar() {
                     <div style={{ padding: "10px 14px 10px", marginBottom: "4px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                       <p style={{ fontSize: "13px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
                       <p style={{ fontSize: "11px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
+                    
                     </div>
+
+                    <ModeToggle/>
 
                     {[
                       { href: "/dashboard", icon: "▦", label: "Dashboard" },
-                      { href: "/bookings", icon: "📅", label: "My bookings" },
+                      { href: "/bookings", icon: "📅", label: "Bookings" },
                       { href: "/messages", icon: "💬", label: "Messages" },
                       { href: "/profile", icon: "⚙️", label: "Profile & settings" },
                     ].map(item => (
@@ -231,10 +235,7 @@ export default function Navbar() {
 
           {/* ── MOBILE RIGHT: badges + hamburger ── */}
           <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
-            {session?.user && (
-              <div style={{ display: "flex", gap: "2px" }}>
-              </div>
-            )}
+            
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               style={{
@@ -276,6 +277,7 @@ export default function Navbar() {
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
+
                     <p style={{ fontSize: "12px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
                   </div>
                 </div>
@@ -284,6 +286,7 @@ export default function Navbar() {
               {/* Nav links */}
               <div style={{ padding: "8px 12px" }}>
                 <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Browse</p>
+
                 {[
                   { href: "/listings", label: "Browse vehicles", icon: "🔍" },
                   { href: "/listings?type=RENT", label: "Rentals", icon: "🔑" },
@@ -293,12 +296,14 @@ export default function Navbar() {
                     <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
                     {item.label}
                   </Link>
+                  
                 ))}
 
                 {session?.user && (
                   <>
                     <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
                     <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>My account</p>
+                    
                     {[
                       { href: "/sell", label: "Sell a vehicle", icon: "🚗" },
                       { href: "/dashboard", label: "Dashboard", icon: "▦" },
@@ -309,15 +314,19 @@ export default function Navbar() {
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                         style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
                         <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
-                        {item.label}
+                        {item.label} 
                       </Link>
                     ))}
 
+                     <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Business</p>
                     {/* Mode toggle in mobile */}
-                    <div style={{ padding: "8px 8px", margin: "4px 0" }}>
-                      <ModeToggle />
-                    </div>
-
+                      <div style={{padding: "8px 8px", margin: "4px 0" }}>
+                       <ModeToggle />
+                      </div>
+                    
+                      
+                
                     {session.user.role === "ADMIN" && (
                       <>
                         <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />

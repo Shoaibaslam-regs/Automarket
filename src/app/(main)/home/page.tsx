@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { IListing } from "@/models/Listing";
 import Link from "next/link";
-import Footer from "@/components/Footer";
+import Footer from "@/components/Footer"; 
 
 type ListingWithId = IListing & { _id: string };
 
@@ -28,7 +28,6 @@ export default async function HomePage() {
 
     return (
         <div style={{ position: "relative", minHeight: "100vh", background: "#f6f8fa" }}>
-
             <div style={{
                 position: "fixed",
                 inset: 0,
