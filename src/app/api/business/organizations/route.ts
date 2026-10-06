@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { Employee } from "@/models/Employee";
+import { Customer } from "@/models/Customer";
 import { auth } from "@/lib/auth";
 
 function generateSlug(name: string): string {
@@ -77,4 +78,38 @@ export async function PATCH(req: NextRequest) {
     );
     return NextResponse.json({ organization: org });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await connectDB();
+    const user = await User.findById(session.user.id);
+    if (!user?.organizationId) return NextResponse.json({ error: "No organization" }, { status: 404 });
+
+    const org = await Organization.findById(user.organizationId);
+    if (!org) return NextResponse.json({ error: "No organization" }, { status: 404 });
+    if (String(org.ownerId) !== String(user._id)) {
+      return NextResponse.json({ error: "Only the business owner can delete this business" }, { status: 403 });
+    }
+
+    const { confirmName } = await req.json();
+    if (confirmName !== org.name) {
+      return NextResponse.json({ error: "Business name does not match" }, { status: 400 });
+    }
+
+    await Customer.deleteMany({ organizationId: org._id });
+    await Employee.deleteMany({ organizationId: org._id });
+    await User.updateMany(
+      { organizationId: org._id },
+      { $unset: { organizationId: "", organizationRole: "" } }
+    );
+    await Organization.findByIdAndDelete(org._id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete org error:", error);
+    return NextResponse.json({ error: "Failed to delete business" }, { status: 500 });
+  }
 }

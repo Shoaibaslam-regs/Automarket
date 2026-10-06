@@ -13,10 +13,10 @@ async function makeAdmin() {
   );
 
   if (!user) {
-    console.log(`❌ User not found: ${ADMIN_EMAIL}`);
+    console.log(`User not found: ${ADMIN_EMAIL}`);
     console.log("Make sure you register first, then run this script.");
   } else {
-    console.log(`✅ ${user.email} is now ADMIN`);
+    console.log(`${user.email} is now ADMIN`);
   }
 
   process.exit(0);

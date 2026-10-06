@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Car, KeyRound } from "lucide-react";
 
 type Booking = {
   _id: string;
@@ -106,7 +107,7 @@ export default function BusinessRentalsPage() {
             [1,2,3].map(i => <div key={i} style={{ background: "white", borderRadius: "12px", height: "120px", opacity: 0.4 }} />)
           ) : filtered.length === 0 ? (
             <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "48px", textAlign: "center" }}>
-              <p style={{ fontSize: "32px", marginBottom: "12px" }}>🔑</p>
+              <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><KeyRound size={25} strokeWidth={1.5} /></div>
               <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>No rental bookings yet</p>
               <p style={{ fontSize: "13px", color: "#57606a", marginTop: "4px" }}>Add a rental vehicle to start receiving bookings</p>
             </div>
@@ -124,7 +125,7 @@ export default function BusinessRentalsPage() {
                     {listing?.images?.[0] ? (
                       <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🚗</div>
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Car size={16} strokeWidth={1.5} /></div>
                     )}
                   </div>
 
@@ -134,10 +135,10 @@ export default function BusinessRentalsPage() {
                       {listing?.title || "Vehicle"}
                     </p>
                     <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "6px" }}>
-                      <span style={{ fontSize: "12px", color: "#57606a" }}>📅 {fmt(booking.startDate)} → {fmt(booking.endDate)} ({days}d)</span>
-                      <span style={{ fontSize: "12px", color: "#57606a" }}>👤 {booking.renterId?.name}</span>
+                      <span style={{ fontSize: "12px", color: "#57606a" }}>{fmt(booking.startDate)} → {fmt(booking.endDate)} ({days}d)</span>
+                      <span style={{ fontSize: "12px", color: "#57606a" }}>{booking.renterId?.name}</span>
                       {booking.renterId?.phone && (
-                        <a href={`tel:${booking.renterId.phone}`} style={{ fontSize: "12px", color: "#0d1117", fontWeight: 600, textDecoration: "none" }}>📞 {booking.renterId.phone}</a>
+                        <a href={`tel:${booking.renterId.phone}`} style={{ fontSize: "12px", color: "#0d1117", fontWeight: 600, textDecoration: "none" }}>{booking.renterId.phone}</a>
                       )}
                     </div>
                     <div style={{ display: "flex", gap: "16px" }}>
@@ -166,7 +167,7 @@ export default function BusinessRentalsPage() {
                         <>
                           <button onClick={() => updateStatus(booking._id, "CONFIRMED")} disabled={updating === booking._id}
                             style={{ padding: "6px 12px", background: "#2da44e", color: "white", border: "none", borderRadius: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                            ✓ Confirm
+                            Confirm
                           </button>
                           <button onClick={() => updateStatus(booking._id, "CANCELLED")} disabled={updating === booking._id}
                             style={{ padding: "6px 12px", background: "white", color: "#cf222e", border: "1px solid #ffcdd2", borderRadius: "7px", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
@@ -184,7 +185,7 @@ export default function BusinessRentalsPage() {
                         <a href={`https://wa.me/${booking.renterId.phone.replace(/\D/g, "")}?text=Hi ${booking.renterId.name}, regarding your rental booking`}
                           target="_blank" rel="noreferrer"
                           style={{ padding: "6px 12px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "7px", fontSize: "12px", color: "#0d1117", textDecoration: "none" }}>
-                          💬 WhatsApp
+                          WhatsApp
                         </a>
                       )}
                     </div>

@@ -131,7 +131,7 @@ export default function ProfilePage() {
 
         {success && (
           <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#1a7f37", marginBottom: "16px" }}>
-            ✅ {success}
+            {success}
           </div>
         )}
         {error && (

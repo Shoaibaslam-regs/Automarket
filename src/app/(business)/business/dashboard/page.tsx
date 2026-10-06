@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
+import { BarChart3, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 
 type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
@@ -47,13 +48,13 @@ export default function BusinessDashboard() {
   }, [router]);
 
   const navItems = [
-    { href: "/business/dashboard", label: "Dashboard", icon: "▦" },
-    { href: "/business/inventory", label: "Inventory", icon: "🚗" },
-    { href: "/business/customers", label: "Customers", icon: "👥" },
-    { href: "/business/rentals", label: "Rentals", icon: "🔑" },
-    { href: "/business/staff", label: "Staff", icon: "👤" },
-    { href: "/business/reports", label: "Reports", icon: "📊" },
-    { href: "/business/settings", label: "Settings", icon: "⚙️" },
+    { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/business/inventory", label: "Inventory", icon: Car },
+    { href: "/business/customers", label: "Customers", icon: Users },
+    { href: "/business/rentals", label: "Rentals", icon: KeyRound },
+    { href: "/business/staff", label: "Staff", icon: User },
+    { href: "/business/reports", label: "Reports", icon: BarChart3 },
+    { href: "/business/settings", label: "Settings", icon: Settings },
   ];
 
   const Sidebar = () => (
@@ -161,10 +162,11 @@ export default function BusinessDashboard() {
                 style={{
                   fontSize: "15px",
                   width: "18px",
-                  textAlign: "center",
+                  display: "inline-flex",
+                  justifyContent: "center",
                 }}
               >
-                {item.icon}
+                <item.icon size={16} strokeWidth={1.75} />
               </span>
 
               {item.label}
@@ -411,28 +413,28 @@ export default function BusinessDashboard() {
                 {
                   label: "Total vehicles",
                   value: stats?.inventory.totalVehicles || 0,
-                  icon: "🚗",
+                  icon: Car,
                   sub: `${stats?.inventory.available || 0} available`,
                   color: "#0550ae",
                 },
                 {
                   label: "Active customers",
                   value: stats?.customers.totalCustomers || 0,
-                  icon: "👥",
+                  icon: Users,
                   sub: `${stats?.customers.leads || 0} new leads`,
                   color: "#1a7f37",
                 },
                 {
                   label: "This month sales",
                   value: stats?.monthly.sales || 0,
-                  icon: "💰",
+                  icon: Wallet,
                   sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(1)}M revenue`,
                   color: "#7d4e00",
                 },
                 {
                   label: "Active rentals",
                   value: stats?.rentals.activeRentals || 0,
-                  icon: "🔑",
+                  icon: KeyRound,
                   sub: `${stats?.rentals.totalBookings || 0} total bookings`,
                   color: "#6e40c9",
                 },
@@ -464,8 +466,8 @@ export default function BusinessDashboard() {
                       {s.label}
                     </p>
 
-                    <span style={{ fontSize: "20px" }}>
-                      {s.icon}
+                    <span style={{ display: "inline-flex", color: "#8c959f" }}>
+                      <s.icon size={18} strokeWidth={1.75} />
                     </span>
                   </div>
 
@@ -733,37 +735,37 @@ export default function BusinessDashboard() {
                   {
                     href: "/business/inventory/add",
                     label: "Add vehicle",
-                    icon: "🚗",
+                    icon: Car,
                     desc: "List a new vehicle",
                   },
                   {
                     href: "/business/customers/add",
                     label: "Add customer",
-                    icon: "👤",
+                    icon: User,
                     desc: "Log a new inquiry",
                   },
                   {
                     href: "/business/inventory",
                     label: "View inventory",
-                    icon: "📋",
+                    icon: ClipboardList,
                     desc: "Manage all vehicles",
                   },
                   {
                     href: "/business/reports",
                     label: "View reports",
-                    icon: "📊",
+                    icon: BarChart3,
                     desc: "Sales & rental stats",
                   },
                   {
                     href: "/sell",
                     label: "Public listing",
-                    icon: "🌐",
+                    icon: Globe,
                     desc: "Post to marketplace",
                   },
                   {
                     href: "/business/staff",
                     label: "Manage staff",
-                    icon: "👥",
+                    icon: Users,
                     desc: "Add team members",
                   },
                 ].map(action => (
@@ -782,8 +784,8 @@ export default function BusinessDashboard() {
                       transition: "all 0.12s",
                     }}
                   >
-                    <span style={{ fontSize: "22px" }}>
-                      {action.icon}
+                    <span style={{ display: "inline-flex", color: "#0d1117" }}>
+                      <action.icon size={20} strokeWidth={1.75} />
                     </span>
 
                     <p

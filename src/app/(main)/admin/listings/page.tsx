@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 
 type Listing = {
   _id: string;
@@ -139,11 +140,11 @@ export default function AdminListingsPage() {
                   onClick={() => updateListing(listing._id, { featured: !listing.featured })}
                   disabled={updating === listing._id}
                   style={{ padding: "5px 10px", background: listing.featured ? "#fff8c5" : "#f6f8fa", border: `1px solid ${listing.featured ? "#e3b341" : "#d0d7de"}`, borderRadius: "6px", fontSize: "11px", color: listing.featured ? "#7d4e00" : "#57606a", cursor: "pointer" }}>
-                  {listing.featured ? "★ Featured" : "☆ Feature"}
+                  {listing.featured ? "Featured" : "Feature"}
                 </button>
                 <button onClick={() => deleteListing(listing._id)} disabled={updating === listing._id}
                   style={{ padding: "5px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer" }}>
-                  🗑
+                  <Trash2 size={12} strokeWidth={1.75} />
                 </button>
               </div>
             </div>

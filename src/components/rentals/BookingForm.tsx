@@ -112,7 +112,7 @@ export default function BookingForm({ rentalId, listingId, dailyRate, deposit, a
         )}
 
         <div style={{ background: "#fff8c5", border: "1px solid #e3b341", borderRadius: "8px", padding: "12px 14px", fontSize: "12px", color: "#7d4e00", marginBottom: "20px", lineHeight: 1.5 }}>
-          ⚠️ Your booking request will be sent to the owner for confirmation. Payment is made in person upon pickup.
+          Your booking request will be sent to the owner for confirmation. Payment is made in person upon pickup.
         </div>
 
         <button

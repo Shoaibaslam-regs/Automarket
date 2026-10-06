@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Users } from "lucide-react";
 
 type Customer = {
   _id: string;
@@ -174,7 +175,7 @@ export default function CustomersPage() {
             <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>Loading...</div>
           ) : filtered.length === 0 ? (
             <div style={{ padding: "48px", textAlign: "center" }}>
-              <p style={{ fontSize: "32px", marginBottom: "12px" }}>👥</p>
+              <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Users size={25} strokeWidth={1.5} /></div>
               <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>No customers yet</p>
               <button onClick={() => setShowAdd(true)} style={{ fontSize: "13px", color: "#0d1117", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>
                 Add your first customer
@@ -190,8 +191,8 @@ export default function CustomersPage() {
                 <div style={{ flex: 1, minWidth: "150px" }}>
                   <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "2px" }}>{c.name}</p>
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                    <a href={`tel:${c.phone}`} style={{ fontSize: "11px", color: "#57606a", textDecoration: "none" }}>📞 {c.phone}</a>
-                    {c.email && <span style={{ fontSize: "11px", color: "#57606a" }}>✉️ {c.email}</span>}
+                    <a href={`tel:${c.phone}`} style={{ fontSize: "11px", color: "#57606a", textDecoration: "none" }}>{c.phone}</a>
+                    {c.email && <span style={{ fontSize: "11px", color: "#57606a" }}>{c.email}</span>}
                     <span style={{ fontSize: "11px", color: "#8c959f" }}>{c.source.replace("_", " ")}</span>
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { Listing } from "@/models/Listing";
 import { IListing } from "@/models/Listing";
 import Link from "next/link";
 import Footer from "@/components/Footer"; 
+import { Search } from "lucide-react";
 
 type ListingWithId = IListing & { _id: string };
 
@@ -275,7 +276,7 @@ export default async function HomePage() {
                         </section>
 
                         <section style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "20px", textAlign: "center" }}>
-                            <div style={{ width: "40px", height: "40px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: "20px" }}>🔍</div>
+                            <div style={{ width: "40px", height: "40px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#8c959f" }}><Search size={16} strokeWidth={1.5} /></div>
                             <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>AI vehicle inspection</p>
                             <p style={{ fontSize: "12px", color: "#57606a", marginBottom: "16px", lineHeight: 1.5 }}>Upload photos — get instant damage reports & value estimates</p>
                             <Link href="/sell" style={{ display: "block", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", color: "#0d1117", borderRadius: "8px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>

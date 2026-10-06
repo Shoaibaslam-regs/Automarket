@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { getPusherClient } from "@/lib/pusher-client";
 import Image from "next/image";
+import { Hand, MessageSquare } from "lucide-react";
 
 type User = {
   _id: string;
@@ -240,7 +241,7 @@ export default function MessagesContent() {
               </div>
             ) : conversations.length === 0 ? (
               <div style={{ padding: "48px 20px", textAlign: "center" }}>
-                <div style={{ fontSize: "40px", marginBottom: "12px" }}>💬</div>
+                <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><MessageSquare size={32} strokeWidth={1.5} /></div>
                 <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "4px" }}>No messages yet</p>
                 <p style={{ fontSize: "12px", color: "#8c959f" }}>Start by messaging a seller from any listing</p>
               </div>
@@ -278,7 +279,7 @@ export default function MessagesContent() {
         <div className={`chat-area ${showChat ? "slide-in" : ""}`}>
           {!activeUser ? (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "12px", height: "100%" }}>
-              <div style={{ fontSize: "56px" }}>💬</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><MessageSquare size={40} strokeWidth={1.5} /></div>
               <p style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117" }}>Select a conversation</p>
               <p style={{ fontSize: "13px", color: "#57606a" }}>Choose from the left to start chatting</p>
             </div>
@@ -305,7 +306,7 @@ export default function MessagesContent() {
                   <div style={{ textAlign: "center", color: "#8c959f", fontSize: "13px", marginTop: "40px" }}>Loading messages...</div>
                 ) : messages.length === 0 ? (
                   <div style={{ textAlign: "center", color: "#8c959f", fontSize: "13px", marginTop: "60px" }}>
-                    <div style={{ fontSize: "32px", marginBottom: "8px" }}>👋</div>
+                    <div style={{ marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Hand size={25} strokeWidth={1.5} /></div>
                     Say hello to {activeUser.name}!
                   </div>
                 ) : messages.map((msg, i) => {

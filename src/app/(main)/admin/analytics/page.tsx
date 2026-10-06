@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import { Calendar, Car, MessageSquare, Users } from "lucide-react";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -196,25 +197,25 @@ export default function AnalyticsPage() {
               {
                 label: "New users (30d)",
                 value: summary.newUsersThisMonth ?? 0,
-                icon: "👥",
+                icon: Users,
                 color: COLORS.users,
               },
               {
                 label: "New listings (30d)",
                 value: summary.newListingsThisMonth ?? 0,
-                icon: "🚗",
+                icon: Car,
                 color: COLORS.listings,
               },
               {
                 label: "New bookings (30d)",
                 value: summary.newBookingsThisMonth ?? 0,
-                icon: "📅",
+                icon: Calendar,
                 color: COLORS.bookings,
               },
               {
                 label: "Total messages",
                 value: summary.totalMessages ?? 0,
-                icon: "💬",
+                icon: MessageSquare,
                 color: COLORS.messages,
               },
             ].map((card) => (
@@ -242,7 +243,7 @@ export default function AnalyticsPage() {
                     fontSize: "20px",
                   }}
                 >
-                  {card.icon}
+                  <card.icon size={18} strokeWidth={1.75} />
                 </div>
 
                 <div>

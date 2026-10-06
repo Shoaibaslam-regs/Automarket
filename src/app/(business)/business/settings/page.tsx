@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import * as Dialog from "@radix-ui/react-dialog";
 
 type Organization = {
   _id: string;
@@ -14,13 +16,105 @@ type Organization = {
   address?: string;
   description?: string;
   slug: string;
+  ownerId: string;
   isActive: boolean;
 };
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 const PLAN_COLORS: Record<string, string> = { FREE: "#57606a", PRO: "#0550ae", BUSINESS: "#1a7f37" };
 
+function DeleteBusinessDialog({ orgName, open, onOpenChange }: {
+  orgName: string; open: boolean; onOpenChange: (open: boolean) => void;
+}) {
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const matches = confirmText === orgName;
+
+  function handleOpenChange(o: boolean) {
+    if (deleting) return;
+    if (!o) { setConfirmText(""); setError(""); }
+    onOpenChange(o);
+  }
+
+  async function handleDelete(e: React.FormEvent) {
+    e.preventDefault();
+    if (!matches) return;
+    setDeleting(true);
+    setError("");
+    const res = await fetch("/api/business/organizations", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmName: confirmText }),
+    });
+    if (res.ok) {
+      // Full reload so the sidebar and session-dependent UI drop the deleted business
+      window.location.href = "/";
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    setError(data.error || "Failed to delete business");
+    setDeleting(false);
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
+        <Dialog.Content
+          style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "460px", background: "white", borderRadius: "12px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e1e4e8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Dialog.Title style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0d1117" }}>
+              Delete {orgName}
+            </Dialog.Title>
+            <Dialog.Close asChild>
+              <button aria-label="Close" disabled={deleting} style={{ background: "none", border: "none", cursor: "pointer", color: "#8c959f", fontSize: "20px", lineHeight: 1 }}>×</button>
+            </Dialog.Close>
+          </div>
+
+          <div style={{ padding: "14px 20px", background: "#fff8c5", borderBottom: "1px solid #f0d97a", fontSize: "13px", color: "#7d4e00" }}>
+            Unexpected bad things will happen if you don&apos;t read this!
+          </div>
+
+          <form onSubmit={handleDelete} style={{ padding: "20px" }}>
+            <Dialog.Description asChild>
+              <div style={{ fontSize: "13px", color: "#0d1117", lineHeight: 1.6 }}>
+                <p style={{ margin: "0 0 10px" }}>
+                  This will permanently delete the <strong>{orgName}</strong> business, including:
+                </p>
+                <ul style={{ margin: "0 0 14px", paddingLeft: "20px", color: "#57606a" }}>
+                  <li>All customer records</li>
+                  <li>All staff memberships (staff will lose access)</li>
+                  <li>Business settings and public profile</li>
+                </ul>
+                <p style={{ margin: "0 0 14px", color: "#57606a" }}>
+                  Your personal account, listings and rentals are not affected. <strong style={{ color: "#cf222e" }}>This action cannot be undone.</strong>
+                </p>
+              </div>
+            </Dialog.Description>
+
+            <label style={{ display: "block", fontSize: "13px", color: "#0d1117", marginBottom: "6px" }}>
+              To confirm, type <strong>{orgName}</strong> in the box below
+            </label>
+            <input value={confirmText} onChange={e => setConfirmText(e.target.value)} autoFocus autoComplete="off" spellCheck={false} disabled={deleting}
+              style={{ width: "100%", padding: "9px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", boxSizing: "border-box", marginBottom: "14px" }} />
+
+            {error && <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "8px 12px", fontSize: "13px", color: "#cf222e", marginBottom: "14px" }}>{error}</div>}
+
+            <button type="submit" disabled={!matches || deleting}
+              style={{ width: "100%", padding: "10px", background: matches ? "#cf222e" : "#f6f8fa", color: matches ? "white" : "#8c959f", border: matches ? "none" : "1px solid #e1e4e8", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: matches && !deleting ? "pointer" : "not-allowed", opacity: deleting ? 0.7 : 1, fontFamily: "inherit" }}>
+              {deleting ? "Deleting..." : "Delete this business"}
+            </button>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 export default function BusinessSettingsPage() {
+  const { data: session } = useSession();
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,6 +160,8 @@ export default function BusinessSettingsPage() {
     }
   }
 
+  const isOwner = !!org && !!session?.user?.id && String(org.ownerId) === session.user.id;
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "#57606a" }}>Loading...</p>
@@ -104,7 +200,7 @@ export default function BusinessSettingsPage() {
         <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "24px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", marginBottom: "20px" }}>Business information</h2>
 
-          {success && <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#1a7f37", marginBottom: "16px" }}>✅ {success}</div>}
+          {success && <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#1a7f37", marginBottom: "16px" }}>{success}</div>}
           {error && <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "16px" }}>{error}</div>}
 
           <form onSubmit={saveSettings} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -164,10 +260,14 @@ export default function BusinessSettingsPage() {
         <div style={{ background: "white", border: "1px solid #ffcdd2", borderRadius: "12px", padding: "20px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#cf222e", marginBottom: "8px" }}>Danger zone</h2>
           <p style={{ fontSize: "13px", color: "#57606a", marginBottom: "14px" }}>These actions are irreversible. Please be careful.</p>
-          <button style={{ padding: "9px 18px", background: "white", color: "#cf222e", border: "1px solid #ffcdd2", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => setDeleteOpen(true)} disabled={!isOwner}
+            title={isOwner ? undefined : "Only the business owner can delete this business"}
+            style={{ padding: "9px 18px", background: "white", color: "#cf222e", border: "1px solid #ffcdd2", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: isOwner ? "pointer" : "not-allowed", opacity: isOwner ? 1 : 0.5, fontFamily: "inherit" }}>
             Delete business account
           </button>
+          {!isOwner && <p style={{ fontSize: "11px", color: "#8c959f", marginTop: "6px" }}>Only the business owner can delete this business.</p>}
         </div>
+        {org && <DeleteBusinessDialog orgName={org.name} open={deleteOpen} onOpenChange={setDeleteOpen} />}
       </div>
     </div>
   );

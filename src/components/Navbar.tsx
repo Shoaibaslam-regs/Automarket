@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
 import MessageBadge from "@/components/MessageBadge";
 import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
+import SignOutDialog from "@/components/SignOutDialog";
+import { Calendar, Car, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -191,13 +194,13 @@ export default function Navbar() {
                     <ModeToggle/>
 
                     {[
-                      { href: "/dashboard", icon: "▦", label: "Dashboard" },
-                      { href: "/bookings", icon: "📅", label: "Bookings" },
-                      { href: "/messages", icon: "💬", label: "Messages" },
-                      { href: "/profile", icon: "⚙️", label: "Profile & settings" },
+                      { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+                      { href: "/bookings", icon: Calendar, label: "Bookings" },
+                      { href: "/messages", icon: MessageSquare, label: "Messages" },
+                      { href: "/profile", icon: Settings, label: "Profile & settings" },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="dropdown-item">
-                        <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>{item.icon}</span>
+                        <span style={{ fontSize: "15px", width: "20px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={16} strokeWidth={1.75} /></span>
                         {item.label}
                       </Link>
                     ))}
@@ -206,16 +209,16 @@ export default function Navbar() {
                       <>
                         <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
                         <Link href="/admin" onClick={() => setMenuOpen(false)} className="dropdown-item" style={{ color: "#d97706" }}>
-                          <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>⚡</span>
+                          <span style={{ width: "20px", display: "inline-flex", justifyContent: "center" }}><ShieldCheck size={16} strokeWidth={1.75} /></span>
                           Admin panel
                         </Link>
                       </>
                     )}
 
                     <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
-                    <button onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                    <button onClick={() => { setMenuOpen(false); setConfirmSignOut(true); }}
                       className="dropdown-item" style={{ color: "#dc2626" }}>
-                      <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>↩</span>
+                      <span style={{ width: "20px", display: "inline-flex", justifyContent: "center" }}><LogOut size={16} strokeWidth={1.75} /></span>
                       Sign out
                     </button>
                   </div>
@@ -288,12 +291,12 @@ export default function Navbar() {
                 <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Browse</p>
 
                 {[
-                  { href: "/listings", label: "Browse vehicles", icon: "🔍" },
-                  { href: "/listings?type=RENT", label: "Rentals", icon: "🔑" },
+                  { href: "/listings", label: "Browse vehicles", icon: Search },
+                  { href: "/listings?type=RENT", label: "Rentals", icon: KeyRound },
                 ].map(item => (
                   <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                     style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
-                    <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
+                    <span style={{ fontSize: "18px", width: "24px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={18} strokeWidth={1.75} /></span>
                     {item.label}
                   </Link>
                   
@@ -305,15 +308,15 @@ export default function Navbar() {
                     <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>My account</p>
                     
                     {[
-                      { href: "/sell", label: "Sell a vehicle", icon: "🚗" },
-                      { href: "/dashboard", label: "Dashboard", icon: "▦" },
-                      { href: "/bookings", label: "My bookings", icon: "📅" },
-                      { href: "/messages", label: "Messages", icon: "💬" },
-                      { href: "/profile", label: "Profile & settings", icon: "⚙️" },
+                      { href: "/sell", label: "Sell a vehicle", icon: Car },
+                      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+                      { href: "/bookings", label: "My bookings", icon: Calendar },
+                      { href: "/messages", label: "Messages", icon: MessageSquare },
+                      { href: "/profile", label: "Profile & settings", icon: Settings },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                         style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
-                        <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>{item.icon}</span>
+                        <span style={{ fontSize: "18px", width: "24px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={18} strokeWidth={1.75} /></span>
                         {item.label} 
                       </Link>
                     ))}
@@ -332,16 +335,16 @@ export default function Navbar() {
                         <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
                         <Link href="/admin" onClick={() => setMobileOpen(false)}
                           style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 600, color: "#d97706", textDecoration: "none", borderRadius: "8px" }}>
-                          <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>⚡</span>
+                          <span style={{ width: "24px", display: "inline-flex", justifyContent: "center" }}><ShieldCheck size={18} strokeWidth={1.75} /></span>
                           Admin panel
                         </Link>
                       </>
                     )}
 
                     <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-                    <button onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
+                    <button onClick={() => { setMobileOpen(false); setConfirmSignOut(true); }}
                       style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#dc2626", background: "none", border: "none", cursor: "pointer", width: "100%", fontFamily: "inherit", borderRadius: "8px" }}>
-                      <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>↩</span>
+                      <span style={{ width: "24px", display: "inline-flex", justifyContent: "center" }}><LogOut size={18} strokeWidth={1.75} /></span>
                       Sign out
                     </button>
                   </>
@@ -367,6 +370,7 @@ export default function Navbar() {
           </>
         )}
       </nav>
+      <SignOutDialog open={confirmSignOut} onOpenChange={setConfirmSignOut} />
     </>
   );
 }

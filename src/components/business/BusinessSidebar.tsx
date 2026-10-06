@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import ModeToggle from "@/components/ModeToggle";
+import SignOutDialog from "@/components/SignOutDialog";
+import { BarChart3, Car, House, KeyRound, LayoutDashboard, LogOut, Settings, User, Users } from "lucide-react";
 
 type Organization = {
   name: string;
@@ -15,13 +17,13 @@ type Organization = {
 };
 
 const NAV_ITEMS = [
-  { href: "/business/dashboard",  label: "Dashboard",  icon: "▦" },
-  { href: "/business/inventory",  label: "Inventory",  icon: "🚗" },
-  { href: "/business/customers",  label: "Customers",  icon: "👥" },
-  { href: "/business/rentals",    label: "Rentals",    icon: "🔑" },
-  { href: "/business/staff",      label: "Staff",      icon: "👤" },
-  { href: "/business/reports",    label: "Reports",    icon: "📊" },
-  { href: "/business/settings",   label: "Settings",   icon: "⚙️" },
+  { href: "/business/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/business/inventory",  label: "Inventory",  icon: Car },
+  { href: "/business/customers",  label: "Customers",  icon: Users },
+  { href: "/business/rentals",    label: "Rentals",    icon: KeyRound },
+  { href: "/business/staff",      label: "Staff",      icon: User },
+  { href: "/business/reports",    label: "Reports",    icon: BarChart3 },
+  { href: "/business/settings",   label: "Settings",   icon: Settings },
 ];
 
 const PLAN_COLORS: Record<string, string> = {
@@ -35,6 +37,7 @@ export default function BusinessSidebar() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -101,24 +104,24 @@ export default function BusinessSidebar() {
               </div>
 
               {[
-                { label: "Business settings", href: "/business/settings", icon: "⚙️" },
-                { label: "Public profile", href: "/dashboard", icon: "👤" },
-                { label: "Marketplace", href: "/", icon: "🏠" },
+                { label: "Business settings", href: "/business/settings", icon: Settings },
+                { label: "Public profile", href: "/dashboard", icon: User },
+                { label: "Marketplace", href: "/", icon: House },
               ].map(item => (
                 <Link key={item.href} href={item.href}
                   style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "7px", textDecoration: "none", color: "#57606a", fontSize: "12px", transition: "background 0.1s" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#f6f8fa")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <span>{item.icon}</span>{item.label}
+                  <item.icon size={14} strokeWidth={1.75} />{item.label}
                 </Link>
               ))}
 
               <div style={{ height: "1px", background: "#f0f0f0", margin: "4px 0" }} />
-              <button onClick={() => signOut({ callbackUrl: "/" })}
+              <button onClick={() => { setDropdownOpen(false); setMobileOpen(false); setConfirmSignOut(true); }}
                 style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "7px", background: "none", border: "none", cursor: "pointer", color: "#cf222e", fontSize: "12px", fontFamily: "inherit" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#fff0f0")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                ↩ Sign out
+                <LogOut size={14} strokeWidth={1.75} /> Sign out
               </button>
             </div>
           )}
@@ -134,7 +137,7 @@ export default function BusinessSidebar() {
               style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", background: isActive ? "rgba(255,255,255,0.1)" : "transparent", color: isActive ? "white" : "rgba(255,255,255,0.5)", fontSize: "13px", fontWeight: isActive ? 600 : 400, transition: "all 0.12s" }}
               onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.06)"; }}
               onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}>
-              <span style={{ fontSize: "15px", width: "20px", textAlign: "center", flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ width: "20px", display: "inline-flex", justifyContent: "center", flexShrink: 0 }}><item.icon size={16} strokeWidth={1.75} /></span>
               {item.label}
               {isActive && <div style={{ marginLeft: "auto", width: "5px", height: "5px", borderRadius: "50%", background: "white" }} />}
             </Link>
@@ -203,6 +206,7 @@ export default function BusinessSidebar() {
           .biz-mobile-topbar { display: flex !important; }
         }
       `}</style>
+      <SignOutDialog open={confirmSignOut} onOpenChange={setConfirmSignOut} />
     </>
   );
 }

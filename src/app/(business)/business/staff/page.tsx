@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Users } from "lucide-react";
 
 type StaffMember = {
   _id: string;
@@ -25,7 +26,7 @@ export default function StaffPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("STAFF");
   const [inviting, setInviting] = useState(false);
-  const [inviteResult, setInviteResult] = useState("");
+  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => { fetchStaff(); }, []);
 
@@ -47,12 +48,12 @@ export default function StaffPage() {
     const data = await res.json();
     setInviting(false);
     if (res.ok) {
-      setInviteResult("✅ Staff member added successfully!");
+      setInviteResult({ ok: true, message: "Staff member added successfully!" });
       setInviteEmail("");
       fetchStaff();
-      setTimeout(() => { setInviteResult(""); setShowInvite(false); }, 2000);
+      setTimeout(() => { setInviteResult(null); setShowInvite(false); }, 2000);
     } else {
-      setInviteResult(`❌ ${data.error}`);
+      setInviteResult({ ok: false, message: data.error });
     }
   }
 
@@ -100,8 +101,8 @@ export default function StaffPage() {
                 </select>
               </div>
               {inviteResult && (
-                <div style={{ padding: "10px 14px", background: inviteResult.startsWith("✅") ? "#dafbe1" : "#fff0f0", borderRadius: "8px", fontSize: "13px", color: inviteResult.startsWith("✅") ? "#1a7f37" : "#cf222e" }}>
-                  {inviteResult}
+                <div style={{ padding: "10px 14px", background: inviteResult.ok ? "#dafbe1" : "#fff0f0", borderRadius: "8px", fontSize: "13px", color: inviteResult.ok ? "#1a7f37" : "#cf222e" }}>
+                  {inviteResult.message}
                 </div>
               )}
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
@@ -160,7 +161,7 @@ export default function StaffPage() {
             <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>Loading...</div>
           ) : staff.length === 0 ? (
             <div style={{ padding: "48px", textAlign: "center" }}>
-              <p style={{ fontSize: "32px", marginBottom: "12px" }}>👥</p>
+              <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Users size={25} strokeWidth={1.5} /></div>
               <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>No staff yet</p>
               <p style={{ fontSize: "13px", color: "#57606a" }}>Add team members to help manage your business</p>
             </div>

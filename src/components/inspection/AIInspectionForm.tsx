@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
+import { Bot, Wallet } from "lucide-react";
 
 interface Report {
   make?: string;
@@ -67,7 +68,7 @@ function ReportCard({ report }: { report: Report }) {
           )}
         </div>
         <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "16px" }}>🤖</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.85)" }}><Bot size={14} strokeWidth={1.75} /></div>
           <span style={{ fontSize: "12px", color: "white", fontWeight: 500 }}>
             {report._isDemo ? "Demo Report" : "AI Powered"}
           </span>
@@ -77,7 +78,7 @@ function ReportCard({ report }: { report: Report }) {
       {/* Demo warning */}
       {report._isDemo && (
         <div style={{ background: "#fff8c5", padding: "10px 20px", fontSize: "12px", color: "#7d4e00", borderBottom: "1px solid #e3b341", display: "flex", alignItems: "center", gap: "6px" }}>
-          ⚠️ Demo report — AI quota exceeded. Report is based on listing data.
+          Demo report — AI quota exceeded. Report is based on listing data.
         </div>
       )}
 
@@ -118,7 +119,7 @@ function ReportCard({ report }: { report: Report }) {
               <p style={{ fontSize: "12px", color: "#1a7f37", marginBottom: "2px" }}>Estimated market value</p>
               <p style={{ fontSize: "22px", fontWeight: 800, color: "#1a7f37" }}>PKR {report.estimate.toLocaleString()}</p>
             </div>
-            <span style={{ fontSize: "28px" }}>💰</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#1a7f37" }}><Wallet size={22} strokeWidth={1.75} /></div>
           </div>
         )}
 
@@ -134,7 +135,7 @@ function ReportCard({ report }: { report: Report }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           {report.damages && report.damages.length > 0 && (
             <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "14px" }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#cf222e", marginBottom: "10px" }}>⚠️ Issues found</p>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "#cf222e", marginBottom: "10px" }}>Issues found</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {report.damages.map((d, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
@@ -147,7 +148,7 @@ function ReportCard({ report }: { report: Report }) {
           )}
           {report.positives && report.positives.length > 0 && (
             <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "14px" }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#1a7f37", marginBottom: "10px" }}>✅ Good points</p>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "#1a7f37", marginBottom: "10px" }}>Good points</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {report.positives.map((p, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
@@ -240,7 +241,7 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
 
       {/* Tips */}
       <div style={{ background: "#fff8c5", border: "1px solid #e3b341", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
-        <p style={{ fontSize: "12px", color: "#7d4e00", fontWeight: 600, marginBottom: "6px" }}>💡 Tips for best results</p>
+        <p style={{ fontSize: "12px", color: "#7d4e00", fontWeight: 600, marginBottom: "6px" }}>Tips for best results</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
           {[
             "Take photos in good lighting",
@@ -276,7 +277,7 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
             Analyzing vehicle... this may take 15-30 seconds
           </>
         ) : (
-          <>🔍 {report ? "Re-run inspection" : "Run AI inspection"}</>
+          <>{report ? "Re-run inspection" : "Run AI inspection"}</>
         )}
       </button>
 

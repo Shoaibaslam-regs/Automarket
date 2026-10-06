@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { Building2, Car, KeyRound, Rocket } from "lucide-react";
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 
@@ -127,13 +128,13 @@ export default function OnboardingPage() {
             <p style={{ fontSize: "14px", color: "#57606a", marginBottom: "28px" }}>We'll customize your dashboard based on your business type.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
-                { id: "DEALER", icon: "🚗", title: "Car Dealer", desc: "Buy and sell cars, manage inventory, track sales and customers" },
-                { id: "RENTAL", icon: "🔑", title: "Rental Company", desc: "Manage a fleet of vehicles available for daily, weekly or monthly rent" },
-                { id: "BOTH", icon: "🏢", title: "Dealer + Rental", desc: "Full automobile business — sell and rent vehicles from one platform" },
+                { id: "DEALER", icon: Car, title: "Car Dealer", desc: "Buy and sell cars, manage inventory, track sales and customers" },
+                { id: "RENTAL", icon: KeyRound, title: "Rental Company", desc: "Manage a fleet of vehicles available for daily, weekly or monthly rent" },
+                { id: "BOTH", icon: Building2, title: "Dealer + Rental", desc: "Full automobile business — sell and rent vehicles from one platform" },
               ].map(opt => (
                 <div key={opt.id} onClick={() => setForm(p => ({ ...p, type: opt.id as "DEALER" | "RENTAL" | "BOTH" }))}
                   style={{ padding: "20px", background: "white", border: `2px solid ${form.type === opt.id ? "#0d1117" : "#e1e4e8"}`, borderRadius: "12px", cursor: "pointer", display: "flex", alignItems: "flex-start", gap: "14px", transition: "all 0.15s" }}>
-                  <span style={{ fontSize: "28px" }}>{opt.icon}</span>
+                  <span style={{ width: "44px", height: "44px", flexShrink: 0, borderRadius: "10px", background: "#f6f8fa", border: "1px solid #e1e4e8", display: "flex", alignItems: "center", justifyContent: "center", color: "#0d1117" }}><opt.icon size={22} strokeWidth={1.75} /></span>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: "15px", fontWeight: 700, color: "#0d1117", marginBottom: "4px" }}>{opt.title}</p>
                     <p style={{ fontSize: "13px", color: "#57606a" }}>{opt.desc}</p>
@@ -235,7 +236,7 @@ export default function OnboardingPage() {
         {/* Step 4 — Launch */}
         {step === 4 && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <div style={{ fontSize: "64px", marginBottom: "20px" }}>🚀</div>
+            <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Rocket size={40} strokeWidth={1.5} /></div>
             <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#0d1117", marginBottom: "12px" }}>Ready to launch!</h1>
             <p style={{ fontSize: "15px", color: "#57606a", marginBottom: "8px" }}>
               You&apos;re setting up <strong style={{ color: "#0d1117" }}>{form.name}</strong>
@@ -286,7 +287,7 @@ export default function OnboardingPage() {
           ) : (
             <button onClick={handleSubmit} disabled={loading}
               style={{ padding: "11px 28px", background: loading ? "#8c959f" : "#1a7f37", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px" }}>
-              {loading ? "Creating..." : "🚀 Launch my business"}
+              {loading ? "Creating..." : "Launch my business"}
             </button>
           )}
         </div>

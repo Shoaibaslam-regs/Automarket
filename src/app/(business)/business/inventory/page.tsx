@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Car, LayoutGrid, List, Trash2 } from "lucide-react";
 
 type Vehicle = {
   _id: string;
@@ -90,7 +91,7 @@ export default function InventoryPage() {
             {(["grid", "list"] as const).map(v => (
               <button key={v} onClick={() => setView(v)}
                 style={{ padding: "9px 12px", background: view === v ? "#0d1117" : "white", color: view === v ? "white" : "#57606a", border: "none", cursor: "pointer", fontSize: "13px", fontFamily: "inherit" }}>
-                {v === "grid" ? "⊞" : "☰"}
+                {v === "grid" ? <LayoutGrid size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
               </button>
             ))}
           </div>
@@ -116,7 +117,7 @@ export default function InventoryPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "60px", textAlign: "center" }}>
-            <p style={{ fontSize: "40px", marginBottom: "12px" }}>🚗</p>
+            <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Car size={32} strokeWidth={1.5} /></div>
             <p style={{ fontSize: "15px", fontWeight: 600, color: "#0d1117", marginBottom: "8px" }}>No vehicles found</p>
             <Link href="/sell" style={{ fontSize: "13px", color: "#0d1117", fontWeight: 600 }}>Add your first vehicle →</Link>
           </div>
@@ -130,7 +131,7 @@ export default function InventoryPage() {
                     {v.images?.[0] ? (
                       <img src={v.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: "32px" }}>🚗</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#8c959f" }}><Car size={25} strokeWidth={1.5} /></div>
                     )}
                     <span style={{ position: "absolute", top: "8px", left: "8px", fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: statusStyle.bg, color: statusStyle.color }}>
                       {v.status}
@@ -150,7 +151,7 @@ export default function InventoryPage() {
                       </Link>
                       <button onClick={() => deleteVehicle(v._id)} disabled={deleting === v._id}
                         style={{ padding: "6px 10px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "7px", fontSize: "11px", color: "#cf222e", cursor: "pointer", fontFamily: "inherit" }}>
-                        🗑
+                        <Trash2 size={13} strokeWidth={1.75} />
                       </button>
                     </div>
                   </div>
@@ -165,7 +166,7 @@ export default function InventoryPage() {
               return (
                 <div key={v._id} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 20px", borderBottom: i < filtered.length - 1 ? "1px solid #f6f8fa" : "none" }}>
                   <div style={{ width: "60px", height: "44px", borderRadius: "6px", background: "#f6f8fa", overflow: "hidden", flexShrink: 0 }}>
-                    {v.images?.[0] ? <img src={v.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🚗</div>}
+                    {v.images?.[0] ? <img src={v.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Car size={14} strokeWidth={1.5} /></div>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.title}</p>
@@ -176,7 +177,7 @@ export default function InventoryPage() {
                   <div style={{ display: "flex", gap: "6px" }}>
                     <Link href={`/listings/${v._id}`} style={{ padding: "5px 10px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "6px", fontSize: "11px", color: "#0d1117", textDecoration: "none", fontWeight: 600 }}>View</Link>
                     <button onClick={() => deleteVehicle(v._id)} disabled={deleting === v._id}
-                      style={{ padding: "5px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer", fontFamily: "inherit" }}>🗑</button>
+                      style={{ padding: "5px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer", fontFamily: "inherit", display: "inline-flex" }}><Trash2 size={12} strokeWidth={1.75} /></button>
                   </div>
                 </div>
               );

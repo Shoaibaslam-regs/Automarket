@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 
 type User = {
   _id: string;
@@ -103,7 +104,7 @@ async function fetchUsers() {
                 )}
                 <button onClick={() => deleteUser(user._id)} disabled={updating === user._id}
                   style={{ padding: "4px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer" }}>
-                  🗑
+                  <Trash2 size={12} strokeWidth={1.75} />
                 </button>
               </div>
             </div>

@@ -169,7 +169,7 @@ export async function sendBookingConfirmedEmail({
 
             ${isConfirmed ? `
             <div style="background: #dafbe1; border: 1px solid #56d364; border-radius: 10px; padding: 18px; margin-bottom: 20px;">
-              <p style="font-size: 13px; color: #1a7f37; font-weight: 600; margin-bottom: 8px;">✅ Your booking is confirmed</p>
+              <p style="font-size: 13px; color: #1a7f37; font-weight: 600; margin-bottom: 8px;">Your booking is confirmed</p>
               <p style="font-size: 13px; color: #1a7f37; margin-bottom: 4px;">
                 Pick-up: <strong>${new Date(startDate).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}</strong>
               </p>

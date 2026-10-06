@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Calendar, Car, CircleCheck, Flag, Users, Wallet } from "lucide-react";
 
 type Stats = {
   totalUsers: number;
@@ -80,10 +81,10 @@ export default function AdminPage() {
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             {[
-              { href: "/admin/users", label: "👥 Users" },
-              { href: "/admin/listings", label: "🚗 Listings" },
-              { href: "/admin/bookings", label: "📅 Bookings" },
-              { href: "/admin/analytics", label: "📊 Analytics" },
+              { href: "/admin/users", label: "Users" },
+              { href: "/admin/listings", label: "Listings" },
+              { href: "/admin/bookings", label: "Bookings" },
+              { href: "/admin/analytics", label: "Analytics" },
             ].map(btn => (
               <Link key={btn.href} href={btn.href}
                 style={{ padding: "8px 14px", background: "white", border: "1px solid #e1e4e8", borderRadius: "8px", fontSize: "13px", color: "#0d1117", textDecoration: "none", fontWeight: 500 }}>
@@ -112,16 +113,16 @@ export default function AdminPage() {
             {/* Stats grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "14px", marginBottom: "24px" }}>
               {stats && [
-                { label: "Total users", value: stats.totalUsers, icon: "👥", color: "#0550ae" },
-                { label: "Total listings", value: stats.totalListings, icon: "🚗", color: "#1a7f37" },
-                { label: "Active listings", value: stats.activeListings, icon: "✅", color: "#7d4e00" },
-                { label: "Total bookings", value: stats.totalBookings, icon: "📅", color: "#6e40c9" },
-                { label: "Completed", value: stats.completedBookings, icon: "🏁", color: "#57606a" },
-                { label: "Platform fee", value: `PKR ${(stats.platformFee / 1000).toFixed(0)}K`, icon: "💰", color: "#1a7f37" },
+                { label: "Total users", value: stats.totalUsers, icon: Users, color: "#0550ae" },
+                { label: "Total listings", value: stats.totalListings, icon: Car, color: "#1a7f37" },
+                { label: "Active listings", value: stats.activeListings, icon: CircleCheck, color: "#7d4e00" },
+                { label: "Total bookings", value: stats.totalBookings, icon: Calendar, color: "#6e40c9" },
+                { label: "Completed", value: stats.completedBookings, icon: Flag, color: "#57606a" },
+                { label: "Platform fee", value: `PKR ${(stats.platformFee / 1000).toFixed(0)}K`, icon: Wallet, color: "#1a7f37" },
               ].map(card => (
                 <div key={card.label} style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
-                    {card.icon}
+                    <card.icon size={18} strokeWidth={1.75} color={card.color} />
                   </div>
                   <div>
                     <p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "2px" }}>{card.label}</p>
