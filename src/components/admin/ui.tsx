@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Check, Copy, Search, type LucideIcon } from "lucide-react";
 
 export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "violet" | "orange";
@@ -377,3 +378,77 @@ export const btn = {
   danger: "bg-white text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50",
   warn: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 hover:bg-amber-100",
 };
+
+const CONFIRM_TONES = {
+  warn: { icon: "bg-amber-100 text-amber-700", button: "bg-amber-500 hover:bg-amber-600 text-white" },
+  danger: { icon: "bg-rose-100 text-rose-600", button: "bg-rose-600 hover:bg-rose-700 text-white" },
+  neutral: { icon: "bg-slate-100 text-slate-600", button: "bg-slate-900 hover:bg-slate-800 text-white" },
+};
+
+/** Confirmation modal for consequential admin actions. Stays open (and disabled) while `loading`. */
+export function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  loadingLabel = "Working…",
+  onConfirm,
+  loading = false,
+  tone = "neutral",
+  icon: Icon,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: React.ReactNode;
+  confirmLabel: string;
+  loadingLabel?: string;
+  onConfirm: () => void;
+  loading?: boolean;
+  tone?: keyof typeof CONFIRM_TONES;
+  icon?: LucideIcon;
+}) {
+  const t = CONFIRM_TONES[tone];
+  return (
+    <Dialog.Root open={open} onOpenChange={o => !loading && onOpenChange(o)}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl shadow-slate-900/20 focus:outline-none">
+          <div className="flex gap-4">
+            {Icon && (
+              <span className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${t.icon}`}>
+                <Icon size={20} strokeWidth={2} />
+              </span>
+            )}
+            <div className="min-w-0">
+              <Dialog.Title className="text-base font-semibold text-slate-900">{title}</Dialog.Title>
+              <Dialog.Description asChild>
+                <div className="mt-1.5 text-sm leading-relaxed text-slate-500">{description}</div>
+              </Dialog.Description>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                disabled={loading}
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </Dialog.Close>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={loading}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${t.button}`}
+            >
+              {loading ? loadingLabel : confirmLabel}
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}

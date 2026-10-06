@@ -119,40 +119,6 @@ export default function Landing({ listings, stats }: { listings: ShowcaseListing
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-slate-950 text-white selection:bg-indigo-500/40">
-      {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/60 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="flex flex-shrink-0 items-center">
-            <Image
-              src="/logo-1771205663069.png"
-              alt="AutoMarket"
-              width={130}
-              height={36}
-              priority
-              className="h-7 w-auto sm:h-8"
-              style={{ filter: "brightness(0.5) invert(1)" }}
-            />
-          </Link>
-          <div className="hidden items-center gap-8 text-sm text-slate-400 md:flex">
-            <Link href="/listings" className="transition hover:text-white">Browse</Link>
-            <Link href="/listings?type=RENT" className="transition hover:text-white">Rentals</Link>
-            <Link href="/sell" className="transition hover:text-white">Sell</Link>
-            <a href="#features" className="transition hover:text-white">Features</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white sm:px-4">
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-white/10 transition hover:bg-slate-200 sm:px-4"
-            >
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       {/* ── HERO ── */}
       <section onPointerMove={trackPointer} className="relative isolate">
         {/* Aurora + grid + cursor spotlight */}

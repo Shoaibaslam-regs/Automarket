@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
-import { DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
+import { ConfirmDialog, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 
 type User = {
   _id: string;
@@ -19,6 +19,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ action: "promote" | "demote" | "delete"; user: User } | null>(null);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -29,22 +31,25 @@ export default function AdminUsersPage() {
     setLoading(false);
   }
 
-  async function updateRole(id: string, role: string) {
-    setUpdating(id);
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
+  // Runs the action the admin confirmed in the dialog
+  async function runPending() {
+    if (!pending) return;
+    const { action, user } = pending;
+    setUpdating(user._id);
+    setActionError("");
+    const res = await fetch(`/api/admin/users/${user._id}`, action === "delete"
+      ? { method: "DELETE" }
+      : {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: action === "promote" ? "ADMIN" : "USER" }),
+        });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setActionError(data.error || "Something went wrong. Please try again.");
+    }
     setUpdating(null);
-    fetchUsers();
-  }
-
-  async function deleteUser(id: string) {
-    if (!confirm("Delete this user?")) return;
-    setUpdating(id);
-    await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
-    setUpdating(null);
+    setPending(null);
     fetchUsers();
   }
 
@@ -67,6 +72,12 @@ export default function AdminUsersPage() {
           </>
         }
       />
+
+      {actionError && (
+        <div role="alert" className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
+          {actionError}
+        </div>
+      )}
 
       <DataTable
         rows={filtered}
@@ -105,16 +116,16 @@ export default function AdminUsersPage() {
             cell: user => (
               <div className="flex gap-1.5 md:justify-end">
                 {user.role !== "ADMIN" ? (
-                  <button onClick={() => updateRole(user._id, "ADMIN")} disabled={updating === user._id} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`}>
+                  <button onClick={() => setPending({ action: "promote", user })} disabled={updating === user._id} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`}>
                     <ShieldCheck size={13} /> Make admin
                   </button>
                 ) : (
-                  <button onClick={() => updateRole(user._id, "USER")} disabled={updating === user._id} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`}>
+                  <button onClick={() => setPending({ action: "demote", user })} disabled={updating === user._id} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`}>
                     <ShieldOff size={13} /> Remove admin
                   </button>
                 )}
                 <button
-                  onClick={() => deleteUser(user._id)}
+                  onClick={() => setPending({ action: "delete", user })}
                   disabled={updating === user._id}
                   aria-label="Delete user"
                   title="Delete user"
@@ -133,6 +144,51 @@ export default function AdminUsersPage() {
           Showing {filtered.length} of {users.length} user{users.length !== 1 ? "s" : ""}
         </p>
       )}
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={open => !open && setPending(null)}
+        onConfirm={runPending}
+        loading={pending !== null && updating === pending.user._id}
+        {...(pending?.action === "promote"
+          ? {
+              tone: "warn" as const,
+              icon: ShieldCheck,
+              title: `Make ${pending.user.name || pending.user.email} an admin?`,
+              description: (
+                <>
+                  Are you sure you want to make <strong className="font-semibold text-slate-900">{pending?.user.name || pending?.user.email}</strong> an admin? They&apos;ll get full access to the admin panel,
+                  including managing users, listings and bookings.
+                </>
+              ),
+              confirmLabel: "Yes, make admin",
+              loadingLabel: "Making admin…",
+            }
+          : pending?.action === "demote"
+          ? {
+              tone: "neutral" as const,
+              icon: ShieldOff,
+              title: `Remove admin access from ${pending.user.name || pending.user.email}?`,
+              description: (
+                <>
+                  <strong className="font-semibold text-slate-900">{pending?.user.name || pending?.user.email}</strong> will lose access to the admin panel and become a regular user.
+                </>
+              ),
+              confirmLabel: "Remove admin",
+              loadingLabel: "Removing…",
+            }
+          : {
+              tone: "danger" as const,
+              icon: Trash2,
+              title: `Delete ${pending?.user.name || pending?.user.email || "user"}?`,
+              description: (
+                <>
+                  This permanently deletes <strong className="font-semibold text-slate-900">{pending?.user.name || pending?.user.email}</strong>&apos;s account. This can&apos;t be undone.
+                </>
+              ),
+              confirmLabel: "Delete user",
+              loadingLabel: "Deleting…",
+            })}
+      />
     </>
   );
 }

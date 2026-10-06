@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
@@ -12,8 +13,15 @@ import { Calendar, Car, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search
 
 export default function Navbar() {
   const { data: session } = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Menus remember which route they were opened on, so they close automatically after navigation
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
+  const [mobileOpenOn, setMobileOpenOn] = useState<string | null>(null);
+  const menuOpen = menuOpenOn === pathname;
+  const mobileOpen = mobileOpenOn === pathname;
+  const setMenuOpen = (open: boolean) => setMenuOpenOn(open ? pathname : null);
+  const setMobileOpen = (open: boolean) => setMobileOpenOn(open ? pathname : null);
   const [scrolled, setScrolled] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,8 +42,38 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => { setMobileOpen(false); setMenuOpen(false); }, []);
+  // Landing page: minimal dark bar with just the logo, Sign in and Get started.
+  // Rendered by this same component (not by the page) so navigating away never shows two navbars.
+  if (pathname === "/") {
+    return (
+      <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/" className="flex flex-shrink-0 items-center">
+            <Image
+              src="/logo-1771205663069.png"
+              alt="AutoMarket"
+              width={130}
+              height={36}
+              priority
+              className="h-7 w-auto sm:h-8"
+              style={{ filter: "brightness(0.5) invert(1)" }}
+            />
+          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white sm:px-4">
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-white/10 transition hover:bg-slate-200 sm:px-4"
+            >
+              Get started
+            </Link>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <>
@@ -240,6 +278,8 @@ export default function Navbar() {
           <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
             
             <button
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(!mobileOpen)}
               style={{
                 width: "40px", height: "40px", display: "flex", flexDirection: "column",

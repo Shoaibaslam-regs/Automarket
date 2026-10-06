@@ -1,17 +1,11 @@
-
-"use client";
-
-import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
+// One Navbar instance for every page in this group (including the landing page), so it never
+// duplicates during client-side navigation.
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
-  const hideNavbarRoutes = ["/"];
-
   return (
     <>
-      {!hideNavbarRoutes.includes(pathname) && <Navbar />}
+      <Navbar />
       <main>{children}</main>
     </>
   );
