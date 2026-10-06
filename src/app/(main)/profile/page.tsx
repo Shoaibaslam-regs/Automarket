@@ -158,7 +158,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <UploadButton
-                  endpoint="vehicleImages"
+                  endpoint="profileImage"
                   onClientUploadComplete={(res) => {
                     const url = res[0]?.ufsUrl || res[0]?.url;
                     if (url) setForm(prev => ({ ...prev, image: url }));

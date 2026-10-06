@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { ExternalLink, ImageOff, Star, Trash2 } from "lucide-react";
+import { PageHeader, Panel, SearchField, SelectField, StatusBadge, btn } from "@/components/admin/ui";
 
 type Listing = {
   _id: string;
@@ -19,7 +20,7 @@ type Listing = {
   createdAt: string;
 };
 
-const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "PENDING", "SOLD", "RENTED"];
+const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "PENDING", "SOLD", "RENTED"] as const;
 
 export default function AdminListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -56,102 +57,117 @@ export default function AdminListingsPage() {
     fetchListings();
   }
 
+  const q = search.toLowerCase();
   const filtered = listings.filter(l => {
-    const matchSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
-      l.make.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = l.title.toLowerCase().includes(q) || l.make.toLowerCase().includes(q);
     const matchStatus = statusFilter ? l.status === statusFilter : true;
     return matchSearch && matchStatus;
   });
-
-  const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-    ACTIVE:   { bg: "#dafbe1", color: "#1a7f37" },
-    INACTIVE: { bg: "#f6f8fa", color: "#57606a" },
-    PENDING:  { bg: "#fff8c5", color: "#7d4e00" },
-    SOLD:     { bg: "#ddf4ff", color: "#0550ae" },
-    RENTED:   { bg: "#ffdfb6", color: "#953800" },
-  };
+  const featuredCount = listings.filter(l => l.featured).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: "32px 24px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <a href="/admin" style={{ fontSize: "13px", color: "#57606a", textDecoration: "none" }}>← Admin</a>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0d1117", marginTop: "8px" }}>Listings</h1>
-          </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search listings..."
-              style={{ padding: "8px 14px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", width: "200px" }} />
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-              style={{ padding: "8px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none" }}>
-              <option value="">All statuses</option>
-              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="Listings"
+        description={loading ? "Loading…" : `${listings.length.toLocaleString()} total · ${featuredCount} featured`}
+        actions={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Search title or make…" />
+            <SelectField value={statusFilter} onChange={setStatusFilter} options={STATUS_OPTIONS} allLabel="All statuses" ariaLabel="Filter by status" />
+          </>
+        }
+      />
 
-        <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
-          {loading ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>Loading...</div>
-          ) : filtered.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>No listings found</div>
-          ) : filtered.map(listing => (
-            <div key={listing._id} style={{ padding: "14px 20px", borderBottom: "1px solid #f6f8fa", display: "flex", alignItems: "center", gap: "14px" }}>
-              {/* Image */}
-              <div style={{ width: "64px", height: "48px", borderRadius: "6px", overflow: "hidden", background: "#f6f8fa", flexShrink: 0 }}>
+      <Panel bodyClassName="divide-y divide-slate-100">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-5 py-4">
+              <div className="h-14 w-20 animate-pulse rounded-lg bg-slate-100" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+                <div className="h-2.5 w-1/2 animate-pulse rounded bg-slate-100" />
+              </div>
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <p className="px-6 py-16 text-center text-sm text-slate-500">No listings found</p>
+        ) : (
+          filtered.map(listing => (
+            <div
+              key={listing._id}
+              className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 transition hover:bg-slate-50/60 sm:px-5 md:flex-nowrap"
+            >
+              <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
                 {listing.images?.[0] ? (
-                  <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={listing.images[0]} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#8c959f" }}>No img</div>
+                  <div className="flex h-full w-full items-center justify-center text-slate-300">
+                    <ImageOff size={18} />
+                  </div>
+                )}
+                {listing.featured && (
+                  <span className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-amber-950">
+                    <Star size={9} fill="currentColor" />
+                  </span>
                 )}
               </div>
 
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
-                  {listing.featured && <span style={{ fontSize: "10px", background: "#fff8c5", color: "#7d4e00", padding: "1px 6px", borderRadius: "20px", fontWeight: 600, flexShrink: 0 }}>Featured</span>}
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate text-sm font-semibold text-slate-900">{listing.title}</p>
+                  <StatusBadge status={listing.status} />
                 </div>
-                <p style={{ fontSize: "11px", color: "#57606a" }}>
-                  {listing.make} {listing.model} · {listing.year} · PKR {listing.price.toLocaleString()} · by {listing.sellerId?.name}
+                <p className="mt-0.5 truncate text-xs text-slate-500">
+                  {listing.make} {listing.model} · {listing.year} · <span className="font-semibold text-slate-700">PKR {listing.price.toLocaleString()}</span>
                 </p>
+                <p className="mt-0.5 truncate text-xs text-slate-400">by {listing.sellerId?.name || "Unknown"}</p>
               </div>
 
-              {/* Status */}
-              <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "20px", background: STATUS_COLORS[listing.status]?.bg || "#f6f8fa", color: STATUS_COLORS[listing.status]?.color || "#57606a", flexShrink: 0 }}>
-                {listing.status}
-              </span>
-
-              {/* Actions */}
-              <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                <Link href={`/listings/${listing._id}`} target="_blank"
-                  style={{ padding: "5px 10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "6px", fontSize: "11px", color: "#0d1117", textDecoration: "none" }}>
-                  View
+              <div className="flex w-full flex-wrap items-center gap-1.5 md:w-auto md:flex-shrink-0 md:flex-nowrap">
+                <Link href={`/listings/${listing._id}`} target="_blank" className={`${btn.base} ${btn.secondary}`}>
+                  <ExternalLink size={13} /> View
                 </Link>
                 <select
                   value={listing.status}
                   onChange={e => updateListing(listing._id, { status: e.target.value })}
                   disabled={updating === listing._id}
-                  style={{ padding: "5px 8px", border: "1px solid #d0d7de", borderRadius: "6px", fontSize: "11px", color: "#0d1117", cursor: "pointer", outline: "none" }}>
-                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  aria-label="Change status"
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-slate-900 disabled:opacity-50"
+                >
+                  {STATUS_OPTIONS.map(s => (
+                    <option key={s} value={s}>
+                      {s.charAt(0) + s.slice(1).toLowerCase()}
+                    </option>
+                  ))}
                 </select>
                 <button
                   onClick={() => updateListing(listing._id, { featured: !listing.featured })}
                   disabled={updating === listing._id}
-                  style={{ padding: "5px 10px", background: listing.featured ? "#fff8c5" : "#f6f8fa", border: `1px solid ${listing.featured ? "#e3b341" : "#d0d7de"}`, borderRadius: "6px", fontSize: "11px", color: listing.featured ? "#7d4e00" : "#57606a", cursor: "pointer" }}>
+                  className={`${btn.base} ${listing.featured ? btn.warn : btn.secondary}`}
+                >
+                  <Star size={13} fill={listing.featured ? "currentColor" : "none"} />
                   {listing.featured ? "Featured" : "Feature"}
                 </button>
-                <button onClick={() => deleteListing(listing._id)} disabled={updating === listing._id}
-                  style={{ padding: "5px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer" }}>
-                  <Trash2 size={12} strokeWidth={1.75} />
+                <button
+                  onClick={() => deleteListing(listing._id)}
+                  disabled={updating === listing._id}
+                  aria-label="Delete listing"
+                  className={`${btn.base} ${btn.danger} ml-auto md:ml-0`}
+                >
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-        <p style={{ fontSize: "12px", color: "#8c959f", marginTop: "12px" }}>{filtered.length} listing{filtered.length !== 1 ? "s" : ""}</p>
-      </div>
-    </div>
+          ))
+        )}
+      </Panel>
+
+      {!loading && (
+        <p className="mt-3 text-xs text-slate-400">
+          Showing {filtered.length} of {listings.length} listing{listings.length !== 1 ? "s" : ""}
+        </p>
+      )}
+    </>
   );
 }

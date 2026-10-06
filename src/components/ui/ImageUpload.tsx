@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
+import { splitVehicleUploads, type RejectedUpload } from "@/lib/vehicleUploads";
 
 interface Props {
   images: string[];
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
   const [uploading, setUploading] = useState(false);
+  const [rejected, setRejected] = useState<RejectedUpload[]>([]);
 
   function removeImage(index: number) {
     onChange(images.filter((_, i) => i !== index));
@@ -41,15 +43,19 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
       {images.length < maxImages && (
         <UploadDropzone
           endpoint="vehicleImages"
-          onUploadBegin={() => setUploading(true)}
+          onUploadBegin={() => {
+            setUploading(true);
+            setRejected([]);
+          }}
           onClientUploadComplete={(res) => {
             setUploading(false);
-            const newUrls = res.map((r) => r.ufsUrl || r.url);
-            onChange([...images, ...newUrls]);
+            const { accepted, rejected } = splitVehicleUploads(res);
+            setRejected(rejected);
+            if (accepted.length) onChange([...images, ...accepted]);
           }}
           onUploadError={(error) => {
             setUploading(false);
-            alert("Upload failed: " + error.message);
+            setRejected([{ name: "Upload", reason: error.message }]);
           }}
           appearance={{
             container: "border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-gray-400 transition",
@@ -58,10 +64,25 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
             button: "bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-700 transition",
           }}
           content={{
-            label: uploading ? "Uploading..." : "Drop images here or click to upload",
-            allowedContent: `Up to ${maxImages - images.length} more · Max 4MB each`,
+            label: uploading ? "Uploading & checking photos with AI…" : "Drop vehicle photos here or click to upload",
+            allowedContent: `Car or bike photos only · Up to ${maxImages - images.length} more · Max 4MB each`,
           }}
         />
+      )}
+
+      {rejected.length > 0 && (
+        <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "10px", padding: "12px 14px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#cf222e", marginBottom: "6px" }}>
+            {rejected.length === 1 ? "1 photo was rejected" : `${rejected.length} photos were rejected`} — only car or bike photos are allowed
+          </p>
+          <ul style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "3px" }}>
+            {rejected.map((r, i) => (
+              <li key={`${r.name}-${i}`} style={{ fontSize: "12px", color: "#82071e" }}>
+                <strong style={{ fontWeight: 600 }}>{r.name}</strong>: {r.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {images.length >= maxImages && (

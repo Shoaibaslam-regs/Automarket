@@ -84,12 +84,12 @@ const BRANDS = [
 
 export default function BrandLogos() {
   return (
-    <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+    <div className="grid grid-cols-4 gap-2.5 sm:gap-3 md:grid-cols-8">
       {BRANDS.map((brand) => (
-        <Link key={brand.name} href={`/listings?make=${brand.name}`}
-          className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-sm transition group bg-white">
-          {brand.svg}
-          <span className="text-xs font-medium text-gray-700 group-hover:text-blue-600">{brand.name}</span>
+        <Link key={brand.name} href={`/listings?make=${encodeURIComponent(brand.name)}`}
+          className="group flex flex-col items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-2 py-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_28px_-14px_rgba(15,23,42,0.3)]">
+          <span className="transition group-hover:scale-110">{brand.svg}</span>
+          <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 sm:text-xs">{brand.name}</span>
         </Link>
       ))}
     </div>

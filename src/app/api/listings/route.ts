@@ -29,12 +29,23 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search");
     const sort = searchParams.get("sort") || "createdAt";
 
+    const SORTS: Record<string, Record<string, 1 | -1>> = {
+      createdAt: { createdAt: -1 },
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+      price: { price: -1 },
+    };
+    const sortOrder = SORTS[sort] ?? SORTS.createdAt;
+
+    // Escape user input so characters like "(" or "+" don't throw on RegExp construction
+    const rx = (v: string) => new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
     const query: ListingQuery = { status: "ACTIVE" };
 
     if (type) query.type = type;
-    if (make) query.make = new RegExp(make, "i");
+    if (make) query.make = rx(make);
     if (condition) query.condition = condition;
-    if (location) query.location = new RegExp(location, "i");
+    if (location) query.location = rx(location);
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
@@ -42,10 +53,10 @@ export async function GET(req: NextRequest) {
     }
     if (search) {
       query.$or = [
-        { title: new RegExp(search, "i") },
-        { make: new RegExp(search, "i") },
-        { model: new RegExp(search, "i") },
-        { location: new RegExp(search, "i") },
+        { title: rx(search) },
+        { make: rx(search) },
+        { model: rx(search) },
+        { location: rx(search) },
       ];
     }
 
@@ -54,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     const listings = await Listing.find(query)
       .populate("sellerId", "name email image phone")
-      .sort({ featured: -1, [sort]: -1 })
+      .sort({ featured: -1, ...sortOrder })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -102,11 +113,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Every image must have passed the AI vehicle check at upload time (see lib/uploadthing.ts)
+    const imageUrls: string[] = Array.isArray(images) ? images.filter((u: unknown) => typeof u === "string") : [];
+    if (imageUrls.length > 0) {
+      const { VehicleImage } = await import("@/models/VehicleImage");
+      const verified = await VehicleImage.countDocuments({ url: { $in: imageUrls }, userId: session.user.id });
+      if (verified !== new Set(imageUrls).size) {
+        return NextResponse.json(
+          { error: "Some images were not verified as vehicle photos. Please re-upload them." },
+          { status: 400 }
+        );
+      }
+    }
+
     const listing = await Listing.create({
       title, description, price, type, condition,
       make, model, year, mileage, color, fuelType,
       transmission, location,
-      images: images || [],
+      images: imageUrls,
       sellerId: session.user.id,
       status: "ACTIVE",
     });

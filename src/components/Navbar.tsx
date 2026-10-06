@@ -120,7 +120,7 @@ export default function Navbar() {
         }}>
 
           {/* ── LOGO ── */}
-          <Link href="/" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+          <Link href="/home" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
             <Image
               src="/logo-1771205663069.png"
               alt="AutoMarket"

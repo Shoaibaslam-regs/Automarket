@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Calendar, Car, CircleCheck, Flag, Users, Wallet } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, Calendar, Car, CircleCheck, Flag, KeyRound, Store, Users, Wallet } from "lucide-react";
+import {
+  Badge,
+  CopyId,
+  DataTable,
+  PageHeader,
+  Panel,
+  Segmented,
+  StatCard,
+  StatGrid,
+  StatusBadge,
+  UserCell,
+} from "@/components/admin/ui";
 
 type Stats = {
   totalUsers: number;
@@ -30,22 +42,10 @@ type Organization = {
   ownerId: { _id: string; name?: string; email: string };
 };
 
-const PLAN_COLORS: Record<string, { bg: string; color: string }> = {
-  FREE:     { bg: "#f6f8fa", color: "#57606a" },
-  PRO:      { bg: "#ddf4ff", color: "#0550ae" },
-  BUSINESS: { bg: "#dafbe1", color: "#1a7f37" },
-};
-
-function CopyId({ id }: { id: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(id); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      title="Copy ID"
-      style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 6px", background: copied ? "#dafbe1" : "#f6f8fa", border: `1px solid ${copied ? "#56d364" : "#d0d7de"}`, borderRadius: "4px", fontSize: "10px", color: copied ? "#1a7f37" : "#8c959f", cursor: "pointer", fontFamily: "monospace", transition: "all 0.15s" }}>
-      {copied ? "✓" : "ID"} {id.slice(-6)}
-    </button>
-  );
+function formatPKR(n: number) {
+  if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `PKR ${(n / 1_000).toFixed(0)}K`;
+  return `PKR ${n.toLocaleString()}`;
 }
 
 export default function AdminPage() {
@@ -70,190 +70,190 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: "28px 24px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Platform health at a glance"
+        actions={
+          <Segmented
+            value={activeTab}
+            onChange={setActiveTab}
+            options={[
+              { value: "overview", label: "Overview" },
+              {
+                value: "businesses",
+                label: (
+                  <>
+                    Businesses
+                    <span className="rounded-full bg-slate-200 px-1.5 text-[11px] font-semibold text-slate-600">{organizations.length}</span>
+                  </>
+                ),
+              },
+            ]}
+          />
+        }
+      />
 
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0d1117" }}>Admin Dashboard</h1>
-            <p style={{ fontSize: "13px", color: "#57606a" }}>AutoMarket platform management</p>
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {[
-              { href: "/admin/users", label: "Users" },
-              { href: "/admin/listings", label: "Listings" },
-              { href: "/admin/bookings", label: "Bookings" },
-              { href: "/admin/analytics", label: "Analytics" },
-            ].map(btn => (
-              <Link key={btn.href} href={btn.href}
-                style={{ padding: "8px 14px", background: "white", border: "1px solid #e1e4e8", borderRadius: "8px", fontSize: "13px", color: "#0d1117", textDecoration: "none", fontWeight: 500 }}>
-                {btn.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", padding: "4px", marginBottom: "20px", width: "fit-content" }}>
-          {(["overview", "businesses"] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{ padding: "7px 20px", borderRadius: "7px", border: "none", fontSize: "13px", fontWeight: 500, cursor: "pointer", background: activeTab === tab ? "#0d1117" : "transparent", color: activeTab === tab ? "white" : "#57606a", fontFamily: "inherit", textTransform: "capitalize" }}>
-              {tab === "overview" ? "Overview" : `Businesses (${organizations.length})`}
-            </button>
+      {loading ? (
+        <StatGrid>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[108px] animate-pulse rounded-2xl border border-slate-200/80 bg-white" />
           ))}
-        </div>
+        </StatGrid>
+      ) : activeTab === "overview" ? (
+        <>
+          {stats && (
+            <StatGrid>
+              <StatCard label="Total users" value={stats.totalUsers.toLocaleString()} icon={Users} tone="blue" />
+              <StatCard label="Total listings" value={stats.totalListings.toLocaleString()} icon={Car} tone="violet" />
+              <StatCard
+                label="Active listings"
+                value={stats.activeListings.toLocaleString()}
+                icon={CircleCheck}
+                tone="green"
+                hint={stats.totalListings ? `${Math.round((stats.activeListings / stats.totalListings) * 100)}% of all listings` : undefined}
+              />
+              <StatCard label="Total bookings" value={stats.totalBookings.toLocaleString()} icon={Calendar} tone="orange" />
+              <StatCard label="Completed" value={stats.completedBookings.toLocaleString()} icon={Flag} tone="neutral" />
+              <StatCard label="Platform fee" value={formatPKR(stats.platformFee)} icon={Wallet} tone="green" />
+            </StatGrid>
+          )}
 
-        {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-            {[1,2,3,4,5,6].map(i => <div key={i} style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", height: "90px", opacity: 0.4 }} />)}
-          </div>
-        ) : activeTab === "overview" ? (
-          <>
-            {/* Stats grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "14px", marginBottom: "24px" }}>
-              {stats && [
-                { label: "Total users", value: stats.totalUsers, icon: Users, color: "#0550ae" },
-                { label: "Total listings", value: stats.totalListings, icon: Car, color: "#1a7f37" },
-                { label: "Active listings", value: stats.activeListings, icon: CircleCheck, color: "#7d4e00" },
-                { label: "Total bookings", value: stats.totalBookings, icon: Calendar, color: "#6e40c9" },
-                { label: "Completed", value: stats.completedBookings, icon: Flag, color: "#57606a" },
-                { label: "Platform fee", value: `PKR ${(stats.platformFee / 1000).toFixed(0)}K`, icon: Wallet, color: "#1a7f37" },
-              ].map(card => (
-                <div key={card.label} style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
-                    <card.icon size={18} strokeWidth={1.75} color={card.color} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "2px" }}>{card.label}</p>
-                    <p style={{ fontSize: "20px", fontWeight: 700, color: card.color }}>{card.value}</p>
+          <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+            <Panel
+              title="Recent users"
+              action={
+                <Link href="/admin/users" className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900">
+                  View all <ArrowRight size={13} />
+                </Link>
+              }
+              bodyClassName="divide-y divide-slate-100"
+            >
+              {recentUsers.length === 0 && <p className="px-5 py-10 text-center text-sm text-slate-500">No users yet</p>}
+              {recentUsers.length > 0 && (
+                <div className="hidden grid-cols-[minmax(0,1fr)_88px_72px] gap-x-4 bg-slate-50/80 px-5 py-2 sm:grid">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">User</p>
+                  <p className="text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Joined</p>
+                  <p className="text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Role</p>
+                </div>
+              )}
+              {recentUsers.map(user => (
+                <div
+                  key={user._id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 transition-colors hover:bg-slate-50/70 sm:grid-cols-[minmax(0,1fr)_88px_72px] sm:px-5"
+                >
+                  <UserCell name={user.name} email={user.email} meta={<CopyId id={user._id} />} />
+                  <p className="hidden text-right text-xs tabular-nums text-slate-500 sm:block">
+                    {new Date(user.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                  </p>
+                  <div className="flex justify-end">
+                    <StatusBadge status={user.role} />
                   </div>
                 </div>
               ))}
-            </div>
+            </Panel>
 
-            {/* Recent users + listings */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-
-              {/* Recent users */}
-              <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
-                <div style={{ padding: "14px 20px", borderBottom: "1px solid #e1e4e8", display: "flex", justifyContent: "space-between" }}>
-                  <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>Recent users</h2>
-                  <Link href="/admin/users" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>View all →</Link>
+            <Panel
+              title="Recent listings"
+              action={
+                <Link href="/admin/listings" className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900">
+                  View all <ArrowRight size={13} />
+                </Link>
+              }
+              bodyClassName="divide-y divide-slate-100"
+            >
+              {recentListings.length === 0 && <p className="px-5 py-10 text-center text-sm text-slate-500">No listings yet</p>}
+              {recentListings.length > 0 && (
+                <div className="hidden grid-cols-[minmax(0,1fr)_112px_72px] gap-x-4 bg-slate-50/80 px-5 py-2 sm:grid">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Listing</p>
+                  <p className="text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Price</p>
+                  <p className="text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Status</p>
                 </div>
-                {recentUsers.map((user, i) => (
-                  <div key={user._id} style={{ padding: "11px 20px", borderBottom: i < recentUsers.length - 1 ? "1px solid #f6f8fa" : "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, flexShrink: 0 }}>
-                      {user.name?.[0]?.toUpperCase() || "?"}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "1px" }}>
-                        <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117" }}>{user.name}</p>
-                        <CopyId id={user._id} />
-                      </div>
-                      <p style={{ fontSize: "11px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
-                    </div>
-                    <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "20px", background: user.role === "ADMIN" ? "#fff8c5" : "#f6f8fa", color: user.role === "ADMIN" ? "#7d4e00" : "#57606a", flexShrink: 0 }}>
-                      {user.role}
+              )}
+              {recentListings.map(listing => (
+                <div
+                  key={listing._id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 transition-colors hover:bg-slate-50/70 sm:grid-cols-[minmax(0,1fr)_112px_72px] sm:px-5"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200/70">
+                      <Car size={16} />
                     </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Recent listings */}
-              <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
-                <div style={{ padding: "14px 20px", borderBottom: "1px solid #e1e4e8", display: "flex", justifyContent: "space-between" }}>
-                  <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117" }}>Recent listings</h2>
-                  <Link href="/admin/listings" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>View all →</Link>
-                </div>
-                {recentListings.map((listing, i) => (
-                  <div key={listing._id} style={{ padding: "11px 20px", borderBottom: i < recentListings.length - 1 ? "1px solid #f6f8fa" : "none", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "1px" }}>
-                        <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
+                    <div className="min-w-0 leading-tight">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-900">{listing.title}</p>
                         <CopyId id={listing._id} />
                       </div>
-                      <p style={{ fontSize: "11px", color: "#8c959f" }}>{listing.make} {listing.model} · PKR {listing.price.toLocaleString()}</p>
+                      <p className="mt-0.5 truncate text-[13px] text-slate-500">
+                        {listing.make} {listing.model} · {listing.year}
+                        <span className="font-medium text-slate-700 sm:hidden"> · PKR {listing.price.toLocaleString()}</span>
+                      </p>
                     </div>
-                    <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "20px", background: listing.status === "ACTIVE" ? "#dafbe1" : "#fff0f0", color: listing.status === "ACTIVE" ? "#1a7f37" : "#cf222e", flexShrink: 0 }}>
-                      {listing.status}
-                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          /* BUSINESSES TAB */
-          <div>
-            {/* Business stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginBottom: "20px" }}>
-              {[
-                { label: "Total businesses", value: organizations.length, color: "#0d1117" },
-                { label: "Active", value: organizations.filter(o => o.isActive).length, color: "#1a7f37" },
-                { label: "Pro plan", value: organizations.filter(o => o.plan === "PRO").length, color: "#0550ae" },
-                { label: "Business plan", value: organizations.filter(o => o.plan === "BUSINESS").length, color: "#7d4e00" },
-                { label: "Dealers", value: organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length, color: "#6e40c9" },
-                { label: "Rental co.", value: organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length, color: "#57606a" },
-              ].map(s => (
-                <div key={s.label} style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", padding: "14px 16px" }}>
-                  <p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "4px" }}>{s.label}</p>
-                  <p style={{ fontSize: "22px", fontWeight: 800, color: s.color }}>{s.value}</p>
+                  <p className="hidden text-right text-sm font-semibold tabular-nums text-slate-900 sm:block">
+                    PKR {listing.price.toLocaleString()}
+                  </p>
+                  <div className="flex justify-end">
+                    <StatusBadge status={listing.status} />
+                  </div>
                 </div>
               ))}
-            </div>
-
-            {/* Businesses table */}
-            <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
-              <div style={{ padding: "14px 20px", borderBottom: "1px solid #e1e4e8", background: "#f6f8fa", display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1fr 1fr 1fr", gap: "12px" }}>
-                {["Business", "Owner", "Type", "Plan", "Vehicles", "Staff"].map(h => (
-                  <p key={h} style={{ fontSize: "11px", fontWeight: 600, color: "#57606a", textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</p>
-                ))}
-              </div>
-              {organizations.length === 0 ? (
-                <div style={{ padding: "48px", textAlign: "center", color: "#57606a" }}>No businesses registered yet</div>
-              ) : organizations.map((org, i) => {
-                const planStyle = PLAN_COLORS[org.plan] || PLAN_COLORS.FREE;
-                return (
-                  <div key={org._id} style={{ padding: "13px 20px", borderBottom: i < organizations.length - 1 ? "1px solid #f6f8fa" : "none", display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1fr 1fr 1fr", gap: "12px", alignItems: "center" }}>
-                    {/* Business name + ID */}
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
-                        <div style={{ width: "24px", height: "24px", borderRadius: "5px", background: "linear-gradient(135deg,#3b82f6,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 800, color: "white", flexShrink: 0 }}>
-                          {org.name[0]}
-                        </div>
-                        <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</p>
-                      </div>
-                      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-                        <CopyId id={org._id} />
-                        <span style={{ fontSize: "10px", color: "#8c959f" }}>{org.city}</span>
-                      </div>
-                    </div>
-
-                    {/* Owner + ID */}
-                    <div>
-                      <p style={{ fontSize: "12px", color: "#0d1117", marginBottom: "2px" }}>{org.ownerId?.name || "Unknown"}</p>
-                      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-                        <CopyId id={org.ownerId?._id} />
-                        <p style={{ fontSize: "10px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.ownerId?.email}</p>
-                      </div>
-                    </div>
-
-                    <span style={{ fontSize: "11px", color: "#57606a", fontWeight: 500 }}>{org.type}</span>
-
-                    <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "20px", background: planStyle.bg, color: planStyle.color, width: "fit-content" }}>
-                      {org.plan}
-                    </span>
-
-                    <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117" }}>{org.vehicleCount}</p>
-                    <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117" }}>{org.staffCount}</p>
-                  </div>
-                );
-              })}
-            </div>
+            </Panel>
           </div>
-        )}
-      </div>
-    </div>
+        </>
+      ) : (
+        /* BUSINESSES TAB */
+        <>
+          <StatGrid>
+            <StatCard label="Total businesses" value={organizations.length} icon={Building2} tone="neutral" />
+            <StatCard label="Active" value={organizations.filter(o => o.isActive).length} icon={CircleCheck} tone="green" />
+            <StatCard label="Pro plan" value={organizations.filter(o => o.plan === "PRO").length} icon={Briefcase} tone="blue" />
+            <StatCard label="Business plan" value={organizations.filter(o => o.plan === "BUSINESS").length} icon={Briefcase} tone="amber" />
+            <StatCard label="Dealers" value={organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length} icon={Store} tone="violet" />
+            <StatCard label="Rental co." value={organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length} icon={KeyRound} tone="orange" />
+          </StatGrid>
+
+          <DataTable
+            rows={organizations}
+            rowKey={o => o._id}
+            cols="md:grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_80px_64px]"
+            empty="No businesses registered yet"
+            columns={[
+              {
+                header: "Business",
+                cell: org => (
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 text-sm font-bold text-white">
+                      {org.name[0]}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
+                        {!org.isActive && <Badge tone="red">Inactive</Badge>}
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <CopyId id={org._id} />
+                        <span className="truncate text-xs text-slate-500">{org.city}</span>
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "Owner",
+                full: true,
+                cell: org => (
+                  <UserCell size={30} name={org.ownerId?.name || "Unknown"} email={org.ownerId?.email} meta={<CopyId id={org.ownerId?._id} />} />
+                ),
+              },
+              { header: "Type", cell: org => <Badge tone="neutral">{org.type}</Badge> },
+              { header: "Plan", cell: org => <StatusBadge status={org.plan} /> },
+              { header: "Vehicles", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.vehicleCount}</p> },
+              { header: "Staff", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.staffCount}</p> },
+            ]}
+          />
+        </>
+      )}
+    </>
   );
 }

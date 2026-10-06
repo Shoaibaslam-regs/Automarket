@@ -1,12 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
+import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import { IListing } from "@/models/Listing";
-import { Search } from "lucide-react";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford"];
 const CONDITIONS = ["NEW", "EXCELLENT", "GOOD", "FAIR", "POOR"];
+const TYPES = [
+  ["", "All"],
+  ["SALE", "For Sale"],
+  ["RENT", "For Rent"],
+  ["BOTH", "Sale & Rent"],
+] as const;
+const SORTS = [
+  ["createdAt", "Newest first"],
+  ["price_asc", "Price: low to high"],
+  ["price_desc", "Price: high to low"],
+] as const;
+const PAGE_SIZE = 12;
+
 type ListingWithId = IListing & { _id: string };
 
 function useDebounce<T>(value: T, delay = 500): T {
@@ -20,17 +33,47 @@ function useDebounce<T>(value: T, delay = 500): T {
   return debounced;
 }
 
-export default function ListingsPage() {
+// Page numbers to show, with "…" gaps: 1 … 4 5 [6] 7 8 … 20
+function pageWindow(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  const pages: (number | "…")[] = [1];
+  if (start > 2) pages.push("…");
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push("…");
+  pages.push(total);
+  return pages;
+}
+
+const fieldClass =
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
+
+function FilterLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">{children}</p>;
+}
+
+export default function ListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const initial = use(searchParams);
+  const initialType = typeof initial.type === "string" && ["SALE", "RENT", "BOTH"].includes(initial.type) ? initial.type : "";
+  const initialSearch = typeof initial.search === "string" ? initial.search : "";
+  const initialMake = typeof initial.make === "string" ? initial.make : "";
+  const initialLocation = typeof initial.location === "string" ? initial.location : "";
+
   const [listings, setListings] = useState<ListingWithId[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [type, setType] = useState("");
-  const [make, setMake] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const [type, setType] = useState<string>(initialType);
+  const [make, setMake] = useState(initialMake);
   const [condition, setCondition] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(initialLocation);
   const [sort, setSort] = useState("createdAt");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -42,7 +85,7 @@ export default function ListingsPage() {
 
   const params = new URLSearchParams();
   params.set("page", page.toString());
-  params.set("limit", "12");
+  params.set("limit", String(PAGE_SIZE));
   if (debouncedSearch) params.set("search", debouncedSearch);
   if (type) params.set("type", type);
   if (make) params.set("make", make);
@@ -76,6 +119,21 @@ export default function ListingsPage() {
     return () => controller.abort();
   }, [query]);
 
+  // Lock page scroll behind the mobile filter sheet
+  useEffect(() => {
+    if (!showFilters) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showFilters]);
+
+  function goToPage(p: number) {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function clearFilters() {
     setSearch("");
     setType("");
@@ -88,59 +146,35 @@ export default function ListingsPage() {
     setPage(1);
   }
 
-  const activeFilterCount = [
-    type,
-    make,
-    condition,
-    minPrice,
-    maxPrice,
-    location,
-  ].filter(Boolean).length;
+  const activeChips = [
+    type && { label: TYPES.find(([v]) => v === type)?.[1] ?? type, clear: () => setType("") },
+    make && { label: make, clear: () => setMake("") },
+    condition && { label: condition.toLowerCase(), clear: () => setCondition("") },
+    minPrice && { label: `Min PKR ${Number(minPrice).toLocaleString()}`, clear: () => setMinPrice("") },
+    maxPrice && { label: `Max PKR ${Number(maxPrice).toLocaleString()}`, clear: () => setMaxPrice("") },
+    location && { label: location, clear: () => setLocation("") },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
+  const activeFilterCount = activeChips.length;
 
   // Plain JSX (not an inner component) so inputs aren't remounted and don't lose focus on each keystroke
   const filterPanel = (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Type */}
+    <div className="flex flex-col gap-6">
       <div>
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#0d1117",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Type
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          {[
-            ["", "All types"],
-            ["SALE", "For Sale"],
-            ["RENT", "For Rent"],
-            ["BOTH", "Sale & Rent"],
-          ].map(([val, label]) => (
+        <FilterLabel>Listing type</FilterLabel>
+        <div className="grid grid-cols-2 gap-1.5">
+          {TYPES.map(([val, label]) => (
             <button
               key={val}
+              type="button"
               onClick={() => {
                 setType(val);
                 setPage(1);
               }}
-              style={{
-                textAlign: "left",
-                padding: "8px 10px",
-                borderRadius: "7px",
-                border: "none",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                background: type === val ? "#0d1117" : "transparent",
-                color: type === val ? "white" : "#57606a",
-                fontWeight: type === val ? 600 : 400,
-                transition: "all 0.1s",
-              }}
+              className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+                type === val
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100"
+              }`}
             >
               {label}
             </button>
@@ -148,37 +182,15 @@ export default function ListingsPage() {
         </div>
       </div>
 
-      {/* Make */}
       <div>
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#0d1117",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Make
-        </p>
-
+        <FilterLabel>Make</FilterLabel>
         <select
           value={make}
           onChange={e => {
             setMake(e.target.value);
             setPage(1);
           }}
-          style={{
-            width: "100%",
-            padding: "9px 12px",
-            border: "1px solid #d0d7de",
-            borderRadius: "8px",
-            fontSize: "13px",
-            outline: "none",
-            background: "white",
-            color: "#0d1117",
-          }}
+          className={fieldClass}
         >
           <option value="">All makes</option>
           {MAKES.map(m => (
@@ -189,254 +201,93 @@ export default function ListingsPage() {
         </select>
       </div>
 
-      {/* Condition */}
       <div>
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#0d1117",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Condition
-        </p>
-
-        <select
-          value={condition}
-          onChange={e => {
-            setCondition(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            width: "100%",
-            padding: "9px 12px",
-            border: "1px solid #d0d7de",
-            borderRadius: "8px",
-            fontSize: "13px",
-            outline: "none",
-            background: "white",
-            color: "#0d1117",
-          }}
-        >
-          <option value="">Any condition</option>
+        <FilterLabel>Condition</FilterLabel>
+        <div className="flex flex-wrap gap-1.5">
           {CONDITIONS.map(c => (
-            <option key={c} value={c}>
-              {c}
-            </option>
+            <button
+              key={c}
+              type="button"
+              onClick={() => {
+                setCondition(condition === c ? "" : c);
+                setPage(1);
+              }}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
+                condition === c
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:ring-slate-400"
+              }`}
+            >
+              {c.toLowerCase()}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
-      {/* Price */}
       <div>
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#0d1117",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Price (PKR)
-        </p>
-
-        <div style={{ display: "flex", gap: "8px" }}>
+        <FilterLabel>Price (PKR)</FilterLabel>
+        <div className="flex items-center gap-2">
           <input
             type="number"
+            inputMode="numeric"
+            min={0}
             placeholder="Min"
             value={minPrice}
             onChange={e => {
               setMinPrice(e.target.value);
               setPage(1);
             }}
-            style={{
-              flex: 1,
-              padding: "9px 10px",
-              border: "1px solid #d0d7de",
-              borderRadius: "8px",
-              fontSize: "13px",
-              outline: "none",
-              minWidth: 0,
-            }}
+            className={`${fieldClass} min-w-0`}
           />
-
+          <span className="text-slate-300">–</span>
           <input
             type="number"
+            inputMode="numeric"
+            min={0}
             placeholder="Max"
             value={maxPrice}
             onChange={e => {
               setMaxPrice(e.target.value);
               setPage(1);
             }}
-            style={{
-              flex: 1,
-              padding: "9px 10px",
-              border: "1px solid #d0d7de",
-              borderRadius: "8px",
-              fontSize: "13px",
-              outline: "none",
-              minWidth: 0,
-            }}
+            className={`${fieldClass} min-w-0`}
           />
         </div>
       </div>
 
-      {/* Location */}
       <div>
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "#0d1117",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Location
-        </p>
-
-        <input
-          type="text"
-          placeholder="City or area"
-          value={location}
-          onChange={e => {
-            setLocation(e.target.value);
-            setPage(1);
-          }}
-          style={{
-            width: "100%",
-            padding: "9px 12px",
-            border: "1px solid #d0d7de",
-            borderRadius: "8px",
-            fontSize: "13px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
+        <FilterLabel>Location</FilterLabel>
+        <div className="relative">
+          <MapPin size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="City or area"
+            value={location}
+            onChange={e => {
+              setLocation(e.target.value);
+              setPage(1);
+            }}
+            className={`${fieldClass} pl-9`}
+          />
+        </div>
       </div>
-
-      <button
-        onClick={clearFilters}
-        style={{
-          padding: "9px",
-          background: "#f6f8fa",
-          border: "1px solid #e1e4e8",
-          borderRadius: "8px",
-          fontSize: "13px",
-          color: "#57606a",
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
-      >
-        Clear all filters
-      </button>
     </div>
   );
 
   return (
-    <>
-      <style>{`
-        .listings-layout {
-          display: grid;
-          grid-template-columns: 220px minmax(0, 1fr);
-          gap: 20px;
-          align-items: start;
-        }
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero + search */}
+      <section className="relative overflow-hidden bg-slate-950">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.35),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.18),transparent_50%)]" />
+        <div className="relative mx-auto max-w-[1180px] px-4 pb-8 pt-8 sm:pb-10 sm:pt-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">Marketplace</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">Find your next ride</h1>
+          <p className="mt-2 max-w-xl text-sm text-slate-400 sm:text-base">
+            Browse verified cars and bikes for sale and rent across Pakistan.
+          </p>
 
-        .listings-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
-        }
-
-        .desktop-sidebar {
-          display: block;
-          min-width: 0;
-        }
-
-        .mobile-filter-btn {
-          display: none;
-        }
-
-        @media (max-width: 1000px) {
-          .listings-layout {
-            grid-template-columns: 200px minmax(0, 1fr);
-            gap: 16px;
-          }
-
-          .listings-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 860px) {
-          .listings-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .desktop-sidebar {
-            display: none;
-          }
-
-          .mobile-filter-btn {
-            display: flex !important;
-          }
-
-          .listings-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 700px) {
-          .listings-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-          }
-        }
-
-        @media (max-width: 500px) {
-          .listings-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-          }
-        }
-
-        @media (max-width: 380px) {
-          .listings-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
-
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#f6f8fa",
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1140px",
-            margin: "0 auto",
-            padding: "20px 16px",
-          }}
-        >
-          {/* Search + mobile filter btn */}
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginBottom: "16px",
-            }}
-          >
+          <div className="relative mt-6 max-w-2xl">
+            <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search by make, model, location..."
@@ -445,148 +296,84 @@ export default function ListingsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              style={{
-                flex: 1,
-                padding: "12px 16px",
-                border: "1px solid #d0d7de",
-                borderRadius: "10px",
-                fontSize: "14px",
-                outline: "none",
-                background: "white",
-                minWidth: 0,
-              }}
+              className="w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-11 text-[15px] text-slate-900 shadow-xl shadow-black/20 outline-none ring-1 ring-white/10 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
             />
-
-            {/* Mobile filter toggle */}
-            <button
-              className="mobile-filter-btn"
-              onClick={() => setShowFilters(!showFilters)}
-              style={{
-                padding: "12px 16px",
-                background: showFilters ? "#0d1117" : "white",
-                border: "1px solid #d0d7de",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                color: showFilters ? "white" : "#0d1117",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                flexShrink: 0,
-                fontFamily: "inherit",
-              }}
-            >
-              Filters
-
-              {activeFilterCount > 0 && (
-                <span
-                  style={{
-                    background: showFilters ? "white" : "#0d1117",
-                    color: showFilters ? "#0d1117" : "white",
-                    borderRadius: "20px",
-                    padding: "1px 6px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+            {search && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
 
-          {/* Mobile filter panel */}
-          {showFilters && (
-            <div
-              style={{
-                background: "white",
-                border: "1px solid #e1e4e8",
-                borderRadius: "12px",
-                padding: "20px",
-                marginBottom: "16px",
-              }}
-              className="mobile-filter-btn"
-            >
-              {filterPanel}
-            </div>
-          )}
-
-          <div className="listings-layout">
-            {/* Desktop sidebar */}
-            <div className="desktop-sidebar">
-              <div
-                style={{
-                  background: "white",
-                  border: "1px solid #e1e4e8",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  position: "sticky",
-                  top: "80px",
+          {/* Quick type switch */}
+          <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {TYPES.map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => {
+                  setType(val);
+                  setPage(1);
                 }}
+                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[13px] font-medium transition ${
+                  type === val
+                    ? "bg-white text-slate-900"
+                    : "bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 hover:bg-white/15"
+                }`}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "20px",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      color: "#0d1117",
-                    }}
-                  >
-                    Filters
-                  </p>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      <div className="mx-auto max-w-[1180px] px-4 py-6 sm:py-8">
+        <div className="grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+          {/* Desktop sidebar */}
+          <aside className="sticky top-20 hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:block">
+            <div className="mb-5 flex items-center justify-between">
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <SlidersHorizontal size={15} strokeWidth={2} />
+                Filters
+              </p>
+              {activeFilterCount > 0 && (
+                <button type="button" onClick={clearFilters} className="text-xs font-medium text-rose-600 hover:text-rose-700">
+                  Clear all
+                </button>
+              )}
+            </div>
+            {filterPanel}
+          </aside>
+
+          {/* Results */}
+          <div className="min-w-0">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-slate-500">
+                <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
+                {pagination.total !== 1 ? "s" : ""} found
+              </p>
+
+              <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-900 shadow-sm lg:hidden"
+                >
+                  <SlidersHorizontal size={15} strokeWidth={2} />
+                  Filters
                   {activeFilterCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      style={{
-                        fontSize: "12px",
-                        color: "#cf222e",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                      }}
-                    >
-                      Clear ({activeFilterCount})
-                    </button>
+                    <span className="rounded-full bg-slate-900 px-1.5 py-px text-[11px] font-bold text-white">{activeFilterCount}</span>
                   )}
-                </div>
-
-                {filterPanel}
-              </div>
-            </div>
-
-            {/* Listings grid */}
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "14px",
-                  flexWrap: "wrap",
-                  gap: "8px",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#57606a",
-                  }}
-                >
-                  <strong style={{ color: "#0d1117" }}>
-                    {pagination.total}
-                  </strong>{" "}
-                  vehicle{pagination.total !== 1 ? "s" : ""} found
-                </p>
+                </button>
 
                 <select
                   value={sort}
@@ -594,205 +381,165 @@ export default function ListingsPage() {
                     setSort(e.target.value);
                     setPage(1);
                   }}
-                  style={{
-                    padding: "7px 12px",
-                    border: "1px solid #d0d7de",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    outline: "none",
-                    background: "white",
-                  }}
+                  aria-label="Sort listings"
+                  className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-slate-900"
                 >
-                  <option value="createdAt">Newest first</option>
-                  <option value="price">Price: low to high</option>
+                  {SORTS.map(([val, label]) => (
+                    <option key={val} value={val}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              {loading ? (
-                <div className="listings-grid">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: "white",
-                        borderRadius: "12px",
-                        border: "1px solid #e1e4e8",
-                        height: "240px",
-                        opacity: 0.5,
-                      }}
-                      className="animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : listings.length === 0 ? (
-                <div
-                  style={{
-                    background: "white",
-                    border: "1px solid #e1e4e8",
-                    borderRadius: "12px",
-                    padding: "60px 24px",
-                    textAlign: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      marginBottom: "12px",
-                      display: "flex",
-                      justifyContent: "center",
-                      color: "#8c959f",
-                    }}
-                  >
-                    <Search size={32} strokeWidth={1.5} />
-                  </div>
-
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      color: "#0d1117",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    No listings found
-                  </p>
-
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#57606a",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    Try adjusting your filters
-                  </p>
-
-                  <button
-                    onClick={clearFilters}
-                    style={{
-                      padding: "8px 20px",
-                      background: "#0d1117",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Clear filters
-                  </button>
-                </div>
-              ) : (
-                <div className="listings-grid">
-                  {listings.map(listing => (
-                    <ListingCard
-                      key={listing._id}
-                      listing={listing}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Pagination */}
-              {pagination.pages > 1 && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "6px",
-                    marginTop: "24px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <button
-                    onClick={() =>
-                      setPage(p => Math.max(1, p - 1))
-                    }
-                    disabled={page === 1}
-                    style={{
-                      padding: "8px 14px",
-                      border: "1px solid #d0d7de",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      cursor:
-                        page === 1 ? "not-allowed" : "pointer",
-                      opacity: page === 1 ? 0.4 : 1,
-                      background: "white",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    ← Prev
-                  </button>
-
-                  {Array.from(
-                    { length: Math.min(pagination.pages, 7) },
-                    (_, i) => {
-                      const p = i + 1;
-
-                      return (
-                        <button
-                          key={p}
-                          onClick={() => setPage(p)}
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            fontSize: "13px",
-                            cursor: "pointer",
-                            border: "1px solid",
-                            borderColor:
-                              p === page
-                                ? "#0d1117"
-                                : "#d0d7de",
-                            background:
-                              p === page
-                                ? "#0d1117"
-                                : "white",
-                            color:
-                              p === page
-                                ? "white"
-                                : "#0d1117",
-                            fontWeight:
-                              p === page ? 700 : 400,
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          {p}
-                        </button>
-                      );
-                    }
-                  )}
-
-                  <button
-                    onClick={() =>
-                      setPage(p =>
-                        Math.min(pagination.pages, p + 1)
-                      )
-                    }
-                    disabled={page === pagination.pages}
-                    style={{
-                      padding: "8px 14px",
-                      border: "1px solid #d0d7de",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      cursor:
-                        page === pagination.pages
-                          ? "not-allowed"
-                          : "pointer",
-                      opacity:
-                        page === pagination.pages ? 0.4 : 1,
-                      background: "white",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Next →
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Active filter chips */}
+            {activeChips.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {activeChips.map(chip => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => {
+                      chip.clear();
+                      setPage(1);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white py-1 pl-3 pr-2 text-xs font-medium capitalize text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:ring-slate-400"
+                  >
+                    {chip.label}
+                    <X size={12} strokeWidth={2.5} className="text-slate-400" />
+                  </button>
+                ))}
+                <button type="button" onClick={clearFilters} className="px-1 text-xs font-medium text-rose-600 hover:underline">
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-4 md:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+                    <div className="aspect-[4/3] animate-pulse bg-slate-200/70" />
+                    <div className="space-y-2.5 p-4">
+                      <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-200/70" />
+                      <div className="h-3.5 w-4/5 animate-pulse rounded bg-slate-200/70" />
+                      <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200/70" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <Search size={24} strokeWidth={1.75} />
+                </div>
+                <p className="text-base font-semibold text-slate-900">No listings found</p>
+                <p className="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+                  Try adjusting your filters or searching for something else.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-4 md:grid-cols-3">
+                {listings.map(listing => (
+                  <ListingCard key={listing._id} listing={listing} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => goToPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  aria-label="Previous page"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {pageWindow(page, pagination.pages).map((p, i) =>
+                  p === "…" ? (
+                    <span key={`gap-${i}`} className="px-1 text-sm text-slate-400">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => goToPage(p)}
+                      aria-current={p === page ? "page" : undefined}
+                      className={`h-9 min-w-9 rounded-xl px-2 text-sm font-medium transition ${
+                        p === page
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-slate-400"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => goToPage(Math.min(pagination.pages, page + 1))}
+                  disabled={page === pagination.pages}
+                  aria-label="Next page"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </nav>
+            )}
           </div>
         </div>
       </div>
-    </>
+
+      {/* Mobile filter sheet */}
+      {showFilters && (
+        <div className="fixed inset-0 z-[150] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={() => setShowFilters(false)} />
+          <div className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-3xl bg-white shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[380px] sm:rounded-none">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <p className="text-base font-bold text-slate-900">Filters</p>
+              <button
+                type="button"
+                aria-label="Close filters"
+                onClick={() => setShowFilters(false)}
+                className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-5">{filterPanel}</div>
+            <div className="flex gap-3 border-t border-slate-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-700"
+              >
+                Clear all
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                className="flex-[2] rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white"
+              >
+                {loading ? "Updating…" : `Show ${pagination.total.toLocaleString()} result${pagination.total !== 1 ? "s" : ""}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

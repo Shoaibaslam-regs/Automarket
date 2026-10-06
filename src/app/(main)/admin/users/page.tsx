@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2 } from "lucide-react";
+import { ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 
 type User = {
   _id: string;
@@ -16,11 +17,12 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => { fetchUsers(); }, []);
 
-async function fetchUsers() {
+  async function fetchUsers() {
     const res = await fetch("/api/admin/users");
     const data = await res.json();
     setUsers(data.users || []);
@@ -46,73 +48,91 @@ async function fetchUsers() {
     fetchUsers();
   }
 
+  const q = search.toLowerCase();
   const filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+    (roleFilter ? u.role === roleFilter : true)
   );
+  const adminCount = users.filter(u => u.role === "ADMIN").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: "32px 24px" }}>
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          <div>
-            <a href="/admin" style={{ fontSize: "13px", color: "#57606a", textDecoration: "none" }}>← Admin</a>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0d1117", marginTop: "8px" }}>Users</h1>
-          </div>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search users..."
-            style={{ padding: "8px 14px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", width: "240px" }}
-          />
-        </div>
+    <>
+      <PageHeader
+        title="Users"
+        description={loading ? "Loading…" : `${users.length.toLocaleString()} registered · ${adminCount} admin${adminCount !== 1 ? "s" : ""}`}
+        actions={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Search name or email…" />
+            <SelectField value={roleFilter} onChange={setRoleFilter} options={["USER", "ADMIN"]} allLabel="All roles" ariaLabel="Filter by role" />
+          </>
+        }
+      />
 
-        <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid #e1e4e8", background: "#f6f8fa", display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr", gap: "12px" }}>
-            {["Name", "Email", "Phone", "Role", "Actions"].map(h => (
-              <p key={h} style={{ fontSize: "11px", fontWeight: 600, color: "#57606a", textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</p>
-            ))}
-          </div>
-
-          {loading ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>Loading...</div>
-          ) : filtered.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>No users found</div>
-          ) : filtered.map(user => (
-            <div key={user._id} style={{ padding: "14px 20px", borderBottom: "1px solid #f6f8fa", display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr", gap: "12px", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, flexShrink: 0 }}>
-                  {user.name?.[0]?.toUpperCase() || "?"}
-                </div>
-                <p style={{ fontSize: "13px", fontWeight: 500, color: "#0d1117" }}>{user.name || "No name"}</p>
-              </div>
-              <p style={{ fontSize: "12px", color: "#57606a" }}>{user.email}</p>
-              <p style={{ fontSize: "12px", color: "#57606a" }}>{user.phone || "—"}</p>
-              <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "20px", background: user.role === "ADMIN" ? "#fff8c5" : "#f6f8fa", color: user.role === "ADMIN" ? "#7d4e00" : "#57606a", width: "fit-content" }}>
-                {user.role}
-              </span>
-              <div style={{ display: "flex", gap: "6px" }}>
+      <DataTable
+        rows={filtered}
+        rowKey={u => u._id}
+        loading={loading}
+        empty="No users match your search"
+        cols="md:grid-cols-[minmax(0,2.6fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)_172px]"
+        columns={[
+          {
+            header: "User",
+            cell: user => <UserCell name={user.name} email={user.email} />,
+          },
+          {
+            header: "Phone",
+            cell: user =>
+              user.phone ? (
+                <p className="truncate text-sm tabular-nums text-slate-700">{user.phone}</p>
+              ) : (
+                <p className="text-sm text-slate-300">—</p>
+              ),
+          },
+          {
+            header: "Joined",
+            cell: user => (
+              <p className="text-sm tabular-nums text-slate-600">
+                {new Date(user.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            ),
+          },
+          { header: "Role", cell: user => <StatusBadge status={user.role} /> },
+          {
+            header: "Actions",
+            full: true,
+            hideLabel: true,
+            align: "right",
+            cell: user => (
+              <div className="flex gap-1.5 md:justify-end">
                 {user.role !== "ADMIN" ? (
-                  <button onClick={() => updateRole(user._id, "ADMIN")} disabled={updating === user._id}
-                    style={{ padding: "4px 10px", background: "#fff8c5", border: "1px solid #e3b341", borderRadius: "6px", fontSize: "11px", fontWeight: 600, color: "#7d4e00", cursor: "pointer" }}>
-                    Make admin
+                  <button onClick={() => updateRole(user._id, "ADMIN")} disabled={updating === user._id} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`}>
+                    <ShieldCheck size={13} /> Make admin
                   </button>
                 ) : (
-                  <button onClick={() => updateRole(user._id, "USER")} disabled={updating === user._id}
-                    style={{ padding: "4px 10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "6px", fontSize: "11px", color: "#57606a", cursor: "pointer" }}>
-                    Remove admin
+                  <button onClick={() => updateRole(user._id, "USER")} disabled={updating === user._id} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`}>
+                    <ShieldOff size={13} /> Remove admin
                   </button>
                 )}
-                <button onClick={() => deleteUser(user._id)} disabled={updating === user._id}
-                  style={{ padding: "4px 8px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", fontSize: "11px", color: "#cf222e", cursor: "pointer" }}>
-                  <Trash2 size={12} strokeWidth={1.75} />
+                <button
+                  onClick={() => deleteUser(user._id)}
+                  disabled={updating === user._id}
+                  aria-label="Delete user"
+                  title="Delete user"
+                  className={`${btn.base} ${btn.danger}`}
+                >
+                  <Trash2 size={13} />
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ),
+          },
+        ]}
+      />
 
-        <p style={{ fontSize: "12px", color: "#8c959f", marginTop: "12px" }}>{filtered.length} user{filtered.length !== 1 ? "s" : ""}</p>
-      </div>
-    </div>
+      {!loading && (
+        <p className="mt-3 text-xs text-slate-400">
+          Showing {filtered.length} of {users.length} user{users.length !== 1 ? "s" : ""}
+        </p>
+      )}
+    </>
   );
 }

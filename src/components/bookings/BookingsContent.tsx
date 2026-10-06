@@ -211,7 +211,7 @@ export default function BookingsContent() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif", padding: "32px 24px" }}>
+    <div className="adm-page">
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
         {deleteTarget && <ConfirmPopup message="This booking will be removed from your view." onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} loading={deleting} />}
@@ -237,14 +237,14 @@ export default function BookingsContent() {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <div className="adm-header">
           <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0d1117" }}>Bookings</h1>
           <Link href="/listings?type=RENT" style={{ padding: "8px 16px", background: "#0d1117", color: "white", borderRadius: "8px", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
             Browse rentals
           </Link>
         </div>
 
-        <div style={{ display: "flex", gap: "4px", background: "white", border: "1px solid #e1e4e8", borderRadius: "10px", padding: "4px", marginBottom: "20px", width: "fit-content" }}>
+        <div className="adm-tabs">
           <button onClick={() => { setTab("mine"); markAsSeen(); }}
             style={{ padding: "7px 16px", borderRadius: "7px", border: "none", fontSize: "13px", fontWeight: 500, cursor: "pointer", background: tab === "mine" ? "#0d1117" : "transparent", color: tab === "mine" ? "white" : "#57606a", display: "flex", alignItems: "center", gap: "6px" }}>
             My bookings
@@ -275,23 +275,23 @@ export default function BookingsContent() {
               const listing = booking.rentalId?.listingId as ListingInfo | undefined;
               const listingId = listing?._id;
               return (
-                <div key={booking._id} style={{ background: "white", border: booking.status === "PENDING" && tab === "received" ? "1px solid #e3b341" : booking.status === "CONFIRMED" && tab === "mine" ? "1px solid #56d364" : "1px solid #e1e4e8", borderRadius: "12px", padding: "20px" }}>
+                <div key={booking._id} className="bk-card" style={{ background: "white", border: booking.status === "PENDING" && tab === "received" ? "1px solid #e3b341" : booking.status === "CONFIRMED" && tab === "mine" ? "1px solid #56d364" : "1px solid #e1e4e8", borderRadius: "12px" }}>
                   <StatusBanner status={booking.status} tab={tab} />
 
                   {listing && (
-                    <div style={{ display: "flex", gap: "12px", marginBottom: "16px", padding: "12px", background: "#f6f8fa", borderRadius: "8px", alignItems: "center" }}>
+                    <div className="bk-listing" style={{ display: "flex", gap: "12px", marginBottom: "16px", padding: "12px", background: "#f6f8fa", borderRadius: "8px", alignItems: "center" }}>
                       <div style={{ width: "64px", height: "48px", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#e1e4e8" }}>
                         {listing.images?.[0] ? <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#8c959f" }}>No img</div>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
-                        <p style={{ fontSize: "12px", color: "#57606a" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
+                        <p style={{ fontSize: "12px", color: "#57606a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
                       </div>
                       {tab === "mine" && listingId && (
-                        <Link href={`/listings/${listingId}`} style={{ padding: "6px 12px", background: "white", border: "1px solid #d0d7de", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "#0d1117", textDecoration: "none", flexShrink: 0 }}>View listing →</Link>
+                        <Link className="bk-listing-actions" href={`/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "white", border: "1px solid #d0d7de", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "#0d1117", textDecoration: "none", flexShrink: 0 }}>View listing →</Link>
                       )}
                       {tab === "received" && booking.renterId && (
-                        <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                        <div className="bk-listing-actions" style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                           {booking.renterId.phone && (
                             <>
                               <a href={`tel:${booking.renterId.phone}`} style={{ padding: "6px 12px", background: "#0d1117", color: "white", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Call</a>
@@ -304,9 +304,9 @@ export default function BookingsContent() {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", gap: "12px" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px 10px", marginBottom: "6px", flexWrap: "wrap" }}>
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117" }}>{fmt(booking.startDate)} → {fmt(booking.endDate)}</span>
                         <span style={{ fontSize: "11px", color: "#57606a" }}>({days} day{days !== 1 ? "s" : ""})</span>
                       </div>
@@ -331,10 +331,10 @@ export default function BookingsContent() {
                         </div>
                       )}
                     </div>
-                    <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", background: statusStyle.bg, color: statusStyle.color, flexShrink: 0, marginLeft: "12px" }}>{booking.status}</span>
+                    <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", background: statusStyle.bg, color: statusStyle.color, flexShrink: 0 }}>{booking.status}</span>
                   </div>
 
-                  <div style={{ display: "flex", gap: "20px", marginBottom: "14px", padding: "12px 16px", background: "#f6f8fa", borderRadius: "8px" }}>
+                  <div className="bk-amounts" style={{ display: "flex", gap: "20px", marginBottom: "14px", padding: "12px 16px", background: "#f6f8fa", borderRadius: "8px" }}>
                     <div><p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "2px" }}>Rental amount</p><p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117" }}>PKR {booking.totalAmount.toLocaleString()}</p></div>
                     <div style={{ width: "1px", background: "#e1e4e8" }} />
                     <div><p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "2px" }}>Deposit</p><p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117" }}>PKR {booking.deposit.toLocaleString()}</p></div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
+import { splitVehicleUploads } from "@/lib/vehicleUploads";
 import { Bot, Wallet } from "lucide-react";
 
 interface Report {
@@ -219,11 +220,14 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
 
         <UploadDropzone
           endpoint="vehicleImages"
-          onUploadBegin={() => setUploading(true)}
+          onUploadBegin={() => { setUploading(true); setError(""); }}
           onClientUploadComplete={(res) => {
             setUploading(false);
-            const newUrls = res.map((r) => r.ufsUrl || r.url);
-            setImages((prev) => [...prev, ...newUrls]);
+            const { accepted, rejected } = splitVehicleUploads(res);
+            if (accepted.length) setImages((prev) => [...prev, ...accepted]);
+            if (rejected.length) {
+              setError(`Only car or bike photos are allowed. Rejected: ${rejected.map(r => `${r.name} (${r.reason})`).join("; ")}`);
+            }
           }}
           onUploadError={(err) => { setUploading(false); setError(err.message); }}
           appearance={{
@@ -233,7 +237,7 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
             button: "bg-gray-900 text-white text-sm px-4 py-2 rounded-lg",
           }}
           content={{
-            label: uploading ? "Uploading..." : "Drop more photos here or click to upload",
+            label: uploading ? "Uploading & checking photos with AI…" : "Drop more photos here or click to upload",
             allowedContent: "Images up to 4MB each",
           }}
         />
