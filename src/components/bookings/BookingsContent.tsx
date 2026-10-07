@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -283,8 +284,8 @@ export default function BookingsContent() {
 
                   {listing && (
                     <div className="bk-listing" style={{ display: "flex", gap: "12px", marginBottom: "16px", padding: "12px", background: "#f6f8fa", borderRadius: "8px", alignItems: "center" }}>
-                      <div style={{ width: "64px", height: "48px", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#e1e4e8" }}>
-                        {listing.images?.[0] ? <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#8c959f" }}>No img</div>}
+                      <div style={{ position: "relative", width: "64px", height: "48px", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "#e1e4e8" }}>
+                        {listing.images?.[0] ? <Image src={listing.images[0]} alt="" fill sizes="64px" className="object-cover" /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#8c959f" }}>No img</div>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>

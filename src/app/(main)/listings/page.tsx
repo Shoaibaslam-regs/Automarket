@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown, Bell, BellRing } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import Select from "@/components/ui/Select";
 import { IListing } from "@/models/Listing";
+import { formatLakh } from "@/lib/format";
+import {
+  CONDITIONS, FUEL_TYPES, TRANSMISSIONS, filtersToSearchParams, hasFilters, parseFilters, type ListingFilters,
+} from "@/lib/listingFilters";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford"];
-const CONDITIONS = ["NEW", "EXCELLENT", "GOOD", "FAIR", "POOR"];
 const TYPES = [
   ["", "All"],
   ["SALE", "For Sale"],
@@ -18,11 +24,23 @@ const SORTS = [
   ["createdAt", "Newest first"],
   ["price_asc", "Price: low to high"],
   ["price_desc", "Price: high to low"],
+  ["year_desc", "Model year: newest"],
+  ["mileage_asc", "Mileage: lowest"],
 ] as const;
 const PAGE_SIZE = 12;
 
 const MAKE_OPTIONS = [{ value: "", label: "All makes" }, ...MAKES.map(m => ({ value: m, label: m }))];
 const SORT_OPTIONS = SORTS.map(([value, label]) => ({ value, label }));
+
+const THIS_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = [
+  { value: "", label: "Any" },
+  ...Array.from({ length: THIS_YEAR - 1979 }, (_, i) => String(THIS_YEAR - i)).map(y => ({ value: y, label: y })),
+];
+const MILEAGE_OPTIONS = [
+  { value: "", label: "Any mileage" },
+  ...[10000, 25000, 50000, 75000, 100000, 150000].map(km => ({ value: String(km), label: `Up to ${km.toLocaleString("en-PK")} km` })),
+];
 
 type ListingWithId = IListing & { _id: string };
 
@@ -62,23 +80,32 @@ export default function ListingsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const initial = use(searchParams);
-  const initialType = typeof initial.type === "string" && ["SALE", "RENT", "BOTH"].includes(initial.type) ? initial.type : "";
-  const initialSearch = typeof initial.search === "string" ? initial.search : "";
-  const initialMake = typeof initial.make === "string" ? initial.make : "";
-  const initialLocation = typeof initial.location === "string" ? initial.location : "";
+  const initialParams = use(searchParams);
+  // Every filter can come from the URL, so searches can be shared, bookmarked and saved
+  const initial = parseFilters(initialParams);
+  const str = (v: string | number | undefined) => (v === undefined ? "" : String(v));
+  const initialSort = typeof initialParams.sort === "string" && SORTS.some(([v]) => v === initialParams.sort) ? initialParams.sort : "createdAt";
+  const initialPage = Math.max(1, Number(initialParams.page) || 1);
+  const router = useRouter();
+  const { status: authStatus } = useSession();
 
   const [listings, setListings] = useState<ListingWithId[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState(initialSearch);
-  const [type, setType] = useState<string>(initialType);
-  const [make, setMake] = useState(initialMake);
-  const [condition, setCondition] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [location, setLocation] = useState(initialLocation);
-  const [sort, setSort] = useState("createdAt");
+  const [page, setPage] = useState(initialPage);
+  const [search, setSearch] = useState(str(initial.search));
+  const [type, setType] = useState<string>(str(initial.type));
+  const [make, setMake] = useState(str(initial.make));
+  const [condition, setCondition] = useState(str(initial.condition));
+  const [minPrice, setMinPrice] = useState(str(initial.minPrice));
+  const [maxPrice, setMaxPrice] = useState(str(initial.maxPrice));
+  const [location, setLocation] = useState(str(initial.location));
+  const [minYear, setMinYear] = useState(str(initial.minYear));
+  const [maxYear, setMaxYear] = useState(str(initial.maxYear));
+  const [maxMileage, setMaxMileage] = useState(str(initial.maxMileage));
+  const [fuelType, setFuelType] = useState(str(initial.fuelType));
+  const [transmission, setTransmission] = useState(str(initial.transmission));
+  const [sort, setSort] = useState<string>(initialSort);
+  const [saveState, setSaveState] = useState<{ query: string; status: "saving" | "saved" | "error"; message?: string } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [closingFilters, setClosingFilters] = useState(false);
 
@@ -97,18 +124,47 @@ export default function ListingsPage({
   const debouncedMaxPrice = useDebounce(maxPrice);
   const debouncedLocation = useDebounce(location);
 
-  const params = new URLSearchParams();
-  params.set("page", page.toString());
+  // parseFilters drops empty/invalid values, so this is exactly what the API will apply
+  const filters: ListingFilters = parseFilters({
+    search: debouncedSearch, type, make, condition, minPrice: debouncedMinPrice, maxPrice: debouncedMaxPrice,
+    location: debouncedLocation, minYear, maxYear, maxMileage, fuelType, transmission,
+  });
+  const filterQuery = filtersToSearchParams(filters).toString();
+  const params = filtersToSearchParams(filters);
+  if (sort !== "createdAt") params.set("sort", sort);
+  if (page > 1) params.set("page", String(page));
+  const urlQuery = params.toString();
   params.set("limit", String(PAGE_SIZE));
-  if (debouncedSearch) params.set("search", debouncedSearch);
-  if (type) params.set("type", type);
-  if (make) params.set("make", make);
-  if (condition) params.set("condition", condition);
-  if (debouncedMinPrice) params.set("minPrice", debouncedMinPrice);
-  if (debouncedMaxPrice) params.set("maxPrice", debouncedMaxPrice);
-  if (debouncedLocation) params.set("location", debouncedLocation);
-  if (sort) params.set("sort", sort);
+  if (!params.has("page")) params.set("page", "1");
   const query = params.toString();
+
+  // Mirror the current search in the address bar without a navigation
+  useEffect(() => {
+    const next = urlQuery ? `/listings?${urlQuery}` : "/listings";
+    if (window.location.pathname + window.location.search !== next) window.history.replaceState(null, "", next);
+  }, [urlQuery]);
+
+  const saveStatus = saveState?.query === filterQuery ? saveState : null;
+
+  async function saveSearch() {
+    if (authStatus !== "authenticated") {
+      router.push("/login");
+      return;
+    }
+    setSaveState({ query: filterQuery, status: "saving" });
+    try {
+      const res = await fetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filters }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't save this search");
+      setSaveState({ query: filterQuery, status: "saved" });
+    } catch (err) {
+      setSaveState({ query: filterQuery, status: "error", message: err instanceof Error ? err.message : "Couldn't save this search" });
+    }
+  }
 
   // Loading is derived: true until the response for the current query has arrived
   const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
@@ -156,6 +212,11 @@ export default function ListingsPage({
     setMinPrice("");
     setMaxPrice("");
     setLocation("");
+    setMinYear("");
+    setMaxYear("");
+    setMaxMileage("");
+    setFuelType("");
+    setTransmission("");
     setSort("createdAt");
     setPage(1);
   }
@@ -164,9 +225,14 @@ export default function ListingsPage({
     type && { label: TYPES.find(([v]) => v === type)?.[1] ?? type, clear: () => setType("") },
     make && { label: make, clear: () => setMake("") },
     condition && { label: condition.toLowerCase(), clear: () => setCondition("") },
-    minPrice && { label: `Min PKR ${Number(minPrice).toLocaleString()}`, clear: () => setMinPrice("") },
-    maxPrice && { label: `Max PKR ${Number(maxPrice).toLocaleString()}`, clear: () => setMaxPrice("") },
+    minPrice && { label: `Min PKR ${formatLakh(Number(minPrice))}`, clear: () => setMinPrice("") },
+    maxPrice && { label: `Max PKR ${formatLakh(Number(maxPrice))}`, clear: () => setMaxPrice("") },
     location && { label: location, clear: () => setLocation("") },
+    minYear && { label: `From ${minYear}`, clear: () => setMinYear("") },
+    maxYear && { label: `Up to ${maxYear}`, clear: () => setMaxYear("") },
+    maxMileage && { label: `≤ ${Number(maxMileage).toLocaleString("en-PK")} km`, clear: () => setMaxMileage("") },
+    fuelType && { label: fuelType, clear: () => setFuelType("") },
+    transmission && { label: transmission, clear: () => setTransmission("") },
   ].filter(Boolean) as { label: string; clear: () => void }[];
   const activeFilterCount = activeChips.length;
 
@@ -260,6 +326,65 @@ export default function ListingsPage({
             }}
             className={`${fieldClass} min-w-0`}
           />
+        </div>
+        {(Number(minPrice) >= 1e5 || Number(maxPrice) >= 1e5) && (
+          <p className="mt-1.5 text-[11px] text-slate-500">
+            {minPrice ? formatLakh(Number(minPrice)) : "Any"} – {maxPrice ? formatLakh(Number(maxPrice)) : "Any"}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <FilterLabel>Model year</FilterLabel>
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <Select value={minYear} onChange={v => { setMinYear(v); setPage(1); }} options={YEAR_OPTIONS} ariaLabel="Minimum model year" />
+          </div>
+          <span className="text-slate-300">–</span>
+          <div className="min-w-0 flex-1">
+            <Select value={maxYear} onChange={v => { setMaxYear(v); setPage(1); }} options={YEAR_OPTIONS} ariaLabel="Maximum model year" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <FilterLabel>Mileage</FilterLabel>
+        <Select value={maxMileage} onChange={v => { setMaxMileage(v); setPage(1); }} options={MILEAGE_OPTIONS} ariaLabel="Maximum mileage" />
+      </div>
+
+      <div>
+        <FilterLabel>Fuel type</FilterLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {FUEL_TYPES.map(f => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => { setFuelType(fuelType === f ? "" : f); setPage(1); }}
+              className={`bl-press rounded-full px-3 py-1.5 text-xs font-medium ${
+                fuelType === f ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:ring-slate-400"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <FilterLabel>Transmission</FilterLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {TRANSMISSIONS.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { setTransmission(transmission === t ? "" : t); setPage(1); }}
+              className={`bl-press rounded-full px-3 py-1.5 text-xs font-medium ${
+                transmission === t ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:ring-slate-400"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -365,10 +490,28 @@ export default function ListingsPage({
           {/* Results */}
           <div className="min-w-0">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-4">
-              <p className="text-sm text-slate-500">
-                <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
-                {pagination.total !== 1 ? "s" : ""} found
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-slate-500">
+                  <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
+                  {pagination.total !== 1 ? "s" : ""} found
+                </p>
+                {hasFilters(filters) && (
+                  <button
+                    type="button"
+                    onClick={saveSearch}
+                    disabled={saveStatus?.status === "saving" || saveStatus?.status === "saved"}
+                    title="Get an email when new vehicles match this search"
+                    className={`bl-pop inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      saveStatus?.status === "saved"
+                        ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200"
+                        : "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
+                    }`}
+                  >
+                    {saveStatus?.status === "saved" ? <BellRing size={13} strokeWidth={2.2} /> : <Bell size={13} strokeWidth={2.2} />}
+                    {saveStatus?.status === "saving" ? "Saving…" : saveStatus?.status === "saved" ? "Alert on" : "Save search"}
+                  </button>
+                )}
+              </div>
 
               <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
                 <button
@@ -400,6 +543,18 @@ export default function ListingsPage({
                 </div>
               </div>
             </div>
+
+            {saveStatus?.status === "error" && (
+              <p role="alert" className="mb-4 rounded-xl bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
+                {saveStatus.message}
+              </p>
+            )}
+            {saveStatus?.status === "saved" && (
+              <p role="status" className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                Search saved. We&apos;ll email you when new vehicles match it. Manage alerts in{" "}
+                <Link href="/saved" className="font-semibold underline">Saved</Link>.
+              </p>
+            )}
 
             {/* Active filter chips */}
             {activeChips.length > 0 && (

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Car, KeyRound } from "lucide-react";
@@ -124,9 +125,9 @@ export default function BusinessRentalsPage() {
                 <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", flexWrap: "wrap" }}>
 
                   {/* Vehicle thumbnail */}
-                  <div style={{ width: "72px", height: "54px", borderRadius: "8px", background: "#f6f8fa", overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ position: "relative", width: "72px", height: "54px", borderRadius: "8px", background: "#f6f8fa", overflow: "hidden", flexShrink: 0 }}>
                     {listing?.images?.[0] ? (
-                      <img src={listing.images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <Image src={listing.images[0]} alt="" fill sizes="72px" className="object-cover" />
                     ) : (
                       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Car size={16} strokeWidth={1.5} /></div>
                     )}

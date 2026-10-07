@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { requireAuth } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
@@ -60,10 +61,9 @@ export default async function DashboardPage() {
               {listings.map((listing) => (
                 <div key={listing._id.toString()}
                   className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-3 px-4 sm:px-6 py-4">
-                  <div className="w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                  <div className="relative w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     {listing.images?.[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={listing.images[0]} alt="" className="w-full h-full object-cover" />
+                      <Image src={listing.images[0]} alt="" fill sizes="80px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">No img</div>
                     )}

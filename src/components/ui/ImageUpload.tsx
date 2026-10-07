@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
 import { splitVehicleUploads, type RejectedUpload } from "@/lib/vehicleUploads";
@@ -24,8 +25,7 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
           {images.map((url, i) => (
             <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid #e1e4e8" }}>
-              <img src={url} alt={`Vehicle image ${i + 1}`}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Image src={url} alt={`Vehicle image ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 200px" className="object-cover" />
               {i === 0 && (
                 <span style={{ position: "absolute", top: "6px", left: "6px", background: "#0d1117", color: "white", fontSize: "10px", padding: "2px 7px", borderRadius: "20px", fontWeight: 600 }}>
                   Main

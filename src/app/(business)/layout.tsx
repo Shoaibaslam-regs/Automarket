@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import BusinessSidebar from "@/components/business/BusinessSidebar";
 
 export const metadata: Metadata = {
-  title: "AutoMarket Business",
+  title: { default: "AutoMarket Business", template: "%s — AutoMarket Business" },
   description: "Manage your automobile business",
 };
 

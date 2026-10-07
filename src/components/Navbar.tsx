@@ -11,7 +11,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
-import { Calendar, Car, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
+import { Calendar, Car, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -245,6 +245,7 @@ export default function Navbar() {
                       { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
                       { href: "/bookings", icon: Calendar, label: "Bookings" },
                       { href: "/messages", icon: MessageSquare, label: "Messages" },
+                      { href: "/saved", icon: Heart, label: "Saved" },
                       { href: "/profile", icon: Settings, label: "Profile & settings" },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="dropdown-item">
@@ -365,6 +366,7 @@ export default function Navbar() {
                       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
                       { href: "/bookings", label: "My bookings", icon: Calendar },
                       { href: "/messages", label: "Messages", icon: MessageSquare },
+                      { href: "/saved", label: "Saved", icon: Heart },
                       { href: "/profile", label: "Profile & settings", icon: Settings },
                     ].map(item => (
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}

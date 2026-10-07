@@ -5,15 +5,26 @@ import { Geist } from "next/font/google";
 import "@uploadthing/react/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AutoMarket — Buy, Sell & Rent Vehicles",
-  description: "Pakistan's premier automobile marketplace",
-   icons: {
-    icon: "/3+Lines+02.webp"
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "AutoMarket — Buy, Sell & Rent Vehicles",
+    template: "%s — AutoMarket",
   },
+  description: "Pakistan's premier automobile marketplace",
+  icons: {
+    icon: "/3+Lines+02.webp",
+  },
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en_PK",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

@@ -1,32 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
-
-type ListingQuery = {
-  status: string;
-  type?: string;
-  make?: RegExp;
-  condition?: string;
-  location?: RegExp;
-  price?: { $gte?: number; $lte?: number };
-  $or?: Array<{ [key: string]: RegExp }>;
-};
+import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
+import { notifySavedSearches } from "@/lib/savedSearchAlerts";
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
-    const type = searchParams.get("type");
-    const make = searchParams.get("make");
-    const minPrice = searchParams.get("minPrice");
-    const maxPrice = searchParams.get("maxPrice");
-    const condition = searchParams.get("condition");
-    const location = searchParams.get("location");
-    const search = searchParams.get("search");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    const limit = Math.min(48, Math.max(1, parseInt(searchParams.get("limit") || "12") || 12));
     const sort = searchParams.get("sort") || "createdAt";
 
     const SORTS: Record<string, Record<string, 1 | -1>> = {
@@ -34,31 +19,14 @@ export async function GET(req: NextRequest) {
       price_asc: { price: 1 },
       price_desc: { price: -1 },
       price: { price: -1 },
+      year_desc: { year: -1 },
+      mileage_asc: { mileage: 1 },
     };
     const sortOrder = SORTS[sort] ?? SORTS.createdAt;
 
-    // Escape user input so characters like "(" or "+" don't throw on RegExp construction
-    const rx = (v: string) => new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-
-    const query: ListingQuery = { status: "ACTIVE" };
-
-    if (type) query.type = type;
-    if (make) query.make = rx(make);
-    if (condition) query.condition = condition;
-    if (location) query.location = rx(location);
-    if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
-    }
-    if (search) {
-      query.$or = [
-        { title: rx(search) },
-        { make: rx(search) },
-        { model: rx(search) },
-        { location: rx(search) },
-      ];
-    }
+    const query = buildListingQuery(parseFilters(searchParams));
+    // Listings without a mileage would otherwise sort first as "lowest"
+    if (sort === "mileage_asc" && !query.mileage) query.mileage = { $ne: null };
 
     const skip = (page - 1) * limit;
     const total = await Listing.countDocuments(query);
@@ -148,6 +116,9 @@ export async function POST(req: NextRequest) {
         ownerId: session.user.id,
       });
     }
+
+    // Email users whose saved searches match, without delaying the seller's response
+    after(() => notifySavedSearches(listing.toObject()).catch(err => console.error("Saved search alerts failed:", err)));
 
     return NextResponse.json({ listing }, { status: 201 });
   } catch (error) {

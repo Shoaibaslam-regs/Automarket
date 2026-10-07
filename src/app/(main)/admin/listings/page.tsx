@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ExternalLink, ImageOff, Star, Trash2 } from "lucide-react";
@@ -100,8 +101,7 @@ export default function AdminListingsPage() {
             >
               <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
                 {listing.images?.[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={listing.images[0]} alt="" className="h-full w-full object-cover" />
+                  <Image src={listing.images[0]} alt="" fill sizes="80px" className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-slate-300">
                     <ImageOff size={18} />

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
@@ -61,7 +62,7 @@ export default async function BookingPage({
               <div className="flex gap-3 p-3 lg:block lg:p-0">
                 <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 lg:h-auto lg:w-full lg:rounded-none lg:aspect-[16/10]">
                   {listing.images?.[0] ? (
-                    <img src={listing.images[0]} alt={listing.title} className="h-full w-full object-cover" />
+                    <Image src={listing.images[0]} alt={listing.title} fill priority sizes="(max-width: 1024px) 96px, 340px" className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-400"><ImageOff size={20} strokeWidth={1.5} /></div>
                   )}

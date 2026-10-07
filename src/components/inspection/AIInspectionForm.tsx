@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
 import { splitVehicleUploads } from "@/lib/vehicleUploads";
@@ -204,7 +205,7 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
             {images.map((url, i) => (
               <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid #e1e4e8" }}>
-                <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <Image src={url} alt="" fill sizes="(max-width: 640px) 25vw, 160px" className="object-cover" />
                 <button
                   onClick={() => setImages(images.filter((_, j) => j !== i))}
                   style={{ position: "absolute", top: "4px", right: "4px", width: "20px", height: "20px", background: "#cf222e", color: "white", border: "none", borderRadius: "50%", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

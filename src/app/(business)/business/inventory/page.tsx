@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Car, LayoutGrid, List, MapPin, Plus, Search, Trash2 } from "lucide-react";
@@ -178,7 +179,7 @@ export default function InventoryPage() {
               <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[#e1e4e8] bg-white transition hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[#f6f8fa]">
                   {v.images?.[0] ? (
-                    <img src={v.images[0]} alt="" className="h-full w-full object-cover" />
+                    <Image src={v.images[0]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-[#8c959f]"><Car size={25} strokeWidth={1.5} /></div>
                   )}
@@ -210,9 +211,9 @@ export default function InventoryPage() {
           <div className="overflow-hidden rounded-2xl border border-[#e1e4e8] bg-white">
             {filtered.map((v, i) => (
               <div key={v._id} className={`flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[#f0f2f4]" : ""}`}>
-                <div className="h-11 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[#f6f8fa] sm:w-16">
+                <div className="relative h-11 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[#f6f8fa] sm:w-16">
                   {v.images?.[0]
-                    ? <img src={v.images[0]} alt="" className="h-full w-full object-cover" />
+                    ? <Image src={v.images[0]} alt="" fill sizes="64px" className="object-cover" />
                     : <div className="flex h-full w-full items-center justify-center text-[#8c959f]"><Car size={14} strokeWidth={1.5} /></div>}
                 </div>
                 <div className="min-w-0 flex-1">

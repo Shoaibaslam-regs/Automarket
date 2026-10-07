@@ -729,18 +729,19 @@ For bookings, using `deletedByOwner` and `deletedByRenter` flags instead of hard
 | AI Inspection quota | Gemini free tier has 0 quota in some regions | Demo report fallback |
 | Pusher free tier | 200k messages/day limit | Polling fallback every 3s |
 | No payment processing | Phase 6 was skipped | Cash on delivery / in-person |
-| No reviews system | Phase 10 not yet built | Planned |
 | Email delivery | Gmail SMTP may be blocked | Use SendGrid SMTP |
 | Slow filesystem | Project on network drive causes slow builds | Move to local SSD |
-| Image optimization | `<img>` tags used in some places instead of Next.js `<Image>` | Minor performance impact |
 
 ---
 
 ## 14. Future Improvements
 
 ### Short Term
-- [ ] **Phase 10** — Reviews & ratings for sellers and rentals
-- [ ] **Favourites/Wishlist** — save listings to view later
+- [x] **Saved searches & email alerts** — save a filtered search, get emailed when a matching listing is posted
+- [x] **Compare vehicles** — pick up to 3 listings and compare them side by side (`/compare`)
+- [x] **SEO** — per-listing titles and share previews, structured data, `sitemap.xml`, `robots.txt`
+- [x] **Phase 10** — Reviews & ratings for sellers (only users who messaged the seller or booked their rental can review)
+- [x] **Favourites/Wishlist** — save listings to view later (`/saved`)
 - [ ] **Price history** — track how listing prices change over time
 - [ ] **Verified seller badge** — admin can verify trusted sellers
 - [ ] **Push notifications** — browser push for booking updates
@@ -748,7 +749,7 @@ For bookings, using `deletedByOwner` and `deletedByRenter` flags instead of hard
 ### Medium Term
 - [ ] **Stripe integration** — online payments with escrow for purchases
 - [ ] **Vehicle history report** — integrate with external APIs for service records
-- [ ] **Advanced filters** — year range slider, engine size, body type
+- [x] **Advanced filters** — year range, max mileage, fuel type, transmission (engine size and body type still need new listing fields)
 - [ ] **Listing boost** — sellers pay to feature their listing
 - [ ] **Bulk listing** — dealers can import multiple listings via CSV
 
@@ -757,7 +758,7 @@ For bookings, using `deletedByOwner` and `deletedByRenter` flags instead of hard
 - [ ] **Video inspection** — AI analysis of video walkthroughs
 - [ ] **Dealer accounts** — special account type for car dealerships
 - [ ] **Insurance integration** — get insurance quotes from listing page
-- [ ] **Financing calculator** — EMI calculator for purchases
+- [x] **Financing calculator** — EMI calculator for purchases
 
 ---
 

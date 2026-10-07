@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 import Select from "@/components/ui/Select";
+import { formatLakh } from "@/lib/format";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford", "Other"];
 const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
@@ -480,6 +481,9 @@ export default function SellPage() {
                         <SectionTitle title="Sale price" hint="What you're asking for the vehicle." />
                         <Field label={isRental ? "Sale price" : "Price"} htmlFor="price">
                           <MoneyInput id="price" name="price" value={form.price} onChange={handleChange} required placeholder="e.g. 3500000" />
+                          {Number(form.price) >= 1e5 && (
+                            <p className="mt-1.5 text-xs font-medium text-slate-500">= PKR {formatLakh(Number(form.price))}</p>
+                          )}
                         </Field>
                       </div>
                     )}
