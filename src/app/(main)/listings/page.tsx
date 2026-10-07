@@ -425,11 +425,11 @@ export default function ListingsPage({
             )}
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 sm:gap-5 md:grid-cols-3">
+              <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="rounded-[22px] bg-white p-2 ring-1 ring-slate-200/80">
-                    <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200/70" />
-                    <div className="space-y-2.5 px-2 pb-2 pt-4">
+                  <div key={i} className="rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:rounded-[22px] sm:p-2">
+                    <div className="aspect-[4/3] animate-pulse rounded-xl bg-slate-200/70 sm:rounded-2xl" />
+                    <div className="space-y-2.5 px-1.5 pb-1.5 pt-3 sm:px-2 sm:pb-2 sm:pt-4">
                       <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-3.5 w-4/5 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200/70" />
@@ -455,7 +455,7 @@ export default function ListingsPage({
                 </button>
               </div>
             ) : (
-              <div key={loadedQuery} className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 sm:gap-5 md:grid-cols-3">
+              <div key={loadedQuery} className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3">
                 {listings.map((listing, i) => (
                   <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i, 8) * 40}ms` } as React.CSSProperties}>
                     <ListingCard listing={listing} />

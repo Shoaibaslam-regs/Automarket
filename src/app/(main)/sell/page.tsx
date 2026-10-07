@@ -240,14 +240,17 @@ export default function SellPage() {
           </div>
 
           {/* Next steps */}
-          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+          {/* Side by side on every screen; labels shorten on narrow phones so both always fit */}
+          <div className="mt-5 grid grid-cols-2 gap-2.5">
             <Link href={listingUrl}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800">
-              View listing <ArrowRight size={15} strokeWidth={2} />
+              className="inline-flex h-12 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-2 text-[13px] font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] sm:text-sm">
+              <span className="truncate">View listing</span>
+              <ArrowRight size={15} strokeWidth={2} className="flex-shrink-0" />
             </Link>
             <button type="button" onClick={listAnother}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-              <Plus size={15} strokeWidth={2} /> List another vehicle
+              className="inline-flex h-12 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98] sm:text-sm">
+              <Plus size={15} strokeWidth={2} className="flex-shrink-0" />
+              <span className="truncate">List another<span className="hidden min-[400px]:inline"> vehicle</span></span>
             </button>
           </div>
 
