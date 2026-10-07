@@ -1,52 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getPusherClient } from "@/lib/pusher-client";
-import { useSession } from "next-auth/react";
+import { useNotificationCounts } from "@/hooks/useNotificationCounts";
+import { CountBadge } from "@/components/NotificationBadge";
 
 export default function MessageBadge() {
-  const { data: session } = useSession();
-  const [count, setCount] = useState(0);
-
-  async function fetchCount() {
-    try {
-      const res = await fetch("/api/messages/unread");
-      const data = await res.json();
-      setCount(data.count || 0);
-    } catch { setCount(0); }
-  }
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    fetchCount();
-
-    // const channel = getPusherClient()?.subscribe(`user-${session.user.id}`);
-     const pusher = getPusherClient();
-     const channel = pusher.subscribe( 
-      `user-${session.user.id}`
-    );
- 
-    channel.bind("new-notification", (data: { type: string }) => {
-      if (data.type === "message") {
-        setCount(prev => prev + 1);
-      }
-    });
-
-    return () => {
-      channel.unbind_all();
-      pusher.unsubscribe(`user-${session.user.id}`);
-    };
-  }, [session?.user?.id]);
-
+  const { messages } = useNotificationCounts();
 
   return (
-    <Link href="/messages" className="relative text-sm text-black/70 hover:text-black transition flex items-center gap-1">
+    <Link href="/messages" className="nav-link" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
       Messages
-      {count > 0 && (
-        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "18px", height: "18px", background: "#0550ae", color: "white", fontSize: "11px", fontWeight: 700, borderRadius: "20px", padding: "0 5px", lineHeight: 1 }}>
-          {count > 99 ? "99+" : count}
-        </span>
-      )}
+      <CountBadge count={messages} />
     </Link>
   );
 }

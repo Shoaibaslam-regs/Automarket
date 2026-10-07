@@ -108,8 +108,12 @@ export default async function ListingDetailPage({
                   <p className="text-gray-500 mt-1">{l.make} {l.model} · {l.year}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">PKR {l.price.toLocaleString()}</p>
-                  {rental && (
+                  {/* Rent-only listings store the daily rate as their price */}
+                  <p className="text-2xl font-bold text-gray-900">
+                    PKR {l.price.toLocaleString()}
+                    {l.type === "RENT" && <span className="text-sm font-medium text-gray-400">/day</span>}
+                  </p>
+                  {rental && l.type !== "RENT" && (
                     <p className="text-sm text-green-600 mt-1">PKR {rental.dailyRate.toLocaleString()}/day</p>
                   )}
                 </div>

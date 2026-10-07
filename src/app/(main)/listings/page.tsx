@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
+import Select from "@/components/ui/Select";
 import { IListing } from "@/models/Listing";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford"];
@@ -19,6 +20,9 @@ const SORTS = [
   ["price_desc", "Price: high to low"],
 ] as const;
 const PAGE_SIZE = 12;
+
+const MAKE_OPTIONS = [{ value: "", label: "All makes" }, ...MAKES.map(m => ({ value: m, label: m }))];
+const SORT_OPTIONS = SORTS.map(([value, label]) => ({ value, label }));
 
 type ListingWithId = IListing & { _id: string };
 
@@ -76,6 +80,16 @@ export default function ListingsPage({
   const [location, setLocation] = useState(initialLocation);
   const [sort, setSort] = useState("createdAt");
   const [showFilters, setShowFilters] = useState(false);
+  const [closingFilters, setClosingFilters] = useState(false);
+
+  // Let the sheet play its exit animation before unmounting
+  function closeFilters() {
+    setClosingFilters(true);
+    setTimeout(() => {
+      setShowFilters(false);
+      setClosingFilters(false);
+    }, 220);
+  }
 
   // Free-text inputs update instantly in the UI but only trigger a fetch once typing pauses
   const debouncedSearch = useDebounce(search);
@@ -158,7 +172,7 @@ export default function ListingsPage({
 
   // Plain JSX (not an inner component) so inputs aren't remounted and don't lose focus on each keystroke
   const filterPanel = (
-    <div className="flex flex-col gap-6">
+    <div className="bl-stagger flex flex-col gap-6">
       <div>
         <FilterLabel>Listing type</FilterLabel>
         <div className="grid grid-cols-2 gap-1.5">
@@ -170,7 +184,7 @@ export default function ListingsPage({
                 setType(val);
                 setPage(1);
               }}
-              className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+              className={`bl-press rounded-lg px-3 py-2 text-[13px] font-medium ${
                 type === val
                   ? "bg-slate-900 text-white shadow-sm"
                   : "bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100"
@@ -184,21 +198,15 @@ export default function ListingsPage({
 
       <div>
         <FilterLabel>Make</FilterLabel>
-        <select
+        <Select
           value={make}
-          onChange={e => {
-            setMake(e.target.value);
+          onChange={v => {
+            setMake(v);
             setPage(1);
           }}
-          className={fieldClass}
-        >
-          <option value="">All makes</option>
-          {MAKES.map(m => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+          options={MAKE_OPTIONS}
+          ariaLabel="Make"
+        />
       </div>
 
       <div>
@@ -212,7 +220,7 @@ export default function ListingsPage({
                 setCondition(condition === c ? "" : c);
                 setPage(1);
               }}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
+              className={`bl-press rounded-full px-3 py-1.5 text-xs font-medium capitalize ${
                 condition === c
                   ? "bg-slate-900 text-white"
                   : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:ring-slate-400"
@@ -279,7 +287,7 @@ export default function ListingsPage({
       {/* Hero + search */}
       <section className="relative overflow-hidden bg-slate-950">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.35),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.18),transparent_50%)]" />
-        <div className="relative mx-auto max-w-[1180px] px-4 pb-8 pt-8 sm:pb-10 sm:pt-12">
+        <div className="relative mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 sm:pb-12 sm:pt-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">Marketplace</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">Find your next ride</h1>
           <p className="mt-2 max-w-xl text-sm text-slate-400 sm:text-base">
@@ -323,7 +331,7 @@ export default function ListingsPage({
                   setType(val);
                   setPage(1);
                 }}
-                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[13px] font-medium transition ${
+                className={`bl-press flex-shrink-0 rounded-full px-4 py-1.5 text-[13px] font-medium ${
                   type === val
                     ? "bg-white text-slate-900"
                     : "bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 hover:bg-white/15"
@@ -336,17 +344,17 @@ export default function ListingsPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1180px] px-4 py-6 sm:py-8">
-        <div className="grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
+        <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-8">
           {/* Desktop sidebar */}
-          <aside className="sticky top-20 hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:block">
+          <aside className="sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:block">
             <div className="mb-5 flex items-center justify-between">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
                 <SlidersHorizontal size={15} strokeWidth={2} />
                 Filters
               </p>
               {activeFilterCount > 0 && (
-                <button type="button" onClick={clearFilters} className="text-xs font-medium text-rose-600 hover:text-rose-700">
+                <button type="button" onClick={clearFilters} className="bl-pop text-xs font-medium text-rose-600 hover:text-rose-700">
                   Clear all
                 </button>
               )}
@@ -356,7 +364,7 @@ export default function ListingsPage({
 
           {/* Results */}
           <div className="min-w-0">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-4">
               <p className="text-sm text-slate-500">
                 <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
                 {pagination.total !== 1 ? "s" : ""} found
@@ -366,30 +374,30 @@ export default function ListingsPage({
                 <button
                   type="button"
                   onClick={() => setShowFilters(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-900 shadow-sm lg:hidden"
+                  className="inline-flex h-10 flex-shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 shadow-sm lg:hidden"
                 >
                   <SlidersHorizontal size={15} strokeWidth={2} />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="rounded-full bg-slate-900 px-1.5 py-px text-[11px] font-bold text-white">{activeFilterCount}</span>
+                    <span key={activeFilterCount} className="bl-pop rounded-full bg-slate-900 px-1.5 py-px text-[11px] font-bold text-white">{activeFilterCount}</span>
                   )}
                 </button>
 
-                <select
-                  value={sort}
-                  onChange={e => {
-                    setSort(e.target.value);
-                    setPage(1);
-                  }}
-                  aria-label="Sort listings"
-                  className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-slate-900"
-                >
-                  {SORTS.map(([val, label]) => (
-                    <option key={val} value={val}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+                  <ArrowUpDown size={14} strokeWidth={2} className="hidden flex-shrink-0 text-slate-400 sm:block" />
+                  <div className="min-w-0 flex-1 sm:w-[190px] sm:flex-none">
+                    <Select
+                      value={sort}
+                      onChange={v => {
+                        setSort(v);
+                        setPage(1);
+                      }}
+                      options={SORT_OPTIONS}
+                      ariaLabel="Sort listings"
+                      className="shadow-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -404,7 +412,7 @@ export default function ListingsPage({
                       chip.clear();
                       setPage(1);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white py-1 pl-3 pr-2 text-xs font-medium capitalize text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:ring-slate-400"
+                    className="bl-pop inline-flex items-center gap-1.5 rounded-full bg-white py-1 pl-3 pr-2 text-xs font-medium capitalize text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:ring-slate-400"
                   >
                     {chip.label}
                     <X size={12} strokeWidth={2.5} className="text-slate-400" />
@@ -417,11 +425,11 @@ export default function ListingsPage({
             )}
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 sm:gap-5 md:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-                    <div className="aspect-[4/3] animate-pulse bg-slate-200/70" />
-                    <div className="space-y-2.5 p-4">
+                  <div key={i} className="rounded-[22px] bg-white p-2 ring-1 ring-slate-200/80">
+                    <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200/70" />
+                    <div className="space-y-2.5 px-2 pb-2 pt-4">
                       <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-3.5 w-4/5 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200/70" />
@@ -430,7 +438,7 @@ export default function ListingsPage({
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+              <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                   <Search size={24} strokeWidth={1.75} />
                 </div>
@@ -447,9 +455,11 @@ export default function ListingsPage({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-4 md:grid-cols-3">
-                {listings.map(listing => (
-                  <ListingCard key={listing._id} listing={listing} />
+              <div key={loadedQuery} className="grid grid-cols-1 gap-4 min-[440px]:grid-cols-2 sm:gap-5 md:grid-cols-3">
+                {listings.map((listing, i) => (
+                  <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i, 8) * 40}ms` } as React.CSSProperties}>
+                    <ListingCard listing={listing} />
+                  </div>
                 ))}
               </div>
             )}
@@ -507,14 +517,14 @@ export default function ListingsPage({
       {/* Mobile filter sheet */}
       {showFilters && (
         <div className="fixed inset-0 z-[150] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={() => setShowFilters(false)} />
-          <div className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-3xl bg-white shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[380px] sm:rounded-none">
+          <div className="bl-backdrop absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" data-closing={closingFilters} onClick={closeFilters} />
+          <div data-closing={closingFilters} className="bl-sheet absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-3xl bg-white shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[380px] sm:rounded-none">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <p className="text-base font-bold text-slate-900">Filters</p>
               <button
                 type="button"
                 aria-label="Close filters"
-                onClick={() => setShowFilters(false)}
+                onClick={closeFilters}
                 className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
               >
                 <X size={18} />
@@ -531,7 +541,7 @@ export default function ListingsPage({
               </button>
               <button
                 type="button"
-                onClick={() => setShowFilters(false)}
+                onClick={closeFilters}
                 className="flex-[2] rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white"
               >
                 {loading ? "Updating…" : `Show ${pagination.total.toLocaleString()} result${pagination.total !== 1 ? "s" : ""}`}

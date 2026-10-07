@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
+import Select from "@/components/ui/Select";
 
 type Organization = {
   _id: string;
@@ -224,11 +225,9 @@ export default function BusinessSettingsPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>City</label>
-                <select value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", background: "white" }}>
-                  <option value="">Select city</option>
-                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <Select value={form.city} onChange={v => setForm(p => ({ ...p, city: v }))} ariaLabel="City"
+                  options={[{ value: "", label: "Select city" }, ...CITIES.map(c => ({ value: c, label: c }))]}
+                  className="h-10 rounded-lg border-[#d0d7de] text-[13px] font-normal text-[#0d1117]" />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Address</label>

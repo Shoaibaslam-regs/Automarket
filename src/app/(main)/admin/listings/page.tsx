@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ExternalLink, ImageOff, Star, Trash2 } from "lucide-react";
 import { PageHeader, Panel, SearchField, SelectField, StatusBadge, btn } from "@/components/admin/ui";
+import Select from "@/components/ui/Select";
 
 type Listing = {
   _id: string;
@@ -128,19 +129,15 @@ export default function AdminListingsPage() {
                 <Link href={`/listings/${listing._id}`} target="_blank" className={`${btn.base} ${btn.secondary}`}>
                   <ExternalLink size={13} /> View
                 </Link>
-                <select
+                <Select
                   value={listing.status}
-                  onChange={e => updateListing(listing._id, { status: e.target.value })}
+                  onChange={v => updateListing(listing._id, { status: v })}
                   disabled={updating === listing._id}
-                  aria-label="Change status"
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-slate-900 disabled:opacity-50"
-                >
-                  {STATUS_OPTIONS.map(s => (
-                    <option key={s} value={s}>
-                      {s.charAt(0) + s.slice(1).toLowerCase()}
-                    </option>
-                  ))}
-                </select>
+                  ariaLabel="Change status"
+                  size="sm"
+                  options={STATUS_OPTIONS.map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+                  className="w-auto min-w-[104px] text-slate-700"
+                />
                 <button
                   onClick={() => updateListing(listing._id, { featured: !listing.featured })}
                   disabled={updating === listing._id}

@@ -135,7 +135,7 @@ export default async function HomePage() {
               ].map(([val, label]) => (
                 <label key={val} className="cursor-pointer">
                   <input type="radio" name="type" value={val} defaultChecked={val === ""} className="peer sr-only" />
-                  <span className="block rounded-t-xl px-4 py-2 text-[13px] font-semibold text-slate-300 transition hover:text-white peer-checked:bg-white peer-checked:text-slate-900 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                  <span className="block rounded-t-xl px-4 py-2 text-[13px] font-semibold text-slate-300 transition hover:text-white peer-checked:bg-white/30 peer-checked:text-slate-900 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
                     {label}
                   </span>
                 </label>

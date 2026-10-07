@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Trash2, TriangleAlert } from "lucide-react";
+import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 
 type ListingInfo = {
   _id: string;
@@ -177,6 +178,8 @@ export default function BookingsContent() {
       setOwnerCount(data.ownerCount || 0);
       setRenterCount(data.renterCount || 0);
     } catch { }
+    // Keep the nav badges in sync after bookings are seen/confirmed/declined
+    refreshNotificationCounts();
   }
 
   async function markAsSeen() {

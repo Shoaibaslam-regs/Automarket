@@ -9,6 +9,8 @@ import MessageBadge from "@/components/MessageBadge";
 import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
+import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
+import { useNotificationCounts } from "@/hooks/useNotificationCounts";
 import { Calendar, Car, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
 
 export default function Navbar() {
@@ -25,6 +27,9 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const counts = useNotificationCounts();
+  const badgeFor = (href: string) => (href === "/messages" ? counts.messages : href === "/bookings" ? counts.bookings : 0);
+  const hasUnread = !!session?.user && counts.messages + counts.bookings > 0;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -106,6 +111,9 @@ export default function Navbar() {
           white-space: nowrap;
         }
         .nav-link:hover { color: #0d1117; background: rgba(0,0,0,0.04); }
+        @media (min-width: 769px) and (max-width: 960px) {
+          .nav-link { padding: 6px 7px; font-size: 13px; }
+        }
         .dropdown-item {
           display: flex;
           align-items: center;
@@ -176,7 +184,8 @@ export default function Navbar() {
             {session?.user && (
               <>
                 <Link href="/sell" className="nav-link">Sell</Link>
-              <BookingBadge /> 
+                <BookingBadge />
+                <MessageBadge />
 
               </>
             )}
@@ -201,9 +210,10 @@ export default function Navbar() {
                     width: "30px", height: "30px", borderRadius: "50%",
                     background: "#0d1117", color: "white",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "12px", fontWeight: 700, flexShrink: 0,
+                    fontSize: "12px", fontWeight: 700, flexShrink: 0, position: "relative",
                   }}>
                     {session.user.name?.[0]?.toUpperCase()}
+                    <NotificationDot show={hasUnread} className="-right-0.5 -top-0.5" />
                   </div>
                   <span style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {session.user.name?.split(" ")[0]}
@@ -240,6 +250,7 @@ export default function Navbar() {
                       <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="dropdown-item">
                         <span style={{ fontSize: "15px", width: "20px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={16} strokeWidth={1.75} /></span>
                         {item.label}
+                        <CountBadge count={badgeFor(item.href)} className="ml-auto" />
                       </Link>
                     ))}
 
@@ -286,7 +297,9 @@ export default function Navbar() {
                 alignItems: "center", justifyContent: "center", gap: "5px",
                 background: mobileOpen ? "rgba(0,0,0,0.06)" : "transparent",
                 border: "none", cursor: "pointer", borderRadius: "10px", padding: "8px",
+                position: "relative",
               }}>
+              <NotificationDot show={hasUnread && !mobileOpen} className="right-1.5 top-1.5" />
               <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
               <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", opacity: mobileOpen ? 0 : 1, transition: "opacity 0.15s" }} />
               <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
@@ -357,7 +370,8 @@ export default function Navbar() {
                       <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                         style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
                         <span style={{ fontSize: "18px", width: "24px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={18} strokeWidth={1.75} /></span>
-                        {item.label} 
+                        {item.label}
+                        <CountBadge count={badgeFor(item.href)} className="ml-auto" />
                       </Link>
                     ))}
 

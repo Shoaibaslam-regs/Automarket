@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as Dialog from "@radix-ui/react-dialog";
 import { getPusherClient } from "@/lib/pusher-client";
+import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import Image from "next/image";
-import { Hand, MessageSquare } from "lucide-react";
+import { Hand, MessageSquare, Trash2 } from "lucide-react";
 
 type User = {
   _id: string;
@@ -30,6 +32,7 @@ type Conversation = Message & {
 
 export default function MessagesContent() {
   const { data: session } = useSession();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const withUserId = searchParams.get("with");
   const listingId = searchParams.get("listing");
@@ -44,6 +47,9 @@ export default function MessagesContent() {
   const [showChat, setShowChat] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -65,6 +71,8 @@ export default function MessagesContent() {
       const res = await fetch(`/api/messages?with=${userId}`);
       const data = await res.json();
       setMessages(data.messages || []);
+      // Opening a thread marks its messages read; clear the nav badge right away
+      refreshNotificationCounts();
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch { }
     setLoadingMsgs(false);
@@ -157,6 +165,33 @@ export default function MessagesContent() {
     setSending(false);
   }
 
+  async function deleteChat() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/messages?with=${deleteTarget._id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Failed to delete chat");
+      }
+      const removedId = deleteTarget._id;
+      setConversations(prev => prev.filter(c => c.partnerId !== removedId));
+      if (activeUser?._id === removedId) {
+        setActiveUser(null);
+        setMessages([]);
+        setShowChat(false);
+        // Drop ?with= so a reload doesn't reopen the deleted thread
+        if (withUserId === removedId) router.replace("/messages");
+      }
+      setDeleteTarget(null);
+      refreshNotificationCounts();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete chat");
+    }
+    setDeleting(false);
+  }
+
   function formatTime(d: string) {
     const date = new Date(d);
     const isToday = date.toDateString() === new Date().toDateString();
@@ -217,6 +252,24 @@ export default function MessagesContent() {
           .back-btn { display: flex !important; }
         }
         .back-btn { display: none; }
+        .conv-row { position: relative; }
+        .conv-row:hover { background: #f6f8fa !important; }
+        .conv-del {
+          opacity: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e1e4e8;
+          background: white; color: #cf222e; cursor: pointer; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; transition: opacity 0.12s;
+        }
+        .conv-row:hover .conv-del, .conv-del:focus-visible { opacity: 1; }
+        .conv-del:hover { background: #fff0f0; border-color: #ffcdd2; }
+        /* Touch screens have no hover: delete from the chat header instead */
+        @media (hover: none) { .conv-del { display: none; } }
+        .chat-del {
+          margin-left: auto; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #e1e4e8;
+          background: white; color: #cf222e; cursor: pointer; flex-shrink: 0; font-size: 12px; font-weight: 600;
+          display: inline-flex; align-items: center; gap: 6px; font-family: inherit; transition: background 0.12s;
+        }
+        .chat-del:hover { background: #fff0f0; border-color: #ffcdd2; }
+        @media (max-width: 480px) { .chat-del-label { display: none; } .chat-del { width: 34px; padding: 0; justify-content: center; } }
       `}</style>
 
       <div className="messages-wrap">
@@ -249,7 +302,7 @@ export default function MessagesContent() {
               const isActive = activeUser?._id === conv.partnerId;
               const isMe = conv.senderId._id === session?.user?.id;
               return (
-                <div key={conv.partnerId}
+                <div key={conv.partnerId} className="conv-row"
                   onClick={() => selectUser(conv.partnerId, { _id: conv.partnerId, name: conv.partnerName, image: conv.partnerImage })}
                   style={{ padding: "12px 16px", cursor: "pointer", background: isActive ? "#f6f8fa" : "white", borderLeft: `3px solid ${isActive ? "#0d1117" : "transparent"}`, display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0, position: "relative" }}>
@@ -269,6 +322,10 @@ export default function MessagesContent() {
                       {isMe ? "You: " : ""}{conv.content}
                     </p>
                   </div>
+                  <button type="button" className="conv-del" aria-label={`Delete chat with ${conv.partnerName}`} title="Delete chat"
+                    onClick={e => { e.stopPropagation(); setDeleteError(""); setDeleteTarget({ _id: conv.partnerId, name: conv.partnerName, image: conv.partnerImage }); }}>
+                    <Trash2 size={14} strokeWidth={1.75} />
+                  </button>
                 </div>
               );
             })}
@@ -295,10 +352,15 @@ export default function MessagesContent() {
                     <Image src={activeUser.image} alt="" fill sizes="36px" style={{ borderRadius: "50%", objectFit: "cover" }} />
                   ) : getInitial(activeUser.name)}
                 </div>
-                <div>
-                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117" }}>{activeUser.name}</p>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeUser.name}</p>
                   <p style={{ fontSize: "11px", color: "#57606a" }}>AutoMarket member</p>
                 </div>
+                <button type="button" className="chat-del" aria-label="Delete chat" title="Delete chat"
+                  onClick={() => { setDeleteError(""); setDeleteTarget(activeUser); }}>
+                  <Trash2 size={14} strokeWidth={1.75} />
+                  <span className="chat-del-label">Delete chat</span>
+                </button>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -354,6 +416,39 @@ export default function MessagesContent() {
           )}
         </div>
       </div>
+
+      <Dialog.Root open={!!deleteTarget} onOpenChange={o => { if (!o && !deleting) setDeleteTarget(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000 }} />
+          <Dialog.Content
+            style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "400px", background: "white", borderRadius: "14px", padding: "24px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff0f0", color: "#cf222e", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px" }}>
+              <Trash2 size={19} strokeWidth={1.75} />
+            </div>
+            <Dialog.Title style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#0d1117" }}>
+              Delete chat with {deleteTarget?.name}?
+            </Dialog.Title>
+            <Dialog.Description style={{ margin: "8px 0 0", fontSize: "14px", color: "#57606a", lineHeight: 1.55 }}>
+              All messages in this conversation will be removed from your inbox. {deleteTarget?.name} will still have their copy. If they message you again, a new chat will start.
+            </Dialog.Description>
+            {deleteError && (
+              <p role="alert" style={{ marginTop: "12px", fontSize: "13px", color: "#cf222e", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "8px 12px" }}>{deleteError}</p>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "20px", flexWrap: "wrap" }}>
+              <Dialog.Close asChild>
+                <button disabled={deleting}
+                  style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "#0d1117", background: "white", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit" }}>
+                  Cancel
+                </button>
+              </Dialog.Close>
+              <button onClick={deleteChat} disabled={deleting}
+                style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "white", background: "#cf222e", border: "none", borderRadius: "8px", cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.7 : 1, fontFamily: "inherit" }}>
+                {deleting ? "Deleting…" : "Delete chat"}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

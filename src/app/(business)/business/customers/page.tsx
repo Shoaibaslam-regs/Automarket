@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users } from "lucide-react";
+import Select from "@/components/ui/Select";
 
 type Customer = {
   _id: string;
@@ -103,17 +104,15 @@ export default function CustomersPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "5px" }}>Source</label>
-                  <select value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", background: "white" }}>
-                    {["WALK_IN", "ONLINE", "REFERRAL", "PHONE", "OTHER"].map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                  </select>
+                  <Select value={form.source} onChange={v => setForm(p => ({ ...p, source: v }))} ariaLabel="Source"
+                    options={["WALK_IN", "ONLINE", "REFERRAL", "PHONE", "OTHER"].map(s => ({ value: s, label: s.replace("_", " ") }))}
+                    className="h-[38px] rounded-lg border-[#d0d7de] text-[13px] font-normal text-[#0d1117]" />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "5px" }}>Status</label>
-                  <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", background: "white" }}>
-                    {STATUSES.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                  </select>
+                  <Select value={form.status} onChange={v => setForm(p => ({ ...p, status: v }))} ariaLabel="Status"
+                    options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
+                    className="h-[38px] rounded-lg border-[#d0d7de] text-[13px] font-normal text-[#0d1117]" />
                 </div>
               </div>
               <div>
@@ -201,11 +200,13 @@ export default function CustomersPage() {
                     Interested in: {c.interestedIn.make} {c.interestedIn.model}
                   </div>
                 )}
-                <select value={c.status}
-                  onChange={e => updateStatus(c._id, e.target.value)}
-                  style={{ padding: "5px 10px", border: `1px solid ${statusStyle.color}`, borderRadius: "20px", fontSize: "11px", fontWeight: 600, color: statusStyle.color, background: statusStyle.bg, cursor: "pointer", outline: "none" }}>
-                  {STATUSES.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                </select>
+                <Select value={c.status}
+                  onChange={v => updateStatus(c._id, v)}
+                  ariaLabel={`Status for ${c.name}`}
+                  size="sm"
+                  options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
+                  style={{ borderColor: statusStyle.color, color: statusStyle.color, background: statusStyle.bg }}
+                  className="h-7 w-auto flex-shrink-0 rounded-full px-2.5 text-[11px] font-semibold" />
                 <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoMarket`}
                   target="_blank" rel="noreferrer"
                   style={{ padding: "5px 10px", background: "#2da44e", color: "white", borderRadius: "6px", fontSize: "11px", fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>

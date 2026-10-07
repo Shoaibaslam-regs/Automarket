@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users } from "lucide-react";
+import Select from "@/components/ui/Select";
 
 type StaffMember = {
   _id: string;
@@ -93,12 +94,13 @@ export default function StaffPage() {
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Role</label>
-                <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", background: "white" }}>
-                  <option value="MANAGER">Manager — full access except billing</option>
-                  <option value="SALES">Sales — manage customers & listings</option>
-                  <option value="STAFF">Staff — view only</option>
-                </select>
+                <Select value={inviteRole} onChange={setInviteRole} ariaLabel="Role"
+                  options={[
+                    { value: "MANAGER", label: "Manager — full access except billing" },
+                    { value: "SALES", label: "Sales — manage customers & listings" },
+                    { value: "STAFF", label: "Staff — view only" },
+                  ]}
+                  className="h-10 rounded-lg border-[#d0d7de] text-[13px] font-normal text-[#0d1117]" />
               </div>
               {inviteResult && (
                 <div style={{ padding: "10px 14px", background: inviteResult.ok ? "#dafbe1" : "#fff0f0", borderRadius: "8px", fontSize: "13px", color: inviteResult.ok ? "#1a7f37" : "#cf222e" }}>
@@ -180,10 +182,12 @@ export default function StaffPage() {
                   Joined {new Date(member.joinedAt).toLocaleDateString("en-PK", { month: "short", year: "numeric" })}
                 </p>
                 {member.role !== "OWNER" ? (
-                  <select value={member.role} onChange={e => updateRole(member._id, e.target.value)}
-                    style={{ padding: "5px 10px", border: `1px solid ${roleStyle.color}`, borderRadius: "20px", fontSize: "11px", fontWeight: 600, color: roleStyle.color, background: roleStyle.bg, cursor: "pointer", outline: "none" }}>
-                    {["MANAGER", "SALES", "STAFF"].map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  <Select value={member.role} onChange={v => updateRole(member._id, v)}
+                    ariaLabel="Change role"
+                    size="sm"
+                    options={["MANAGER", "SALES", "STAFF"].map(r => ({ value: r, label: r }))}
+                    style={{ borderColor: roleStyle.color, color: roleStyle.color, background: roleStyle.bg }}
+                    className="h-7 w-auto flex-shrink-0 rounded-full px-2.5 text-[11px] font-semibold" />
                 ) : (
                   <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "20px", background: roleStyle.bg, color: roleStyle.color }}>
                     OWNER

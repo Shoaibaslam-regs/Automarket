@@ -6,6 +6,8 @@ export interface IMessage extends Document {
   listingId?: mongoose.Types.ObjectId;
   content: string;
   read: boolean;
+  /** Users who deleted this message's conversation from their inbox (per-user soft delete). */
+  deletedFor: mongoose.Types.ObjectId[];
   createdAt: Date;
 }
 
@@ -16,6 +18,7 @@ const MessageSchema = new Schema<IMessage>(
     listingId: { type: Schema.Types.ObjectId, ref: "Listing" },
     content: { type: String, required: true },
     read: { type: Boolean, default: false },
+    deletedFor: { type: [{ type: Schema.Types.ObjectId, ref: "User" }], default: [] },
   },
   { timestamps: true }
 );

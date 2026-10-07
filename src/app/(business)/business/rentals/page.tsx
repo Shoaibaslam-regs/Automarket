@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Car, KeyRound } from "lucide-react";
+import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 
 type Booking = {
   _id: string;
@@ -49,6 +50,8 @@ export default function BusinessRentalsPage() {
     });
     setUpdating(null);
     fetchBookings();
+    // Accepting/declining a request changes the pending count on the sidebar badge
+    refreshNotificationCounts();
   }
 
   function fmt(d: string) {

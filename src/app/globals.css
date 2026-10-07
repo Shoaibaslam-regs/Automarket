@@ -380,3 +380,38 @@ body {
   .lp-rise { animation: none; opacity: 1; }
   .lp-reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/* ── BROWSE LISTINGS: filter motion ── */
+@keyframes bl-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes bl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bl-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes bl-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes bl-sheet-down { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes bl-sheet-in-right { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes bl-sheet-out-right { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes bl-pop { 0% { opacity: 0; transform: scale(0.8); } 70% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
+
+.bl-enter { animation: bl-fade-up 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--bl-delay, 0ms); }
+.bl-pop { animation: bl-pop 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.bl-backdrop { animation: bl-fade-in 0.22s ease both; }
+.bl-backdrop[data-closing="true"] { animation: bl-fade-out 0.2s ease both; }
+.bl-sheet { animation: bl-sheet-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bl-sheet[data-closing="true"] { animation: bl-sheet-down 0.22s cubic-bezier(0.4, 0, 1, 1) both; }
+@media (min-width: 640px) {
+  .bl-sheet { animation-name: bl-sheet-in-right; }
+  .bl-sheet[data-closing="true"] { animation-name: bl-sheet-out-right; }
+}
+/* Filter sections fade in one after another when the sheet/sidebar appears */
+.bl-stagger > * { animation: bl-fade-up 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.bl-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.bl-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.bl-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.bl-stagger > *:nth-child(5) { animation-delay: 200ms; }
+/* Tactile press on filter buttons */
+.bl-press { transition: background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.12s; }
+.bl-press:active { transform: scale(0.96); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-enter, .bl-pop, .bl-backdrop, .bl-sheet, .bl-stagger > * { animation: none !important; }
+  .bl-press:active { transform: none; }
+}

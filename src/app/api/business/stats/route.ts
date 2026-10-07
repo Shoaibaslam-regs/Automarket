@@ -5,6 +5,7 @@ import { Customer } from "@/models/Customer";
 import { Booking } from "@/models/Booking";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
+import { getOrgUserIds } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
 
@@ -73,8 +74,3 @@ export async function GET() {
   }
 }
 
-async function getOrgUserIds(orgId: unknown) {
-  const { Employee } = await import("@/models/Employee");
-  const employees = await Employee.find({ organizationId: orgId }).select("userId").lean();
-  return employees.map(e => e.userId);
-}

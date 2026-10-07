@@ -3,6 +3,7 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Check, Copy, Search, type LucideIcon } from "lucide-react";
+import Select from "@/components/ui/Select";
 
 export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "violet" | "orange";
 
@@ -255,19 +256,16 @@ export function SelectField({
   ariaLabel: string;
 }) {
   return (
-    <select
+    <Select
       value={value}
-      onChange={e => onChange(e.target.value)}
-      aria-label={ariaLabel}
-      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-    >
-      <option value="">{allLabel}</option>
-      {options.map(o => (
-        <option key={o} value={o}>
-          {o.charAt(0) + o.slice(1).toLowerCase()}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      ariaLabel={ariaLabel}
+      options={[
+        { value: "", label: allLabel },
+        ...options.map(o => ({ value: o, label: o.charAt(0) + o.slice(1).toLowerCase() })),
+      ]}
+      className="h-[38px] w-auto min-w-[150px] text-slate-700"
+    />
   );
 }
 

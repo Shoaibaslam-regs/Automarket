@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { auth } from "@/lib/auth";
+import mongoose from "mongoose";
 
 async function triggerPusher(channel: string, event: string, data: unknown) {
   try {
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
           { senderId: session.user.id, receiverId: withUserId },
           { senderId: withUserId, receiverId: session.user.id },
         ],
+        deletedFor: { $ne: session.user.id },
       })
         .populate("senderId", "name image")
         .populate("receiverId", "name image")
@@ -49,6 +51,7 @@ export async function GET(req: NextRequest) {
         { senderId: session.user.id },
         { receiverId: session.user.id },
       ],
+      deletedFor: { $ne: session.user.id },
     })
       .populate("senderId", "name image")
       .populate("receiverId", "name image")
@@ -134,5 +137,43 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Messages POST error:", error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
+
+// Deletes a conversation for the current user only; the other participant keeps their copy.
+// Messages are removed from the database once both participants have deleted them.
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const withUserId = new URL(req.url).searchParams.get("with");
+    if (!withUserId || !mongoose.Types.ObjectId.isValid(withUserId)) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 400 });
+    }
+
+    await connectDB();
+
+    const me = new mongoose.Types.ObjectId(session.user.id);
+    const partner = new mongoose.Types.ObjectId(withUserId);
+    // Scoped to messages the current user sent or received, so nobody else's chats can be touched
+    const conversation = {
+      $or: [
+        { senderId: me, receiverId: partner },
+        { senderId: partner, receiverId: me },
+      ],
+    };
+
+    // Read receipts are left untouched: the unread count already ignores messages in deletedFor,
+    // and marking them read would falsely show the sender "seen".
+    const result = await Message.updateMany(conversation, { $addToSet: { deletedFor: me } });
+    await Message.deleteMany({ ...conversation, deletedFor: { $all: [me, partner] } });
+
+    return NextResponse.json({ ok: true, deleted: result.modifiedCount });
+  } catch (error) {
+    console.error("Messages DELETE error:", error);
+    return NextResponse.json({ error: "Failed to delete conversation" }, { status: 500 });
   }
 }

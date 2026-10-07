@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Building2, Car, KeyRound, Rocket } from "lucide-react";
+import Select from "@/components/ui/Select";
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 
@@ -174,11 +175,9 @@ export default function OnboardingPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>City *</label>
-                  <select name="city" value={form.city} onChange={handleChange}
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "14px", outline: "none", background: "white" }}>
-                    <option value="">Select city</option>
-                    {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <Select name="city" value={form.city} onChange={v => setForm(p => ({ ...p, city: v }))} ariaLabel="City"
+                    options={[{ value: "", label: "Select city" }, ...CITIES.map(c => ({ value: c, label: c }))]}
+                    className="h-[42px] rounded-lg border-[#d0d7de] font-normal text-[#0d1117]" />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Address</label>

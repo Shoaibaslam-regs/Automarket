@@ -13,6 +13,7 @@ export async function GET() {
     const count = await Message.countDocuments({
       receiverId: session.user.id,
       read: false,
+      deletedFor: { $ne: session.user.id },
     });
     return NextResponse.json({ count });
   } catch {

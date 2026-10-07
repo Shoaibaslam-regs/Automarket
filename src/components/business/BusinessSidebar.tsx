@@ -7,7 +7,9 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import ModeToggle from "@/components/ModeToggle";
 import SignOutDialog from "@/components/SignOutDialog";
-import { BarChart3, Car, House, KeyRound, LayoutDashboard, LogOut, Settings, User, Users } from "lucide-react";
+import { BarChart3, Car, House, KeyRound, LayoutDashboard, LogOut, MessageSquare, Settings, User, Users } from "lucide-react";
+import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
+import { useNotificationCounts } from "@/hooks/useNotificationCounts";
 
 type Organization = {
   name: string;
@@ -39,6 +41,10 @@ export default function BusinessSidebar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const counts = useNotificationCounts();
+  // Rentals is where business owners handle incoming booking requests
+  const navBadge = (href: string) => (href === "/business/rentals" ? counts.ownerBookings : 0);
+  const hasUnread = counts.messages + counts.ownerBookings > 0;
 
   useEffect(() => {
     fetch("/api/business/organizations")
@@ -73,8 +79,9 @@ export default function BusinessSidebar() {
         <div ref={dropdownRef} style={{ position: "relative" }}>
           <button onClick={() => setDropdownOpen(!dropdownOpen)}
             style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontFamily: "inherit" }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "6px", background: "linear-gradient(135deg,#3b82f6,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "white", flexShrink: 0 }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "6px", background: "linear-gradient(135deg,#3b82f6,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800, color: "white", flexShrink: 0, position: "relative" }}>
               {org?.name?.[0]?.toUpperCase() || "B"}
+              <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-[#0d1117]" />
             </div>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
               <p style={{ fontSize: "12px", fontWeight: 700, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -105,6 +112,7 @@ export default function BusinessSidebar() {
 
               {[
                 { label: "Business settings", href: "/business/settings", icon: Settings },
+                { label: "Messages", href: "/messages", icon: MessageSquare },
                 { label: "Public profile", href: "/dashboard", icon: User },
                 { label: "Marketplace", href: "/", icon: House },
               ].map(item => (
@@ -113,6 +121,7 @@ export default function BusinessSidebar() {
                   onMouseEnter={e => (e.currentTarget.style.background = "#f6f8fa")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                   <item.icon size={14} strokeWidth={1.75} />{item.label}
+                  {item.href === "/messages" && <CountBadge count={counts.messages} className="ml-auto" />}
                 </Link>
               ))}
 
@@ -139,7 +148,11 @@ export default function BusinessSidebar() {
               onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}>
               <span style={{ width: "20px", display: "inline-flex", justifyContent: "center", flexShrink: 0 }}><item.icon size={16} strokeWidth={1.75} /></span>
               {item.label}
-              {isActive && <div style={{ marginLeft: "auto", width: "5px", height: "5px", borderRadius: "50%", background: "white" }} />}
+              {navBadge(item.href) > 0 ? (
+                <CountBadge count={navBadge(item.href)} className="ml-auto" />
+              ) : (
+                isActive && <div style={{ marginLeft: "auto", width: "5px", height: "5px", borderRadius: "50%", background: "white" }} />
+              )}
             </Link>
           );
         })}
@@ -177,11 +190,13 @@ export default function BusinessSidebar() {
             style={{ width: "auto", height: "22px", filter: "brightness(0) invert(1)" }} />
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
+          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontWeight: 500, maxWidth: "40vw", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {org?.name}
           </span>
           <button onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ width: "36px", height: "36px", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            style={{ width: "36px", height: "36px", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px", position: "relative" }}>
+            <NotificationDot show={hasUnread && !mobileOpen} className="-right-1 -top-1 ring-[#0d1117]" />
             <span style={{ width: "16px", height: "2px", background: "white", borderRadius: "2px", display: "block", transition: "transform 0.2s", transform: mobileOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }} />
             <span style={{ width: "16px", height: "2px", background: "white", borderRadius: "2px", display: "block", opacity: mobileOpen ? 0 : 1 }} />
             <span style={{ width: "16px", height: "2px", background: "white", borderRadius: "2px", display: "block", transition: "transform 0.2s", transform: mobileOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }} />
