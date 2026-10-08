@@ -11,7 +11,7 @@ AutoMarket is a Pakistani vehicle marketplace (buy, sell, rent cars and bikes; p
 ## Commands
 
 ```bash
-npm run dev          # dev server on http://localhost:3001 (not 3000)
+npm run dev          # dev server on http://localhost:3001
 npm run build
 npm run lint         # ESLint 9 flat config (eslint.config.mjs)
 npx tsc --noEmit     # type check; CI runs this before lint and build

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Users } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -30,11 +31,25 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 const STATUSES = ["LEAD", "INTERESTED", "TEST_DRIVE", "NEGOTIATING", "SOLD", "LOST"];
 
 export default function CustomersPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <p style={{ color: "#57606a", fontSize: "14px" }}>Loading customers...</p>
+      </div>
+    }>
+      <CustomersContent />
+    </Suspense>
+  );
+}
+
+function CustomersContent() {
+  const searchParams = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  // Dashboard "Add customer" quick action links here with ?add=1
+  const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" });
 

@@ -373,7 +373,7 @@ export default function BusinessDashboard() {
               }}
             >
               <Link
-                href="/business/inventory/add"
+                href="/sell"
                 style={{
                   padding: "8px 16px",
                   background: "#0d1117",
@@ -733,13 +733,13 @@ export default function BusinessDashboard() {
               <div className="quick-actions-grid">
                 {[
                   {
-                    href: "/business/inventory/add",
+                    href: "/sell",
                     label: "Add vehicle",
                     icon: Car,
                     desc: "List a new vehicle",
                   },
                   {
-                    href: "/business/customers/add",
+                    href: "/business/customers?add=1",
                     label: "Add customer",
                     icon: User,
                     desc: "Log a new inquiry",
@@ -770,7 +770,7 @@ export default function BusinessDashboard() {
                   },
                 ].map(action => (
                   <Link
-                    key={action.href}
+                    key={action.label}
                     href={action.href}
                     style={{
                       display: "flex",
