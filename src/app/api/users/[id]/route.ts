@@ -14,11 +14,10 @@ export async function GET(
     }
     const { id } = await params;
     await connectDB();
-    const user = await User.findById(id).select("name image email").lean() as {
+    const user = await User.findById(id).select("name image").lean() as {
       _id: { toString: () => string };
       name?: string;
       image?: string;
-      email: string;
     } | null;
 
     if (!user) {
@@ -30,7 +29,6 @@ export async function GET(
         _id: user._id.toString(),
         name: user.name || "User",
         image: user.image,
-        email: user.email,
       }
     });
   } catch {

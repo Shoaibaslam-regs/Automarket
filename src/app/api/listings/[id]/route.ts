@@ -13,7 +13,7 @@ export async function GET(
     await connectDB();
 
     const listing = await Listing.findById(id)
-      .populate("sellerId", "name email image phone createdAt")
+      .populate("sellerId", "name image phone createdAt")
       .lean();
 
     if (!listing) {

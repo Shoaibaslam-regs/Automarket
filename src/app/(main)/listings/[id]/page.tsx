@@ -27,7 +27,7 @@ type Props = { params: Promise<{ id: string }> };
 const getListing = cache(async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   await connectDB();
-  return Listing.findById(id).populate("sellerId", "name email image phone").lean();
+  return Listing.findById(id).populate("sellerId", "name image phone").lean();
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -78,7 +78,6 @@ export default async function ListingDetailPage({ params }: Props) {
     sellerId: {
       _id?: mongoose.Types.ObjectId;
       name?: string;
-      email?: string;
       phone?: string;
     } | null;
   };

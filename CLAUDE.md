@@ -1,1 +1,55 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 @AGENTS.md
+
+## Project
+
+AutoMarket is a Pakistani vehicle marketplace (buy, sell, rent cars and bikes; prices in PKR). It is a single Next.js 16 App Router app with MongoDB (Mongoose), NextAuth v5 (beta), UploadThing, Pusher, Gemini and Nodemailer. `documentation.md` is a long feature, model and API write-up. It is partly out of date (for example, it says the dev port is 3000), so check the code before relying on it.
+
+## Commands
+
+```bash
+npm run dev          # dev server on http://localhost:3001 (not 3000)
+npm run build
+npm run lint         # ESLint 9 flat config (eslint.config.mjs)
+npx tsc --noEmit     # type check; CI runs this before lint and build
+npm run make-admin   # tsx src/scripts/make-admin.ts: promotes ADMIN_EMAIL to role ADMIN
+```
+
+There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `tsc --noEmit`, lint and build, then deploys to Vercel: previews for PRs and production on pushes to `main`. All env vars are required at build time. See the CI file for the full list (`DATABASE_URL`, `NEXTAUTH_SECRET`, Google OAuth, `UPLOADTHING_TOKEN`, `GEMINI_API_KEY`, the Pusher server and `NEXT_PUBLIC_` keys, the email credentials, `ADMIN_SECRET` and `ADMIN_EMAIL`). `src/lib/mongodb.ts` throws at import time if `DATABASE_URL` is missing.
+
+## Architecture
+
+**Routing (`src/app`)** uses three route groups, each with its own layout and `error.tsx`:
+- `(main)`: the public site and user area (listings, sell, bookings, messages, saved, compare, dashboard, profile) plus `admin/*`.
+- `(business)/business/*`: a dealer or organization console with its own sidebar layout and inline styles, separate from the main Navbar shell.
+- `(auth)`: login and register.
+
+`src/app/api/**/route.ts` holds the REST handlers that client components call with `fetch`. Vercel caps them at 30s (`vercel.json`).
+
+**Auth.** `src/lib/auth.ts` exports `{ handlers, auth, signIn, signOut }` and uses Credentials (bcrypt) and Google providers with JWT sessions. `session.user.id` and `session.user.role` are added in the callbacks and typed in `src/types/next-auth.d.ts`. Google sign-in creates the `User` document on first login.
+- Route protection lives in **`src/proxy.ts`**, which replaces `middleware.ts` in this Next version. It wraps `auth()`, guards the protected prefixes and `/admin` (role `ADMIN`), and skips `/api`. API routes must therefore call `await auth()` and return 401 themselves.
+- Server pages can use `requireAuth()` and `requireAdmin()` from `src/lib/session.ts`.
+- User roles are `USER`, `SELLER` and `ADMIN`. Business roles are separate: `Employee.role` is one of `OWNER`, `MANAGER`, `SALES` or `STAFF`, linked to an `Organization`.
+
+**Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` use the `mongoose.models.X || mongoose.model(...)` pattern.
+- Business inventory is not owned by the organization directly. It is the listings whose `sellerId` is any organization member; see `getInventorySellerIds` in `src/lib/business.ts`.
+
+**Listing filters.** `src/lib/listingFilters.ts` is the single source for browse filters. `parseFilters` turns URL or object input into `buildListingQuery`, the Mongo query that always includes `status: "ACTIVE"`. `listingMatches` is an in-memory twin of that query. The listings API, the browse page URL state and saved-search alerts all use this module, so a new filter must be added to it and to both the query builder and the matcher.
+- When a listing is created, `POST /api/listings` uses `after()` to run `notifySavedSearches` (`src/lib/savedSearchAlerts.ts`), which emails users whose saved searches match.
+
+**Image uploads.** `src/lib/uploadthing.ts` defines two endpoints:
+- `vehicleImages` checks every file with Gemini vision (`src/lib/vehicleImageCheck.ts`; the model can be overridden with `GEMINI_VISION_MODEL`). It fails closed: rejected or unverifiable files are deleted from UploadThing, and approved ones are recorded in `VehicleImage`. The client splits the per-file results with `splitVehicleUploads` (`src/lib/vehicleUploads.ts`).
+- `profileImage` has no check.
+
+Remote image hosts must be allowed in `next.config.ts` `images.remotePatterns`.
+
+**AI inspection.** `api/ai-inspection` and `components/inspection/AIInspectionForm.tsx` use `@google/generative-ai` and save results to the `Inspection` model.
+
+**Realtime and notifications.** The server triggers Pusher events through `src/lib/pusher.ts`. Routes no-op when Pusher env vars are absent (see `triggerPusher` in `api/messages/route.ts`). Clients subscribe to the per-user channel `user-${userId}`. Badge counts come from `src/hooks/useNotificationCounts.ts`, which runs one shared poller per page that also refreshes on window focus and on the Pusher `new-notification` event.
+
+**Client state.** Zustand stores live in `src/hooks/`. `useCompare` persists to localStorage with `skipHydration: true`, and `CompareBar` rehydrates it after mount to avoid hydration mismatches. Shared compare constants live in `src/lib/compare.ts`.
+
+**Conventions.** Use the `@/*` path alias for `src/*`. Styling is Tailwind 3 (`tailwind.config.js`). Shared UI primitives are in `src/components/ui`. react-hook-form and zod are installed but nothing in `src` imports them yet.

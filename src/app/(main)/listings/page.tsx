@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown, Bell, BellRing } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown, Bell, BellRing, LayoutGrid, List } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import Select from "@/components/ui/Select";
 import { IListing } from "@/models/Listing";
@@ -105,6 +105,7 @@ export default function ListingsPage({
   const [fuelType, setFuelType] = useState(str(initial.fuelType));
   const [transmission, setTransmission] = useState(str(initial.transmission));
   const [sort, setSort] = useState<string>(initialSort);
+  const [view, setView] = useState<"grid" | "list">(initialParams.view === "list" ? "list" : "grid");
   const [saveState, setSaveState] = useState<{ query: string; status: "saving" | "saved" | "error"; message?: string } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [closingFilters, setClosingFilters] = useState(false);
@@ -133,7 +134,10 @@ export default function ListingsPage({
   const params = filtersToSearchParams(filters);
   if (sort !== "createdAt") params.set("sort", sort);
   if (page > 1) params.set("page", String(page));
-  const urlQuery = params.toString();
+  // view only changes presentation, so it goes in the address bar but not in the API query (no refetch)
+  const urlParams = new URLSearchParams(params);
+  if (view === "list") urlParams.set("view", "list");
+  const urlQuery = urlParams.toString();
   params.set("limit", String(PAGE_SIZE));
   if (!params.has("page")) params.set("page", "1");
   const query = params.toString();
@@ -526,6 +530,21 @@ export default function ListingsPage({
                   )}
                 </button>
 
+                <div className="flex h-10 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  {(["grid", "list"] as const).map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setView(v)}
+                      aria-label={v === "grid" ? "Grid view" : "List view"}
+                      aria-pressed={view === v}
+                      className={`flex w-10 items-center justify-center transition ${view === v ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                    >
+                      {v === "grid" ? <LayoutGrid size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
                   <ArrowUpDown size={14} strokeWidth={2} className="hidden flex-shrink-0 text-slate-400 sm:block" />
                   <div className="min-w-0 flex-1 sm:w-[190px] sm:flex-none">
@@ -579,7 +598,21 @@ export default function ListingsPage({
               </div>
             )}
 
-            {loading ? (
+            {loading && view === "list" ? (
+              <div className="flex flex-col gap-3 sm:gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:gap-5 sm:rounded-[22px] sm:p-2">
+                    <div className="aspect-[4/3] w-[42%] flex-shrink-0 animate-pulse rounded-xl bg-slate-200/70 sm:w-[260px] sm:rounded-2xl md:w-[300px] lg:w-[320px]" />
+                    <div className="flex-1 space-y-3 py-2 pr-2">
+                      <div className="h-2.5 w-1/4 animate-pulse rounded bg-slate-200/70" />
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200/70" />
+                      <div className="h-5 w-1/3 animate-pulse rounded bg-slate-200/70" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-slate-200/70" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : loading ? (
               <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:rounded-[22px] sm:p-2">
@@ -610,10 +643,13 @@ export default function ListingsPage({
                 </button>
               </div>
             ) : (
-              <div key={loadedQuery} className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3">
+              <div
+                key={`${loadedQuery}-${view}`}
+                className={view === "list" ? "flex flex-col gap-3 sm:gap-4" : "grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3"}
+              >
                 {listings.map((listing, i) => (
                   <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i, 8) * 40}ms` } as React.CSSProperties}>
-                    <ListingCard listing={listing} />
+                    <ListingCard listing={listing} layout={view} eager={i < (view === "list" ? 1 : 3)} />
                   </div>
                 ))}
               </div>

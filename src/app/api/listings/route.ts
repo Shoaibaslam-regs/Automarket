@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     const total = await Listing.countDocuments(query);
 
     const listings = await Listing.find(query)
-      .populate("sellerId", "name email image phone")
+      // Public feed: only what a card shows. Contact details stay on the listing page.
+      .populate("sellerId", "name image")
       .sort({ featured: -1, ...sortOrder })
       .skip(skip)
       .limit(limit)
