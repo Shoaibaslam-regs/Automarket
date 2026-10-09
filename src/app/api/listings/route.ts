@@ -4,6 +4,7 @@ import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
 import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
+import { checkPlanLimit } from "@/lib/subscription";
 
 export async function GET(req: NextRequest) {
   try {
@@ -81,6 +82,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Free and premium plans cap how many listings can be live at once
+    const overLimit = await checkPlanLimit(session.user.id, "listings");
+    if (overLimit) return NextResponse.json(overLimit, { status: 403 });
 
     // Every image must have passed the AI vehicle check at upload time (see lib/uploadthing.ts)
     const imageUrls: string[] = Array.isArray(images) ? images.filter((u: unknown) => typeof u === "string") : [];

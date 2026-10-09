@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ExternalLink, ImageOff, Star, Trash2 } from "lucide-react";
 import { PageHeader, Panel, SearchField, SelectField, StatusBadge, btn } from "@/components/admin/ui";
 import Select from "@/components/ui/Select";
+import { useAdminAccess } from "@/components/admin/AdminAccess";
 
 type Listing = {
   _id: string;
@@ -25,6 +26,7 @@ type Listing = {
 const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "PENDING", "SOLD", "RENTED"] as const;
 
 export default function AdminListingsPage() {
+  const { canWrite } = useAdminAccess();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -132,7 +134,7 @@ export default function AdminListingsPage() {
                 <Select
                   value={listing.status}
                   onChange={v => updateListing(listing._id, { status: v })}
-                  disabled={updating === listing._id}
+                  disabled={!canWrite || updating === listing._id}
                   ariaLabel="Change status"
                   size="sm"
                   options={STATUS_OPTIONS.map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
@@ -140,7 +142,7 @@ export default function AdminListingsPage() {
                 />
                 <button
                   onClick={() => updateListing(listing._id, { featured: !listing.featured })}
-                  disabled={updating === listing._id}
+                  disabled={!canWrite || updating === listing._id}
                   className={`${btn.base} ${listing.featured ? btn.warn : btn.secondary}`}
                 >
                   <Star size={13} fill={listing.featured ? "currentColor" : "none"} />
@@ -148,7 +150,7 @@ export default function AdminListingsPage() {
                 </button>
                 <button
                   onClick={() => deleteListing(listing._id)}
-                  disabled={updating === listing._id}
+                  disabled={!canWrite || updating === listing._id}
                   aria-label="Delete listing"
                   className={`${btn.base} ${btn.danger} ml-auto md:ml-0`}
                 >

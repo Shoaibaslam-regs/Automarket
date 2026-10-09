@@ -11,6 +11,9 @@ import {
 import ImageUpload from "@/components/ui/ImageUpload";
 import Select from "@/components/ui/Select";
 import { formatLakh } from "@/lib/format";
+import { formatLimit, planInfo } from "@/lib/plans";
+import LimitReachedCard from "@/components/subscription/LimitReachedCard";
+import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford", "Other"];
 const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
@@ -92,11 +95,15 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
 
 export default function SellPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const { data: sub, refresh: refreshSub } = useSubscription(status === "authenticated");
+  const listingsFull = !!sub && atLimit(sub.usage.listings, sub.limits.listings);
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Set when the API refused the listing because the plan is full, so the error can link to /pricing
+  const [limitError, setLimitError] = useState(false);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [published, setPublished] = useState<{ id: string; type: string; price: number } | null>(null);
@@ -155,7 +162,14 @@ export default function SellPage() {
     const data = await res.json();
     setLoading(false);
 
-    if (!res.ok) { setError(data.error); return; }
+    if (!res.ok) {
+      setError(data.error);
+      setLimitError(data.code === "PLAN_LIMIT_REACHED");
+      // The plan filled up (maybe from another tab or a teammate); swap the form for the upgrade card
+      if (data.code === "PLAN_LIMIT_REACHED") refreshSub();
+      return;
+    }
+    refreshSub();
     // Show the success screen instead of jumping straight to the listing
     setPublished({ id: data.listing._id, type: data.listing.type, price: data.listing.price });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -286,6 +300,16 @@ export default function SellPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sell or rent</p>
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">List your vehicle</h1>
           <p className="mt-1.5 text-sm text-slate-500">A few details and your listing is live on AutoMarket.</p>
+          {sub && (
+            <p className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-inset ring-slate-200">
+              <span className="font-semibold" style={{ color: planInfo(sub.planId).accent }}>{planInfo(sub.planId).name} plan</span>
+              <span className="text-slate-300">·</span>
+              <span className="tabular-nums">{sub.usage.listings} of {formatLimit(sub.limits.listings)} active listings used</span>
+              {sub.planId !== "UNLIMITED" && (
+                <Link href="/pricing" className="font-semibold text-indigo-600 hover:text-indigo-700">Upgrade</Link>
+              )}
+            </p>
+          )}
 
           {/* Stepper */}
           <nav aria-label="Listing progress" className="mt-6 rounded-2xl border border-slate-200/80 bg-slate-50/60 px-3 py-4 sm:px-6 sm:py-5">
@@ -341,7 +365,18 @@ export default function SellPage() {
       </section>
 
       <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 sm:py-8">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {listingsFull && sub && (
+          <LimitReachedCard
+            kind="listings"
+            planId={sub.planId}
+            used={sub.usage.listings}
+            limit={sub.limits.listings}
+            hint={sub.inheritedFromOwner
+              ? "Your business owner can upgrade, or mark an older listing as sold to free a slot."
+              : "Upgrade to post more, or mark an older listing as sold to free a slot."}
+          />
+        )}
+        <div className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] ${listingsFull ? "hidden" : ""}`}>
           <form ref={formRef} onSubmit={handleSubmit} className="min-w-0">
             <div className="rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
@@ -356,7 +391,14 @@ export default function SellPage() {
 
               <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
                 {error && (
-                  <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-[13px] text-rose-700">{error}</div>
+                  <div role="alert" className="flex flex-col gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-[13px] text-rose-700 sm:flex-row sm:items-center sm:justify-between">
+                    <span>{error}</span>
+                    {limitError && (
+                      <Link href="/pricing" className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800">
+                        Upgrade plan <ArrowRight size={13} />
+                      </Link>
+                    )}
+                  </div>
                 )}
 
                 {step === 1 && (

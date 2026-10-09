@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
-import { auth } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const gate = await requireAdminApi("read");
+    if (!gate.ok) return gate.response;
     await connectDB();
     const listings = await Listing.find()
       .populate("sellerId", "name email")

@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
+import { checkPlanLimit } from "@/lib/subscription";
+import { SLOT_STATUSES } from "@/lib/plans";
 
 export async function GET(
   req: NextRequest,
@@ -54,7 +56,7 @@ export async function PATCH(
     }
     await connectDB();
 
-    const listing = await Listing.findById(id).select("sellerId").lean<{ sellerId: mongoose.Types.ObjectId }>();
+    const listing = await Listing.findById(id).select("sellerId status").lean<{ sellerId: mongoose.Types.ObjectId; status: string }>();
     if (!listing) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
@@ -66,6 +68,13 @@ export async function PATCH(
     const update: Record<string, unknown> = {};
     for (const key of EDITABLE_FIELDS) {
       if (body && key in body) update[key] = body[key];
+    }
+
+    // Re-activating a sold or inactive listing takes a plan slot again
+    const takesSlot = (status: unknown) => (SLOT_STATUSES as readonly unknown[]).includes(status);
+    if ("status" in update && takesSlot(update.status) && !takesSlot(listing.status)) {
+      const overLimit = await checkPlanLimit(session.user.id, "listings");
+      if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     }
 
     // Ownership is re-checked in the write itself so the update can never touch someone else's listing

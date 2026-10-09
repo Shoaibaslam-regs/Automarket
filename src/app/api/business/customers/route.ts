@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Customer } from "@/models/Customer";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
+import { checkPlanLimit } from "@/lib/subscription";
 
 export async function GET() {
   try {
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const user = await User.findById(session.user.id);
     if (!user?.organizationId) return NextResponse.json({ error: "No organization" }, { status: 404 });
+    const overLimit = await checkPlanLimit(session.user.id, "customers");
+    if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     const body = await req.json();
     const customer = await Customer.create({ ...body, organizationId: user.organizationId });
     return NextResponse.json({ customer }, { status: 201 });

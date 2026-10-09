@@ -147,7 +147,7 @@ export default async function HomePage() {
                 name="search"
                 type="text"
                 aria-label="Search vehicles"
-                placeholder="Try “Civic 2020” or “Lahore”"
+                placeholder="Try “Civic 2020” or “Karachi”"
                 className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
               />
               <button

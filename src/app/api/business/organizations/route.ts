@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { auth } from "@/lib/auth";
+import { getSubscription } from "@/lib/subscription";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -17,8 +18,11 @@ export async function GET() {
     await connectDB();
     const user = await User.findById(session.user.id);
     if (!user?.organizationId) return NextResponse.json({ organization: null });
-    const org = await Organization.findById(user.organizationId);
-    return NextResponse.json({ organization: org });
+    const org = await Organization.findById(user.organizationId).lean();
+    if (!org) return NextResponse.json({ organization: null });
+    // Plans live on the owner's account; report the one in force rather than the legacy org field
+    const sub = await getSubscription(session.user.id);
+    return NextResponse.json({ organization: { ...org, plan: sub.planId } });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
 
-    const { name, type, phone, email, city, address, description, plan } = await req.json();
+    const { name, type, phone, email, city, address, description } = await req.json();
     if (!name || !type || !city) return NextResponse.json({ error: "Name, type and city are required" }, { status: 400 });
 
     const existing = await User.findById(session.user.id);
@@ -38,7 +42,6 @@ export async function POST(req: NextRequest) {
 
     const org = await Organization.create({
       name, type, phone, email, city, address, description,
-      plan: plan || "FREE",
       slug: generateSlug(name),
       ownerId: session.user.id,
       isActive: true,

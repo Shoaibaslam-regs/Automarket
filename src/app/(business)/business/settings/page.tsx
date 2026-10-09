@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Select from "@/components/ui/Select";
+import { Crown } from "lucide-react";
+import { planInfo } from "@/lib/plans";
+import UsageMeters from "@/components/subscription/UsageMeters";
+import { useSubscription } from "@/components/subscription/useSubscription";
 
 type Organization = {
   _id: string;
@@ -22,7 +26,6 @@ type Organization = {
 };
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
-const PLAN_COLORS: Record<string, string> = { FREE: "#57606a", PRO: "#0550ae", BUSINESS: "#1a7f37" };
 
 function DeleteBusinessDialog({ orgName, open, onOpenChange }: {
   orgName: string; open: boolean; onOpenChange: (open: boolean) => void;
@@ -117,6 +120,8 @@ export default function BusinessSettingsPage() {
   const { data: session } = useSession();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [org, setOrg] = useState<Organization | null>(null);
+  const { data: sub } = useSubscription();
+  const plan = planInfo(sub?.planId ?? org?.plan);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -179,22 +184,34 @@ export default function BusinessSettingsPage() {
 
       <div style={{ maxWidth: "680px", margin: "0 auto", padding: "24px 20px", display: "flex", flexDirection: "column", gap: "20px" }}>
 
-        {/* Plan badge */}
-        <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "4px" }}>Current plan</p>
-            <p style={{ fontSize: "11px", color: "#8c959f" }}>Your business is on the {org?.plan} plan</p>
+        {/* Plan */}
+        <div className="relative overflow-hidden rounded-xl bg-slate-950 p-5 text-white sm:p-6">
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-24 left-8 h-48 w-48 rounded-full bg-amber-400/15 blur-3xl" />
+          <div className="relative flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-amber-300 ring-1 ring-inset ring-white/15">
+                <Crown size={18} />
+              </span>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Current plan</p>
+                <p className="text-lg font-bold">{plan.name}{plan.price > 0 && <span className="ml-1.5 text-sm font-medium text-slate-400">PKR {plan.price.toLocaleString()}/mo</span>}</p>
+                {sub?.expiresAt && (
+                  <p className="text-xs text-slate-400">
+                    {sub.source === "ADMIN_GRANT" ? "Complimentary · " : ""}until {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2 text-xs font-bold text-slate-950 no-underline transition hover:opacity-90">
+              {plan.id === "UNLIMITED" ? "View plans" : "Upgrade plan"}
+            </Link>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 800, color: PLAN_COLORS[org?.plan || "FREE"], padding: "4px 14px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "20px" }}>
-              {org?.plan}
-            </span>
-            {org?.plan !== "BUSINESS" && (
-              <button style={{ padding: "7px 14px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                Upgrade
-              </button>
-            )}
-          </div>
+          {sub && (
+            <div className="relative mt-5">
+              <UsageMeters sub={sub} />
+            </div>
+          )}
         </div>
 
         {/* Business info */}

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
 import { BarChart3, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
+import { planInfo } from "@/lib/plans";
 
 type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
@@ -116,7 +117,7 @@ export default function BusinessDashboard() {
               marginTop: "1px",
             }}
           >
-            {org?.plan} plan · {org?.city}
+            {planInfo(org?.plan).name} plan · {org?.city}
           </p>
         </div>
       </div>

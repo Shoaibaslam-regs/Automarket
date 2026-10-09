@@ -51,6 +51,7 @@ function CustomersContent() {
   // Dashboard "Add customer" quick action links here with ?add=1
   const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1");
   const [saving, setSaving] = useState(false);
+  const [addError, setAddError] = useState<{ message: string; planLimit: boolean } | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" });
 
   useEffect(() => { fetchCustomers(); }, []);
@@ -65,12 +66,18 @@ function CustomersContent() {
   async function addCustomer(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/business/customers", {
+    setAddError(null);
+    const res = await fetch("/api/business/customers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAddError({ message: data.error || "Failed to add customer", planLimit: data.code === "PLAN_LIMIT_REACHED" });
+      return;
+    }
     setShowAdd(false);
     setForm({ name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" });
     fetchCustomers();
@@ -102,6 +109,12 @@ function CustomersContent() {
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117" }}>Add customer</h2>
               <button onClick={() => setShowAdd(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#8c959f" }}>×</button>
             </div>
+            {addError && (
+              <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "14px" }}>
+                {addError.message}{" "}
+                {addError.planLimit && <Link href="/pricing" style={{ color: "#0d1117", fontWeight: 700 }}>Upgrade plan →</Link>}
+              </div>
+            )}
             <form onSubmit={addCustomer} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {[
                 { label: "Full name *", name: "name", type: "text", placeholder: "Customer name", required: true },

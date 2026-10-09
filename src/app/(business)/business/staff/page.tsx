@@ -27,7 +27,7 @@ export default function StaffPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("STAFF");
   const [inviting, setInviting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string; planLimit?: boolean } | null>(null);
 
   useEffect(() => { fetchStaff(); }, []);
 
@@ -54,7 +54,7 @@ export default function StaffPage() {
       fetchStaff();
       setTimeout(() => { setInviteResult(null); setShowInvite(false); }, 2000);
     } else {
-      setInviteResult({ ok: false, message: data.error });
+      setInviteResult({ ok: false, message: data.error, planLimit: data.code === "PLAN_LIMIT_REACHED" });
     }
   }
 
@@ -104,7 +104,8 @@ export default function StaffPage() {
               </div>
               {inviteResult && (
                 <div style={{ padding: "10px 14px", background: inviteResult.ok ? "#dafbe1" : "#fff0f0", borderRadius: "8px", fontSize: "13px", color: inviteResult.ok ? "#1a7f37" : "#cf222e" }}>
-                  {inviteResult.message}
+                  {inviteResult.message}{" "}
+                  {inviteResult.planLimit && <Link href="/pricing" style={{ color: "#0d1117", fontWeight: 700 }}>Upgrade plan →</Link>}
                 </div>
               )}
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>

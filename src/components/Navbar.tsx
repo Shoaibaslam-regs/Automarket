@@ -11,7 +11,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
-import { Calendar, Car, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
+import { Calendar, Car, Crown, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -181,6 +181,7 @@ export default function Navbar() {
           <div className="nav-desktop" style={{ alignItems: "center", gap: "2px", flex: 1, justifyContent: "center" }}>
             <Link href="/listings" className="nav-link">Browse</Link>
             <Link href="/listings?type=RENT" className="nav-link">Rentals</Link>
+            <Link href="/pricing" className="nav-link">Pricing</Link>
             {session?.user && (
               <>
                 <Link href="/sell" className="nav-link">Sell</Link>
@@ -347,6 +348,7 @@ export default function Navbar() {
                 {[
                   { href: "/listings", label: "Browse vehicles", icon: Search },
                   { href: "/listings?type=RENT", label: "Rentals", icon: KeyRound },
+                  { href: "/pricing", label: "Pricing", icon: Crown },
                 ].map(item => (
                   <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                     style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>

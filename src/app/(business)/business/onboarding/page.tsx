@@ -5,40 +5,12 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Building2, Car, KeyRound, Rocket } from "lucide-react";
+import Link from "next/link";
 import Select from "@/components/ui/Select";
+import { PLAN_LIST, formatLimit, formatPlanPrice, planInfo } from "@/lib/plans";
+import { useSubscription } from "@/components/subscription/useSubscription";
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
-
-const PLANS = [
-  {
-    id: "FREE",
-    name: "Free",
-    price: "PKR 0",
-    period: "/forever",
-    color: "#57606a",
-    features: ["Up to 20 vehicles", "1 staff member", "Basic inventory", "Customer tracking"],
-    limit: "Perfect to get started",
-  },
-  {
-    id: "PRO",
-    name: "Pro",
-    price: "PKR 2,999",
-    period: "/month",
-    color: "#0550ae",
-    popular: true,
-    features: ["Up to 200 vehicles", "5 staff members", "Rental management", "Customer CRM", "Sales reports", "AI inspection"],
-    limit: "Best for growing dealers",
-  },
-  {
-    id: "BUSINESS",
-    name: "Business",
-    price: "PKR 7,999",
-    period: "/month",
-    color: "#1a7f37",
-    features: ["Unlimited vehicles", "Unlimited staff", "Multiple branches", "Advanced analytics", "API access", "Priority support"],
-    limit: "For established businesses",
-  },
-];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -54,8 +26,10 @@ export default function OnboardingPage() {
     city: "",
     address: "",
     description: "",
-    plan: "FREE",
   });
+  // A business runs on its owner's plan, so this is the plan the new business will start on
+  const { data: sub } = useSubscription(!!session?.user);
+  const currentPlan = planInfo(sub?.planId);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     setForm(p => ({ ...p, [e.target.name]: e.target.value }));
@@ -195,39 +169,41 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3 — Plan selection */}
+        {/* Step 3 — Plan overview */}
         {step === 3 && (
           <div>
-            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0d1117", marginBottom: "8px" }}>Choose your plan</h1>
-            <p style={{ fontSize: "14px", color: "#57606a", marginBottom: "28px" }}>Start free and upgrade anytime. No credit card required for Free plan.</p>
+            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0d1117", marginBottom: "8px" }}>Your plan</h1>
+            <p style={{ fontSize: "14px", color: "#57606a", marginBottom: "28px" }}>
+              Your business starts on your current <strong style={{ color: currentPlan.accent }}>{currentPlan.name}</strong> plan and your whole team shares it.
+              You can upgrade anytime from <Link href="/pricing" style={{ color: "#0d1117", fontWeight: 600 }}>Pricing</Link>.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {PLANS.map(plan => (
-                <div key={plan.id} onClick={() => setForm(p => ({ ...p, plan: plan.id }))}
-                  style={{ padding: "20px", background: "white", border: `2px solid ${form.plan === plan.id ? plan.color : "#e1e4e8"}`, borderRadius: "12px", cursor: "pointer", position: "relative", transition: "all 0.15s" }}>
-                  {plan.popular && (
-                    <span style={{ position: "absolute", top: "-10px", left: "20px", background: "#0550ae", color: "white", fontSize: "10px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px" }}>
-                      MOST POPULAR
-                    </span>
-                  )}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                    <div>
-                      <p style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117", marginBottom: "2px" }}>{plan.name}</p>
-                      <p style={{ fontSize: "12px", color: "#8c959f" }}>{plan.limit}</p>
+              {PLAN_LIST.map(plan => {
+                const current = plan.id === currentPlan.id;
+                return (
+                  <div key={plan.id}
+                    style={{ padding: "18px 20px", background: current ? "#0d1117" : "white", color: current ? "white" : "#0d1117", border: `1px solid ${current ? "#0d1117" : "#e1e4e8"}`, borderRadius: "12px", position: "relative" }}>
+                    {current && (
+                      <span style={{ position: "absolute", top: "-10px", left: "20px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "#0d1117", fontSize: "10px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px" }}>
+                        YOUR PLAN
+                      </span>
+                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
+                      <div>
+                        <p style={{ fontSize: "16px", fontWeight: 700, marginBottom: "2px" }}>{plan.name}</p>
+                        <p style={{ fontSize: "12px", color: current ? "#9ca3af" : "#8c959f" }}>{plan.tagline}</p>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <span style={{ fontSize: "20px", fontWeight: 800, color: current ? "#fcd34d" : plan.accent }}>{formatPlanPrice(plan.price)}</span>
+                        <span style={{ fontSize: "12px", color: "#8c959f" }}>{plan.price ? "/month" : ""}</span>
+                      </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: "20px", fontWeight: 800, color: plan.color }}>{plan.price}</span>
-                      <span style={{ fontSize: "12px", color: "#8c959f" }}>{plan.period}</span>
-                    </div>
+                    <p style={{ fontSize: "12px", color: current ? "#d1d5db" : "#57606a" }}>
+                      {formatLimit(plan.limits.listings)} listings · {formatLimit(plan.limits.staff)} team members · {formatLimit(plan.limits.customers)} customers
+                    </p>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
-                    {plan.features.map(f => (
-                      <p key={f} style={{ fontSize: "12px", color: "#57606a", display: "flex", alignItems: "center", gap: "5px" }}>
-                        <span style={{ color: plan.color, fontWeight: 700 }}>✓</span> {f}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -241,7 +217,7 @@ export default function OnboardingPage() {
               You&apos;re setting up <strong style={{ color: "#0d1117" }}>{form.name}</strong>
             </p>
             <p style={{ fontSize: "13px", color: "#8c959f", marginBottom: "32px" }}>
-              {form.type === "DEALER" ? "Car dealer" : form.type === "RENTAL" ? "Rental company" : "Dealer + Rental"} · {form.city} · {form.plan} plan
+              {form.type === "DEALER" ? "Car dealer" : form.type === "RENTAL" ? "Rental company" : "Dealer + Rental"} · {form.city} · {currentPlan.name} plan
             </p>
             <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "20px", textAlign: "left", marginBottom: "28px" }}>
               <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "12px" }}>What happens next:</p>

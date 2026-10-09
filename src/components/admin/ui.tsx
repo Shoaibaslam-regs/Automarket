@@ -39,8 +39,11 @@ export const STATUS_TONE: Record<string, Tone> = {
   ADMIN: "violet",
   USER: "neutral",
   FREE: "neutral",
-  PRO: "blue",
-  BUSINESS: "green",
+  STARTER: "blue",
+  PRO: "violet",
+  UNLIMITED: "amber",
+  FULL: "violet",
+  READ_ONLY: "neutral",
 };
 
 export function PageHeader({

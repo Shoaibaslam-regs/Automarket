@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, Car, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Car, Eye, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -13,6 +14,43 @@ const NAV = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminAccessProvider>
+      <AdminShell>{children}</AdminShell>
+    </AdminAccessProvider>
+  );
+}
+
+function AccessCard() {
+  const { access } = useAdminAccess();
+  if (access === "READ_ONLY") {
+    return (
+      <div className="mt-auto rounded-xl bg-white/5 p-3 ring-1 ring-inset ring-white/10">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-200"><Eye size={13} className="text-sky-300" /> View-only access</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">You can see everything, but only a full admin can make changes.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-auto rounded-xl bg-white/5 p-3 ring-1 ring-inset ring-white/10">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-200"><ShieldCheck size={13} className="text-indigo-300" /> Full admin access</p>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Changes here affect every user on the platform.</p>
+    </div>
+  );
+}
+
+function ViewOnlyBanner() {
+  const { access } = useAdminAccess();
+  if (access !== "READ_ONLY") return null;
+  return (
+    <div className="mb-5 flex items-center gap-2.5 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-800 ring-1 ring-inset ring-sky-200">
+      <Eye size={16} className="flex-shrink-0" />
+      <span><strong className="font-semibold">View-only admin.</strong> You can browse all data, but actions are disabled.</span>
+    </div>
+  );
+}
+
+function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
@@ -50,10 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="mt-auto rounded-xl bg-white/5 p-3 ring-1 ring-inset ring-white/10">
-          <p className="text-xs font-semibold text-slate-200">Admin access</p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Changes here affect every user on the platform.</p>
-        </div>
+        <AccessCard />
       </aside>
 
       {/* Mobile / tablet nav */}
@@ -79,7 +114,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <main className="min-w-0 flex-1">
-        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8">
+          <ViewOnlyBanner />
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -207,8 +207,8 @@ export default function AdminPage() {
           <StatGrid>
             <StatCard label="Total businesses" value={organizations.length} icon={Building2} tone="neutral" />
             <StatCard label="Active" value={organizations.filter(o => o.isActive).length} icon={CircleCheck} tone="green" />
-            <StatCard label="Pro plan" value={organizations.filter(o => o.plan === "PRO").length} icon={Briefcase} tone="blue" />
-            <StatCard label="Business plan" value={organizations.filter(o => o.plan === "BUSINESS").length} icon={Briefcase} tone="amber" />
+            <StatCard label="Premium plans" value={organizations.filter(o => o.plan === "STARTER" || o.plan === "PRO").length} icon={Briefcase} tone="blue" />
+            <StatCard label="Unlimited plan" value={organizations.filter(o => o.plan === "UNLIMITED").length} icon={Briefcase} tone="amber" />
             <StatCard label="Dealers" value={organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length} icon={Store} tone="violet" />
             <StatCard label="Rental co." value={organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length} icon={KeyRound} tone="orange" />
           </StatGrid>

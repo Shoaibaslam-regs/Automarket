@@ -3,16 +3,14 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { Listing } from "@/models/Listing";
 import { Booking } from "@/models/Booking";
-import { auth } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const gate = await requireAdminApi("read");
+    if (!gate.ok) return gate.response;
 
     await connectDB();
 

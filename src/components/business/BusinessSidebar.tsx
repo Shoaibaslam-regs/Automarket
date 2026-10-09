@@ -10,6 +10,7 @@ import SignOutDialog from "@/components/SignOutDialog";
 import { BarChart3, Car, House, KeyRound, LayoutDashboard, LogOut, MessageSquare, Settings, User, Users } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
+import { planInfo } from "@/lib/plans";
 
 type Organization = {
   name: string;
@@ -27,10 +28,6 @@ const NAV_ITEMS = [
   { href: "/business/reports",    label: "Reports",    icon: BarChart3 },
   { href: "/business/settings",   label: "Settings",   icon: Settings },
 ];
-
-const PLAN_COLORS: Record<string, string> = {
-  FREE: "#57606a", PRO: "#0550ae", BUSINESS: "#1a7f37",
-};
 
 export default function BusinessSidebar() {
   const pathname = usePathname();
@@ -88,7 +85,7 @@ export default function BusinessSidebar() {
                 {org?.name || "My Business"}
               </p>
               <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>
-                {org?.type} · <span style={{ color: PLAN_COLORS[org?.plan || "FREE"] }}>{org?.plan}</span>
+                {org?.type} · <span style={{ color: planInfo(org?.plan).accent }}>{planInfo(org?.plan).name}</span>
               </p>
             </div>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
