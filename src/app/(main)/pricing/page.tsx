@@ -7,7 +7,7 @@ import PlanCards from "@/components/subscription/PlanCards";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLAN_LIST, formatLimit, planInfo, type Plan } from "@/lib/plans";
+import { PLANS, PLAN_LIST, formatLimit, planInfo, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Active listings", value: p => formatLimit(p.limits.listings) },
@@ -64,7 +64,7 @@ export default function PricingPage() {
             <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoMarket Premium</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
-            Start free with 2 listings. Upgrade when you need more listings, a bigger team and full showroom management.
+            Start free with {PLANS.FREE.limits.listings} listings and a team of {PLANS.FREE.limits.staff}. Upgrade when you need more listings, a bigger team and full showroom management.
           </p>
         </div>
       </section>

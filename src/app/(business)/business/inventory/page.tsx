@@ -3,8 +3,11 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, LayoutGrid, List, MapPin, Plus, Search, Trash2 } from "lucide-react";
+import { Car, Crown, LayoutGrid, List, MapPin, Plus, Search, Trash2 } from "lucide-react";
 import Select from "@/components/ui/Select";
+import ConfirmDialog from "@/components/business/ConfirmDialog";
+import { formatLimit } from "@/lib/plans";
+import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
 type Vehicle = {
   _id: string;
@@ -55,6 +58,8 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const { data: sub, refresh: refreshSub } = useSubscription();
+  const listingsFull = !!sub && atLimit(sub.usage.listings, sub.limits.listings);
 
   useEffect(() => {
     // Scoped server-side to the signed-in user's business; never the public marketplace feed
@@ -68,17 +73,24 @@ export default function InventoryPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function deleteVehicle(id: string) {
-    if (!confirm("Delete this vehicle?")) return;
+  const [confirmDelete, setConfirmDelete] = useState<Vehicle | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function deleteVehicle() {
+    if (!confirmDelete) return;
+    const id = confirmDelete._id;
+    setDeleteError("");
     setDeleting(id);
     const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setVehicles(prev => prev.filter(v => v._id !== id));
-    } else {
-      const d = await res.json().catch(() => ({}));
-      alert(d.error || "Failed to delete vehicle");
-    }
     setDeleting(null);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setDeleteError(d.error || "Failed to delete vehicle");
+      return;
+    }
+    setVehicles(prev => prev.filter(v => v._id !== id));
+    setConfirmDelete(null);
+    refreshSub();
   }
 
   const filtered = vehicles.filter(v => {
@@ -98,7 +110,7 @@ export default function InventoryPage() {
   const deleteButton = (v: Vehicle, compact = false) =>
     v.canManage ? (
       <button
-        onClick={() => deleteVehicle(v._id)}
+        onClick={() => { setDeleteError(""); setConfirmDelete(v); }}
         disabled={deleting === v._id}
         aria-label={`Delete ${v.title}`}
         className={`inline-flex items-center justify-center rounded-lg border border-[#ffcdd2] bg-[#fff0f0] text-[#cf222e] transition hover:bg-[#ffe3e3] disabled:opacity-50 ${compact ? "h-8 w-8" : "h-8 px-2.5"}`}
@@ -109,15 +121,43 @@ export default function InventoryPage() {
 
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={o => !o && setConfirmDelete(null)}
+        title={`Delete ${confirmDelete?.title ?? "vehicle"}`}
+        description={confirmDelete && (
+          <>
+            <strong style={{ color: "#0d1117" }}>{confirmDelete.title}</strong> will be removed from AutoMarket and buyers will no longer
+            be able to find it. If it was sold, consider marking it <strong>Sold</strong> instead to keep it in your reports.
+            {" "}<strong style={{ color: "#cf222e" }}>This can&apos;t be undone.</strong>
+          </>
+        )}
+        confirmLabel="Delete vehicle"
+        loading={confirmDelete !== null && deleting === confirmDelete._id}
+        error={deleteError}
+        onConfirm={deleteVehicle}
+      />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-5 sm:px-6">
         <div className="min-w-0">
           <Link href="/business/dashboard" className="text-xs text-[#57606a] hover:text-[#0d1117]">← Dashboard</Link>
           <h1 className="mt-1 text-lg font-bold text-[#0d1117]">Inventory</h1>
+          {sub && (
+            <p className={`mt-0.5 text-xs ${listingsFull ? "text-[#cf222e]" : "text-[#57606a]"}`}>
+              {sub.usage.listings} of {formatLimit(sub.limits.listings)} active listings on your plan
+              {listingsFull && " · mark a vehicle sold or upgrade to add more"}
+            </p>
+          )}
         </div>
-        <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1117] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#24292f]">
-          <Plus size={15} strokeWidth={2} /> Add vehicle
-        </Link>
+        {listingsFull ? (
+          <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2.5 text-[13px] font-bold text-slate-950 transition hover:opacity-90">
+            <Crown size={15} strokeWidth={2} /> Upgrade to add more
+          </Link>
+        ) : (
+          <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1117] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#24292f]">
+            <Plus size={15} strokeWidth={2} /> Add vehicle
+          </Link>
+        )}
       </div>
 
       <div className="px-4 py-5 sm:px-6">

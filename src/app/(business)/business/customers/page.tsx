@@ -3,8 +3,12 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
+import { Pencil, Trash2, Users } from "lucide-react";
+import { isClosedDeal } from "@/lib/customers";
+import { formatLimit } from "@/lib/plans";
+import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 import Select from "@/components/ui/Select";
+import ConfirmDialog from "@/components/business/ConfirmDialog";
 
 type Customer = {
   _id: string;
@@ -30,6 +34,8 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 
 const STATUSES = ["LEAD", "INTERESTED", "TEST_DRIVE", "NEGOTIATING", "SOLD", "LOST"];
 
+const EMPTY_FORM = { name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" };
+
 export default function CustomersPage() {
   return (
     <Suspense fallback={
@@ -52,44 +58,92 @@ function CustomersContent() {
   const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1");
   const [saving, setSaving] = useState(false);
   const [addError, setAddError] = useState<{ message: string; planLimit: boolean } | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
+  // null while adding; the customer's id while editing an existing one
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState({ canEdit: false, canDelete: false });
+  const [pageError, setPageError] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Customer | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const { data: sub, refresh: refreshSub } = useSubscription();
+  const customersFull = !!sub && atLimit(sub.usage.customers, sub.limits.customers);
+
+  const fetchCustomers = () =>
+    fetch("/api/business/customers")
+      .then(res => res.json())
+      .then(data => {
+        setCustomers(data.customers || []);
+        if (data.permissions) setPermissions(data.permissions);
+      })
+      .catch(() => setPageError("Couldn't load customers."))
+      .finally(() => setLoading(false));
 
   useEffect(() => { fetchCustomers(); }, []);
 
-  async function fetchCustomers() {
-    const res = await fetch("/api/business/customers");
-    const data = await res.json();
-    setCustomers(data.customers || []);
-    setLoading(false);
+  function closeModal() {
+    setShowAdd(false);
+    setEditingId(null);
+    setAddError(null);
+    setForm(EMPTY_FORM);
   }
 
-  async function addCustomer(e: React.FormEvent) {
+  function openEdit(c: Customer) {
+    setEditingId(c._id);
+    setForm({ name: c.name, phone: c.phone, email: c.email || "", city: c.city || "", source: c.source, status: c.status, notes: c.notes || "" });
+    setAddError(null);
+    setShowAdd(true);
+  }
+
+  async function saveCustomer(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setAddError(null);
-    const res = await fetch("/api/business/customers", {
-      method: "POST",
+    const res = await fetch(editingId ? `/api/business/customers/${editingId}` : "/api/business/customers", {
+      method: editingId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     setSaving(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setAddError({ message: data.error || "Failed to add customer", planLimit: data.code === "PLAN_LIMIT_REACHED" });
+      setAddError({ message: data.error || "Failed to save customer", planLimit: data.code === "PLAN_LIMIT_REACHED" });
       return;
     }
-    setShowAdd(false);
-    setForm({ name: "", phone: "", email: "", city: "", source: "WALK_IN", status: "LEAD", notes: "" });
+    closeModal();
     fetchCustomers();
+    refreshSub();
   }
 
   async function updateStatus(id: string, status: string) {
-    await fetch(`/api/business/customers/${id}`, {
+    setPageError("");
+    const res = await fetch(`/api/business/customers/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setPageError(data.error || "Failed to update status");
+    }
     fetchCustomers();
+  }
+
+  async function deleteCustomer() {
+    const c = confirmDelete;
+    if (!c) return;
+    setDeleteError("");
+    setDeleting(c._id);
+    const res = await fetch(`/api/business/customers/${c._id}`, { method: "DELETE" });
+    setDeleting(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Failed to delete customer");
+      return;
+    }
+    setConfirmDelete(null);
+    fetchCustomers();
+    refreshSub();
   }
 
   const filtered = customers.filter(c => {
@@ -103,11 +157,11 @@ function CustomersContent() {
 
       {/* Add customer modal */}
       {showAdd && (
-        <div onClick={() => setShowAdd(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+        <div onClick={closeModal} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: "14px", width: "100%", maxWidth: "480px", padding: "24px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117" }}>Add customer</h2>
-              <button onClick={() => setShowAdd(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#8c959f" }}>×</button>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117" }}>{editingId ? "Edit customer" : "Add customer"}</h2>
+              <button onClick={closeModal} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#8c959f" }}>×</button>
             </div>
             {addError && (
               <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "14px" }}>
@@ -115,7 +169,7 @@ function CustomersContent() {
                 {addError.planLimit && <Link href="/pricing" style={{ color: "#0d1117", fontWeight: 700 }}>Upgrade plan →</Link>}
               </div>
             )}
-            <form onSubmit={addCustomer} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form onSubmit={saveCustomer} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {[
                 { label: "Full name *", name: "name", type: "text", placeholder: "Customer name", required: true },
                 { label: "Phone *", name: "phone", type: "tel", placeholder: "+92 300 0000000", required: true },
@@ -150,13 +204,13 @@ function CustomersContent() {
                   style={{ width: "100%", padding: "9px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", resize: "none", boxSizing: "border-box" }} />
               </div>
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "4px" }}>
-                <button type="button" onClick={() => setShowAdd(false)}
+                <button type="button" onClick={closeModal}
                   style={{ padding: "9px 18px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "8px", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
                   style={{ padding: "9px 18px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                  {saving ? "Saving..." : "Add customer"}
+                  {saving ? "Saving..." : editingId ? "Save changes" : "Add customer"}
                 </button>
               </div>
             </form>
@@ -164,19 +218,54 @@ function CustomersContent() {
         </div>
       )}
 
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={o => !o && setConfirmDelete(null)}
+        title={`Delete ${confirmDelete?.name ?? "customer"}`}
+        description={confirmDelete && (
+          <>
+            This deal is marked <strong style={{ color: STATUS_COLORS[confirmDelete.status]?.color }}>{confirmDelete.status}</strong>.
+            Deleting <strong style={{ color: "#0d1117" }}>{confirmDelete.name}</strong> removes their contact details and notes permanently
+            and frees a customer slot on your plan. <strong style={{ color: "#cf222e" }}>This can&apos;t be undone.</strong>
+          </>
+        )}
+        confirmLabel="Delete customer"
+        loading={confirmDelete !== null && deleting === confirmDelete._id}
+        error={deleteError}
+        onConfirm={deleteCustomer}
+      />
+
       {/* Header */}
       <div style={{ padding: "20px 24px", background: "white", borderBottom: "1px solid #e1e4e8", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <Link href="/business/dashboard" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>← Dashboard</Link>
           <h1 style={{ fontSize: "18px", fontWeight: 700, color: "#0d1117", marginTop: "4px" }}>Customers</h1>
+          {sub && (
+            <p style={{ fontSize: "12px", color: customersFull ? "#cf222e" : "#57606a", marginTop: "2px" }}>
+              {sub.usage.customers} of {formatLimit(sub.limits.customers)} customers on your plan
+              {customersFull && " · delete closed deals or upgrade to add more"}
+            </p>
+          )}
         </div>
-        <button onClick={() => setShowAdd(true)}
-          style={{ padding: "9px 18px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-          + Add customer
-        </button>
+        {permissions.canEdit && (customersFull ? (
+          <Link href="/pricing"
+            style={{ padding: "9px 18px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "#0d1117", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
+            Upgrade plan to add more
+          </Link>
+        ) : (
+          <button onClick={() => setShowAdd(true)}
+            style={{ padding: "9px 18px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            + Add customer
+          </button>
+        ))}
       </div>
 
       <div style={{ padding: "20px 24px" }}>
+        {pageError && (
+          <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "14px" }}>
+            {pageError}
+          </div>
+        )}
         {/* Pipeline summary */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "10px", marginBottom: "16px" }}>
           {STATUSES.map(s => {
@@ -203,10 +292,12 @@ function CustomersContent() {
           ) : filtered.length === 0 ? (
             <div style={{ padding: "48px", textAlign: "center" }}>
               <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Users size={25} strokeWidth={1.5} /></div>
-              <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>No customers yet</p>
-              <button onClick={() => setShowAdd(true)} style={{ fontSize: "13px", color: "#0d1117", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>
-                Add your first customer
-              </button>
+              <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>{customers.length === 0 ? "No customers yet" : "No customers match your filters"}</p>
+              {permissions.canEdit && customers.length === 0 && (
+                <button onClick={() => setShowAdd(true)} style={{ fontSize: "13px", color: "#0d1117", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>
+                  Add your first customer
+                </button>
+              )}
             </div>
           ) : filtered.map((c, i) => {
             const statusStyle = STATUS_COLORS[c.status] || STATUS_COLORS.LEAD;
@@ -230,6 +321,7 @@ function CustomersContent() {
                 )}
                 <Select value={c.status}
                   onChange={v => updateStatus(c._id, v)}
+                  disabled={!permissions.canEdit}
                   ariaLabel={`Status for ${c.name}`}
                   size="sm"
                   options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
@@ -240,6 +332,21 @@ function CustomersContent() {
                   style={{ padding: "5px 10px", background: "#2da44e", color: "white", borderRadius: "6px", fontSize: "11px", fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>
                   WhatsApp
                 </a>
+                {permissions.canEdit && (
+                  <button onClick={() => openEdit(c)} aria-label={`Edit ${c.name}`} title="Edit customer"
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "6px", color: "#57606a", cursor: "pointer", flexShrink: 0 }}>
+                    <Pencil size={13} />
+                  </button>
+                )}
+                {permissions.canDelete && (
+                  <button onClick={() => { setDeleteError(""); setConfirmDelete(c); }}
+                    disabled={!isClosedDeal(c.status) || deleting === c._id}
+                    aria-label={`Delete ${c.name}`}
+                    title={isClosedDeal(c.status) ? "Delete customer" : "Mark the deal as Sold or Lost to delete"}
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "6px", color: "#cf222e", cursor: isClosedDeal(c.status) ? "pointer" : "not-allowed", opacity: isClosedDeal(c.status) ? 1 : 0.4, flexShrink: 0 }}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             );
           })}

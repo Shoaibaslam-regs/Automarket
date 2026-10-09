@@ -20,3 +20,35 @@ export async function getInventorySellerIds(userId: string): Promise<mongoose.Ty
   const members = await getOrgUserIds(user.organizationId);
   return members.some(id => id.equals(own)) ? members : [...members, own];
 }
+
+export type BusinessRole = "OWNER" | "MANAGER" | "SALES" | "STAFF";
+
+/** What each business role may do; mirrors the role guide on the staff page. */
+export const BUSINESS_PERMISSIONS = {
+  /** Add, re-role and remove team members */
+  manageTeam: ["OWNER", "MANAGER"],
+  /** Add customers and update their details or deal status */
+  editCustomers: ["OWNER", "MANAGER", "SALES"],
+  /** Delete a customer record, and only once its deal is closed */
+  deleteCustomers: ["OWNER"],
+} as const satisfies Record<string, readonly BusinessRole[]>;
+
+export type BusinessPermission = keyof typeof BUSINESS_PERMISSIONS;
+
+export function can(role: BusinessRole | null | undefined, permission: BusinessPermission): boolean {
+  return !!role && (BUSINESS_PERMISSIONS[permission] as readonly BusinessRole[]).includes(role);
+}
+
+/**
+ * The user's organization and role, read from their Employee record
+ * (the source of truth, rather than the copy on the User document).
+ */
+export async function getMembership(userId: string): Promise<{ organizationId: mongoose.Types.ObjectId; role: BusinessRole } | null> {
+  const user = await User.findById(userId).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
+  if (!user?.organizationId) return null;
+  const employee = await Employee.findOne({ organizationId: user.organizationId, userId })
+    .select("role")
+    .lean<{ role: BusinessRole }>();
+  if (!employee) return null;
+  return { organizationId: user.organizationId, role: employee.role };
+}
