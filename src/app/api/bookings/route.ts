@@ -6,6 +6,7 @@ import { Listing } from "@/models/Listing";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { sendBookingRequestEmail } from "@/lib/email";
+import { ensureBookingCustomer } from "@/lib/customerSync";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,6 +27,8 @@ export async function GET(req: NextRequest) {
       bookings = await Booking.find({
         rentalId: { $in: rentalIds },
         deletedByOwner: { $ne: true },
+        // Walk-in bookings have no renter account and are managed in the business console
+        source: { $ne: "WALK_IN" },
       })
         .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location" } })
         .populate("renterId", "name email phone")
@@ -117,6 +120,13 @@ export async function POST(req: NextRequest) {
       deposit,
       status: "PENDING",
     });
+
+    // The renter becomes a customer of the business that owns the vehicle
+    try {
+      await ensureBookingCustomer(booking._id);
+    } catch (customerError) {
+      console.error("Adding booking customer failed:", customerError);
+    }
 
     try {
       const listing = await Listing.findOne({ _id: rental.listingId }).lean() as { title: string } | null;

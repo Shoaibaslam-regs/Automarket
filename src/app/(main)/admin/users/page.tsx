@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, UserCog, type LucideIcon } from "lucide-react";
+import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
 import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { PLAN_LIST, formatLimit, planInfo, type PlanId } from "@/lib/plans";
+import { planInfo, type PlanId } from "@/lib/plans";
+import PlanGiftDialog from "@/components/admin/PlanGiftDialog";
 
 type AdminAccess = "FULL" | "READ_ONLY";
 
@@ -37,14 +38,6 @@ const ACCESS_OPTIONS: { value: AdminAccess; title: string; description: string; 
     description: "Can see every page and all data in the admin panel, but can't change or delete anything.",
     icon: Eye,
   },
-];
-
-const DURATIONS: { value: number | null; label: string }[] = [
-  { value: 1, label: "1 month" },
-  { value: 3, label: "3 months" },
-  { value: 6, label: "6 months" },
-  { value: 12, label: "1 year" },
-  { value: null, label: "No end date" },
 ];
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -147,109 +140,6 @@ function AccessDialog({ user, onClose, onSave }: {
   );
 }
 
-/** Gives a user any plan for free, for a set time or with no end date. */
-function PlanDialog({ user, onClose, onSave }: {
-  user: User | null; onClose: () => void; onSave: (plan: PlanId, months: number | null) => Promise<void>;
-}) {
-  const [plan, setPlan] = useState<PlanId | null>(null);
-  const [months, setMonths] = useState<number | null>(1);
-  const [busy, setBusy] = useState(false);
-  const selected = plan ?? (user && user.effectivePlan !== "FREE" ? user.effectivePlan : "STARTER");
-
-  function reset() { setPlan(null); setMonths(1); }
-
-  async function save() {
-    setBusy(true);
-    await onSave(selected, selected === "FREE" ? null : months);
-    setBusy(false);
-    reset();
-  }
-
-  return (
-    <DialogShell open={user !== null} onOpenChange={o => { if (!o) { reset(); onClose(); } }} busy={busy}>
-      {user && (
-        <>
-          <div className="flex gap-4">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950">
-              <Gift size={20} />
-            </span>
-            <div className="min-w-0">
-              <Dialog.Title className="text-base font-semibold text-slate-900">Gift a plan to {displayName(user)}</Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-slate-500">
-                Free of charge. Currently on <strong className="font-semibold text-slate-700">{planInfo(user.effectivePlan).name}</strong>
-                {user.planExpiresAt && user.effectivePlan !== "FREE" ? ` until ${fmtDate(user.planExpiresAt)}` : ""}.
-              </Dialog.Description>
-            </div>
-          </div>
-
-          <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Plan</p>
-          <div role="radiogroup" aria-label="Plan" className="mt-2 grid grid-cols-2 gap-2">
-            {PLAN_LIST.map(p => {
-              const active = selected === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setPlan(p.id)}
-                  className={`rounded-xl p-3 text-left ring-1 ring-inset transition ${active ? "bg-amber-50 ring-2 ring-amber-500" : "ring-slate-200 hover:bg-slate-50"}`}
-                >
-                  <span className="block text-sm font-semibold text-slate-900">{p.name}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    {formatLimit(p.limits.listings)} listings · PKR {p.price.toLocaleString()}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {selected !== "FREE" ? (
-            <>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Duration</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {DURATIONS.map(d => (
-                  <button
-                    key={d.label}
-                    type="button"
-                    onClick={() => setMonths(d.value)}
-                    aria-pressed={months === d.value}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset transition ${
-                      months === d.value ? "bg-slate-900 text-white ring-slate-900" : "text-slate-600 ring-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="mt-4 rounded-xl bg-slate-50 px-3.5 py-3 text-[13px] text-slate-600 ring-1 ring-inset ring-slate-200">
-              Moves the user back to Free. Their existing listings stay live, but they can&apos;t post more than {PLAN_LIST[0].limits.listings}.
-            </p>
-          )}
-
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Dialog.Close asChild>
-              <button type="button" disabled={busy} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50">
-                Cancel
-              </button>
-            </Dialog.Close>
-            <button
-              type="button"
-              onClick={save}
-              disabled={busy}
-              className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {busy ? "Saving…" : selected === "FREE" ? "Move to Free" : `Gift ${planInfo(selected).name}`}
-            </button>
-          </div>
-        </>
-      )}
-    </DialogShell>
-  );
-}
-
 export default function AdminUsersPage() {
   const { data: session } = useSession();
   const { canWrite } = useAdminAccess();
@@ -258,7 +148,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
-  const [pending, setPending] = useState<{ action: "demote" | "delete"; user: User } | null>(null);
+  const [pending, setPending] = useState<{ action: "demote" | "delete" | "revoke"; user: User } | null>(null);
   const [accessFor, setAccessFor] = useState<User | null>(null);
   const [planFor, setPlanFor] = useState<User | null>(null);
   const [actionError, setActionError] = useState("");
@@ -297,11 +187,15 @@ export default function AdminUsersPage() {
     if (!pending) return;
     const { action, user } = pending;
     setUpdating(user._id);
-    await send(
-      `/api/admin/users/${user._id}`,
-      action === "delete" ? { method: "DELETE" } : json("PATCH", { role: "USER" }),
-      action === "delete" ? `${displayName(user)} was deleted.` : `${displayName(user)} is no longer an admin.`
-    );
+    if (action === "revoke") {
+      await send(`/api/admin/users/${user._id}/plan`, { method: "DELETE" }, `${displayName(user)}'s gifted plan was revoked. They're back on Free.`);
+    } else {
+      await send(
+        `/api/admin/users/${user._id}`,
+        action === "delete" ? { method: "DELETE" } : json("PATCH", { role: "USER" }),
+        action === "delete" ? `${displayName(user)} was deleted.` : `${displayName(user)} is no longer an admin.`
+      );
+    }
     setUpdating(null);
     setPending(null);
   }
@@ -318,7 +212,7 @@ export default function AdminUsersPage() {
     await send(
       `/api/admin/users/${planFor._id}/plan`,
       json("PATCH", { plan, months }),
-      plan === "FREE" ? `${displayName(planFor)} is back on Free.` : `${displayName(planFor)} now has ${planInfo(plan).name} for free.`
+      `${displayName(planFor)} now has ${planInfo(plan).name} for free.`
     );
     setPlanFor(null);
   }
@@ -418,6 +312,11 @@ export default function AdminUsersPage() {
                   <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
                     <Gift size={13} /> Plan
                   </button>
+                  {user.planSource === "ADMIN_GRANT" && user.effectivePlan !== "FREE" && (
+                    <button onClick={() => setPending({ action: "revoke", user })} disabled={busy} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
+                      <Undo2 size={13} />
+                    </button>
+                  )}
                   {!locked && (user.role !== "ADMIN" ? (
                     <button onClick={() => setAccessFor(user)} disabled={busy} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`}>
                       <ShieldCheck size={13} /> Make admin
@@ -451,14 +350,32 @@ export default function AdminUsersPage() {
       )}
 
       <AccessDialog user={accessFor} onClose={() => setAccessFor(null)} onSave={saveAccess} />
-      <PlanDialog user={planFor} onClose={() => setPlanFor(null)} onSave={savePlan} />
+      <PlanGiftDialog
+        target={planFor && { name: displayName(planFor), effectivePlan: planFor.effectivePlan, planExpiresAt: planFor.planExpiresAt }}
+        onClose={() => setPlanFor(null)}
+        onSave={savePlan}
+      />
 
       <ConfirmDialog
         open={pending !== null}
         onOpenChange={open => !open && setPending(null)}
         onConfirm={runPending}
         loading={pending !== null && updating === pending.user._id}
-        {...(pending?.action === "demote"
+        {...(pending?.action === "revoke"
+          ? {
+              tone: "danger" as const,
+              icon: Undo2,
+              title: `Revoke ${planInfo(pending.user.effectivePlan).name} from ${displayName(pending.user)}?`,
+              description: (
+                <>
+                  <strong className="font-semibold text-slate-900">{displayName(pending.user)}</strong> goes back to the Free plan straight away,
+                  along with any business they own. Their existing listings stay live, but they can&apos;t add more past the Free limits.
+                </>
+              ),
+              confirmLabel: "Revoke plan",
+              loadingLabel: "Revoking…",
+            }
+          : pending?.action === "demote"
           ? {
               tone: "neutral" as const,
               icon: ShieldOff,

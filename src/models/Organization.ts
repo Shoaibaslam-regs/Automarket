@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IOrganization extends Document {
   name: string;
@@ -45,6 +46,4 @@ const OrganizationSchema = new Schema<IOrganization>(
   { timestamps: true }
 );
 
-export const Organization =
-  mongoose.models.Organization ||
-  mongoose.model<IOrganization>("Organization", OrganizationSchema);
+export const Organization = defineModel<IOrganization>("Organization", OrganizationSchema);

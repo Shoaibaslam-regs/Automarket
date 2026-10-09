@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IRental extends Document {
   listingId: mongoose.Types.ObjectId;
@@ -26,5 +27,4 @@ const RentalSchema = new Schema<IRental>(
   { timestamps: true }
 );
 
-export const Rental =
-  mongoose.models.Rental || mongoose.model<IRental>("Rental", RentalSchema);
+export const Rental = defineModel<IRental>("Rental", RentalSchema);

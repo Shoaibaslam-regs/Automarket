@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IFavorite extends Document {
   userId: mongoose.Types.ObjectId;
@@ -18,5 +19,4 @@ const FavoriteSchema = new Schema<IFavorite>(
 FavoriteSchema.index({ userId: 1, listingId: 1 }, { unique: true });
 FavoriteSchema.index({ userId: 1, createdAt: -1 });
 
-export const Favorite =
-  mongoose.models.Favorite || mongoose.model<IFavorite>("Favorite", FavoriteSchema);
+export const Favorite = defineModel<IFavorite>("Favorite", FavoriteSchema);

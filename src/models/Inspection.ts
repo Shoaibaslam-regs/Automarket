@@ -1,4 +1,5 @@
  import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IInspection extends Omit<Document, "model"> {
   listingId: mongoose.Types.ObjectId;
@@ -35,6 +36,4 @@ const InspectionSchema = new Schema<IInspection>(
   { timestamps: true }
 );
 
-export const Inspection =
-  mongoose.models.Inspection ||
-  mongoose.model<IInspection>("Inspection", InspectionSchema);
+export const Inspection = defineModel<IInspection>("Inspection", InspectionSchema);

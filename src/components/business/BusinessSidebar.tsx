@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BarChart3, Car, ChevronDown, Crown, House, KeyRound, LayoutDashboard, LogOut, MessageSquare,
+  ArrowLeftRight, BarChart3, CalendarCheck, Car, ChevronDown, Crown, House, LayoutDashboard, LogOut, MessageSquare,
   Settings, Sparkles, User, Users, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
@@ -27,7 +27,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/business/inventory", label: "Inventory", icon: Car },
   { href: "/business/customers", label: "Customers", icon: Users },
-  { href: "/business/rentals", label: "Rentals", icon: KeyRound },
+  { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
   { href: "/business/staff", label: "Staff", icon: User },
   { href: "/business/reports", label: "Reports", icon: BarChart3 },
   { href: "/business/settings", label: "Settings", icon: Settings },
@@ -162,8 +162,8 @@ function SidebarContent({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  // Rentals is where business owners handle incoming booking requests
-  const navBadge = (href: string) => (href === "/business/rentals" ? counts.ownerBookings : 0);
+  // Bookings is where the business handles incoming rental requests
+  const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : 0);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-slate-950 text-white">

@@ -94,9 +94,9 @@ function generateSlip(booking: Booking, tab: string) {
   if (win) { win.document.write(html); win.document.close(); }
 }
 
-function ConfirmPopup({ title = "Remove this booking?", message, icon = <Trash2 size={20} strokeWidth={1.75} />, confirmLabel = "Remove", loadingLabel = "Removing...", cancelLabel = "Cancel", onConfirm, onCancel, loading }: {
+function ConfirmPopup({ title = "Remove this booking?", message, icon = <Trash2 size={20} strokeWidth={1.75} />, confirmLabel = "Remove", loadingLabel = "Removing...", cancelLabel = "Cancel", onConfirm, onCancel, loading, error }: {
   title?: string; message: string; icon?: React.ReactNode; confirmLabel?: string; loadingLabel?: string; cancelLabel?: string;
-  onConfirm: () => void; onCancel: () => void; loading: boolean;
+  onConfirm: () => void; onCancel: () => void; loading: boolean; error?: string;
 }) {
   return (
     <div onClick={onCancel} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
@@ -107,7 +107,8 @@ function ConfirmPopup({ title = "Remove this booking?", message, icon = <Trash2 
         </div>
         <div style={{ padding: "16px 24px 24px" }}>
           <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#0d1117", marginBottom: "8px" }}>{title}</h3>
-          <p style={{ fontSize: "14px", color: "#57606a", lineHeight: 1.6, marginBottom: "24px" }}>{message}</p>
+          <p style={{ fontSize: "14px", color: "#57606a", lineHeight: 1.6, marginBottom: error ? "12px" : "24px" }}>{message}</p>
+          {error && <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "8px 12px", fontSize: "13px", color: "#cf222e", marginBottom: "16px" }}>{error}</div>}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
             <button onClick={onCancel} disabled={loading} style={{ padding: "8px 18px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", cursor: "pointer" }}>{cancelLabel}</button>
             <button onClick={onConfirm} disabled={loading} style={{ padding: "8px 18px", background: "#cf222e", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
@@ -162,6 +163,7 @@ export default function BookingsContent() {
   const [renterCount, setRenterCount] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; action: "cancel" | "decline" } | null>(null);
 
   const fetchBookings = useCallback(async () => {
@@ -207,8 +209,14 @@ export default function BookingsContent() {
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    await fetch(`/api/bookings/${deleteTarget}`, { method: "DELETE" });
+    setDeleteError("");
+    const res = await fetch(`/api/bookings/${deleteTarget}`, { method: "DELETE" });
     setDeleting(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Couldn't remove this booking. Please try again.");
+      return;
+    }
     setDeleteTarget(null);
     fetchBookings();
     fetchCounts();
@@ -218,7 +226,7 @@ export default function BookingsContent() {
     <div className="adm-page">
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-        {deleteTarget && <ConfirmPopup message="This booking will be removed from your view." onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} loading={deleting} />}
+        {deleteTarget && <ConfirmPopup message="This booking will be removed from your view." onConfirm={confirmDelete} onCancel={() => { setDeleteTarget(null); setDeleteError(""); }} loading={deleting} error={deleteError} />}
         {cancelTarget && (
           <ConfirmPopup
             icon={<TriangleAlert size={20} strokeWidth={1.75} />}
@@ -362,7 +370,8 @@ export default function BookingsContent() {
                     {["CONFIRMED", "COMPLETED"].includes(booking.status) && (
                       <button onClick={() => generateSlip(booking, tab)} style={{ padding: "8px 16px", background: "white", border: "1px solid #d0d7de", color: "#0d1117", borderRadius: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Generate slip</button>
                     )}
-                    {["COMPLETED", "CANCELLED"].includes(booking.status) && (
+                    {/* A booking whose vehicle was deleted can always be cleared away */}
+                    {(["COMPLETED", "CANCELLED"].includes(booking.status) || !booking.rentalId) && (
                       <button onClick={() => setDeleteTarget(booking._id)} style={{ padding: "8px 14px", background: "white", color: "#8c959f", border: "1px solid #e1e4e8", borderRadius: "7px", fontSize: "12px", cursor: "pointer", marginLeft: "auto" }}>Remove</button>
                     )}
                   </div>

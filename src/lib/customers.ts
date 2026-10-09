@@ -9,11 +9,13 @@ export function isClosedDeal(status: unknown): boolean {
 }
 
 export function pickCustomerFields(body: unknown) {
-  const out: Record<string, string> = {};
+  const out: Record<string, string | boolean> = {};
   if (!body || typeof body !== "object") return out;
   for (const key of CUSTOMER_FIELDS) {
     const value = (body as Record<string, unknown>)[key];
     if (typeof value === "string") out[key] = value.trim();
   }
+  const starred = (body as Record<string, unknown>).starred;
+  if (typeof starred === "boolean") out.starred = starred;
   return out;
 }

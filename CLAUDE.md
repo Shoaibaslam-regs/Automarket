@@ -20,7 +20,7 @@ npm run make-admin   # tsx src/scripts/make-admin.ts: promotes ADMIN_EMAIL to ro
 
 There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `tsc --noEmit`, lint and build, then deploys to Vercel: previews for PRs and production on pushes to `main`. All env vars are required at build time. See the CI file for the full list (`DATABASE_URL`, `NEXTAUTH_SECRET`, Google OAuth, `UPLOADTHING_TOKEN`, `GEMINI_API_KEY`, the Pusher server and `NEXT_PUBLIC_` keys, the email credentials, `ADMIN_SECRET` and `ADMIN_EMAIL`). `src/lib/mongodb.ts` throws at import time if `DATABASE_URL` is missing. `NEXT_PUBLIC_SUPPORT_WHATSAPP` is optional. When it is unset, the WhatsApp contact buttons are hidden.
 
-`npm run lint` currently reports 5 known errors (in `business/onboarding`, `business/rentals`, `BookingsContent` and `MessagesContent`). Compare against that baseline instead of expecting a clean run. The React compiler lint rules are strict:
+`npm run lint` currently reports 4 known errors (in `business/onboarding`, `BookingsContent` and `MessagesContent`). Compare against that baseline instead of expecting a clean run. The React compiler lint rules are strict:
 - `react-hooks/set-state-in-effect` flags `useEffect(() => { load(); })` when `load` sets state, even after an `await`. The workaround used in this repo is to write the loader as a `fetch().then(...)` chain or to call it via `queueMicrotask`.
 - `react-hooks/immutability` flags functions used in an effect before they are declared.
 
@@ -46,7 +46,7 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - Check permissions with `can(role, "manageTeam" | "editCustomers" | "deleteCustomers")`, defined in `src/lib/business.ts`.
   - Business routes must scope every query to `member.organizationId`. Customers can only be deleted by the owner, and only when their status is `SOLD` or `LOST` (`src/lib/customers.ts`).
 
-**Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` use the `mongoose.models.X || mongoose.model(...)` pattern.
+**Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` are registered with `defineModel(name, schema)` (`src/models/defineModel.ts`). In production it reuses the cached model. In development it replaces the cached model, so schema edits apply on hot reload without restarting the server. Use it for new models instead of `mongoose.models.X || mongoose.model(...)`.
 - Business inventory is not owned by the organization directly. It is the listings whose `sellerId` is any organization member; see `getInventorySellerIds` in `src/lib/business.ts`.
 
 **Plans and limits.** `src/lib/plans.ts` is the single source for plan names, prices and limits: `FREE`, `STARTER` ("Premium"), `PRO` ("Premium Plus") and `UNLIMITED`. A `null` limit means unlimited. The file is client-safe, and all UI text reads its numbers from it.
@@ -58,6 +58,14 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - Clients read `/api/subscription` through `useSubscription()` (`components/subscription/`).
 - There is no payment integration. Admins grant plans through `PATCH /api/admin/users/[id]/plan`, and users ask for one through `POST /api/support/upgrade-request`.
   - That request posts a chat `Message` to the support admin (`getSupportAdmin` in `src/lib/support.ts`).
+
+**Bookings.**
+- A `Booking` belongs to a `Rental`, which belongs to a listing. It has no organization field, so business bookings are the ones on `getBusinessRentals(userId)`, meaning rentals owned by any member.
+- `source: "WALK_IN"` bookings have no `renterId`. They store customer details in `walkIn` instead, so treat `renterId` as optional. The personal `/api/bookings?role=owner` list excludes them.
+- The business console (`/business/bookings`, `/api/business/bookings`) creates walk-ins and enforces the status flow in `src/lib/bookings.ts`: PENDING → CONFIRMED → ACTIVE (handed over) → COMPLETED, with cancellation before handover.
+- `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
+- Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
+- The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
 
 **Listing filters.** `src/lib/listingFilters.ts` is the single source for browse filters. `parseFilters` turns URL or object input into `buildListingQuery`, the Mongo query that always includes `status: "ACTIVE"`. `listingMatches` is an in-memory twin of that query. The listings API, the browse page URL state and saved-search alerts all use this module, so a new filter must be added to it and to both the query builder and the matcher.
 - When a listing is created, `POST /api/listings` uses `after()` to run `notifySavedSearches` (`src/lib/savedSearchAlerts.ts`), which emails users whose saved searches match.

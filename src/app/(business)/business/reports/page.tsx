@@ -32,6 +32,16 @@ type Stats = {
   rentals: {
     totalBookings: number;
     activeRentals: number;
+    pending: number;
+    upcoming: number;
+    completed: number;
+    cancelled: number;
+    online: number;
+    walkIn: number;
+    revenueThisMonth: number;
+    revenueTotal: number;
+    depositsHeld: number;
+    revenueByMonth: { month: string; revenue: number }[];
   };
   monthly: {
     sales: number;
@@ -39,18 +49,39 @@ type Stats = {
   };
 };
 
+/** Compact PKR: 950 → "PKR 950", 12,500 → "PKR 12.5K", 2,400,000 → "PKR 2.4M" */
+function pkr(n: number) {
+  if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `PKR ${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `PKR ${n.toLocaleString()}`;
+}
+
 export default function ReportsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/business/stats")
-      .then((r) => r.json())
-      .then((d) => {
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok || !d.rentals) throw new Error(d.error || "Failed to load reports");
         setStats(d);
-        setLoading(false);
-      });
+      })
+      .catch((e) => setError(e.message === "No organization" ? "Set up your business to see reports." : "Couldn't load your reports. Please refresh to try again."))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (!loading && error) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div role="alert" style={{ background: "#fff", border: "1px solid #ffcdd2", borderRadius: "14px", padding: "22px 28px", textAlign: "center" }}>
+          <p style={{ margin: 0, color: "#cf222e", fontSize: "14px", fontWeight: 600 }}>{error}</p>
+          <Link href="/business/dashboard" style={{ display: "inline-block", marginTop: "10px", fontSize: "12px", color: "#0d1117", fontWeight: 600 }}>← Back to dashboard</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -151,9 +182,7 @@ export default function ReportsPage() {
       label: "Sales this month",
       value: stats?.monthly.sales || 0,
       icon: Wallet,
-      sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(
-        1
-      )}M`,
+      sub: `${pkr(stats?.monthly.revenue || 0)} sold`,
     },
     {
       label: "Conversion rate",
@@ -165,13 +194,13 @@ export default function ReportsPage() {
       label: "Active rentals",
       value: stats?.rentals.activeRentals || 0,
       icon: KeyRound,
-      sub: "ongoing",
+      sub: `${stats?.rentals.totalBookings || 0} bookings all time`,
     },
     {
-      label: "Total bookings",
-      value: stats?.rentals.totalBookings || 0,
+      label: "Rental revenue",
+      value: pkr(stats?.rentals.revenueThisMonth || 0),
       icon: Calendar,
-      sub: "all time",
+      sub: "completed this month",
     },
   ];
 
@@ -221,24 +250,15 @@ export default function ReportsPage() {
     {
       section: "Rentals",
       rows: [
-        [
-          "Total bookings",
-          stats?.rentals.totalBookings || 0,
-        ],
-        [
-          "Currently active",
-          stats?.rentals.activeRentals || 0,
-        ],
-        [
-          "Monthly revenue",
-          `PKR ${((stats?.monthly.revenue || 0) / 1000).toFixed(
-            0
-          )}K`,
-        ],
-        [
-          "Monthly sales",
-          stats?.monthly.sales || 0,
-        ],
+        ["Total bookings", stats?.rentals.totalBookings || 0],
+        ["Pending requests", stats?.rentals.pending || 0],
+        ["Upcoming pickups", stats?.rentals.upcoming || 0],
+        ["Out now", stats?.rentals.activeRentals || 0],
+        ["Completed", stats?.rentals.completed || 0],
+        ["Online / walk-in", `${stats?.rentals.online || 0} / ${stats?.rentals.walkIn || 0}`],
+        ["Revenue this month", pkr(stats?.rentals.revenueThisMonth || 0)],
+        ["All-time rental revenue", pkr(stats?.rentals.revenueTotal || 0)],
+        ["Deposits held", pkr(stats?.rentals.depositsHeld || 0)],
       ],
     },
   ];
@@ -642,6 +662,38 @@ export default function ReportsPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </section>
+
+        {/* Rental revenue */}
+        <section
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e1e4e8",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "18px",
+            boxShadow: "0 4px 16px rgba(15,23,42,0.025)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "8px" }}>
+            <div>
+              <h2 style={{ fontSize: "14px", fontWeight: 750, color: "#0d1117", margin: 0 }}>Rental revenue</h2>
+              <p style={{ fontSize: "10px", color: "#8c959f", margin: "4px 0 0" }}>Completed bookings, last 6 months</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: "18px", fontWeight: 800, color: "#1a7f37", margin: 0 }}>{pkr(stats?.rentals.revenueTotal || 0)}</p>
+              <p style={{ fontSize: "10px", color: "#8c959f", margin: "2px 0 0" }}>all time</p>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={stats?.rentals.revenueByMonth || []} margin={{ top: 10, right: 8, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#8c959f" }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#8c959f" }} tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => pkr(v).replace("PKR ", "")} />
+              <Tooltip formatter={(v) => [pkr(Number(v)), "Revenue"]} cursor={{ fill: "#f6f8fa" }} />
+              <Bar dataKey="revenue" fill="#1a7f37" radius={[5, 5, 0, 0]} name="Revenue" maxBarSize={48} />
+            </BarChart>
+          </ResponsiveContainer>
         </section>
 
         {/* Business Summary */}

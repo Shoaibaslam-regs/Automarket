@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Briefcase, Building2, Calendar, Car, CircleCheck, Flag, KeyRound, Store, Users, Wallet } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, Store, Undo2, Users, Wallet } from "lucide-react";
+import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
+import { useAdminAccess } from "@/components/admin/AdminAccess";
+import { planInfo, type PlanId } from "@/lib/plans";
 import {
   Badge,
+  ConfirmDialog,
   CopyId,
   DataTable,
   PageHeader,
@@ -14,6 +18,7 @@ import {
   StatGrid,
   StatusBadge,
   UserCell,
+  btn,
 } from "@/components/admin/ui";
 
 type Stats = {
@@ -33,7 +38,9 @@ type Organization = {
   _id: string;
   name: string;
   type: string;
-  plan: string;
+  plan: PlanId;
+  planExpiresAt?: string | null;
+  planSource?: "PAID" | "ADMIN_GRANT" | null;
   city: string;
   isActive: boolean;
   staffCount: number;
@@ -55,6 +62,44 @@ export default function AdminPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "businesses">("overview");
+  const { canWrite } = useAdminAccess();
+  const [giftFor, setGiftFor] = useState<Organization | null>(null);
+  const [revokeFor, setRevokeFor] = useState<Organization | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const reloadOrganizations = () =>
+    fetch("/api/admin/organizations")
+      .then(r => r.json())
+      .then(d => setOrganizations(d.organizations || []))
+      .catch(() => {});
+
+  // Business plans live on the owner's account, so both actions target the owner's user id
+  async function giftPlan(plan: PlanId, months: number | null) {
+    const org = giftFor;
+    if (!org?.ownerId?._id) return;
+    const res = await fetch(`/api/admin/users/${org.ownerId._id}/plan`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan, months }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setNotice(res.ok ? { ok: true, text: `${org.name} now has ${planInfo(plan).name} for free.` } : { ok: false, text: data.error || "Failed to gift plan" });
+    setGiftFor(null);
+    reloadOrganizations();
+  }
+
+  async function revokePlan() {
+    const org = revokeFor;
+    if (!org?.ownerId?._id) return;
+    setRevoking(true);
+    const res = await fetch(`/api/admin/users/${org.ownerId._id}/plan`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setRevoking(false);
+    setNotice(res.ok ? { ok: true, text: `${org.name}'s gifted plan was revoked. It's back on Free.` } : { ok: false, text: data.error || "Failed to revoke plan" });
+    setRevokeFor(null);
+    reloadOrganizations();
+  }
 
   useEffect(() => {
     Promise.all([
@@ -204,6 +249,14 @@ export default function AdminPage() {
       ) : (
         /* BUSINESSES TAB */
         <>
+          {notice && (
+            <div
+              role={notice.ok ? "status" : "alert"}
+              className={`mb-4 rounded-xl px-4 py-3 text-sm ring-1 ring-inset ${notice.ok ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-rose-50 text-rose-700 ring-rose-200"}`}
+            >
+              {notice.text}
+            </div>
+          )}
           <StatGrid>
             <StatCard label="Total businesses" value={organizations.length} icon={Building2} tone="neutral" />
             <StatCard label="Active" value={organizations.filter(o => o.isActive).length} icon={CircleCheck} tone="green" />
@@ -216,7 +269,7 @@ export default function AdminPage() {
           <DataTable
             rows={organizations}
             rowKey={o => o._id}
-            cols="md:grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_80px_64px]"
+            cols="md:grid-cols-[minmax(0,2.1fr)_minmax(0,1.9fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_64px_56px_150px]"
             empty="No businesses registered yet"
             columns={[
               {
@@ -247,10 +300,79 @@ export default function AdminPage() {
                 ),
               },
               { header: "Type", cell: org => <Badge tone="neutral">{org.type}</Badge> },
-              { header: "Plan", cell: org => <StatusBadge status={org.plan} /> },
+              {
+                header: "Plan",
+                cell: org => {
+                  const plan = planInfo(org.plan);
+                  return (
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-semibold" style={{ color: plan.accent }}>
+                        {org.plan !== "FREE" && <Crown size={13} />}
+                        {plan.name}
+                        {org.planSource === "ADMIN_GRANT" && org.plan !== "FREE" && <Gift size={12} className="text-violet-500" aria-label="Gifted by an admin" />}
+                      </p>
+                      {org.plan !== "FREE" && (
+                        <p className="truncate text-xs text-slate-400">{org.planExpiresAt ? `until ${fmtPlanDate(org.planExpiresAt)}` : "no end date"}</p>
+                      )}
+                    </div>
+                  );
+                },
+              },
               { header: "Vehicles", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.vehicleCount}</p> },
               { header: "Staff", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.staffCount}</p> },
+              {
+                header: "Actions",
+                full: true,
+                hideLabel: true,
+                align: "right",
+                cell: org =>
+                  !canWrite ? (
+                    <p className="text-xs text-slate-400 md:text-right">View only</p>
+                  ) : !org.ownerId?._id ? (
+                    <p className="text-xs text-slate-400 md:text-right">No owner</p>
+                  ) : (
+                    <div className="flex gap-1.5 md:justify-end">
+                      <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
+                        <Gift size={13} /> Gift plan
+                      </button>
+                      {org.planSource === "ADMIN_GRANT" && org.plan !== "FREE" && (
+                        <button onClick={() => setRevokeFor(org)} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
+                          <Undo2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  ),
+              },
             ]}
+          />
+
+          <PlanGiftDialog
+            target={giftFor && {
+              name: giftFor.name,
+              ownerLabel: giftFor.ownerId?.name || giftFor.ownerId?.email,
+              effectivePlan: giftFor.plan,
+              planExpiresAt: giftFor.planExpiresAt,
+            }}
+            onClose={() => setGiftFor(null)}
+            onSave={giftPlan}
+          />
+          <ConfirmDialog
+            open={revokeFor !== null}
+            onOpenChange={o => !o && setRevokeFor(null)}
+            onConfirm={revokePlan}
+            loading={revoking}
+            tone="danger"
+            icon={Undo2}
+            title={`Revoke ${revokeFor ? planInfo(revokeFor.plan).name : "plan"} from ${revokeFor?.name ?? "this business"}?`}
+            description={
+              <>
+                <strong className="font-semibold text-slate-900">{revokeFor?.name}</strong> and its owner{" "}
+                <strong className="font-semibold text-slate-900">{revokeFor?.ownerId?.name || revokeFor?.ownerId?.email}</strong> go back to the
+                Free plan straight away. Existing vehicles, staff and customers stay, but the team can&apos;t add more past the Free limits.
+              </>
+            }
+            confirmLabel="Revoke plan"
+            loadingLabel="Revoking…"
           />
         </>
       )}

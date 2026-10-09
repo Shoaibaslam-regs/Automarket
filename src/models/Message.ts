@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IMessage extends Document {
   senderId: mongoose.Types.ObjectId;
@@ -26,5 +27,4 @@ const MessageSchema = new Schema<IMessage>(
 MessageSchema.index({ senderId: 1, receiverId: 1 });
 MessageSchema.index({ receiverId: 1, read: 1 });
 
-export const Message =
-  mongoose.models.Message || mongoose.model<IMessage>("Message", MessageSchema);
+export const Message = defineModel<IMessage>("Message", MessageSchema);

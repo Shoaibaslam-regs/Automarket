@@ -23,12 +23,13 @@ export async function PATCH(
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
+    // The rental is gone when its vehicle was deleted; only the renter can still act on the booking then
     const rental = booking.rentalId as {
       ownerId: { toString: () => string };
       listingId: { toString: () => string };
-    };
-    const isOwner = rental.ownerId.toString() === session.user.id;
-    const isRenter = booking.renterId.toString() === session.user.id;
+    } | null;
+    const isOwner = rental?.ownerId.toString() === session.user.id;
+    const isRenter = booking.renterId?.toString() === session.user.id;
     if (!isOwner && !isRenter) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -43,7 +44,7 @@ export async function PATCH(
     }
     await booking.save();
 
-    if (isOwner && (status === "CONFIRMED" || status === "CANCELLED")) {
+    if (isOwner && rental && (status === "CONFIRMED" || status === "CANCELLED")) {
       try {
         const listing = await Listing.findById(rental.listingId).lean() as { title: string } | null;
         const renter = await User.findById(booking.renterId).lean() as { name?: string; email: string } | null;
@@ -84,18 +85,21 @@ export async function DELETE(
     if (!booking) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const rental = booking.rentalId as { ownerId: { toString: () => string } };
-    const isOwner = rental.ownerId.toString() === session.user.id;
-    const isRenter = booking.renterId.toString() === session.user.id;
+    // A missing rental means the vehicle was deleted: nobody can manage the booking any more
+    const rental = booking.rentalId as { ownerId: { toString: () => string } } | null;
+    const vehicleGone = !rental;
+    const isOwner = rental?.ownerId.toString() === session.user.id;
+    const isRenter = booking.renterId?.toString() === session.user.id;
     if (!isOwner && !isRenter) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    if (!["COMPLETED", "CANCELLED"].includes(booking.status)) {
+    if (!vehicleGone && !["COMPLETED", "CANCELLED"].includes(booking.status)) {
       return NextResponse.json({ error: "Only completed or cancelled bookings can be removed" }, { status: 400 });
     }
     if (isOwner) booking.deletedByOwner = true;
     if (isRenter) booking.deletedByRenter = true;
-    if (booking.deletedByOwner && booking.deletedByRenter) {
+    // With the vehicle gone the owner can never see it, so the renter removing it is final
+    if ((booking.deletedByOwner && booking.deletedByRenter) || (vehicleGone && isRenter)) {
       await Booking.findByIdAndDelete(id);
     } else {
       await booking.save();

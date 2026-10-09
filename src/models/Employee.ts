@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IEmployee extends Document {
   organizationId: mongoose.Types.ObjectId;
@@ -19,6 +20,4 @@ const EmployeeSchema = new Schema<IEmployee>(
   { timestamps: true }
 );
 
-export const Employee =
-  mongoose.models.Employee ||
-  mongoose.model<IEmployee>("Employee", EmployeeSchema);
+export const Employee = defineModel<IEmployee>("Employee", EmployeeSchema);

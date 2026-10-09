@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 import type { ListingFilters } from "@/lib/listingFilters";
 
 export interface ISavedSearch extends Document {
@@ -25,5 +26,4 @@ const SavedSearchSchema = new Schema<ISavedSearch>(
 
 SavedSearchSchema.index({ emailAlerts: 1 });
 
-export const SavedSearch =
-  mongoose.models.SavedSearch || mongoose.model<ISavedSearch>("SavedSearch", SavedSearchSchema);
+export const SavedSearch = defineModel<ISavedSearch>("SavedSearch", SavedSearchSchema);

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IPayment extends Document {
   userId: mongoose.Types.ObjectId;
@@ -38,5 +39,4 @@ const PaymentSchema = new Schema<IPayment>(
   { timestamps: true }
 );
 
-export const Payment =
-  mongoose.models.Payment || mongoose.model<IPayment>("Payment", PaymentSchema);
+export const Payment = defineModel<IPayment>("Payment", PaymentSchema);

@@ -15,7 +15,7 @@ export async function GET() {
     await connectDB();
 
     const orgs = await Organization.find()
-      .populate("ownerId", "name email phone plan planExpiresAt")
+      .populate("ownerId", "name email phone plan planExpiresAt planSource")
       .sort({ createdAt: -1 })
       .lean() as Array<{
         _id: { toString: () => string };
@@ -25,7 +25,7 @@ export async function GET() {
         city: string;
         isActive: boolean;
         createdAt: Date;
-        ownerId: { _id: { toString: () => string }; name?: string; email: string; plan?: string; planExpiresAt?: Date };
+        ownerId: { _id: { toString: () => string }; name?: string; email: string; plan?: string; planExpiresAt?: Date; planSource?: string };
       }>;
 
     const enriched = await Promise.all(
@@ -33,7 +33,15 @@ export async function GET() {
         const staffCount = await Employee.countDocuments({ organizationId: org._id });
         const vehicleCount = await Listing.countDocuments({ sellerId: org.ownerId?._id });
         // Plans live on the owner's account
-        return { ...org, plan: effectivePlanId(org.ownerId?.plan, org.ownerId?.planExpiresAt), staffCount, vehicleCount };
+        const plan = effectivePlanId(org.ownerId?.plan, org.ownerId?.planExpiresAt);
+        return {
+          ...org,
+          plan,
+          planExpiresAt: plan === "FREE" ? null : org.ownerId?.planExpiresAt ?? null,
+          planSource: plan === "FREE" ? null : org.ownerId?.planSource ?? null,
+          staffCount,
+          vehicleCount,
+        };
       })
     );
 

@@ -53,7 +53,7 @@ export default function BusinessDashboard() {
     { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/business/inventory", label: "Inventory", icon: Car },
     { href: "/business/customers", label: "Customers", icon: Users },
-    { href: "/business/rentals", label: "Rentals", icon: KeyRound },
+    { href: "/business/bookings", label: "Bookings", icon: KeyRound },
     { href: "/business/staff", label: "Staff", icon: User },
     { href: "/business/reports", label: "Reports", icon: BarChart3 },
     { href: "/business/settings", label: "Settings", icon: Settings },
@@ -431,7 +431,7 @@ export default function BusinessDashboard() {
                   label: "This month sales",
                   value: stats?.monthly.sales || 0,
                   icon: Wallet,
-                  sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(1)}M revenue`,
+                  sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(1)}M sold`,
                   color: "#7d4e00",
                 },
                 {
@@ -754,16 +754,16 @@ export default function BusinessDashboard() {
                     desc: "Manage all vehicles",
                   },
                   {
+                    href: "/business/bookings",
+                    label: "Bookings",
+                    icon: KeyRound,
+                    desc: "Walk-ins, handovers & slips",
+                  },
+                  {
                     href: "/business/reports",
                     label: "View reports",
                     icon: BarChart3,
                     desc: "Sales & rental stats",
-                  },
-                  {
-                    href: "/sell",
-                    label: "Public listing",
-                    icon: Globe,
-                    desc: "Post to marketplace",
                   },
                   {
                     href: "/business/staff",

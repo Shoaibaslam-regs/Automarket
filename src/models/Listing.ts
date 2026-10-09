@@ -1,4 +1,5 @@
  import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 export interface IListing extends Omit<Document, "model"> {
   title: string;
@@ -60,5 +61,4 @@ ListingSchema.index({
   location: "text",
 });
 
-export const Listing =
-  mongoose.models.Listing || mongoose.model<IListing>("Listing", ListingSchema);
+export const Listing = defineModel<IListing>("Listing", ListingSchema);

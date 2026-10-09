@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { defineModel } from "./defineModel";
 
 /** An uploaded image that passed the AI vehicle check. Listings may only use URLs recorded here. */
 export interface IVehicleImage extends Document {
@@ -19,5 +20,4 @@ const VehicleImageSchema = new Schema<IVehicleImage>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-export const VehicleImage =
-  mongoose.models.VehicleImage || mongoose.model<IVehicleImage>("VehicleImage", VehicleImageSchema);
+export const VehicleImage = defineModel<IVehicleImage>("VehicleImage", VehicleImageSchema);
