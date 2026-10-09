@@ -9,6 +9,7 @@ import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
 import { BarChart3, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 import { planInfo } from "@/lib/plans";
+import UserIdBadge from "@/components/UserIdBadge";
 
 type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
@@ -364,6 +365,7 @@ export default function BusinessDashboard() {
                   year: "numeric",
                 })}
               </p>
+              <UserIdBadge id={session?.user?.id} className="mt-1" />
             </div>
 
             <div

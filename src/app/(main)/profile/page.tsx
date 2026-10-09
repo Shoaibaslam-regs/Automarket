@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { UploadButton } from "@/lib/uploadthing-client";
 import Image from "next/image";
+import UserIdBadge from "@/components/UserIdBadge";
 
 type UserProfile = {
   name?: string;
@@ -113,6 +114,7 @@ export default function ProfilePage() {
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#0d1117", marginBottom: "2px" }}>{profile?.name}</h1>
             <p style={{ fontSize: "13px", color: "#57606a" }}>{profile?.email}</p>
+            <UserIdBadge id={session?.user?.id} className="mr-1.5 mt-1" />
             <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "20px", background: profile?.role === "ADMIN" ? "#fff8c5" : "#f6f8fa", color: profile?.role === "ADMIN" ? "#7d4e00" : "#57606a", marginTop: "4px", display: "inline-block" }}>
               {profile?.role}
             </span>

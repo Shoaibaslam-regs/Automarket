@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import Link from "next/link";
 import DeleteListing from "@/components/listings/DeleteListing";
+import UserIdBadge from "@/components/UserIdBadge";
 
 export default async function DashboardPage() {
   const session = await requireAuth();
@@ -27,7 +28,10 @@ export default async function DashboardPage() {
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
               Welcome, {session.user.name}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Manage your listings and bookings</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="text-gray-500 text-sm">Manage your listings and bookings</p>
+              <UserIdBadge id={session.user.id} />
+            </div>
           </div>
           <Link href="/sell"
             className="w-full sm:w-auto text-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">

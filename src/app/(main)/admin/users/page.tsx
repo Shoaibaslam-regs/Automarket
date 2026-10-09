@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, UserCog, type LucideIcon } from "lucide-react";
-import { Badge, ConfirmDialog, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
+import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { PLAN_LIST, formatLimit, planInfo, type PlanId } from "@/lib/plans";
 
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
 
   const q = search.toLowerCase();
   const filtered = users.filter(u =>
-    (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+    (u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u._id.includes(q.replace(/^#/, ""))) &&
     (roleFilter ? u.role === roleFilter : true)
   );
   const adminCount = users.filter(u => u.role === "ADMIN").length;
@@ -338,7 +338,7 @@ export default function AdminUsersPage() {
         description={loading ? "Loading…" : `${users.length.toLocaleString()} registered · ${adminCount} admin${adminCount !== 1 ? "s" : ""} · ${premiumCount} premium`}
         actions={
           <>
-            <SearchField value={search} onChange={setSearch} placeholder="Search name or email…" />
+            <SearchField value={search} onChange={setSearch} placeholder="Search name, email or ID…" />
             <SelectField value={roleFilter} onChange={setRoleFilter} options={["USER", "SELLER", "ADMIN"]} allLabel="All roles" ariaLabel="Filter by role" />
           </>
         }
@@ -364,7 +364,7 @@ export default function AdminUsersPage() {
         columns={[
           {
             header: "User",
-            cell: user => <UserCell name={user.name} email={user.email} />,
+            cell: user => <UserCell name={user.name} email={user.email} meta={<CopyId id={user._id} />} />,
           },
           {
             header: "Plan",
