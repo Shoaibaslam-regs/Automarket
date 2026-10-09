@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { CalendarClock, Check, Gift, Minus, ShieldCheck, Sparkles } from "lucide-react";
+import { CalendarClock, Check, Gift, Headset, Minus, ShieldCheck, Sparkles } from "lucide-react";
 import PlanCards from "@/components/subscription/PlanCards";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
+import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { PLANS, PLAN_LIST, formatLimit, planInfo, type Plan } from "@/lib/plans";
@@ -35,7 +36,7 @@ const FAQ = [
   },
   {
     q: "How do I pay?",
-    a: "Online payments are coming soon. Until then, contact the AutoMarket team and an admin can activate your plan.",
+    a: "Online payments are coming soon. Until then, tap Message the team (or WhatsApp) and an admin will activate your plan and share payment details.",
   },
 ];
 
@@ -140,6 +141,25 @@ export default function PricingPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        {/* Talk to the team */}
+        <section className="relative mt-12 overflow-hidden rounded-[26px] bg-slate-950 p-6 text-white sm:p-10">
+          <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/25 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl" />
+          <div className="relative grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-white/10">
+                <Headset size={13} /> Talk to the team
+              </span>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Ready to upgrade?</h2>
+              <p className="mt-2 max-w-[520px] text-sm leading-relaxed text-slate-400">
+                Message us and an admin will activate your plan, usually the same day. Your request includes your account ID,
+                so we know exactly who you are.
+              </p>
+            </div>
+            <ContactTeam plan={current && current.id !== "FREE" ? current : PLANS.STARTER} tone="dark" />
           </div>
         </section>
 

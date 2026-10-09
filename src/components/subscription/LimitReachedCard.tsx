@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Crown, Lock } from "lucide-react";
-import { formatLimit, planInfo } from "@/lib/plans";
+import { PLAN_LIST, formatLimit, planInfo } from "@/lib/plans";
+import ContactTeam from "./ContactTeam";
 
 const NOUNS = { listings: "active listings", staff: "team members", customers: "customers" } as const;
 
@@ -21,6 +22,8 @@ export default function LimitReachedCard({
   hint?: string;
 }) {
   const plan = planInfo(planId);
+  // The request goes out for the next plan up, which is the natural upgrade from here
+  const nextPlan = PLAN_LIST[PLAN_LIST.findIndex(p => p.id === plan.id) + 1] ?? null;
   return (
     <div className="relative overflow-hidden rounded-[22px] bg-slate-950 p-6 text-white shadow-[0_30px_60px_-30px_rgba(15,23,42,0.6)] sm:p-8">
       <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
@@ -45,6 +48,14 @@ export default function LimitReachedCard({
           <Crown size={16} /> View plans <ArrowRight size={15} />
         </Link>
       </div>
+      {nextPlan && (
+        <div className="relative mt-5 border-t border-white/10 pt-5">
+          <p className="mb-3 text-xs text-slate-400">
+            Want {nextPlan.name} ({formatLimit(nextPlan.limits[kind])} {NOUNS[kind]}) now? Ask the team and an admin will activate it for you.
+          </p>
+          <ContactTeam plan={nextPlan} tone="dark" className="sm:max-w-md" />
+        </div>
+      )}
     </div>
   );
 }

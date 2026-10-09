@@ -6,12 +6,15 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
 import MessageBadge from "@/components/MessageBadge";
-import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
-import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
+import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
+import { NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
-import { Calendar, Car, Crown, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare, Search, Settings, ShieldCheck } from "lucide-react";
+import { Car, ChevronDown, Crown } from "lucide-react";
+import { useSubscription } from "@/components/subscription/useSubscription";
+import { planInfo } from "@/lib/plans";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -28,8 +31,10 @@ export default function Navbar() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const counts = useNotificationCounts();
-  const badgeFor = (href: string) => (href === "/messages" ? counts.messages : href === "/bookings" ? counts.bookings : 0);
   const hasUnread = !!session?.user && counts.messages + counts.bookings > 0;
+  // Plan label under the name on the account button; fetched once per page load for signed-in users
+  const { data: navSub } = useSubscription(!!session?.user);
+  const navPlan = navSub ? planInfo(navSub.planId) : null;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -85,20 +90,10 @@ export default function Navbar() {
       <style>{`
         .nav-desktop { display: flex; }
         .nav-mobile-btn { display: none; }
-        .nav-mobile-menu { display: none; }
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
           .nav-desktop-right { display: none !important; }
           .nav-mobile-btn { display: flex !important; }
-          .nav-mobile-menu.open { display: flex !important; }
-        }
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .nav-link {
           font-size: 14px;
@@ -114,37 +109,6 @@ export default function Navbar() {
         @media (min-width: 769px) and (max-width: 960px) {
           .nav-link { padding: 6px 7px; font-size: 13px; }
         }
-        .dropdown-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 9px 14px;
-          font-size: 13px;
-          color: rgba(0,0,0,0.7);
-          text-decoration: none;
-          border-radius: 8px;
-          transition: background 0.12s;
-          font-weight: 500;
-          width: 100%;
-          text-align: left;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-family: inherit;
-        }
-        .dropdown-item:hover { background: rgba(0,0,0,0.05); color: #0d1117; }
-        .mobile-nav-link {
-          display: block;
-          padding: 13px 20px;
-          font-size: 15px;
-          font-weight: 500;
-          color: rgba(0,0,0,0.75);
-          text-decoration: none;
-          border-bottom: 1px solid rgba(0,0,0,0.05);
-          transition: background 0.1s;
-        }
-        .mobile-nav-link:hover { background: rgba(0,0,0,0.03); }
-        .mobile-nav-link:last-child { border-bottom: none; }
       `}</style>
 
       <nav style={{
@@ -195,84 +159,42 @@ export default function Navbar() {
           {/* ── DESKTOP RIGHT ── */}
           <div className="nav-desktop nav-desktop-right" style={{ alignItems: "center", gap: "10px", flexShrink: 0 }}>
             {session?.user ? (
-              <div ref={dropdownRef} style={{ position: "relative" }}>
+              <div ref={dropdownRef} className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "8px",
-                    padding: "6px 10px 6px 6px",
-                    background: menuOpen ? "rgba(0,0,0,0.05)" : "transparent",
-                    border: "1px solid",
-                    borderColor: menuOpen ? "rgba(0,0,0,0.1)" : "transparent",
-                    borderRadius: "40px", cursor: "pointer",
-                    fontFamily: "inherit", transition: "all 0.15s",
-                  }}>
-                  <div style={{
-                    width: "30px", height: "30px", borderRadius: "50%",
-                    background: "#0d1117", color: "white",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "12px", fontWeight: 700, flexShrink: 0, position: "relative",
-                  }}>
-                    {session.user.name?.[0]?.toUpperCase()}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Account menu"
+                  className={`flex h-11 min-w-[168px] items-center gap-2.5 rounded-2xl pl-1.5 pr-3 ring-1 ring-inset transition duration-200 ${
+                    menuOpen
+                      ? "bg-slate-50 shadow-[0_8px_20px_-10px_rgba(15,23,42,0.35)] ring-slate-300"
+                      : "bg-white shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-slate-200/90 hover:bg-slate-50 hover:ring-slate-300"
+                  }`}
+                >
+                  <span className="relative flex flex-shrink-0">
+                    <RingAvatar name={session.user.name} image={session.user.image} size={30} />
                     <NotificationDot show={hasUnread} className="-right-0.5 -top-0.5" />
-                  </div>
-                  <span style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {session.user.name?.split(" ")[0]}
                   </span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-                    style={{ transition: "transform 0.2s", transform: menuOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}>
-                    <path d="M2 4l4 4 4-4" stroke="#8c959f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <span className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="max-w-[110px] truncate text-[13px] font-semibold leading-4 text-slate-900">{session.user.name}</span>
+                    <span
+                      className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-3"
+                      style={{ color: navPlan && navPlan.id !== "FREE" ? (navPlan.id === "UNLIMITED" ? "#b45309" : navPlan.accent) : "#94a3b8" }}
+                    >
+                      {navPlan && navPlan.id !== "FREE" && <Crown size={10} strokeWidth={2.25} />}
+                      {navPlan ? (navPlan.id === "FREE" ? "Free plan" : navPlan.name) : "\u00a0"}
+                    </span>
+                  </span>
+                  <ChevronDown size={14} strokeWidth={2.25} className={`flex-shrink-0 text-slate-400 transition duration-200 ${menuOpen ? "rotate-180 text-slate-700" : ""}`} />
                 </button>
 
                 {menuOpen && (
-                  <div style={{
-                    position: "absolute", right: 0, top: "calc(100% + 8px)",
-                    width: "230px", background: "white",
-                    border: "1px solid rgba(0,0,0,0.1)", borderRadius: "14px",
-                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)", padding: "6px",
-                    animation: "fadeDown 0.15s ease", zIndex: 200,
-                  }}>
-                    {/* User info */}
-                    <div style={{ padding: "10px 14px 10px", marginBottom: "4px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
-                      <p style={{ fontSize: "11px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
-                    
-                    </div>
-
-                    <ModeToggle/>
-
-                    {[
-                      { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-                      { href: "/bookings", icon: Calendar, label: "Bookings" },
-                      { href: "/messages", icon: MessageSquare, label: "Messages" },
-                      { href: "/saved", icon: Heart, label: "Saved" },
-                      { href: "/profile", icon: Settings, label: "Profile & settings" },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="dropdown-item">
-                        <span style={{ fontSize: "15px", width: "20px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={16} strokeWidth={1.75} /></span>
-                        {item.label}
-                        <CountBadge count={badgeFor(item.href)} className="ml-auto" />
-                      </Link>
-                    ))}
-
-                    {session.user.role === "ADMIN" && (
-                      <>
-                        <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
-                        <Link href="/admin" onClick={() => setMenuOpen(false)} className="dropdown-item" style={{ color: "#d97706" }}>
-                          <span style={{ width: "20px", display: "inline-flex", justifyContent: "center" }}><ShieldCheck size={16} strokeWidth={1.75} /></span>
-                          Admin panel
-                        </Link>
-                      </>
-                    )}
-
-                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "4px 6px" }} />
-                    <button onClick={() => { setMenuOpen(false); setConfirmSignOut(true); }}
-                      className="dropdown-item" style={{ color: "#dc2626" }}>
-                      <span style={{ width: "20px", display: "inline-flex", justifyContent: "center" }}><LogOut size={16} strokeWidth={1.75} /></span>
-                      Sign out
-                    </button>
-                  </div>
+                  <UserMenuDropdown
+                    session={session}
+                    counts={counts}
+                    onClose={() => setMenuOpen(false)}
+                    onSignOut={() => setConfirmSignOut(true)}
+                  />
                 )}
               </div>
             ) : (
@@ -290,144 +212,42 @@ export default function Navbar() {
           {/* ── MOBILE RIGHT: badges + hamburger ── */}
           <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
             
+            {session?.user && (
+              <Link href="/sell" aria-label="Sell a vehicle"
+                className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-[13px] font-semibold text-white shadow-sm shadow-slate-900/20 transition active:scale-95">
+                <Car size={15} strokeWidth={2} /> Sell
+              </Link>
+            )}
             <button
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label="Open menu"
               aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              style={{
-                width: "40px", height: "40px", display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center", gap: "5px",
-                background: mobileOpen ? "rgba(0,0,0,0.06)" : "transparent",
-                border: "none", cursor: "pointer", borderRadius: "10px", padding: "8px",
-                position: "relative",
-              }}>
-              <NotificationDot show={hasUnread && !mobileOpen} className="right-1.5 top-1.5" />
-              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
-              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", opacity: mobileOpen ? 0 : 1, transition: "opacity 0.15s" }} />
-              <span style={{ display: "block", width: "20px", height: "2px", background: "#0d1117", borderRadius: "2px", transition: "transform 0.22s", transform: mobileOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+              onClick={() => setMobileOpen(true)}
+              className="relative flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-xl bg-white ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 active:scale-95"
+            >
+              <NotificationDot show={hasUnread} className="right-1.5 top-1.5" />
+              {session?.user ? (
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-xs font-bold text-white">
+                  {session.user.name?.[0]?.toUpperCase() || "?"}
+                </span>
+              ) : (
+                <>
+                  <span className="block h-[2px] w-[18px] rounded-full bg-slate-900" />
+                  <span className="block h-[2px] w-[12px] self-center rounded-full bg-slate-900" />
+                  <span className="block h-[2px] w-[18px] rounded-full bg-slate-900" />
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        {/* ── MOBILE MENU DRAWER ── */}
-        {mobileOpen && (
-          <>
-            {/* Backdrop */}
-            <div onClick={() => setMobileOpen(false)}
-              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 80, top: "64px" }} />
-
-            {/* Drawer */}
-            <div className="nav-mobile-menu open"
-              style={{
-                position: "fixed", top: scrolled ? "56px" : "64px", left: 0, right: 0,
-                background: "white", zIndex: 90, flexDirection: "column",
-                borderBottom: "1px solid rgba(0,0,0,0.08)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                animation: "slideDown 0.2s ease",
-                maxHeight: "calc(100vh - 64px)", overflowY: "auto",
-              }}>
-
-              {/* User info banner */}
-              {session?.user && (
-                <div style={{ padding: "14px 20px 12px", background: "#f6f8fa", borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>
-                    {session.user.name?.[0]?.toUpperCase()}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: "#0d1117", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.name}</p>
-
-                    <p style={{ fontSize: "12px", color: "#8c959f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session.user.email}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Nav links */}
-              <div style={{ padding: "8px 12px" }}>
-                <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Browse</p>
-
-                {[
-                  { href: "/listings", label: "Browse vehicles", icon: Search },
-                  { href: "/listings?type=RENT", label: "Rentals", icon: KeyRound },
-                  { href: "/pricing", label: "Pricing", icon: Crown },
-                ].map(item => (
-                  <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
-                    <span style={{ fontSize: "18px", width: "24px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={18} strokeWidth={1.75} /></span>
-                    {item.label}
-                  </Link>
-                  
-                ))}
-
-                {session?.user && (
-                  <>
-                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-                    <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>My account</p>
-                    
-                    {[
-                      { href: "/sell", label: "Sell a vehicle", icon: Car },
-                      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-                      { href: "/bookings", label: "My bookings", icon: Calendar },
-                      { href: "/messages", label: "Messages", icon: MessageSquare },
-                      { href: "/saved", label: "Saved", icon: Heart },
-                      { href: "/profile", label: "Profile & settings", icon: Settings },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                        style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", textDecoration: "none", borderRadius: "8px" }}>
-                        <span style={{ fontSize: "18px", width: "24px", textAlign: "center", display: "inline-flex", justifyContent: "center" }}><item.icon size={18} strokeWidth={1.75} /></span>
-                        {item.label}
-                        <CountBadge count={badgeFor(item.href)} className="ml-auto" />
-                      </Link>
-                    ))}
-
-                     <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#8c959f", textTransform: "uppercase", letterSpacing: "0.6px", padding: "8px 8px 4px" }}>Business</p>
-                    {/* Mode toggle in mobile */}
-                      <div style={{padding: "8px 8px", margin: "4px 0" }}>
-                       <ModeToggle />
-                      </div>
-                    
-                      
-                
-                    {session.user.role === "ADMIN" && (
-                      <>
-                        <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-                        <Link href="/admin" onClick={() => setMobileOpen(false)}
-                          style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 600, color: "#d97706", textDecoration: "none", borderRadius: "8px" }}>
-                          <span style={{ width: "24px", display: "inline-flex", justifyContent: "center" }}><ShieldCheck size={18} strokeWidth={1.75} /></span>
-                          Admin panel
-                        </Link>
-                      </>
-                    )}
-
-                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-                    <button onClick={() => { setMobileOpen(false); setConfirmSignOut(true); }}
-                      style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 8px", fontSize: "14px", fontWeight: 500, color: "#dc2626", background: "none", border: "none", cursor: "pointer", width: "100%", fontFamily: "inherit", borderRadius: "8px" }}>
-                      <span style={{ width: "24px", display: "inline-flex", justifyContent: "center" }}><LogOut size={18} strokeWidth={1.75} /></span>
-                      Sign out
-                    </button>
-                  </>
-                )}
-
-                {!session?.user && (
-                  <>
-                    <div style={{ height: "1px", background: "rgba(0,0,0,0.06)", margin: "12px 0 8px" }} />
-                    <div style={{ display: "flex", gap: "8px", padding: "4px 8px 12px" }}>
-                      <Link href="/login" onClick={() => setMobileOpen(false)}
-                        style={{ flex: 1, textAlign: "center", padding: "12px", fontSize: "14px", fontWeight: 600, color: "#0d1117", textDecoration: "none", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "10px" }}>
-                        Sign in
-                      </Link>
-                      <Link href="/register" onClick={() => setMobileOpen(false)}
-                        style={{ flex: 1, textAlign: "center", padding: "12px", fontSize: "14px", fontWeight: 600, color: "white", textDecoration: "none", background: "#0d1117", borderRadius: "10px" }}>
-                        Register
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </>
-        )}
       </nav>
+      <MobileNavDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        onSignOut={() => setConfirmSignOut(true)}
+        session={session}
+        counts={counts}
+      />
       <SignOutDialog open={confirmSignOut} onOpenChange={setConfirmSignOut} />
     </>
   );

@@ -3,16 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
-
-async function triggerPusher(channel: string, event: string, data: unknown) {
-  try {
-    if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
-    const { pusherServer } = await import("@/lib/pusher");
-    await pusherServer.trigger(channel, event, data);
-  } catch (e) {
-    console.error("Pusher error:", e);
-  }
-}
+import { triggerPusher } from "@/lib/support";
 
 export async function GET(req: NextRequest) {
   try {

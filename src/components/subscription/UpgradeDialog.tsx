@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Clock3, Crown, ShieldCheck, X } from "lucide-react";
 import { formatLimit, formatPlanPrice, type Plan } from "@/lib/plans";
+import ContactTeam from "./ContactTeam";
 
 /**
  * Shown when someone picks a paid plan. Online payment is not wired up yet,
@@ -37,16 +38,17 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
                   <div>
                     <p className="text-sm font-semibold text-amber-900">Online payments are coming soon</p>
                     <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-amber-800">
-                      We&apos;re still setting up card and mobile wallet payments. Until then, contact the AutoMarket team and an admin
-                      can activate {plan.name} on your account.
+                      We&apos;re still setting up card and mobile wallet payments. Until then, send the team a request below and an
+                      admin will activate {plan.name} on your account and reply with payment details.
                     </Dialog.Description>
                   </div>
                 </div>
                 <p className="flex items-center gap-2 text-xs text-slate-500">
                   <ShieldCheck size={14} className="text-emerald-600" /> You won&apos;t be charged anything today.
                 </p>
-                <Dialog.Close className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Got it
+                <ContactTeam plan={plan} />
+                <Dialog.Close className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+                  Maybe later
                 </Dialog.Close>
               </div>
             </>
