@@ -21,7 +21,9 @@ async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.T
 }
 
 /**
- * Suspends or reinstates a business. Body: { action: "suspend", reason } | { action: "reinstate" }.
+ * Warns, suspends or reinstates a business.
+ * Body: { action: "warn", reason } | { action: "suspend", reason } | { action: "reinstate" }.
+ * A warning is optional: it only records the notice and messages the owner.
  * Suspending hides the business's live listings (remembered, so reinstating switches back on exactly
  * those), takes its public page offline and locks its console apart from Help & support.
  */
@@ -35,6 +37,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const org = await Organization.findById(id);
     if (!org) return NextResponse.json({ error: "Business not found" }, { status: 404 });
     const memberIds = await getOrgUserIds(org._id);
+
+    if (action === "warn") {
+      const why = typeof reason === "string" ? reason.trim() : "";
+      if (why.length < 5 || why.length > 500) return NextResponse.json({ error: "Give a reason of 5 to 500 characters" }, { status: 400 });
+      if (org.isActive === false) return NextResponse.json({ error: "This business is already suspended" }, { status: 400 });
+      org.warnings.push({ reason: why, at: new Date(), by: gate.admin._id });
+      await org.save();
+      const count = org.warnings.length;
+      await notifyOwner(gate.admin._id, org.ownerId,
+        `Warning ${count > 1 ? `#${count} ` : ""}for your business "${org.name}" on AutoMarket: ${why}. ` +
+        `Please fix this to avoid a suspension. Reply here if you have questions.`);
+      return NextResponse.json({ ok: true, warnings: count });
+    }
 
     if (action === "suspend") {
       const why = typeof reason === "string" ? reason.trim() : "";

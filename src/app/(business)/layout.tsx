@@ -6,18 +6,43 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
+import { Employee } from "@/models/Employee";
+import { can, type BusinessRole } from "@/lib/business";
 
-/** The signed-in user's business, if an admin has suspended it. */
-async function getSuspension() {
+type WarningRow = { reason: string; at: Date; acknowledgedAt?: Date };
+
+/** The signed-in user's business moderation state: a suspension, or open admin warnings. */
+async function getModeration() {
   const session = await auth();
-  if (!session?.user?.id) return null;
+  if (!session?.user?.id) return { suspension: null, warning: null };
   await connectDB();
   const user = await User.findById(session.user.id).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
-  if (!user?.organizationId) return null;
-  const org = await Organization.findOne({ _id: user.organizationId, isActive: false })
-    .select("name suspension")
-    .lean<{ name: string; suspension?: { reason: string; at: Date } }>();
-  return org ? { name: org.name, reason: org.suspension?.reason ?? "Suspended by an admin", at: new Date(org.suspension?.at ?? Date.now()).toISOString() } : null;
+  if (!user?.organizationId) return { suspension: null, warning: null };
+  const org = await Organization.findById(user.organizationId)
+    .select("name isActive suspension warnings")
+    .lean<{ name: string; isActive?: boolean; suspension?: { reason: string; at: Date }; warnings?: WarningRow[] }>();
+  if (!org) return { suspension: null, warning: null };
+
+  if (org.isActive === false) {
+    return {
+      suspension: { name: org.name, reason: org.suspension?.reason ?? "Suspended by an admin", at: new Date(org.suspension?.at ?? Date.now()).toISOString() },
+      warning: null,
+    };
+  }
+  const open = (org.warnings ?? []).filter(w => !w.acknowledgedAt);
+  if (open.length === 0) return { suspension: null, warning: null };
+  const role = (await Employee.findOne({ organizationId: user.organizationId, userId: session.user.id }).select("role").lean<{ role: BusinessRole }>())?.role;
+  const latest = open[open.length - 1];
+  return {
+    suspension: null,
+    warning: {
+      reason: latest.reason,
+      at: new Date(latest.at).toISOString(),
+      open: open.length,
+      total: org.warnings?.length ?? open.length,
+      canAcknowledge: can(role, "manageTeam"),
+    },
+  };
 }
 
 export const metadata: Metadata = {
@@ -26,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BusinessLayout({ children }: { children: React.ReactNode }) {
-  const suspension = await getSuspension();
+  const { suspension, warning } = await getModeration();
   return (
     <>
       <style>{`
@@ -50,7 +75,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
       <div className="biz-root">
         <BusinessSidebar />
         <div className="biz-content">
-          <SuspensionGate suspension={suspension}>{children}</SuspensionGate>
+          <SuspensionGate suspension={suspension} warning={warning}>{children}</SuspensionGate>
         </div>
       </div>
     </>

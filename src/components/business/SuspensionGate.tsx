@@ -1,22 +1,82 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Headset, ShieldAlert } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { AlertTriangle, Headset, ShieldAlert } from "lucide-react";
+
+type Warning = { reason: string; at: string; open: number; total: number; canAcknowledge: boolean };
+
+/** Amber banner for open admin warnings; the owner or a manager can acknowledge it. */
+function WarningBanner({ warning }: { warning: Warning }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [hidden, setHidden] = useState(false);
+  if (hidden) return null;
+
+  async function acknowledge() {
+    setBusy(true);
+    setError("");
+    const res = await fetch("/api/business/warnings", { method: "PATCH" });
+    setBusy(false);
+    if (!res.ok) { setError((await res.json().catch(() => ({}))).error || "Couldn't acknowledge"); return; }
+    setHidden(true);
+    router.refresh();
+  }
+
+  return (
+    <div role="alert" className="border-b border-[#f0d97a] bg-[#fff8c5] px-4 py-3 sm:px-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <AlertTriangle size={18} className="flex-shrink-0 text-[#9a6700]" />
+        <div className="min-w-0 flex-1 text-[13px] text-[#7d4e00]">
+          <p className="font-bold">
+            Warning from AutoMarket{warning.total > 1 ? ` (${warning.total} so far)` : ""} ·{" "}
+            <span className="font-normal">{new Date(warning.at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span>
+          </p>
+          <p className="mt-0.5">{warning.reason}. Please fix this to avoid your business being suspended.</p>
+          {error && <p className="mt-1 text-[#cf222e]">{error}</p>}
+        </div>
+        <div className="flex flex-shrink-0 gap-2">
+          <Link href="/business/support" className="rounded-lg border border-[#d4a72c] bg-white px-3 py-1.5 text-xs font-semibold text-[#7d4e00] hover:bg-[#fffbe6]">
+            Contact support
+          </Link>
+          {warning.canAcknowledge && (
+            <button onClick={acknowledge} disabled={busy} className="rounded-lg bg-[#9a6700] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7d4e00] disabled:opacity-50">
+              {busy ? "Saving…" : "I understand"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Locks the business console while the business is suspended, leaving only Help & support
- * open so the owner can appeal. The APIs enforce the suspension independently.
+ * open so the owner can appeal, and shows a banner for open admin warnings.
+ * The APIs enforce the suspension independently.
  */
 export default function SuspensionGate({
   suspension,
+  warning,
   children,
 }: {
   suspension: { name: string; reason: string; at: string } | null;
+  /** Open admin warnings: shown as a banner, nothing is locked */
+  warning?: Warning | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  if (!suspension || pathname.startsWith("/business/support")) return <>{children}</>;
+  if (!suspension) {
+    return (
+      <>
+        {warning && <WarningBanner warning={warning} />}
+        {children}
+      </>
+    );
+  }
+  if (pathname.startsWith("/business/support")) return <>{children}</>;
 
   return (
     <div className="flex min-h-[calc(100vh-48px)] items-center justify-center bg-[#f6f8fa] p-4 md:min-h-screen">

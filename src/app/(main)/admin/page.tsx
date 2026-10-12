@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
@@ -47,6 +47,7 @@ type Organization = {
   city: string;
   isActive: boolean;
   suspension?: { reason: string; at: string } | null;
+  warnings?: Array<{ reason: string; at: string; acknowledgedAt?: string }>;
   staffCount: number;
   vehicleCount: number;
   createdAt: string;
@@ -99,6 +100,8 @@ export default function AdminPage() {
   const [suspendFor, setSuspendFor] = useState<Organization | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
   const [reinstateFor, setReinstateFor] = useState<Organization | null>(null);
+  const [warnFor, setWarnFor] = useState<Organization | null>(null);
+  const [warnReason, setWarnReason] = useState("");
   const [suspending, setSuspending] = useState(false);
 
   const bq = bizSearch.trim().toLowerCase().replace(/^#/, "");
@@ -107,7 +110,7 @@ export default function AdminPage() {
     (!bizStatus || (bizStatus === "Suspended" ? !o.isActive : o.isActive))
   );
 
-  async function changeSuspension(org: Organization, body: { action: "suspend"; reason: string } | { action: "reinstate" }) {
+  async function changeSuspension(org: Organization, body: { action: "suspend" | "warn"; reason: string } | { action: "reinstate" }) {
     setSuspending(true);
     const res = await fetch(`/api/admin/organizations/${org._id}`, {
       method: "PATCH",
@@ -118,6 +121,8 @@ export default function AdminPage() {
     setSuspending(false);
     if (!res.ok) {
       setNotice({ ok: false, text: data.error || "Failed to update business" });
+    } else if (body.action === "warn") {
+      setNotice({ ok: true, text: `${org.name} was warned (${data.warnings} warning${data.warnings === 1 ? "" : "s"} in total). The owner got your message and sees a banner in their console.` });
     } else if (body.action === "suspend") {
       setNotice({ ok: true, text: `${org.name} is suspended. ${data.hiddenListings ?? 0} listing${data.hiddenListings === 1 ? " was" : "s were"} hidden and the owner was notified in Messages.` });
     } else {
@@ -126,6 +131,8 @@ export default function AdminPage() {
     setSuspendFor(null);
     setSuspendReason("");
     setReinstateFor(null);
+    setWarnFor(null);
+    setWarnReason("");
     reloadOrganizations();
   }
 
@@ -321,7 +328,7 @@ export default function AdminPage() {
           <DataTable
             rows={shownOrgs}
             rowKey={o => o._id}
-            cols="md:grid-cols-[minmax(0,2.1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_60px_52px_210px]"
+            cols="md:grid-cols-[minmax(0,2fr)_minmax(0,1.7fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_56px_48px_270px]"
             empty={organizations.length ? "No businesses match your search" : "No businesses registered yet"}
             columns={[
               {
@@ -335,6 +342,11 @@ export default function AdminPage() {
                       <div className="flex min-w-0 items-center gap-2">
                         <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
                         {!org.isActive && <Badge tone="red">Suspended</Badge>}
+                        {org.isActive && (org.warnings?.length ?? 0) > 0 && (
+                          <span title={`Last warning: ${org.warnings![org.warnings!.length - 1].reason}`}>
+                            <Badge tone="amber"><AlertTriangle size={10} /> {org.warnings!.length} warning{org.warnings!.length !== 1 ? "s" : ""}</Badge>
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         <CopyId id={org._id} />
@@ -395,6 +407,11 @@ export default function AdminPage() {
                           <Undo2 size={13} />
                         </button>
                       )}
+                      {org.isActive && (
+                        <button onClick={() => { setWarnReason(""); setWarnFor(org); }} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`} title="Send a warning">
+                          <AlertTriangle size={13} /> Warn
+                        </button>
+                      )}
                       {org.isActive ? (
                         <button onClick={() => { setSuspendReason(""); setSuspendFor(org); }} className={`${btn.base} ${btn.danger} flex-1 md:flex-none`} title="Suspend business">
                           <Ban size={13} /> Suspend
@@ -411,6 +428,46 @@ export default function AdminPage() {
           />
 
           <ConfirmDialog
+            open={warnFor !== null}
+            onOpenChange={o => { if (!o) { setWarnFor(null); setWarnReason(""); } }}
+            onConfirm={() => {
+              if (!warnFor) return;
+              if (warnReason.trim().length < 5) { setNotice({ ok: false, text: "Give a reason of at least 5 characters" }); return; }
+              changeSuspension(warnFor, { action: "warn", reason: warnReason.trim() });
+            }}
+            loading={suspending}
+            tone="warn"
+            icon={AlertTriangle}
+            title={`Warn ${warnFor?.name ?? "business"}?`}
+            confirmLabel="Send warning"
+            loadingLabel="Sending…"
+            description={
+              <>
+                <span className="block">
+                  Nothing is hidden or locked. The owner gets your message in Messages and sees an amber warning banner in their console until they acknowledge it.
+                  {warnFor && (warnFor.warnings?.length ?? 0) > 0 && <> This will be warning #{warnFor.warnings!.length + 1}.</>}
+                </span>
+                <span className="mt-3 flex flex-wrap gap-1.5">
+                  {["Spam listings", "Misleading prices or photos", "Duplicate listings", "Complaints from buyers", "Slow or no responses to customers"].map(r => (
+                    <button key={r} type="button" onClick={() => setWarnReason(r)}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${warnReason === r ? "bg-amber-500 text-white ring-amber-500" : "text-slate-600 ring-slate-200 hover:bg-slate-50"}`}>
+                      {r}
+                    </button>
+                  ))}
+                </span>
+                <textarea
+                  value={warnReason}
+                  onChange={e => setWarnReason(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="What should they fix? Shown to the owner…"
+                  aria-label="Warning reason"
+                  className="mt-3 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                />
+              </>
+            }
+          />
+          <ConfirmDialog
             open={suspendFor !== null}
             onOpenChange={o => { if (!o) { setSuspendFor(null); setSuspendReason(""); } }}
             onConfirm={() => {
@@ -426,6 +483,16 @@ export default function AdminPage() {
             loadingLabel="Suspending…"
             description={
               <>
+                {suspendFor && (suspendFor.warnings?.length ?? 0) === 0 && (
+                  <span className="mb-2 block rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-inset ring-amber-200">
+                    This business hasn&apos;t been warned yet. You can send a warning first instead. It&apos;s optional.
+                  </span>
+                )}
+                {suspendFor && (suspendFor.warnings?.length ?? 0) > 0 && (
+                  <span className="mb-2 block rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 ring-1 ring-inset ring-slate-200">
+                    Warned {suspendFor.warnings!.length} time{suspendFor.warnings!.length !== 1 ? "s" : ""}, last for: {suspendFor.warnings![suspendFor.warnings!.length - 1].reason}
+                  </span>
+                )}
                 <span className="block">
                   Its live listings are hidden, its public page goes offline and its console is locked except Help &amp; support.
                   The owner gets a message with your reason. Reinstating brings the same listings back.
