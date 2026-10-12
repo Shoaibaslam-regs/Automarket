@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarCheck,
-  MapPin,
   MessageCircle,
   ScanSearch,
   Search,
@@ -13,6 +12,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing, IListing } from "@/models/Listing";
 import ListingCard from "@/components/listings/ListingCard";
 import BrandLogos from "@/components/BrandLogos";
+import ProvinceCities from "@/components/ProvinceCities";
 import Footer from "@/components/Footer";
 
 type ListingWithId = IListing & { _id: string };
@@ -20,7 +20,6 @@ type ListingWithId = IListing & { _id: string };
 // Re-read listings and counts at most once a minute instead of freezing them at build time
 export const revalidate = 60;
 
-const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 const POPULAR = ["Corolla", "Civic", "Alto", "Cultus", "Yamaha"];
 
 const FEATURES = [
@@ -267,24 +266,10 @@ export default async function HomePage() {
           </ol>
         </section>
 
-        {/* ── Browse by city ── */}
+        {/* ── Browse by province ── */}
         <section>
-          <SectionHeader eyebrow="Near you" title="Browse by city" />
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-            {CITIES.map(city => (
-              <Link
-                key={city}
-                href={`/listings?location=${encodeURIComponent(city)}`}
-                className="group flex items-center justify-between rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <MapPin size={15} className="flex-shrink-0 text-slate-400 transition group-hover:text-indigo-500" />
-                  <span className="truncate">{city}</span>
-                </span>
-                <ArrowRight size={14} className="flex-shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-900" />
-              </Link>
-            ))}
-          </div>
+          <SectionHeader eyebrow="Near you" title="Browse by province" />
+          <ProvinceCities />
         </section>
 
         {/* ── CTA ── */}
