@@ -12,14 +12,13 @@ import type { Metadata } from "next";
 import ImageGallery from "@/components/ui/ImageGallery";
 import { SITE_URL } from "@/lib/site";
 import { formatLakh } from "@/lib/format";
-import { Review } from "@/models/Review";
-import { canReviewSeller, getSellerRatings } from "@/lib/reviews";
+import { getBestDealForListing, getBusinessRatings, getSellerBusinesses } from "@/lib/reviews";
+import { dealLabel, dealPrice } from "@/lib/deals";
+import { BadgeCheck, Building2, ChevronRight, MapPin, Tag, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
-import SellerReviews from "@/components/reviews/SellerReviews";
 import StarRating from "@/components/reviews/StarRating";
-import { toReviewView } from "@/components/reviews/types";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -27,7 +26,7 @@ type Props = { params: Promise<{ id: string }> };
 const getListing = cache(async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   await connectDB();
-  return Listing.findById(id).populate("sellerId", "name image phone").lean();
+  return Listing.findById(id).populate("sellerId", "name image phone createdAt").lean();
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -79,6 +78,7 @@ export default async function ListingDetailPage({ params }: Props) {
       _id?: mongoose.Types.ObjectId;
       name?: string;
       phone?: string;
+      createdAt?: Date;
     } | null;
   };
 
@@ -104,19 +104,17 @@ export default async function ListingDetailPage({ params }: Props) {
   const viewerId = session?.user?.id;
   const isOwner = !!viewerId && viewerId === sellerId;
 
-  // Seller reputation: rating summary, first page of reviews, and whether this viewer may review
-  const REVIEW_PAGE = 10;
-  const [ratings, sellerReviews, myReview, eligible] = sellerId
-    ? await Promise.all([
-        getSellerRatings([sellerId]),
-        Review.find({ sellerId }).sort({ createdAt: -1 }).limit(REVIEW_PAGE).populate("reviewerId", "name image").lean(),
-        viewerId ? Review.findOne({ sellerId, reviewerId: viewerId }).populate("reviewerId", "name image").lean() : null,
-        viewerId && !isOwner ? canReviewSeller(viewerId, sellerId) : false,
-      ])
-    : [new Map(), [], null, false];
-  const rating = (sellerId && ratings.get(sellerId)) || { average: 0, count: 0 };
-  const viewer = !viewerId ? "anon" : isOwner ? "owner" : eligible || myReview ? "eligible" : "ineligible";
   const isForSale = l.type === "SALE" || l.type === "BOTH";
+
+  // Who listed it: a business (with its rating and any live deal) or a private seller
+  const business = sellerId ? (await getSellerBusinesses([sellerId])).get(sellerId) : undefined;
+  const [businessRatings, deal] = business
+    ? await Promise.all([
+        getBusinessRatings([business.id]),
+        isForSale ? getBestDealForListing(business.id, id, l.price) : null,
+      ])
+    : [new Map(), null];
+  const rating = (business && businessRatings.get(business.id)) || { average: 0, count: 0 };
 
   const specs = [
     { label: "Condition", value: l.condition },
@@ -185,18 +183,32 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
                 <div className="text-right">
                   {/* Rent-only listings store the daily rate as their price */}
-                  <p className="text-2xl font-bold text-gray-900">
-                    PKR {l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(l.price)}
+                  {deal && (
+                    <p className="text-sm font-medium text-gray-400 line-through">PKR {formatLakh(l.price)}</p>
+                  )}
+                  <p className={`text-2xl font-bold ${deal ? "text-rose-600" : "text-gray-900"}`}>
+                    PKR {l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(deal ? dealPrice(l.price, deal) : l.price)}
                     {l.type === "RENT" && <span className="text-sm font-medium text-gray-400">/day</span>}
                   </p>
                   {l.type !== "RENT" && l.price >= 1e5 && (
-                    <p className="text-xs text-gray-400">PKR {l.price.toLocaleString("en-PK")}</p>
+                    <p className="text-xs text-gray-400">PKR {(deal ? dealPrice(l.price, deal) : l.price).toLocaleString("en-PK")}</p>
                   )}
                   {rental && l.type !== "RENT" && (
                     <p className="text-sm text-green-600 mt-1">PKR {rental.dailyRate.toLocaleString()}/day</p>
                   )}
                 </div>
               </div>
+              {deal && business && (
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 px-4 py-3 ring-1 ring-inset ring-rose-200">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-600 text-white"><Tag size={16} /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-rose-700">{deal.title} · {dealLabel(deal)}</p>
+                    <p className="text-xs text-rose-600/80">
+                      {deal.description ? `${deal.description} · ` : ""}Offer by {business.name}, ends {new Date(deal.endsAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2">
                 <FavoriteButton listingId={id} variant="pill" />
                 <CompareButton variant="pill" item={{ id, title: l.title, image: l.images?.[0], price: l.price, type: l.type }} />
@@ -232,18 +244,6 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
             )}
 
-            {sellerId && (
-              <SellerReviews
-                sellerId={sellerId}
-                listingId={id}
-                sellerName={l.sellerId?.name?.split(" ")[0] ?? "this seller"}
-                viewer={viewer}
-                initialReviews={sellerReviews.map(toReviewView)}
-                initialSummary={rating}
-                initialHasMore={rating.count > REVIEW_PAGE}
-                myReview={myReview ? toReviewView(myReview) : undefined}
-              />
-            )}
           </div>
 
           {/* Right */}
@@ -251,26 +251,62 @@ export default async function ListingDetailPage({ params }: Props) {
 
             {/* Seller */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4">Seller</h2>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-gray-700">Listed by</h2>
+                {l.sellerId && (business ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                    <BadgeCheck size={12} /> Business account
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">
+                    <UserRound size={12} /> Private seller
+                  </span>
+                ))}
+              </div>
               {l.sellerId ? (
                 <>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
-                      {l.sellerId.name?.[0]?.toUpperCase() ?? "?"}
+                  {business ? (
+                    <Link href={`/dealers/${business.slug}`} className="group -m-2 flex items-center gap-3 rounded-xl p-2 transition hover:bg-gray-50">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-bold text-white">
+                        {business.name[0]?.toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{business.name}</p>
+                        {rating.count > 0 ? (
+                          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
+                            <StarRating value={rating.average} size={12} />
+                            <span className="font-semibold text-gray-800">{rating.average.toFixed(1)}</span>
+                            <span>({rating.count} review{rating.count !== 1 ? "s" : ""})</span>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">No reviews yet</p>
+                        )}
+                        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-500">
+                          <Building2 size={11} /> {business.type === "RENTAL" ? "Rental company" : business.type === "BOTH" ? "Dealer & rentals" : "Dealer"}
+                          {business.city && <><MapPin size={11} className="ml-1" /> {business.city}</>}
+                        </p>
+                      </div>
+                      <ChevronRight size={16} className="text-gray-300 transition group-hover:text-gray-500" />
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
+                        {l.sellerId.name?.[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{l.sellerId.name ?? "Unknown"}</p>
+                        <p className="text-xs text-gray-400">
+                          Individual seller{l.sellerId.createdAt ? ` · on AutoMarket since ${new Date(l.sellerId.createdAt).getFullYear()}` : ""}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{l.sellerId.name ?? "Unknown"}</p>
-                      {rating.count > 0 ? (
-                        <a href="#reviews" className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800">
-                          <StarRating value={rating.average} size={12} />
-                          <span className="font-semibold text-gray-800">{rating.average.toFixed(1)}</span>
-                          <span>({rating.count})</span>
-                        </a>
-                      ) : (
-                        <p className="text-xs text-gray-400">No reviews yet</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
+                  {business && (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Listed by {l.sellerId.name?.split(" ")[0] ?? "a team member"} at {business.name}.{" "}
+                      <Link href={`/dealers/${business.slug}#reviews`} className="font-semibold text-indigo-700 hover:underline">See reviews</Link>
+                    </p>
+                  )}
                   {l.sellerId.phone && (
                     <a href={`tel:${l.sellerId.phone}`}
                       className="mt-4 w-full block text-center py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">

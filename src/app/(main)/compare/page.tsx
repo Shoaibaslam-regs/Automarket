@@ -7,7 +7,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
 import { Inspection } from "@/models/Inspection";
-import { getSellerRatings } from "@/lib/reviews";
+import { getBusinessRatings, getSellerBusinesses } from "@/lib/reviews";
 import { formatLakh } from "@/lib/format";
 import { MAX_COMPARE } from "@/lib/compare";
 import StarRating from "@/components/reviews/StarRating";
@@ -74,11 +74,13 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
 
   const listingIds = listings.map(l => l._id);
   const sellerIds = listings.flatMap(l => (l.sellerId?._id ? [String(l.sellerId._id)] : []));
-  const [rentals, inspections, ratings] = await Promise.all([
+  const [rentals, inspections, businesses] = await Promise.all([
     Rental.find({ listingId: { $in: listingIds } }).lean<{ listingId: mongoose.Types.ObjectId; dailyRate: number; deposit: number }[]>(),
     Inspection.find({ listingId: { $in: listingIds } }).lean<{ listingId: mongoose.Types.ObjectId; damageScore?: number; estimate?: number }[]>(),
-    getSellerRatings(sellerIds),
+    getSellerBusinesses(sellerIds),
   ]);
+  // Ratings belong to businesses; private sellers have none
+  const ratings = await getBusinessRatings([...businesses.values()].map(b => b.id));
   const rentalOf = new Map(rentals.map(r => [String(r.listingId), r]));
   const inspectionOf = new Map(inspections.map(i => [String(i.listingId), i]));
 
@@ -87,7 +89,8 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
     // Rent-only listings store the daily rate as their price
     const dailyRate = l.type === "RENT" ? l.price : rentalOf.get(id)?.dailyRate;
     const salePrice = l.type === "RENT" ? undefined : l.price;
-    return { l, id, dailyRate, salePrice, inspection: inspectionOf.get(id), rating: l.sellerId?._id ? ratings.get(String(l.sellerId._id)) : undefined };
+    const business = l.sellerId?._id ? businesses.get(String(l.sellerId._id)) : undefined;
+    return { l, id, dailyRate, salePrice, inspection: inspectionOf.get(id), business, rating: business ? ratings.get(business.id) : undefined };
   });
 
   const dash = <span className="text-slate-300">—</span>;
@@ -124,7 +127,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
       scores: cols.map(c => (c.inspection?.damageScore != null ? -c.inspection.damageScore : undefined)),
     },
     {
-      label: "Seller rating",
+      label: "Business rating",
       values: cols.map(c =>
         c.rating ? (
           <span key={c.id} className="inline-flex items-center gap-1.5">
@@ -134,12 +137,21 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
             </span>
           </span>
         ) : (
-          <span key={c.id} className="text-xs text-slate-400">No reviews</span>
+          <span key={c.id} className="text-xs text-slate-400">{c.business ? "No reviews yet" : "Private seller"}</span>
         )
       ),
       scores: cols.map(c => c.rating?.average),
     },
-    { label: "Seller", values: cols.map(c => c.l.sellerId?.name || dash) },
+    {
+      label: "Seller",
+      values: cols.map(c =>
+        c.business ? (
+          <a key={c.id} href={`/dealers/${c.business.slug}`} className="text-sm font-semibold text-indigo-700 hover:underline">{c.business.name}</a>
+        ) : (
+          <span key={c.id}>{c.l.sellerId?.name ? `${c.l.sellerId.name} · Private` : dash}</span>
+        )
+      ),
+    },
   ];
 
   return (

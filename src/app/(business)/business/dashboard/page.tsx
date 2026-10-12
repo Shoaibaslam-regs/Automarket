@@ -23,6 +23,7 @@ type Organization = {
   type: string;
   plan: string;
   city: string;
+  slug?: string;
 };
 
 export default function BusinessDashboard() {
@@ -233,6 +234,13 @@ export default function BusinessDashboard() {
           background: #f6f8fa;
         }
 
+        .biz-dash-header { position: sticky; top: 0; z-index: 10; }
+        /* On phones the fixed business bar sits on top, so the page header scrolls normally */
+        @media (max-width: 768px) {
+          .biz-dash-header { position: static; }
+          .biz-dash-body { padding: 16px !important; }
+        }
+
         .stat-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -327,89 +335,42 @@ export default function BusinessDashboard() {
 
         {/* Main content */}
         <div className="biz-main">
-          {/* Top bar */}
-          <div
-            style={{
-              padding: "16px 24px",
-              background: "white",
-              borderBottom: "1px solid #e1e4e8",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-            }}
-          >
-            <div>
-              <h1
-                style={{
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#0d1117",
-                }}
-              >
-                Dashboard
-              </h1>
-
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#8c959f",
-                }}
-              >
-                {new Date().toLocaleDateString("en-PK", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+          {/* Top bar: compact on phones, where the fixed business bar already shows the logo and avatar */}
+          <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-3 sm:px-6 sm:py-4">
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-[#0d1117] sm:text-lg">Dashboard</h1>
+              <p className="hidden text-xs text-[#8c959f] sm:block">
+                {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>
-              <UserIdBadge id={session?.user?.id} className="mt-1" />
+              <UserIdBadge id={session?.user?.id} className="mt-1 hidden sm:inline-flex" />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                alignItems: "center",
-              }}
-            >
+            <div className="flex flex-shrink-0 items-center gap-2">
+              {org?.slug && (
+                <a
+                  href={`/dealers/${org.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="See your shop the way customers see it"
+                  aria-label="View public page"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e1e4e8] bg-white px-2 text-xs font-semibold text-[#0d1117] transition hover:bg-[#f6f8fa] sm:h-9 sm:px-3 sm:text-[13px]"
+                >
+                  <Globe size={14} /> <span className="hidden sm:inline">View public page</span>
+                </a>
+              )}
               <Link
                 href="/sell"
-                style={{
-                  padding: "8px 16px",
-                  background: "#0d1117",
-                  color: "white",
-                  borderRadius: "8px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                }}
+                className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#0d1117] px-2.5 text-xs font-semibold text-white transition hover:bg-[#24292f] sm:h-9 sm:px-4 sm:text-[13px]"
               >
-                + Add vehicle
+                + <span className="sm:hidden">Add</span><span className="hidden sm:inline">Add vehicle</span>
               </Link>
-
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "#0d1117",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                }}
-              >
+              <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-[#0d1117] text-[13px] font-bold text-white sm:flex">
                 {session?.user?.name?.[0]?.toUpperCase()}
               </div>
             </div>
           </div>
 
-          <div style={{ padding: "24px" }}>
+          <div className="biz-dash-body" style={{ padding: "24px" }}>
             {/* Main stats */}
             <div className="stat-grid" style={{ marginBottom: "20px" }}>
               {[

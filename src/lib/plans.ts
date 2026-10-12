@@ -87,3 +87,16 @@ export function formatPlanPrice(price: number): string {
 export function planInfo(plan: unknown): Plan {
   return PLANS[isPlanId(plan) ? plan : "FREE"];
 }
+
+/** How a paid plan was obtained. Gifts and trials cost the user nothing and can be revoked by an admin. */
+export type PlanSource = "PAID" | "ADMIN_GRANT" | "TRIAL";
+
+export const TRIAL_MONTHS = 1;
+
+export function isFreeGrant(source: unknown): boolean {
+  return source === "ADMIN_GRANT" || source === "TRIAL";
+}
+
+export function planSourceLabel(source: unknown): string | null {
+  return source === "TRIAL" ? "Free trial" : source === "ADMIN_GRANT" ? "Complimentary" : source === "PAID" ? "Paid" : null;
+}

@@ -5,13 +5,13 @@ import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { Listing } from "@/models/Listing";
 import { getInventorySellerIds } from "@/lib/business";
-import { PLANS, SLOT_STATUSES, effectivePlanId, formatLimit, type Plan, type PlanId } from "@/lib/plans";
+import { PLANS, SLOT_STATUSES, effectivePlanId, formatLimit, type Plan, type PlanId, type PlanSource } from "@/lib/plans";
 
 type PlanFields = {
   _id: mongoose.Types.ObjectId;
   plan?: string;
   planExpiresAt?: Date;
-  planSource?: "PAID" | "ADMIN_GRANT";
+  planSource?: PlanSource;
   organizationId?: mongoose.Types.ObjectId;
 };
 
@@ -21,7 +21,7 @@ export type Subscription = {
   /** The plan stored on the account, which may differ from planId once it has expired */
   storedPlanId: string;
   expiresAt: Date | null;
-  source: "PAID" | "ADMIN_GRANT" | null;
+  source: PlanSource | null;
   /** Business members share their owner's plan */
   inheritedFromOwner: boolean;
   organizationId: mongoose.Types.ObjectId | null;

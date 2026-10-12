@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
-import { PLAN_IDS, type PlanId } from "../lib/plans";
+import { PLAN_IDS, type PlanId, type PlanSource } from "../lib/plans";
 
 export interface IUser extends Document {
   name?: string;
@@ -16,8 +16,11 @@ export interface IUser extends Document {
   adminAccess?: "FULL" | "READ_ONLY";
   plan: PlanId;
   planExpiresAt?: Date;
-  /** How the current paid plan was obtained; ADMIN_GRANT is a free upgrade given from the admin panel */
-  planSource?: "PAID" | "ADMIN_GRANT";
+  /** How the current paid plan was obtained: ADMIN_GRANT is a gift from the admin panel, TRIAL the one-time free trial */
+  planSource?: PlanSource;
+  /** When the account's one free trial was started; set once and never cleared, so it can't be given again */
+  trialUsedAt?: Date;
+  trialPlan?: PlanId;
   planGrantedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -37,7 +40,9 @@ const UserSchema = new Schema<IUser>(
     adminAccess: { type: String, enum: ["FULL", "READ_ONLY"] },
     plan: { type: String, enum: PLAN_IDS, default: "FREE" },
     planExpiresAt: { type: Date },
-    planSource: { type: String, enum: ["PAID", "ADMIN_GRANT"] },
+    planSource: { type: String, enum: ["PAID", "ADMIN_GRANT", "TRIAL"] },
+    trialUsedAt: { type: Date },
+    trialPlan: { type: String, enum: PLAN_IDS },
     planGrantedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }

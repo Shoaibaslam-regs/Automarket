@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Select from "@/components/ui/Select";
 import { Crown } from "lucide-react";
-import { planInfo } from "@/lib/plans";
+import { planInfo, planSourceLabel } from "@/lib/plans";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
 
@@ -198,7 +198,7 @@ export default function BusinessSettingsPage() {
                 <p className="text-lg font-bold">{plan.name}{plan.price > 0 && <span className="ml-1.5 text-sm font-medium text-slate-400">PKR {plan.price.toLocaleString()}/mo</span>}</p>
                 {sub?.expiresAt && (
                   <p className="text-xs text-slate-400">
-                    {sub.source === "ADMIN_GRANT" ? "Complimentary · " : ""}until {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                    {planSourceLabel(sub.source) && sub.source !== "PAID" ? `${planSourceLabel(sub.source)} · ` : ""}until {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 )}
               </div>

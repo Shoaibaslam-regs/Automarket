@@ -34,6 +34,10 @@ export const BUSINESS_PERMISSIONS = {
   deleteCustomers: ["OWNER"],
   /** Create walk-in bookings and move bookings through their statuses */
   manageBookings: ["OWNER", "MANAGER", "SALES"],
+  /** Create, edit, pause and delete deals */
+  manageDeals: ["OWNER", "MANAGER"],
+  /** Publicly reply to customer reviews */
+  replyReviews: ["OWNER", "MANAGER"],
 } as const satisfies Record<string, readonly BusinessRole[]>;
 
 export type BusinessPermission = keyof typeof BUSINESS_PERMISSIONS;

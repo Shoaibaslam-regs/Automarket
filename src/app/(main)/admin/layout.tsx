@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, Car, Eye, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Car, Eye, LayoutDashboard, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/listings", label: "Listings", icon: Car },
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
+  { href: "/admin/deals", label: "Deals", icon: Tag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

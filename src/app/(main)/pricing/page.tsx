@@ -8,7 +8,7 @@ import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLANS, PLAN_LIST, formatLimit, planInfo, type Plan } from "@/lib/plans";
+import { PLANS, PLAN_LIST, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Active listings", value: p => formatLimit(p.limits.listings) },
@@ -85,9 +85,9 @@ export default function PricingPage() {
                 {sub.inheritedFromOwner && <p className="mt-1 text-sm text-slate-500">Shared with your business through the owner&apos;s plan.</p>}
               </div>
               <div className="flex flex-wrap gap-2">
-                {sub.source === "ADMIN_GRANT" && (
+                {(sub.source === "ADMIN_GRANT" || sub.source === "TRIAL") && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
-                    <Gift size={13} /> Complimentary
+                    <Gift size={13} /> {planSourceLabel(sub.source)}
                   </span>
                 )}
                 {sub.expiresAt && (

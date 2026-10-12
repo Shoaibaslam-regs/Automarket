@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, Store, Undo2, Users, Wallet } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
+import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { planInfo, type PlanId } from "@/lib/plans";
+import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
 import {
   Badge,
   ConfirmDialog,
@@ -40,7 +41,7 @@ type Organization = {
   type: string;
   plan: PlanId;
   planExpiresAt?: string | null;
-  planSource?: "PAID" | "ADMIN_GRANT" | null;
+  planSource?: PlanSource | null;
   city: string;
   isActive: boolean;
   staffCount: number;
@@ -163,6 +164,8 @@ export default function AdminPage() {
               <StatCard label="Platform fee" value={formatPKR(stats.platformFee)} icon={Wallet} tone="green" />
             </StatGrid>
           )}
+
+          <PlanLookup />
 
           <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
             <Panel
@@ -309,7 +312,7 @@ export default function AdminPage() {
                       <p className="flex items-center gap-1.5 truncate text-sm font-semibold" style={{ color: plan.accent }}>
                         {org.plan !== "FREE" && <Crown size={13} />}
                         {plan.name}
-                        {org.planSource === "ADMIN_GRANT" && org.plan !== "FREE" && <Gift size={12} className="text-violet-500" aria-label="Gifted by an admin" />}
+                        {isFreeGrant(org.planSource) && org.plan !== "FREE" && <Gift size={12} className="text-violet-500" aria-label={org.planSource === "TRIAL" ? "Free trial" : "Gifted by an admin"} />}
                       </p>
                       {org.plan !== "FREE" && (
                         <p className="truncate text-xs text-slate-400">{org.planExpiresAt ? `until ${fmtPlanDate(org.planExpiresAt)}` : "no end date"}</p>
@@ -335,7 +338,7 @@ export default function AdminPage() {
                       <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
                         <Gift size={13} /> Gift plan
                       </button>
-                      {org.planSource === "ADMIN_GRANT" && org.plan !== "FREE" && (
+                      {isFreeGrant(org.planSource) && org.plan !== "FREE" && (
                         <button onClick={() => setRevokeFor(org)} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
                           <Undo2 size={13} />
                         </button>

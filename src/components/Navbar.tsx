@@ -12,7 +12,7 @@ import MobileNavDrawer from "@/components/MobileNavDrawer";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
 import { NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
-import { Car, ChevronDown, Crown } from "lucide-react";
+import { ChevronDown, Crown } from "lucide-react";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 
@@ -120,7 +120,7 @@ export default function Navbar() {
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}>
-        <div style={{
+        <div className="nav-bar-inner" style={{
           maxWidth: "1280px", margin: "0 auto",
           padding: "0 20px",
           height: scrolled ? "56px" : "64px",
@@ -136,6 +136,7 @@ export default function Navbar() {
               alt="AutoMarket"
               width={140}
               height={40}
+              className="nav-logo"
               style={{ width: "auto", height: scrolled ? "30px" : "36px", transition: "height 0.3s" }}
               priority
             />
@@ -212,12 +213,6 @@ export default function Navbar() {
           {/* ── MOBILE RIGHT: badges + hamburger ── */}
           <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
             
-            {session?.user && (
-              <Link href="/sell" aria-label="Sell a vehicle"
-                className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-[13px] font-semibold text-white shadow-sm shadow-slate-900/20 transition active:scale-95">
-                <Car size={15} strokeWidth={2} /> Sell
-              </Link>
-            )}
             <button
               aria-label="Open menu"
               aria-expanded={mobileOpen}

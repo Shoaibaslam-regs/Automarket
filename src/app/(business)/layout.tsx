@@ -23,7 +23,7 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
         }
         @media (max-width: 768px) {
           .biz-content {
-            padding-top: 56px;
+            padding-top: 48px;
           }
         }
       `}</style>

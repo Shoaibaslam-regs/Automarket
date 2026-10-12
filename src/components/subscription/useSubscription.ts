@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { PlanId, PlanLimits } from "@/lib/plans";
+import type { PlanId, PlanLimits, PlanSource } from "@/lib/plans";
 
 export type SubscriptionInfo = {
   planId: PlanId;
   storedPlanId: string;
   expiresAt: string | null;
-  source: "PAID" | "ADMIN_GRANT" | null;
+  source: PlanSource | null;
   inheritedFromOwner: boolean;
   hasBusiness: boolean;
   limits: PlanLimits;

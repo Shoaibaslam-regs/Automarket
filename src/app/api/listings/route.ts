@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
+// Registers the model for the seller → business populate below
+import "@/models/Organization";
 import { auth } from "@/lib/auth";
 import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
@@ -34,7 +36,8 @@ export async function GET(req: NextRequest) {
 
     const listings = await Listing.find(query)
       // Public feed: only what a card shows. Contact details stay on the listing page.
-      .populate("sellerId", "name image")
+      // The seller's business (if any) lets cards show "listed by a business" vs a private seller
+      .populate({ path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug" } })
       .sort({ featured: -1, ...sortOrder })
       .skip(skip)
       .limit(limit)

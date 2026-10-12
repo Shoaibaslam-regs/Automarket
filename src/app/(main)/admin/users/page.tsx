@@ -6,7 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
 import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { planInfo, type PlanId } from "@/lib/plans";
+import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
 import PlanGiftDialog from "@/components/admin/PlanGiftDialog";
 
 type AdminAccess = "FULL" | "READ_ONLY";
@@ -21,7 +21,7 @@ type User = {
   isOwner: boolean;
   effectivePlan: PlanId;
   planExpiresAt?: string;
-  planSource?: "PAID" | "ADMIN_GRANT";
+  planSource?: PlanSource;
   createdAt: string;
 };
 
@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
                   <p className="flex items-center gap-1.5 truncate text-sm font-semibold" style={{ color: plan.accent }}>
                     {user.effectivePlan === "UNLIMITED" && <Crown size={13} />}
                     {plan.name}
-                    {user.planSource === "ADMIN_GRANT" && user.effectivePlan !== "FREE" && (
+                    {isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (
                       <Gift size={12} className="text-violet-500" aria-label="Gifted by an admin" />
                     )}
                   </p>
@@ -312,7 +312,7 @@ export default function AdminUsersPage() {
                   <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
                     <Gift size={13} /> Plan
                   </button>
-                  {user.planSource === "ADMIN_GRANT" && user.effectivePlan !== "FREE" && (
+                  {isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (
                     <button onClick={() => setPending({ action: "revoke", user })} disabled={busy} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
                       <Undo2 size={13} />
                     </button>

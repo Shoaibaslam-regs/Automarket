@@ -8,8 +8,8 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BarChart3, CalendarCheck, Car, ChevronDown, Crown, House, LayoutDashboard, LogOut, MessageSquare,
-  Settings, Sparkles, User, Users, X, type LucideIcon,
+  ArrowLeftRight, BarChart3, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, House, LayoutDashboard, LogOut, MessageSquare,
+  Settings, Sparkles, Star, Tag, User, Users, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -21,6 +21,7 @@ type Organization = {
   type: string;
   plan: string;
   city: string;
+  slug?: string;
 };
 
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
@@ -28,6 +29,8 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/inventory", label: "Inventory", icon: Car },
   { href: "/business/customers", label: "Customers", icon: Users },
   { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
+  { href: "/business/deals", label: "Deals", icon: Tag },
+  { href: "/business/reviews", label: "Reviews", icon: Star },
   { href: "/business/staff", label: "Staff", icon: User },
   { href: "/business/reports", label: "Reports", icon: BarChart3 },
   { href: "/business/settings", label: "Settings", icon: Settings },
@@ -84,6 +87,7 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
             <p className="truncate text-[11px] text-slate-400">{session?.user?.email}</p>
           </div>
           {[
+            ...(org?.slug ? [{ label: "Public business page", href: `/dealers/${org.slug}`, icon: Globe }] : []),
             { label: "Business settings", href: "/business/settings", icon: Settings },
             { label: "Messages", href: "/messages", icon: MessageSquare },
             { label: "My dashboard", href: "/dashboard", icon: User },
@@ -214,6 +218,28 @@ function SidebarContent({
             </Link>
           );
         })}
+
+        {org?.slug && (
+          <>
+            <p className="px-2.5 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Your shop</p>
+            <a
+              href={`/dealers/${org.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={onClose}
+              className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500/15 to-fuchsia-500/10 px-2.5 py-2 text-[13.5px] font-medium text-indigo-100 ring-1 ring-inset ring-indigo-400/25 transition hover:from-indigo-500/25 hover:to-fuchsia-500/20"
+            >
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-400/20 text-indigo-200">
+                <Globe size={16} strokeWidth={1.9} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">View public page</span>
+                <span className="block truncate text-[10px] text-indigo-300/70">How customers see you</span>
+              </span>
+              <ExternalLink size={13} className="flex-shrink-0 text-indigo-300/70 transition group-hover:text-indigo-100" />
+            </a>
+          </>
+        )}
       </nav>
 
       {/* Plan + account */}
@@ -303,21 +329,21 @@ export default function BusinessSidebar() {
       </aside>
 
       {/* Mobile top bar: the dark counterpart of the marketplace navbar */}
-      <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-14 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4 backdrop-blur-xl">
+      <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl">
         <Link href="/home" className="flex flex-shrink-0 items-center gap-2">
-          <Image src="/logo-1771205663069.png" alt="AutoMarket" width={100} height={26} className="h-[22px] w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-300">Business</span>
+          <Image src="/logo-1771205663069.png" alt="AutoMarket" width={100} height={26} className="h-[18px] w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
+          <span className="rounded bg-white/10 px-1 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-slate-300">Business</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-xs font-medium text-slate-400">{org?.name}</span>
+          <span className="hidden truncate text-[11px] font-medium text-slate-400 min-[380px]:block">{org?.name}</span>
           <button
             onClick={() => setMobileOpenOn(pathname)}
             aria-label="Open menu"
             aria-expanded={mobileOpen}
-            className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.06] ring-1 ring-inset ring-white/15 transition active:scale-95"
+            className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06] ring-1 ring-inset ring-white/15 transition active:scale-95"
           >
             <NotificationDot show={hasUnread} className="right-1.5 top-1.5 ring-slate-950" />
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-950">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[11px] font-bold text-slate-950">
               {session?.user?.name?.[0]?.toUpperCase() || "?"}
             </span>
           </button>

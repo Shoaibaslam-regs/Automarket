@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight } from "lucide-react";
+import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, BadgeCheck } from "lucide-react";
 import { IListing } from "@/models/Listing";
 import { formatLakh } from "@/lib/format";
 import FavoriteButton from "./FavoriteButton";
@@ -20,10 +20,34 @@ const TYPE_BADGE: Record<IListing["type"], { label: string; className: string }>
   BOTH: { label: "Sale & Rent", className: "bg-indigo-500/90 text-white" },
 };
 
-// sellerId is populated ({ name, image }) on the browse feed and a bare ObjectId elsewhere
-function sellerOf(listing: Props["listing"]): { name?: string; image?: string } | null {
+type CardSeller = { name?: string; image?: string; organizationId?: { name?: string } | null };
+
+// sellerId is populated ({ name, image, organizationId }) on the browse feed and a bare ObjectId elsewhere
+function sellerOf(listing: Props["listing"]): CardSeller | null {
   const s = listing.sellerId as unknown;
-  return s && typeof s === "object" && "name" in s ? (s as { name?: string; image?: string }) : null;
+  return s && typeof s === "object" && "name" in s ? (s as CardSeller) : null;
+}
+
+/** Business sellers show their business name with a badge; private sellers show their own name. */
+function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean }) {
+  const business = seller.organizationId && typeof seller.organizationId === "object" ? seller.organizationId.name : undefined;
+  if (business) {
+    return (
+      <span className="flex min-w-0 items-center gap-1 font-medium text-indigo-700" title={`Listed by ${business} (business account)`}>
+        <BadgeCheck size={13} className="flex-shrink-0" />
+        <span className="truncate">{business}</span>
+      </span>
+    );
+  }
+  if (!seller.name) return null;
+  return (
+    <span className="flex min-w-0 items-center gap-1.5" title={`${seller.name} (private seller)`}>
+      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
+        {seller.name[0]?.toUpperCase()}
+      </span>
+      <span className="truncate">{compact ? seller.name.split(" ")[0] : seller.name}</span>
+    </span>
+  );
 }
 
 function PriceText({ listing, className }: { listing: Props["listing"]; className: string }) {
@@ -142,12 +166,9 @@ export default function ListingCard({ listing, layout = "grid", eager }: Props) 
                   <MapPin size={12} strokeWidth={1.75} className="flex-shrink-0 text-slate-400" />
                   <span className="truncate">{listing.location}</span>
                 </span>
-                {seller?.name && (
-                  <span className="hidden min-w-0 max-w-[45%] items-center gap-1.5 sm:flex" title={seller.name}>
-                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
-                      {seller.name[0]?.toUpperCase()}
-                    </span>
-                    <span className="truncate">{seller.name.split(" ")[0]}</span>
+                {seller && (
+                  <span className="hidden min-w-0 max-w-[50%] sm:flex">
+                    <SellerTag seller={seller} compact />
                   </span>
                 )}
               </div>
@@ -271,14 +292,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
           <span className="rounded-full bg-slate-100/80 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600">
             {listing.condition.toLowerCase()}
           </span>
-          {seller?.name && (
-            <span className="flex min-w-0 items-center gap-1.5" title={seller.name}>
-              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
-                {seller.name[0]?.toUpperCase()}
-              </span>
-              <span className="truncate">{seller.name}</span>
-            </span>
-          )}
+          {seller && <SellerTag seller={seller} />}
         </div>
       </Link>
     </article>

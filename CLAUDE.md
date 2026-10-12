@@ -43,7 +43,7 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - Admin pages hide actions through `useAdminAccess()` (`components/admin/AdminAccess.tsx`, which reads `/api/admin/me`).
 - **Business roles** are separate: `Employee.role` is one of `OWNER`, `MANAGER`, `SALES` or `STAFF`, linked to an `Organization`.
   - The `Employee` record is the source of truth. Read it with `getMembership(userId)`.
-  - Check permissions with `can(role, "manageTeam" | "editCustomers" | "deleteCustomers")`, defined in `src/lib/business.ts`.
+  - Check permissions with `can(role, permission)`, defined in `src/lib/business.ts`. The permissions are `manageTeam`, `editCustomers`, `deleteCustomers`, `manageBookings`, `manageDeals` and `replyReviews`.
   - Business routes must scope every query to `member.organizationId`. Customers can only be deleted by the owner, and only when their status is `SOLD` or `LOST` (`src/lib/customers.ts`).
 
 **Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` are registered with `defineModel(name, schema)` (`src/models/defineModel.ts`). In production it reuses the cached model. In development it replaces the cached model, so schema edits apply on hot reload without restarting the server. Use it for new models instead of `mongoose.models.X || mongoose.model(...)`.
@@ -57,6 +57,9 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - Listings count against the limit only while their status is `ACTIVE`, `PENDING` or `RENTED`. Staff counts include the owner.
 - Clients read `/api/subscription` through `useSubscription()` (`components/subscription/`).
 - There is no payment integration. Admins grant plans through `PATCH /api/admin/users/[id]/plan`, and users ask for one through `POST /api/support/upgrade-request`.
+- `User.planSource` is `PAID`, `ADMIN_GRANT` (a gift) or `TRIAL`. Use `isFreeGrant()` from `src/lib/plans.ts` for "an admin can revoke this".
+- Each account gets one free trial (`TRIAL_MONTHS` long), started with `trial: true` on the plan route. `User.trialUsedAt` is set atomically and never cleared, so revoking a trial doesn't allow another.
+- The admin dashboard's **Plan lookup** box (`components/admin/PlanLookup.tsx`, `/api/admin/plans/lookup`) searches by name, email, business name, or full or short ID.
   - That request posts a chat `Message` to the support admin (`getSupportAdmin` in `src/lib/support.ts`).
 
 **Bookings.**
@@ -66,6 +69,15 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
 - Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
 - The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
+
+**Reviews and deals.**
+- Reviews belong to **businesses**, not individual sellers or listings. `BusinessReview` allows one review per user per organization, and the business can add a public `reply`.
+- Only people who dealt with the business may review it (`canReviewBusiness` in `src/lib/reviews.ts`): they booked, messaged a member, or are a CRM customer. Members can't review their own business.
+- `src/lib/reviews.ts` also provides `getBusinessRatings`, `getSellerBusinesses` (seller id → business, used to label listings "Business" or "Private seller") and `getBestDealForListing`.
+- The public business page is `/dealers/[slug]` (`Organization.slug`), with its reviews API at `/api/businesses/[slug]/reviews`. The business console has `/business/reviews` and `/business/deals`.
+- A `Deal` takes a percent or PKR amount off sale prices, for all of the business's sale vehicles (empty `listingIds`) or chosen ones, between `startsAt` and `endsAt`. Its state comes from `dealState` in `src/lib/deals.ts`, which is client-safe.
+- Admins see and disable deals at `/admin/deals`. `disabledByAdmin` can't be undone by the business.
+- The old per-seller `Review` model and `/api/reviews` were removed. Their documents are left in the `reviews` collection but nothing reads them.
 
 **Listing filters.** `src/lib/listingFilters.ts` is the single source for browse filters. `parseFilters` turns URL or object input into `buildListingQuery`, the Mongo query that always includes `status: "ACTIVE"`. `listingMatches` is an in-memory twin of that query. The listings API, the browse page URL state and saved-search alerts all use this module, so a new filter must be added to it and to both the query builder and the matcher.
 - When a listing is created, `POST /api/listings` uses `after()` to run `notifySavedSearches` (`src/lib/savedSearchAlerts.ts`), which emails users whose saved searches match.
@@ -85,5 +97,9 @@ Remote image hosts must be allowed in `next.config.ts` `images.remotePatterns`.
 **Conventions.** Use the `@/*` path alias for `src/*`, except in `src/models/`, where `User.ts` imports `../lib/plans` relatively so the `tsx` admin script can load it.
 - Styling is Tailwind 3 (`tailwind.config.js`), with no dark mode. Many business and older pages use inline `style={{}}` objects with a GitHub-like palette (`#0d1117`, `#57606a`, `#e1e4e8`).
 - Newer UI uses Tailwind `slate` with dark "glow" header cards. The marketplace (light) and business console (dark) are mirror themes. The shared pieces are `RingAvatar` (`components/UserMenuDropdown.tsx`), `UserIdBadge`, `MobileNavDrawer` and `business/BusinessSidebar`.
+- **Palette rules.** Marketplace pages, including the personal `/dashboard`, use `slate-900` primary buttons, `indigo` accents, `amber` for plans and premium, and the indigo → fuchsia → amber gradient for avatars and premium highlights. Don't introduce new accent families such as teal; the owner rejected that as clashing with the project. Status colours (emerald, amber, rose, sky) are fine.
+- **Grid/list pattern.** `ListingCard` takes `layout="grid" | "list"`. Pages with the browse page's ⊞/☰ switch (`listings/page.tsx`, `listings/DealerVehicles.tsx`, `listings/MyListings.tsx`) use a 2-column grid even on phones. A per-browser view choice lives in `localStorage` and is applied after mount via `queueMicrotask`, so server HTML still renders the grid.
+- Server pages passing lean Mongo documents to client components must `JSON.parse(JSON.stringify(...))` them first, because ObjectIds and Dates don't cross the boundary.
+- The mobile navbar shows only the logo and the menu button, with no Sell button; selling is a tile in `MobileNavDrawer`. Keep the bar at its original size, and make menu contents compact instead.
 - Destructive actions use dialogs (Radix `@radix-ui/react-dialog`), never `window.confirm`. Use `components/admin/ui.tsx` `ConfirmDialog` in admin pages and `components/business/ConfirmDialog.tsx` in the business console.
 - Shared UI primitives are in `src/components/ui`. react-hook-form and zod are installed but nothing in `src` imports them yet.

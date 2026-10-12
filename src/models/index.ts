@@ -6,6 +6,7 @@ export { Payment } from "./Payment";
 export { Inspection } from "./Inspection";
 export { VehicleImage } from "./VehicleImage";
 export { Favorite } from "./Favorite";
-export { Review } from "./Review";
+export { BusinessReview } from "./BusinessReview";
+export { Deal } from "./Deal";
 export { SavedSearch } from "./SavedSearch";
 
