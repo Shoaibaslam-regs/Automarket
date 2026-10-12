@@ -15,6 +15,7 @@ import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
 import { useSubscription, type SubscriptionInfo } from "@/components/subscription/useSubscription";
 import { formatLimit, planInfo } from "@/lib/plans";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 type Organization = {
   name: string;
@@ -246,6 +247,10 @@ function SidebarContent({
       {/* Plan + account */}
       <div className="relative space-y-3 border-t border-white/10 px-3 pb-4 pt-3">
         {sub && <PlanCard sub={sub} />}
+        <div className="flex items-center justify-between gap-2 px-1">
+          <span className="text-[11px] font-medium text-slate-500">Theme</span>
+          <ThemeToggle tone="dark" compact />
+        </div>
         <div className="flex items-center gap-2.5 px-1">
           <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold ring-1 ring-inset ring-white/15">
             {session?.user?.image ? <Image src={session.user.image} alt="" fill sizes="32px" className="object-cover" /> : session?.user?.name?.[0]?.toUpperCase() || "?"}

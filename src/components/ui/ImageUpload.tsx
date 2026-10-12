@@ -24,15 +24,15 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
       {images.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
           {images.map((url, i) => (
-            <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid #e1e4e8" }}>
+            <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--gh-e1e4e8)" }}>
               <Image src={url} alt={`Vehicle image ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 200px" className="object-cover" />
               {i === 0 && (
-                <span style={{ position: "absolute", top: "6px", left: "6px", background: "#0d1117", color: "white", fontSize: "10px", padding: "2px 7px", borderRadius: "20px", fontWeight: 600 }}>
+                <span style={{ position: "absolute", top: "6px", left: "6px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", fontSize: "10px", padding: "2px 7px", borderRadius: "20px", fontWeight: 600 }}>
                   Main
                 </span>
               )}
               <button type="button" onClick={() => removeImage(i)}
-                style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", background: "#cf222e", color: "white", border: "none", borderRadius: "50%", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", background: "var(--gh-cf222e)", color: "var(--gh-ffffff)", border: "none", borderRadius: "50%", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 ×
               </button>
             </div>
@@ -71,13 +71,13 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
       )}
 
       {rejected.length > 0 && (
-        <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "10px", padding: "12px 14px" }}>
-          <p style={{ fontSize: "13px", fontWeight: 600, color: "#cf222e", marginBottom: "6px" }}>
+        <div role="alert" style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "10px", padding: "12px 14px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-cf222e)", marginBottom: "6px" }}>
             {rejected.length === 1 ? "1 photo was rejected" : `${rejected.length} photos were rejected`} — only car or bike photos are allowed
           </p>
           <ul style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "3px" }}>
             {rejected.map((r, i) => (
-              <li key={`${r.name}-${i}`} style={{ fontSize: "12px", color: "#82071e" }}>
+              <li key={`${r.name}-${i}`} style={{ fontSize: "12px", color: "var(--gh-82071e)" }}>
                 <strong style={{ fontWeight: 600 }}>{r.name}</strong>: {r.reason}
               </li>
             ))}
@@ -86,7 +86,7 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
       )}
 
       {images.length >= maxImages && (
-        <p style={{ fontSize: "12px", color: "#8c959f", textAlign: "center" }}>Maximum {maxImages} images reached</p>
+        <p style={{ fontSize: "12px", color: "var(--gh-8c959f)", textAlign: "center" }}>Maximum {maxImages} images reached</p>
       )}
     </div>
   );

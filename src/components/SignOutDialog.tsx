@@ -23,22 +23,22 @@ export default function SignOutDialog({
       <Dialog.Portal>
         <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000 }} />
         <Dialog.Content
-          style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "380px", background: "white", borderRadius: "14px", padding: "24px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, fontFamily: "inherit" }}>
-          <Dialog.Title style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#0d1117" }}>
+          style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "380px", background: "var(--gh-ffffff)", borderRadius: "14px", padding: "24px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, fontFamily: "inherit" }}>
+          <Dialog.Title style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "var(--gh-0d1117)" }}>
             Sign out?
           </Dialog.Title>
-          <Dialog.Description style={{ margin: "8px 0 20px", fontSize: "14px", color: "#57606a", lineHeight: 1.5 }}>
+          <Dialog.Description style={{ margin: "8px 0 20px", fontSize: "14px", color: "var(--gh-57606a)", lineHeight: 1.5 }}>
             Are you sure you want to sign out of your account?
           </Dialog.Description>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
             <Dialog.Close asChild>
               <button disabled={loading}
-                style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "#0d1117", background: "white", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", background: "var(--gh-ffffff)", border: "1px solid rgb(var(--tw-c-slate-950) / 0.12)", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit" }}>
                 Cancel
               </button>
             </Dialog.Close>
             <button onClick={handleConfirm} disabled={loading}
-              style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "white", background: "#dc2626", border: "none", borderRadius: "8px", cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1, fontFamily: "inherit" }}>
+              style={{ padding: "9px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-ffffff)", background: "var(--gh-dc2626)", border: "none", borderRadius: "8px", cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1, fontFamily: "inherit" }}>
               {loading ? "Signing out…" : "Sign out"}
             </button>
           </div>

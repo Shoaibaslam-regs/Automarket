@@ -15,6 +15,7 @@ import { useNotificationCounts } from "@/hooks/useNotificationCounts";
 import { ChevronDown, Crown } from "lucide-react";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
+import { ThemeCycleButton } from "@/components/theme/ThemeToggle";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -89,6 +90,8 @@ export default function Navbar() {
     <>
       <style>{`
         .nav-desktop { display: flex; }
+        /* The logo artwork is dark; lighten it on the dark theme, as the landing page's dark bar does */
+        .dark .nav-logo { filter: brightness(0.5) invert(1); }
         .nav-mobile-btn { display: none; }
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
@@ -98,14 +101,14 @@ export default function Navbar() {
         .nav-link {
           font-size: 14px;
           font-weight: 500;
-          color: rgba(0,0,0,0.65);
+          color: rgb(var(--tw-c-slate-950) / 0.65);
           text-decoration: none;
           padding: 6px 10px;
           border-radius: 8px;
           transition: all 0.15s;
           white-space: nowrap;
         }
-        .nav-link:hover { color: #0d1117; background: rgba(0,0,0,0.04); }
+        .nav-link:hover { color: var(--gh-0d1117); background: rgb(var(--tw-c-slate-950) / 0.05); }
         @media (min-width: 769px) and (max-width: 960px) {
           .nav-link { padding: 6px 7px; font-size: 13px; }
         }
@@ -113,10 +116,10 @@ export default function Navbar() {
 
       <nav style={{
         position: "sticky", top: 0, zIndex: 100,
-        background: "rgba(255,255,255,0.88)",
+        background: "rgb(var(--tw-c-white) / 0.88)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        borderBottom: "1px solid rgb(var(--tw-c-slate-950) / 0.08)",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}>
@@ -180,7 +183,7 @@ export default function Navbar() {
                     <span className="max-w-[110px] truncate text-[13px] font-semibold leading-4 text-slate-900">{session.user.name}</span>
                     <span
                       className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-3"
-                      style={{ color: navPlan && navPlan.id !== "FREE" ? (navPlan.id === "UNLIMITED" ? "#b45309" : navPlan.accent) : "#94a3b8" }}
+                      style={{ color: navPlan && navPlan.id !== "FREE" ? (navPlan.id === "UNLIMITED" ? "rgb(var(--tw-c-amber-700))" : navPlan.accent) : "var(--gh-94a3b8)" }}
                     >
                       {navPlan && navPlan.id !== "FREE" && <Crown size={10} strokeWidth={2.25} />}
                       {navPlan ? (navPlan.id === "FREE" ? "Free plan" : navPlan.name) : "\u00a0"}
@@ -199,11 +202,12 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <Link href="/login" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "#0d1117", textDecoration: "none", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.12)" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <ThemeCycleButton />
+                <Link href="/login" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", textDecoration: "none", borderRadius: "8px", border: "1px solid rgb(var(--tw-c-slate-950) / 0.12)" }}>
                   Sign in
                 </Link>
-                <Link href="/register" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "white", textDecoration: "none", borderRadius: "8px", background: "#0d1117" }}>
+                <Link href="/register" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-ffffff)", textDecoration: "none", borderRadius: "8px", background: "var(--gh-0d1117)" }}>
                   Register
                 </Link>
               </div>

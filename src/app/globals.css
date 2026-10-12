@@ -7,6 +7,20 @@
   --foreground: #171717;
 }
 
+.dark {
+  --background: #0b1120;
+  --foreground: #e6ebf2;
+}
+
+/* Form fields with no background of their own would get the browser's grey dark-mode fill;
+   give them the card colour instead. :where() keeps specificity at zero so any class or inline style wins. */
+:where(.dark) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select) {
+  background-color: rgb(var(--tw-c-white));
+}
+
+/* The AutoMarket logo artwork is dark; add .theme-logo where it sits on a themed (not always-dark) surface */
+.dark .theme-logo { filter: brightness(0.5) invert(1); }
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -142,8 +156,8 @@ body {
 .messages-sidebar {
   width: 300px;
   flex-shrink: 0;
-  border-right: 1px solid #e1e4e8;
-  background: white;
+  border-right: 1px solid var(--gh-e1e4e8);
+  background: var(--gh-ffffff);
   display: flex;
   flex-direction: column;
 }
@@ -223,8 +237,8 @@ body {
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #8c959f; }
+::-webkit-scrollbar-thumb { background: var(--gh-d0d7de); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gh-8c959f); }
 
 /* ── FOCUS VISIBLE ── */
 *:focus-visible {
@@ -235,7 +249,7 @@ body {
 /* ── SHARED PAGE SHELL (user bookings) ── */
 .adm-page {
   min-height: 100vh;
-  background: #f6f8fa;
+  background: var(--gh-f6f8fa);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   padding: 32px 24px;
 }
@@ -252,8 +266,8 @@ body {
 .adm-tabs {
   display: flex;
   gap: 4px;
-  background: white;
-  border: 1px solid #e1e4e8;
+  background: var(--gh-ffffff);
+  border: 1px solid var(--gh-e1e4e8);
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 20px;

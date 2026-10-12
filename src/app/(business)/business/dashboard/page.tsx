@@ -64,7 +64,7 @@ export default function BusinessDashboard() {
     <div
       style={{
         width: "220px",
-        background: "#0d1117",
+        background: "var(--gh-0d1117)",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -103,7 +103,7 @@ export default function BusinessDashboard() {
             style={{
               fontSize: "12px",
               fontWeight: 700,
-              color: "white",
+              color: "var(--gh-ffffff)",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -195,7 +195,7 @@ export default function BusinessDashboard() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f6f8fa",
+          background: "var(--gh-f6f8fa)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -203,7 +203,7 @@ export default function BusinessDashboard() {
       >
         <p
           style={{
-            color: "#57606a",
+            color: "var(--gh-57606a)",
             fontSize: "14px",
             animation: "fadeInOut 1.8s ease-in-out infinite",
           }}
@@ -231,7 +231,7 @@ export default function BusinessDashboard() {
         .biz-main {
           flex: 1;
           overflow-y: auto;
-          background: #f6f8fa;
+          background: var(--gh-f6f8fa);
         }
 
         .biz-dash-header { position: sticky; top: 0; z-index: 10; }
@@ -336,10 +336,10 @@ export default function BusinessDashboard() {
         {/* Main content */}
         <div className="biz-main">
           {/* Top bar: compact on phones, where the fixed business bar already shows the logo and avatar */}
-          <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-3 sm:px-6 sm:py-4">
+          <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#0d1117] sm:text-lg">Dashboard</h1>
-              <p className="hidden text-xs text-[#8c959f] sm:block">
+              <h1 className="text-base font-bold text-[var(--gh-0d1117)] sm:text-lg">Dashboard</h1>
+              <p className="hidden text-xs text-[var(--gh-8c959f)] sm:block">
                 {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>
               <UserIdBadge id={session?.user?.id} className="mt-1 hidden sm:inline-flex" />
@@ -353,18 +353,18 @@ export default function BusinessDashboard() {
                   rel="noreferrer"
                   title="See your shop the way customers see it"
                   aria-label="View public page"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e1e4e8] bg-white px-2 text-xs font-semibold text-[#0d1117] transition hover:bg-[#f6f8fa] sm:h-9 sm:px-3 sm:text-[13px]"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] sm:h-9 sm:px-3 sm:text-[13px]"
                 >
                   <Globe size={14} /> <span className="hidden sm:inline">View public page</span>
                 </a>
               )}
               <Link
                 href="/sell"
-                className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#0d1117] px-2.5 text-xs font-semibold text-white transition hover:bg-[#24292f] sm:h-9 sm:px-4 sm:text-[13px]"
+                className="inline-flex h-8 items-center gap-1 rounded-lg bg-[var(--gh-0d1117)] px-2.5 text-xs font-semibold text-white transition hover:bg-[var(--gh-24292f)] sm:h-9 sm:px-4 sm:text-[13px]"
               >
                 + <span className="sm:hidden">Add</span><span className="hidden sm:inline">Add vehicle</span>
               </Link>
-              <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-[#0d1117] text-[13px] font-bold text-white sm:flex">
+              <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-[var(--gh-0d1117)] text-[13px] font-bold text-white sm:flex">
                 {session?.user?.name?.[0]?.toUpperCase()}
               </div>
             </div>
@@ -379,35 +379,35 @@ export default function BusinessDashboard() {
                   value: stats?.inventory.totalVehicles || 0,
                   icon: Car,
                   sub: `${stats?.inventory.available || 0} available`,
-                  color: "#0550ae",
+                  color: "var(--gh-0550ae)",
                 },
                 {
                   label: "Active customers",
                   value: stats?.customers.totalCustomers || 0,
                   icon: Users,
                   sub: `${stats?.customers.leads || 0} new leads`,
-                  color: "#1a7f37",
+                  color: "var(--gh-1a7f37)",
                 },
                 {
                   label: "This month sales",
                   value: stats?.monthly.sales || 0,
                   icon: Wallet,
                   sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(1)}M sold`,
-                  color: "#7d4e00",
+                  color: "var(--gh-7d4e00)",
                 },
                 {
                   label: "Active rentals",
                   value: stats?.rentals.activeRentals || 0,
                   icon: KeyRound,
                   sub: `${stats?.rentals.totalBookings || 0} total bookings`,
-                  color: "#6e40c9",
+                  color: "var(--gh-6e40c9)",
                 },
               ].map(s => (
                 <div
                   key={s.label}
                   style={{
-                    background: "white",
-                    border: "1px solid #e1e4e8",
+                    background: "var(--gh-ffffff)",
+                    border: "1px solid var(--gh-e1e4e8)",
                     borderRadius: "12px",
                     padding: "18px 20px",
                   }}
@@ -423,14 +423,14 @@ export default function BusinessDashboard() {
                     <p
                       style={{
                         fontSize: "12px",
-                        color: "#8c959f",
+                        color: "var(--gh-8c959f)",
                         fontWeight: 500,
                       }}
                     >
                       {s.label}
                     </p>
 
-                    <span style={{ display: "inline-flex", color: "#8c959f" }}>
+                    <span style={{ display: "inline-flex", color: "var(--gh-8c959f)" }}>
                       <s.icon size={18} strokeWidth={1.75} />
                     </span>
                   </div>
@@ -449,7 +449,7 @@ export default function BusinessDashboard() {
                   <p
                     style={{
                       fontSize: "11px",
-                      color: "#8c959f",
+                      color: "var(--gh-8c959f)",
                     }}
                   >
                     {s.sub}
@@ -463,8 +463,8 @@ export default function BusinessDashboard() {
               {/* Inventory breakdown */}
               <div
                 style={{
-                  background: "white",
-                  border: "1px solid #e1e4e8",
+                  background: "var(--gh-ffffff)",
+                  border: "1px solid var(--gh-e1e4e8)",
                   borderRadius: "12px",
                   padding: "20px",
                 }}
@@ -481,7 +481,7 @@ export default function BusinessDashboard() {
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
-                      color: "#0d1117",
+                      color: "var(--gh-0d1117)",
                     }}
                   >
                     Inventory status
@@ -491,7 +491,7 @@ export default function BusinessDashboard() {
                     href="/business/inventory"
                     style={{
                       fontSize: "12px",
-                      color: "#57606a",
+                      color: "var(--gh-57606a)",
                       textDecoration: "none",
                     }}
                   >
@@ -511,19 +511,19 @@ export default function BusinessDashboard() {
                       label: "Available",
                       value: stats?.inventory.available || 0,
                       total: stats?.inventory.totalVehicles || 1,
-                      color: "#1a7f37",
+                      color: "var(--gh-1a7f37)",
                     },
                     {
                       label: "Sold",
                       value: stats?.inventory.sold || 0,
                       total: stats?.inventory.totalVehicles || 1,
-                      color: "#0550ae",
+                      color: "var(--gh-0550ae)",
                     },
                     {
                       label: "Reserved",
                       value: stats?.inventory.reserved || 0,
                       total: stats?.inventory.totalVehicles || 1,
-                      color: "#e3b341",
+                      color: "var(--gh-e3b341)",
                     },
                   ].map(item => (
                     <div key={item.label}>
@@ -535,14 +535,14 @@ export default function BusinessDashboard() {
                           marginBottom: "5px",
                         }}
                       >
-                        <span style={{ color: "#57606a" }}>
+                        <span style={{ color: "var(--gh-57606a)" }}>
                           {item.label}
                         </span>
 
                         <span
                           style={{
                             fontWeight: 700,
-                            color: "#0d1117",
+                            color: "var(--gh-0d1117)",
                           }}
                         >
                           {item.value}
@@ -551,7 +551,7 @@ export default function BusinessDashboard() {
 
                       <div
                         style={{
-                          background: "#f6f8fa",
+                          background: "var(--gh-f6f8fa)",
                           borderRadius: "4px",
                           height: "6px",
                           overflow: "hidden",
@@ -577,8 +577,8 @@ export default function BusinessDashboard() {
               {/* Customer pipeline */}
               <div
                 style={{
-                  background: "white",
-                  border: "1px solid #e1e4e8",
+                  background: "var(--gh-ffffff)",
+                  border: "1px solid var(--gh-e1e4e8)",
                   borderRadius: "12px",
                   padding: "20px",
                 }}
@@ -595,7 +595,7 @@ export default function BusinessDashboard() {
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
-                      color: "#0d1117",
+                      color: "var(--gh-0d1117)",
                     }}
                   >
                     Customer pipeline
@@ -605,7 +605,7 @@ export default function BusinessDashboard() {
                     href="/business/customers"
                     style={{
                       fontSize: "12px",
-                      color: "#57606a",
+                      color: "var(--gh-57606a)",
                       textDecoration: "none",
                     }}
                   >
@@ -618,26 +618,26 @@ export default function BusinessDashboard() {
                     {
                       label: "Leads",
                       value: stats?.customers.leads || 0,
-                      color: "#8c959f",
-                      bg: "#f6f8fa",
+                      color: "var(--gh-8c959f)",
+                      bg: "var(--gh-f6f8fa)",
                     },
                     {
                       label: "Interested",
                       value: stats?.customers.totalCustomers || 0,
-                      color: "#0550ae",
-                      bg: "#ddf4ff",
+                      color: "var(--gh-0550ae)",
+                      bg: "var(--gh-ddf4ff)",
                     },
                     {
                       label: "Test drives",
                       value: stats?.customers.testDrives || 0,
-                      color: "#7d4e00",
-                      bg: "#fff8c5",
+                      color: "var(--gh-7d4e00)",
+                      bg: "var(--gh-fff8c5)",
                     },
                     {
                       label: "Closed",
                       value: stats?.customers.closedSales || 0,
-                      color: "#1a7f37",
-                      bg: "#dafbe1",
+                      color: "var(--gh-1a7f37)",
+                      bg: "var(--gh-dafbe1)",
                     },
                   ].map(s => (
                     <div
@@ -677,8 +677,8 @@ export default function BusinessDashboard() {
             {/* Quick actions */}
             <div
               style={{
-                background: "white",
-                border: "1px solid #e1e4e8",
+                background: "var(--gh-ffffff)",
+                border: "1px solid var(--gh-e1e4e8)",
                 borderRadius: "12px",
                 padding: "20px",
               }}
@@ -687,7 +687,7 @@ export default function BusinessDashboard() {
                 style={{
                   fontSize: "14px",
                   fontWeight: 700,
-                  color: "#0d1117",
+                  color: "var(--gh-0d1117)",
                   marginBottom: "16px",
                 }}
               >
@@ -741,14 +741,14 @@ export default function BusinessDashboard() {
                       flexDirection: "column",
                       gap: "6px",
                       padding: "14px",
-                      background: "#f6f8fa",
-                      border: "1px solid #e1e4e8",
+                      background: "var(--gh-f6f8fa)",
+                      border: "1px solid var(--gh-e1e4e8)",
                       borderRadius: "10px",
                       textDecoration: "none",
                       transition: "all 0.12s",
                     }}
                   >
-                    <span style={{ display: "inline-flex", color: "#0d1117" }}>
+                    <span style={{ display: "inline-flex", color: "var(--gh-0d1117)" }}>
                       <action.icon size={20} strokeWidth={1.75} />
                     </span>
 
@@ -756,7 +756,7 @@ export default function BusinessDashboard() {
                       style={{
                         fontSize: "13px",
                         fontWeight: 600,
-                        color: "#0d1117",
+                        color: "var(--gh-0d1117)",
                       }}
                     >
                       {action.label}
@@ -765,7 +765,7 @@ export default function BusinessDashboard() {
                     <p
                       style={{
                         fontSize: "11px",
-                        color: "#8c959f",
+                        color: "var(--gh-8c959f)",
                       }}
                     >
                       {action.desc}

@@ -33,11 +33,11 @@ type Vehicle = { rentalId: string; title: string; image: string | null; dailyRat
 type CustomerOption = { _id: string; name: string; phone: string; email?: string };
 
 const STATUS_STYLE: Record<BookingStatus, { bg: string; color: string; label: string }> = {
-  PENDING: { bg: "#fff8c5", color: "#7d4e00", label: "Pending" },
-  CONFIRMED: { bg: "#ddf4ff", color: "#0550ae", label: "Confirmed" },
-  ACTIVE: { bg: "#dafbe1", color: "#1a7f37", label: "Out now" },
-  COMPLETED: { bg: "#f6f8fa", color: "#57606a", label: "Completed" },
-  CANCELLED: { bg: "#fff0f0", color: "#cf222e", label: "Cancelled" },
+  PENDING: { bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)", label: "Pending" },
+  CONFIRMED: { bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)", label: "Confirmed" },
+  ACTIVE: { bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)", label: "Out now" },
+  COMPLETED: { bg: "var(--gh-f6f8fa)", color: "var(--gh-57606a)", label: "Completed" },
+  CANCELLED: { bg: "var(--gh-fff0f0)", color: "var(--gh-cf222e)", label: "Cancelled" },
 };
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -112,8 +112,8 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
     onCreated(data.booking._id);
   }
 
-  const input = "h-10 w-full rounded-lg border border-[#d0d7de] bg-white px-3 text-[13px] text-[#0d1117] outline-none transition focus:border-[#0d1117] focus:ring-2 focus:ring-[#0d1117]/10";
-  const label = "mb-1.5 block text-xs font-semibold text-[#0d1117]";
+  const input = "h-10 w-full rounded-lg border border-[var(--gh-d0d7de)] bg-white px-3 text-[13px] text-[var(--gh-0d1117)] outline-none transition focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10";
+  const label = "mb-1.5 block text-xs font-semibold text-[var(--gh-0d1117)]";
   const today = toInputDate(new Date());
 
   return (
@@ -121,12 +121,12 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-black/50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] flex max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
-          <div className="flex items-center justify-between border-b border-[#e1e4e8] px-5 py-4">
-            <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-[#0d1117]">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d1117] text-white"><CalendarCheck size={15} /></span>
+          <div className="flex items-center justify-between border-b border-[var(--gh-e1e4e8)] px-5 py-4">
+            <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-[var(--gh-0d1117)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gh-0d1117)] text-white"><CalendarCheck size={15} /></span>
               New walk-in booking
             </Dialog.Title>
-            <Dialog.Close aria-label="Close" disabled={saving} className="rounded-full p-1 text-[#8c959f] hover:bg-[#f6f8fa] hover:text-[#0d1117]"><X size={18} /></Dialog.Close>
+            <Dialog.Close aria-label="Close" disabled={saving} className="rounded-full p-1 text-[var(--gh-8c959f)] hover:bg-[var(--gh-f6f8fa)] hover:text-[var(--gh-0d1117)]"><X size={18} /></Dialog.Close>
           </div>
           <Dialog.Description className="sr-only">Book one of your rental vehicles for a customer who came in person or called.</Dialog.Description>
 
@@ -140,7 +140,7 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                   ariaLabel="Vehicle"
                   placeholder="Choose a rental vehicle"
                   options={vehicles.map(v => ({ value: v.rentalId, label: `${v.title} · ${pkr(v.dailyRate)}/day` }))}
-                  className="h-10 rounded-lg border-[#d0d7de] text-[13px] font-normal"
+                  className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal"
                 />
               </div>
 
@@ -155,8 +155,8 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-[#f6f8fa] p-4 ring-1 ring-inset ring-[#e1e4e8]">
-                <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#57606a]"><UserRound size={13} /> Customer</p>
+              <div className="rounded-xl bg-[var(--gh-f6f8fa)] p-4 ring-1 ring-inset ring-[var(--gh-e1e4e8)]">
+                <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--gh-57606a)]"><UserRound size={13} /> Customer</p>
                 {customers.length > 0 && (
                   <div className="mb-3">
                     <Select
@@ -165,7 +165,7 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                       ariaLabel="Existing customer"
                       placeholder="Pick from your customers (optional)"
                       options={customers.map(c => ({ value: c._id, label: `${c.name} · ${c.phone}` }))}
-                      className="h-10 rounded-lg border-[#d0d7de] bg-white text-[13px] font-normal"
+                      className="h-10 rounded-lg border-[var(--gh-d0d7de)] bg-white text-[13px] font-normal"
                     />
                   </div>
                 )}
@@ -201,27 +201,27 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                     onChange={v => set("status", v)}
                     ariaLabel="Status"
                     options={[{ value: "CONFIRMED", label: "Confirmed" }, { value: "PENDING", label: "Pending" }]}
-                    className="h-10 rounded-lg border-[#d0d7de] text-[13px] font-normal"
+                    className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal"
                   />
                 </div>
               </div>
 
               {vehicle && validDates && (
-                <div className="rounded-xl bg-[#0d1117] p-4 text-white">
+                <div className="rounded-xl bg-[var(--gh-0d1117)] p-4 text-white">
                   <div className="flex justify-between text-[13px] text-white/70"><span>{days} day{days !== 1 ? "s" : ""} × {pkr(vehicle.dailyRate)}</span><span>{pkr(rent)}</span></div>
                   <div className="mt-1 flex justify-between text-[13px] text-white/70"><span>Security deposit (refundable)</span><span>{pkr(vehicle.deposit)}</span></div>
                   <div className="mt-3 flex justify-between border-t border-white/15 pt-3 text-sm font-bold"><span>Due at pickup</span><span>{pkr(rent + vehicle.deposit)}</span></div>
                 </div>
               )}
 
-              {error && <div role="alert" className="rounded-lg border border-[#ffcdd2] bg-[#fff0f0] px-3 py-2.5 text-[13px] text-[#cf222e]">{error}</div>}
+              {error && <div role="alert" className="rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-3 py-2.5 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-[#e1e4e8] px-5 py-4">
+            <div className="flex justify-end gap-2 border-t border-[var(--gh-e1e4e8)] px-5 py-4">
               <Dialog.Close asChild>
-                <button type="button" disabled={saving} className="rounded-lg border border-[#e1e4e8] bg-[#f6f8fa] px-4 py-2 text-[13px] font-semibold text-[#0d1117]">Cancel</button>
+                <button type="button" disabled={saving} className="rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-4 py-2 text-[13px] font-semibold text-[var(--gh-0d1117)]">Cancel</button>
               </Dialog.Close>
-              <button type="submit" disabled={saving || !form.rentalId} className="rounded-lg bg-[#0d1117] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50">
+              <button type="submit" disabled={saving || !form.rentalId} className="rounded-lg bg-[var(--gh-0d1117)] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50">
                 {saving ? "Creating…" : "Create booking"}
               </button>
             </div>
@@ -322,7 +322,7 @@ export default function BusinessBookingsPage() {
   const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa]">
+    <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
       <NewBookingDialog
         open={newOpen}
         onOpenChange={setNewOpen}
@@ -335,7 +335,7 @@ export default function BusinessBookingsPage() {
         title={`${confirmCancel?.status === "PENDING" ? "Decline" : "Cancel"} booking ${confirmCancel ? bookingNumber(confirmCancel._id) : ""}`}
         description={confirmCancel && (
           <>
-            {customerOf(confirmCancel).name}&apos;s booking for <strong style={{ color: "#0d1117" }}>{confirmCancel.rentalId?.listingId?.title}</strong> ({fmt(confirmCancel.startDate)} → {fmt(confirmCancel.endDate)}) will be cancelled and the dates freed up.
+            {customerOf(confirmCancel).name}&apos;s booking for <strong style={{ color: "var(--gh-0d1117)" }}>{confirmCancel.rentalId?.listingId?.title}</strong> ({fmt(confirmCancel.startDate)} → {fmt(confirmCancel.endDate)}) will be cancelled and the dates freed up.
             {confirmCancel.source !== "WALK_IN" && " The renter will be notified by email."}
           </>
         )}
@@ -351,7 +351,7 @@ export default function BusinessBookingsPage() {
         title={`Remove booking ${confirmRemove ? bookingNumber(confirmRemove._id) : ""}`}
         description={confirmRemove && (
           <>
-            This {confirmRemove.status === "COMPLETED" ? "completed" : "cancelled"} booking for <strong style={{ color: "#0d1117" }}>{customerOf(confirmRemove).name}</strong> will be
+            This {confirmRemove.status === "COMPLETED" ? "completed" : "cancelled"} booking for <strong style={{ color: "var(--gh-0d1117)" }}>{customerOf(confirmRemove).name}</strong> will be
             removed from your bookings list.
             {confirmRemove.source === "WALK_IN"
               ? " Walk-in bookings are deleted permanently, so print the slip first if you need a copy."
@@ -366,14 +366,14 @@ export default function BusinessBookingsPage() {
       />
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-5 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <div className="min-w-0">
-          <Link href="/business/dashboard" className="text-xs text-[#57606a] hover:text-[#0d1117]">← Dashboard</Link>
-          <h1 className="mt-1 text-lg font-bold text-[#0d1117]">Bookings</h1>
-          <p className="mt-0.5 text-xs text-[#57606a]">Rental requests, walk-in bookings, handovers and slips for your whole fleet</p>
+          <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
+          <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Bookings</h1>
+          <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Rental requests, walk-in bookings, handovers and slips for your whole fleet</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg border border-[#e1e4e8] bg-white px-3.5 py-2.5 text-[13px] font-semibold text-[#0d1117] transition hover:bg-[#f6f8fa]">
+          <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3.5 py-2.5 text-[13px] font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)]">
             <KeyRound size={14} /> Add rental vehicle
           </Link>
           {canManage && (
@@ -381,7 +381,7 @@ export default function BusinessBookingsPage() {
               onClick={() => setNewOpen(true)}
               disabled={vehicles.length === 0}
               title={vehicles.length === 0 ? "List a vehicle for rent first" : undefined}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1117] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#24292f] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus size={15} strokeWidth={2.2} /> New booking
             </button>
@@ -391,33 +391,33 @@ export default function BusinessBookingsPage() {
 
       <div className="px-4 py-5 sm:px-6">
         {created && (
-          <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#56d364] bg-[#dafbe1] px-4 py-3 text-[13px] text-[#1a7f37]">
+          <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--gh-56d364)] bg-[var(--gh-dafbe1)] px-4 py-3 text-[13px] text-[var(--gh-1a7f37)]">
             <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Booking {bookingNumber(created)} created.</span>
             <span className="flex gap-2">
-              <Link href={`/business/bookings/${created}/slip`} target="_blank" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1a7f37] px-3 py-1.5 text-xs font-semibold text-white">
+              <Link href={`/business/bookings/${created}/slip`} target="_blank" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-1a7f37)] px-3 py-1.5 text-xs font-semibold text-white">
                 <FileText size={13} /> Print slip
               </Link>
-              <button onClick={() => setCreated(null)} aria-label="Dismiss" className="rounded-lg px-2 text-[#1a7f37] hover:bg-white/50"><X size={14} /></button>
+              <button onClick={() => setCreated(null)} aria-label="Dismiss" className="rounded-lg px-2 text-[var(--gh-1a7f37)] hover:bg-white/50"><X size={14} /></button>
             </span>
           </div>
         )}
-        {actionError && <div role="alert" className="mb-4 rounded-xl border border-[#ffcdd2] bg-[#fff0f0] px-4 py-3 text-[13px] text-[#cf222e]">{actionError}</div>}
+        {actionError && <div role="alert" className="mb-4 rounded-xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-4 py-3 text-[13px] text-[var(--gh-cf222e)]">{actionError}</div>}
 
         {/* Stats */}
         <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
-            { label: "Pending requests", value: stats.pending, icon: Clock3, color: "#7d4e00", bg: "#fff8c5" },
-            { label: "Upcoming pickups", value: stats.upcoming, icon: CalendarDays, color: "#0550ae", bg: "#ddf4ff" },
-            { label: "Out now", value: stats.out, icon: Car, color: "#1a7f37", bg: "#dafbe1", hint: stats.overdue ? `${stats.overdue} overdue` : undefined },
-            { label: "Completed revenue", value: pkr(stats.revenue), icon: CheckCircle2, color: "#0d1117", bg: "#f6f8fa" },
+            { label: "Pending requests", value: stats.pending, icon: Clock3, color: "var(--gh-7d4e00)", bg: "var(--gh-fff8c5)" },
+            { label: "Upcoming pickups", value: stats.upcoming, icon: CalendarDays, color: "var(--gh-0550ae)", bg: "var(--gh-ddf4ff)" },
+            { label: "Out now", value: stats.out, icon: Car, color: "var(--gh-1a7f37)", bg: "var(--gh-dafbe1)", hint: stats.overdue ? `${stats.overdue} overdue` : undefined },
+            { label: "Completed revenue", value: pkr(stats.revenue), icon: CheckCircle2, color: "var(--gh-0d1117)", bg: "var(--gh-f6f8fa)" },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl border border-[#e1e4e8] bg-white p-4">
+            <div key={s.label} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-[#8c959f]">{s.label}</p>
+                <p className="text-[11px] font-medium text-[var(--gh-8c959f)]">{s.label}</p>
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: s.bg, color: s.color }}><s.icon size={14} /></span>
               </div>
               <p className="mt-2 truncate text-xl font-extrabold tabular-nums" style={{ color: s.color }}>{s.value}</p>
-              {s.hint && <p className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[#cf222e]"><AlertTriangle size={11} /> {s.hint}</p>}
+              {s.hint && <p className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[var(--gh-cf222e)]"><AlertTriangle size={11} /> {s.hint}</p>}
             </div>
           ))}
         </div>
@@ -432,20 +432,20 @@ export default function BusinessBookingsPage() {
                 <button
                   key={s || "ALL"}
                   onClick={() => setStatusFilter(s)}
-                  className={`rounded-full border px-3.5 py-1.5 text-xs transition ${active ? "border-[#0d1117] bg-[#0d1117] font-semibold text-white" : "border-[#e1e4e8] bg-white text-[#57606a] hover:border-[#d0d7de]"}`}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs transition ${active ? "border-[var(--gh-0d1117)] bg-[var(--gh-0d1117)] font-semibold text-white" : "border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-57606a)] hover:border-[var(--gh-d0d7de)]"}`}
                 >
-                  {s ? STATUS_STYLE[s].label : "All"} <span className={active ? "text-white/70" : "text-[#8c959f]"}>({count})</span>
+                  {s ? STATUS_STYLE[s].label : "All"} <span className={active ? "text-white/70" : "text-[var(--gh-8c959f)]"}>({count})</span>
                 </button>
               );
             })}
           </div>
           <div className="relative lg:w-72">
-            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c959f]" />
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gh-8c959f)]" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Booking no, customer, phone, vehicle…"
-              className="h-10 w-full rounded-xl border border-[#e1e4e8] bg-white pl-9 pr-3 text-[13px] outline-none focus:border-[#0d1117] focus:ring-2 focus:ring-[#0d1117]/10"
+              className="h-10 w-full rounded-xl border border-[var(--gh-e1e4e8)] bg-white pl-9 pr-3 text-[13px] outline-none focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10"
             />
           </div>
         </div>
@@ -455,12 +455,12 @@ export default function BusinessBookingsPage() {
           {loading ? (
             [1, 2, 3].map(i => <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-white" />)
           ) : loadError ? (
-            <div className="rounded-2xl border border-[#ffcdd2] bg-[#fff0f0] p-6 text-center text-sm text-[#cf222e]">{loadError}</div>
+            <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)]">{loadError}</div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl border border-[#e1e4e8] bg-white px-6 py-14 text-center">
-              <div className="mb-3 flex justify-center text-[#8c959f]"><CalendarCheck size={30} strokeWidth={1.5} /></div>
-              <p className="text-sm font-semibold text-[#0d1117]">{bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}</p>
-              <p className="mt-1 text-[13px] text-[#57606a]">
+            <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
+              <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><CalendarCheck size={30} strokeWidth={1.5} /></div>
+              <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}</p>
+              <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">
                 {vehicles.length === 0
                   ? "List a vehicle for rent to start taking bookings."
                   : bookings.length === 0 && canManage ? "Online requests appear here, or create a walk-in booking." : ""}
@@ -474,33 +474,33 @@ export default function BusinessBookingsPage() {
             const overdue = b.status === "ACTIVE" && new Date(b.endDate).getTime() < now;
             const busy = updating === b._id;
             return (
-              <div key={b._id} className={`rounded-2xl border bg-white p-4 sm:p-5 ${overdue ? "border-[#ffcdd2]" : "border-[#e1e4e8]"}`}>
+              <div key={b._id} className={`rounded-2xl border bg-white p-4 sm:p-5 ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
                 <div className="flex flex-wrap items-start gap-4">
-                  <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[#f6f8fa]">
+                  <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)]">
                     {listing?.images?.[0]
                       ? <Image src={listing.images[0]} alt="" fill sizes="80px" className="object-cover" />
-                      : <div className="flex h-full items-center justify-center text-[#8c959f]"><Car size={18} strokeWidth={1.5} /></div>}
+                      : <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={18} strokeWidth={1.5} /></div>}
                   </div>
 
                   <div className="min-w-[200px] flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[11px] font-bold text-[#57606a]">{bookingNumber(b._id)}</span>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${b.source === "WALK_IN" ? "bg-[#fbefff] text-[#8250df]" : "bg-[#f6f8fa] text-[#57606a]"}`}>
+                      <span className="font-mono text-[11px] font-bold text-[var(--gh-57606a)]">{bookingNumber(b._id)}</span>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${b.source === "WALK_IN" ? "bg-[var(--gh-fbefff)] text-[var(--gh-8250df)]" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"}`}>
                         {b.source === "WALK_IN" ? <><Store size={10} /> WALK-IN</> : "ONLINE"}
                       </span>
-                      {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f0] px-2 py-0.5 text-[10px] font-bold text-[#cf222e]"><AlertTriangle size={10} /> OVERDUE</span>}
+                      {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> OVERDUE</span>}
                     </div>
-                    <p className="mt-1 truncate text-sm font-bold text-[#0d1117]">{listing?.title || "Vehicle"}</p>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#57606a]">
+                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--gh-57606a)]">
                       <span className="flex items-center gap-1"><CalendarDays size={12} /> {fmt(b.startDate)} → {fmt(b.endDate)} ({days}d)</span>
                       <span className="flex items-center gap-1"><UserRound size={12} /> {c.name}</span>
-                      {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-1 font-semibold text-[#0d1117]"><Phone size={12} /> {c.phone}</a>}
+                      {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-1 font-semibold text-[var(--gh-0d1117)]"><Phone size={12} /> {c.phone}</a>}
                     </div>
-                    {b.notes && <p className="mt-1.5 truncate text-xs italic text-[#8c959f]">“{b.notes}”</p>}
+                    {b.notes && <p className="mt-1.5 truncate text-xs italic text-[var(--gh-8c959f)]">“{b.notes}”</p>}
                     <div className="mt-3 flex flex-wrap gap-5">
-                      <div><p className="text-[11px] text-[#8c959f]">Rental</p><p className="text-sm font-bold tabular-nums text-[#0d1117]">{pkr(b.totalAmount)}</p></div>
-                      <div><p className="text-[11px] text-[#8c959f]">Deposit</p><p className="text-sm font-bold tabular-nums text-[#0d1117]">{pkr(b.deposit)}</p></div>
-                      <div><p className="text-[11px] text-[#8c959f]">Total</p><p className="text-sm font-bold tabular-nums text-[#1a7f37]">{pkr(b.totalAmount + b.deposit)}</p></div>
+                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Rental</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount)}</p></div>
+                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Deposit</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.deposit)}</p></div>
+                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Total</p><p className="text-sm font-bold tabular-nums text-[var(--gh-1a7f37)]">{pkr(b.totalAmount + b.deposit)}</p></div>
                     </div>
                   </div>
 
@@ -509,32 +509,32 @@ export default function BusinessBookingsPage() {
                     <div className="flex flex-wrap gap-1.5 sm:justify-end">
                       {canManage && b.status === "PENDING" && (
                         <>
-                          <button onClick={() => updateStatus(b, "CONFIRMED")} disabled={busy} className={`${btn} bg-[#2da44e] text-white hover:bg-[#2c974b]`}>
+                          <button onClick={() => updateStatus(b, "CONFIRMED")} disabled={busy} className={`${btn} bg-[var(--gh-2da44e)] text-white hover:bg-[var(--gh-2c974b)]`}>
                             <CheckCircle2 size={13} /> Confirm
                           </button>
-                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[#ffcdd2] bg-white text-[#cf222e] hover:bg-[#fff0f0]`}>Decline</button>
+                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>Decline</button>
                         </>
                       )}
                       {canManage && b.status === "CONFIRMED" && (
                         <>
-                          <button onClick={() => updateStatus(b, "ACTIVE")} disabled={busy} className={`${btn} bg-[#0d1117] text-white hover:bg-[#24292f]`} title="The customer has collected the vehicle">
+                          <button onClick={() => updateStatus(b, "ACTIVE")} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The customer has collected the vehicle">
                             <KeyRound size={13} /> Hand over
                           </button>
-                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[#ffcdd2] bg-white text-[#cf222e] hover:bg-[#fff0f0]`}>Cancel</button>
+                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>Cancel</button>
                         </>
                       )}
                       {canManage && b.status === "ACTIVE" && (
-                        <button onClick={() => updateStatus(b, "COMPLETED")} disabled={busy} className={`${btn} bg-[#0d1117] text-white hover:bg-[#24292f]`} title="The vehicle is back">
+                        <button onClick={() => updateStatus(b, "COMPLETED")} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The vehicle is back">
                           <Undo2 size={13} /> Mark returned
                         </button>
                       )}
                       {canManage && (b.status === "COMPLETED" || b.status === "CANCELLED") && (
-                        <button onClick={() => { setRemoveError(""); setConfirmRemove(b); }} disabled={busy} className={`${btn} border border-[#e1e4e8] bg-white text-[#57606a] hover:border-[#ffcdd2] hover:text-[#cf222e]`} title="Remove from your list">
+                        <button onClick={() => { setRemoveError(""); setConfirmRemove(b); }} disabled={busy} className={`${btn} border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-57606a)] hover:border-[var(--gh-ffcdd2)] hover:text-[var(--gh-cf222e)]`} title="Remove from your list">
                           <Trash2 size={13} /> Remove
                         </button>
                       )}
                       {b.status !== "CANCELLED" && (
-                        <Link href={`/business/bookings/${b._id}/slip`} target="_blank" className={`${btn} border border-[#e1e4e8] bg-[#f6f8fa] text-[#0d1117] hover:bg-[#eef1f4]`}>
+                        <Link href={`/business/bookings/${b._id}/slip`} target="_blank" className={`${btn} border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)] hover:bg-[var(--gh-eef1f4)]`}>
                           <FileText size={13} /> Slip
                         </Link>
                       )}
@@ -543,13 +543,13 @@ export default function BusinessBookingsPage() {
                           href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${c.name}, regarding your booking ${bookingNumber(b._id)}`)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className={`${btn} border border-[#e1e4e8] bg-white text-[#1a7f37] hover:bg-[#dafbe1]`}
+                          className={`${btn} border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-1a7f37)] hover:bg-[var(--gh-dafbe1)]`}
                         >
                           WhatsApp
                         </a>
                       )}
                     </div>
-                    {b.createdBy?.name && <p className="text-[10px] text-[#8c959f]">Booked by {b.createdBy.name}</p>}
+                    {b.createdBy?.name && <p className="text-[10px] text-[var(--gh-8c959f)]">Booked by {b.createdBy.name}</p>}
                   </div>
                 </div>
               </div>

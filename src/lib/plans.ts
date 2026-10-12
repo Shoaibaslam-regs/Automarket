@@ -14,7 +14,7 @@ export type Plan = {
   price: number;
   limits: PlanLimits;
   features: string[];
-  /** Hex accent used for plan badges in the inline-styled business console */
+  /** Accent colour (a theme variable, so it adapts to dark mode) for plan names and badges; CSS only, not SVG */
   accent: string;
   highlight?: boolean;
 };
@@ -22,7 +22,7 @@ export type Plan = {
 export const PLANS: Record<PlanId, Plan> = {
   FREE: {
     id: "FREE",
-    accent: "#57606a",
+    accent: "var(--gh-57606a)",
     name: "Free",
     tagline: "Get started with a few vehicles and a small team",
     price: 0,
@@ -31,7 +31,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   STARTER: {
     id: "STARTER",
-    accent: "#0550ae",
+    accent: "var(--gh-0550ae)",
     name: "Premium",
     tagline: "For regular sellers and small showrooms",
     price: 500,
@@ -40,7 +40,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   PRO: {
     id: "PRO",
-    accent: "#8250df",
+    accent: "var(--gh-8250df)",
     name: "Premium Plus",
     tagline: "For growing dealerships",
     price: 1200,
@@ -50,7 +50,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   UNLIMITED: {
     id: "UNLIMITED",
-    accent: "#9a6700",
+    accent: "var(--gh-9a6700)",
     name: "Unlimited",
     tagline: "Run your whole business on AutoMarket",
     price: 5000,

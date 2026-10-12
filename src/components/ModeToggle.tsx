@@ -32,8 +32,8 @@ export default function ModeToggle() {
         padding: "6px 14px",
         borderRadius: "20px",
         border: "1px solid",
-        borderColor: isBusiness ? "#1a7f37" : "#e1e4e8",
-        background: isBusiness ? "#dafbe1" : "white",
+        borderColor: isBusiness ? "var(--gh-1a7f37)" : "var(--gh-e1e4e8)",
+        background: isBusiness ? "var(--gh-dafbe1)" : "var(--gh-ffffff)",
         cursor: "pointer",
         fontFamily: "inherit",
         transition: "all 0.2s",
@@ -43,7 +43,7 @@ export default function ModeToggle() {
       {/* Toggle pill */}
       <div style={{
         width: "32px", height: "18px",
-        background: isBusiness ? "#22c55e" : "#d0d7de",
+        background: isBusiness ? "#22c55e" : "var(--gh-d0d7de)",
         borderRadius: "9px",
         position: "relative",
         transition: "background 0.2s",
@@ -54,7 +54,7 @@ export default function ModeToggle() {
           top: "2px",
           left: isBusiness ? "16px" : "2px",
           width: "14px", height: "14px",
-          background: "white",
+          background: "var(--gh-ffffff)",
           borderRadius: "50%",
           transition: "left 0.2s",
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
@@ -65,7 +65,7 @@ export default function ModeToggle() {
       <span style={{
         fontSize: "12px",
         fontWeight: 600,
-        color: isBusiness ? "#1a7f37" : "#57606a",
+        color: isBusiness ? "var(--gh-1a7f37)" : "var(--gh-57606a)",
         whiteSpace: "nowrap",
       }}>
         {isBusiness ? "Business mode" : "Business mode"}

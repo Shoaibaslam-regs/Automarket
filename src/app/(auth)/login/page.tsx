@@ -32,48 +32,48 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: "flex", flexDirection: "column" }}>
 <Navbar/>
   
       {/* Form */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
-        <div style={{ width: "100%", maxWidth: "400px", background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "32px" }}>
-          <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#0d1117", marginBottom: "4px" }}>Welcome back</h1>
-          <p style={{ fontSize: "13px", color: "#57606a", marginBottom: "24px" }}>Sign in to your AutoMarket account</p>
+        <div style={{ width: "100%", maxWidth: "400px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" }}>
+          <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>Welcome back</h1>
+          <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "24px" }}>Sign in to your AutoMarket account</p>
 
           {error && (
-            <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "16px" }}>
+            <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "16px" }}>
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "#0d1117", marginBottom: "6px" }}>Email</label>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 placeholder="you@example.com"
-                style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "14px", color: "#0d1117", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "#0d1117", marginBottom: "6px" }}>Password</label>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 placeholder="••••••••"
-                style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "14px", color: "#0d1117", outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
             <button type="submit" disabled={loading}
-              style={{ padding: "11px", background: loading ? "#8c959f" : "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
+              style={{ padding: "11px", background: loading ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "20px 0" }}>
-            <div style={{ flex: 1, height: "1px", background: "#e1e4e8" }} />
-            <span style={{ fontSize: "12px", color: "#8c959f" }}>or</span>
-            <div style={{ flex: 1, height: "1px", background: "#e1e4e8" }} />
+            <div style={{ flex: 1, height: "1px", background: "var(--gh-e1e4e8)" }} />
+            <span style={{ fontSize: "12px", color: "var(--gh-8c959f)" }}>or</span>
+            <div style={{ flex: 1, height: "1px", background: "var(--gh-e1e4e8)" }} />
           </div>
 
           <button onClick={handleGoogle}
-            style={{ width: "100%", padding: "10px", background: "white", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "#0d1117", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+            style={{ width: "100%", padding: "10px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "var(--gh-0d1117)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
             <svg width="16" height="16" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -83,21 +83,21 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p style={{ textAlign: "center", fontSize: "13px", color: "#57606a", marginTop: "20px" }}>
+          <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Don&apos;t have an account?{" "}
-            <Link href="/register" style={{ color: "#0d1117", fontWeight: 600, textDecoration: "underline" }}>Create one</Link>
+            <Link href="/register" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Create one</Link>
           </p>
         </div>
       </div>
 
       {/* Footer */}
-      <footer style={{ background: "white", borderTop: "1px solid #e1e4e8", padding: "16px 24px", textAlign: "center", flexShrink: 0 }}>
+      <footer style={{ background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", textAlign: "center", flexShrink: 0 }}>
         <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "8px", flexWrap: "wrap" }}>
           {[["Browse listings", "/listings"], ["Sell a vehicle", "/sell"], ["Rent a vehicle", "/listings?type=RENT"]].map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: "11px", color: "#8c959f" }}>© 2025 AutoMarket Pakistan</p>
+        <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>© 2025 AutoMarket Pakistan</p>
       </footer>
     </div>
   );

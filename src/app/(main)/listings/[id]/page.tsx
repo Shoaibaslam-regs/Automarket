@@ -322,7 +322,7 @@ export default async function ListingDetailPage({ params }: Props) {
                   {session?.user && !isOwner && (
   <Link
     href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`}
-    style={{ display: "block", marginTop: "8px", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "#0d1117", textDecoration: "none", fontWeight: 500 }}
+    style={{ display: "block", marginTop: "8px", padding: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "var(--gh-0d1117)", textDecoration: "none", fontWeight: 500 }}
   >
     Message seller
   </Link>
@@ -371,7 +371,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 {!isOwner && !session?.user && (
                   <Link
                     href="/login"
-                    style={{ display: "block", marginTop: "12px", padding: "10px", background: "#f6f8fa", border: "1px solid #d0d7de", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "#57606a", textDecoration: "none" }}
+                    style={{ display: "block", marginTop: "12px", padding: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", textDecoration: "none" }}
                   >
                     Login first for online booking
                   </Link>

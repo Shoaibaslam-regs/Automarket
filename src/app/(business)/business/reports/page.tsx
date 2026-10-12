@@ -15,6 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { Calendar, Car, KeyRound, TrendingUp, Users, Wallet } from "lucide-react";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 type Stats = {
   inventory: {
@@ -57,6 +58,11 @@ function pkr(n: number) {
 }
 
 export default function ReportsPage() {
+  // Chart colours are SVG attributes, which can't read the CSS theme variables, so pick them per theme
+  const { resolved } = useTheme();
+  const chart = resolved === "dark"
+    ? { ink: "#eef2f8", grid: "#263248", tick: "#7d8ba1", cursor: "#1a2436", revenue: "#3fb950" }
+    : { ink: "#0d1117", grid: "#f0f0f0", tick: "#8c959f", cursor: "#f6f8fa", revenue: "#1a7f37" };
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,10 +80,10 @@ export default function ReportsPage() {
 
   if (!loading && error) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f6f8fa", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-        <div role="alert" style={{ background: "#fff", border: "1px solid #ffcdd2", borderRadius: "14px", padding: "22px 28px", textAlign: "center" }}>
-          <p style={{ margin: 0, color: "#cf222e", fontSize: "14px", fontWeight: 600 }}>{error}</p>
-          <Link href="/business/dashboard" style={{ display: "inline-block", marginTop: "10px", fontSize: "12px", color: "#0d1117", fontWeight: 600 }}>← Back to dashboard</Link>
+      <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div role="alert" style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "14px", padding: "22px 28px", textAlign: "center" }}>
+          <p style={{ margin: 0, color: "var(--gh-cf222e)", fontSize: "14px", fontWeight: 600 }}>{error}</p>
+          <Link href="/business/dashboard" style={{ display: "inline-block", marginTop: "10px", fontSize: "12px", color: "var(--gh-0d1117)", fontWeight: 600 }}>← Back to dashboard</Link>
         </div>
       </div>
     );
@@ -88,7 +94,7 @@ export default function ReportsPage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f6f8fa",
+          background: "var(--gh-f6f8fa)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -98,8 +104,8 @@ export default function ReportsPage() {
       >
         <div
           style={{
-            background: "#ffffff",
-            border: "1px solid #e1e4e8",
+            background: "var(--gh-ffffff)",
+            border: "1px solid var(--gh-e1e4e8)",
             borderRadius: "14px",
             padding: "22px 28px",
             boxShadow: "0 8px 25px rgba(15,23,42,0.05)",
@@ -108,7 +114,7 @@ export default function ReportsPage() {
           <p
             style={{
               margin: 0,
-              color: "#57606a",
+              color: "var(--gh-57606a)",
               fontSize: "13px",
               fontWeight: 500,
             }}
@@ -268,18 +274,18 @@ export default function ReportsPage() {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(180deg, #f8fafc 0%, #f6f8fa 100%)",
+          "linear-gradient(180deg, var(--gh-f8fafc) 0%, var(--gh-f6f8fa) 100%)",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        color: "#0d1117",
+        color: "var(--gh-0d1117)",
       }}
     >
       {/* Header */}
       <div
         style={{
-          background: "rgba(255,255,255,0.95)",
+          background: "rgb(var(--tw-c-white) / 0.95)",
           backdropFilter: "blur(10px)",
-          borderBottom: "1px solid #e1e4e8",
+          borderBottom: "1px solid var(--gh-e1e4e8)",
           position: "sticky",
           top: 0,
           zIndex: 10,
@@ -301,7 +307,7 @@ export default function ReportsPage() {
               href="/business/dashboard"
               style={{
                 fontSize: "11px",
-                color: "#57606a",
+                color: "var(--gh-57606a)",
                 textDecoration: "none",
                 fontWeight: 500,
               }}
@@ -313,7 +319,7 @@ export default function ReportsPage() {
               style={{
                 fontSize: "20px",
                 fontWeight: 750,
-                color: "#0d1117",
+                color: "var(--gh-0d1117)",
                 margin: "5px 0 0",
                 letterSpacing: "-0.3px",
               }}
@@ -325,10 +331,10 @@ export default function ReportsPage() {
           <div
             style={{
               fontSize: "11px",
-              color: "#8c959f",
+              color: "var(--gh-8c959f)",
               whiteSpace: "nowrap",
-              background: "#f6f8fa",
-              border: "1px solid #e1e4e8",
+              background: "var(--gh-f6f8fa)",
+              border: "1px solid var(--gh-e1e4e8)",
               padding: "7px 10px",
               borderRadius: "8px",
             }}
@@ -367,7 +373,7 @@ export default function ReportsPage() {
                   fontSize: "14px",
                   fontWeight: 750,
                   margin: 0,
-                  color: "#0d1117",
+                  color: "var(--gh-0d1117)",
                 }}
               >
                 Business overview
@@ -376,7 +382,7 @@ export default function ReportsPage() {
               <p
                 style={{
                   fontSize: "11px",
-                  color: "#8c959f",
+                  color: "var(--gh-8c959f)",
                   margin: "3px 0 0",
                 }}
               >
@@ -397,8 +403,8 @@ export default function ReportsPage() {
               <div
                 key={s.label}
                 style={{
-                  background: "#ffffff",
-                  border: "1px solid #e1e4e8",
+                  background: "var(--gh-ffffff)",
+                  border: "1px solid var(--gh-e1e4e8)",
                   borderRadius: "13px",
                   padding: "15px",
                   minWidth: 0,
@@ -418,7 +424,7 @@ export default function ReportsPage() {
                   <p
                     style={{
                       fontSize: "10px",
-                      color: "#8c959f",
+                      color: "var(--gh-8c959f)",
                       margin: 0,
                       lineHeight: 1.4,
                     }}
@@ -434,8 +440,8 @@ export default function ReportsPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background: "#f6f8fa",
-                      border: "1px solid #e1e4e8",
+                      background: "var(--gh-f6f8fa)",
+                      border: "1px solid var(--gh-e1e4e8)",
                       borderRadius: "8px",
                       fontSize: "15px",
                     }}
@@ -448,7 +454,7 @@ export default function ReportsPage() {
                   style={{
                     fontSize: "22px",
                     fontWeight: 800,
-                    color: "#0d1117",
+                    color: "var(--gh-0d1117)",
                     margin: "0 0 2px",
                     letterSpacing: "-0.5px",
                   }}
@@ -459,7 +465,7 @@ export default function ReportsPage() {
                 <p
                   style={{
                     fontSize: "10px",
-                    color: "#8c959f",
+                    color: "var(--gh-8c959f)",
                     margin: 0,
                   }}
                 >
@@ -483,8 +489,8 @@ export default function ReportsPage() {
           {/* Inventory breakdown */}
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #e1e4e8",
+              background: "var(--gh-ffffff)",
+              border: "1px solid var(--gh-e1e4e8)",
               borderRadius: "14px",
               padding: "18px",
               minWidth: 0,
@@ -497,7 +503,7 @@ export default function ReportsPage() {
                 style={{
                   fontSize: "14px",
                   fontWeight: 750,
-                  color: "#0d1117",
+                  color: "var(--gh-0d1117)",
                   margin: 0,
                 }}
               >
@@ -507,7 +513,7 @@ export default function ReportsPage() {
               <p
                 style={{
                   fontSize: "10px",
-                  color: "#8c959f",
+                  color: "var(--gh-8c959f)",
                   margin: "4px 0 0",
                 }}
               >
@@ -571,7 +577,7 @@ export default function ReportsPage() {
                   <span
                     style={{
                       fontSize: "10px",
-                      color: "#57606a",
+                      color: "var(--gh-57606a)",
                     }}
                   >
                     {d.name}: {d.value}
@@ -584,8 +590,8 @@ export default function ReportsPage() {
           {/* Customer pipeline */}
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #e1e4e8",
+              background: "var(--gh-ffffff)",
+              border: "1px solid var(--gh-e1e4e8)",
               borderRadius: "14px",
               padding: "18px",
               minWidth: 0,
@@ -598,7 +604,7 @@ export default function ReportsPage() {
                 style={{
                   fontSize: "14px",
                   fontWeight: 750,
-                  color: "#0d1117",
+                  color: "var(--gh-0d1117)",
                   margin: 0,
                 }}
               >
@@ -608,7 +614,7 @@ export default function ReportsPage() {
               <p
                 style={{
                   fontSize: "10px",
-                  color: "#8c959f",
+                  color: "var(--gh-8c959f)",
                   margin: "4px 0 0",
                 }}
               >
@@ -628,14 +634,14 @@ export default function ReportsPage() {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#f0f0f0"
+                  stroke={chart.grid}
                 />
 
                 <XAxis
                   dataKey="name"
                   tick={{
                     fontSize: 10,
-                    fill: "#8c959f",
+                    fill: chart.tick,
                   }}
                   tickLine={false}
                   axisLine={false}
@@ -645,7 +651,7 @@ export default function ReportsPage() {
                 <YAxis
                   tick={{
                     fontSize: 10,
-                    fill: "#8c959f",
+                    fill: chart.tick,
                   }}
                   tickLine={false}
                   axisLine={false}
@@ -655,7 +661,7 @@ export default function ReportsPage() {
 
                 <Bar
                   dataKey="value"
-                  fill="#0d1117"
+                  fill={chart.ink}
                   radius={[5, 5, 0, 0]}
                   name="Customers"
                 />
@@ -667,8 +673,8 @@ export default function ReportsPage() {
         {/* Rental revenue */}
         <section
           style={{
-            background: "#ffffff",
-            border: "1px solid #e1e4e8",
+            background: "var(--gh-ffffff)",
+            border: "1px solid var(--gh-e1e4e8)",
             borderRadius: "14px",
             padding: "18px",
             marginBottom: "18px",
@@ -677,21 +683,21 @@ export default function ReportsPage() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "8px" }}>
             <div>
-              <h2 style={{ fontSize: "14px", fontWeight: 750, color: "#0d1117", margin: 0 }}>Rental revenue</h2>
-              <p style={{ fontSize: "10px", color: "#8c959f", margin: "4px 0 0" }}>Completed bookings, last 6 months</p>
+              <h2 style={{ fontSize: "14px", fontWeight: 750, color: "var(--gh-0d1117)", margin: 0 }}>Rental revenue</h2>
+              <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "4px 0 0" }}>Completed bookings, last 6 months</p>
             </div>
             <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "18px", fontWeight: 800, color: "#1a7f37", margin: 0 }}>{pkr(stats?.rentals.revenueTotal || 0)}</p>
-              <p style={{ fontSize: "10px", color: "#8c959f", margin: "2px 0 0" }}>all time</p>
+              <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--gh-1a7f37)", margin: 0 }}>{pkr(stats?.rentals.revenueTotal || 0)}</p>
+              <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "2px 0 0" }}>all time</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={stats?.rentals.revenueByMonth || []} margin={{ top: 10, right: 8, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#8c959f" }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#8c959f" }} tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => pkr(v).replace("PKR ", "")} />
-              <Tooltip formatter={(v) => [pkr(Number(v)), "Revenue"]} cursor={{ fill: "#f6f8fa" }} />
-              <Bar dataKey="revenue" fill="#1a7f37" radius={[5, 5, 0, 0]} name="Revenue" maxBarSize={48} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: chart.tick }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: chart.tick }} tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => pkr(v).replace("PKR ", "")} />
+              <Tooltip formatter={(v) => [pkr(Number(v)), "Revenue"]} cursor={{ fill: chart.cursor }} />
+              <Bar dataKey="revenue" fill={chart.revenue} radius={[5, 5, 0, 0]} name="Revenue" maxBarSize={48} />
             </BarChart>
           </ResponsiveContainer>
         </section>
@@ -699,8 +705,8 @@ export default function ReportsPage() {
         {/* Business Summary */}
         <section
           style={{
-            background: "#ffffff",
-            border: "1px solid #e1e4e8",
+            background: "var(--gh-ffffff)",
+            border: "1px solid var(--gh-e1e4e8)",
             borderRadius: "14px",
             padding: "18px",
             boxShadow:
@@ -712,7 +718,7 @@ export default function ReportsPage() {
               style={{
                 fontSize: "14px",
                 fontWeight: 750,
-                color: "#0d1117",
+                color: "var(--gh-0d1117)",
                 margin: 0,
               }}
             >
@@ -722,7 +728,7 @@ export default function ReportsPage() {
             <p
               style={{
                 fontSize: "10px",
-                color: "#8c959f",
+                color: "var(--gh-8c959f)",
                 margin: "4px 0 0",
               }}
             >
@@ -743,8 +749,8 @@ export default function ReportsPage() {
                 key={col.section}
                 style={{
                   minWidth: 0,
-                  background: "#fafbfc",
-                  border: "1px solid #edf0f2",
+                  background: "var(--gh-fafbfc)",
+                  border: "1px solid var(--gh-edf0f2)",
                   borderRadius: "11px",
                   padding: "14px",
                 }}
@@ -753,7 +759,7 @@ export default function ReportsPage() {
                   style={{
                     fontSize: "10px",
                     fontWeight: 800,
-                    color: "#0d1117",
+                    color: "var(--gh-0d1117)",
                     textTransform: "uppercase",
                     letterSpacing: "0.6px",
                     margin: "0 0 10px",
@@ -772,13 +778,13 @@ export default function ReportsPage() {
                       gap: "12px",
                       padding: "9px 0",
                       borderBottom:
-                        "1px solid #e9edf0",
+                        "1px solid var(--gh-e9edf0)",
                     }}
                   >
                     <span
                       style={{
                         fontSize: "11px",
-                        color: "#57606a",
+                        color: "var(--gh-57606a)",
                         minWidth: 0,
                       }}
                     >
@@ -789,7 +795,7 @@ export default function ReportsPage() {
                       style={{
                         fontSize: "11px",
                         fontWeight: 750,
-                        color: "#0d1117",
+                        color: "var(--gh-0d1117)",
                         whiteSpace: "nowrap",
                       }}
                     >

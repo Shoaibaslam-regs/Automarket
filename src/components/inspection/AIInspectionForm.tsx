@@ -28,25 +28,25 @@ interface Props {
 }
 
 const CONDITION_COLORS: Record<string, { bg: string; color: string }> = {
-  EXCELLENT: { bg: "#dafbe1", color: "#1a7f37" },
-  GOOD:      { bg: "#ddf4ff", color: "#0550ae" },
-  FAIR:      { bg: "#fff8c5", color: "#7d4e00" },
-  POOR:      { bg: "#fff0f0", color: "#cf222e" },
+  EXCELLENT: { bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)" },
+  GOOD:      { bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)" },
+  FAIR:      { bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)" },
+  POOR:      { bg: "var(--gh-fff0f0)", color: "var(--gh-cf222e)" },
 };
 
 function DamageBar({ score }: { score: number }) {
   const pct = (score / 10) * 100;
-  const color = score <= 2 ? "#2da44e" : score <= 5 ? "#e3b341" : score <= 7 ? "#f0883e" : "#cf222e";
+  const color = score <= 2 ? "var(--gh-2da44e)" : score <= 5 ? "var(--gh-e3b341)" : score <= 7 ? "#f0883e" : "var(--gh-cf222e)";
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
-        <span style={{ color: "#57606a" }}>Damage score</span>
+        <span style={{ color: "var(--gh-57606a)" }}>Damage score</span>
         <span style={{ fontWeight: 700, color }}>{score}/10</span>
       </div>
-      <div style={{ background: "#e1e4e8", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
+      <div style={{ background: "var(--gh-e1e4e8)", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "4px", transition: "width 0.5s ease" }} />
       </div>
-      <p style={{ fontSize: "11px", color: "#8c959f", marginTop: "4px" }}>
+      <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>
         {score <= 2 ? "No significant damage" : score <= 5 ? "Minor damage present" : score <= 7 ? "Moderate damage" : "Significant damage"}
       </p>
     </div>
@@ -57,12 +57,12 @@ function ReportCard({ report }: { report: Report }) {
   const condStyle = CONDITION_COLORS[report.condition ?? "GOOD"] ?? CONDITION_COLORS.GOOD;
 
   return (
-    <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden", marginTop: "24px" }}>
+    <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", overflow: "hidden", marginTop: "24px" }}>
 
       {/* Header */}
-      <div style={{ background: "#0d1117", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="theme-static" style={{ background: "var(--gh-0d1117)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <p style={{ fontSize: "13px", fontWeight: 700, color: "white", marginBottom: "2px" }}>AI Inspection Report</p>
+          <p style={{ fontSize: "13px", fontWeight: 700, color: "var(--gh-ffffff)", marginBottom: "2px" }}>AI Inspection Report</p>
           {report.createdAt && (
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>
               Generated {new Date(report.createdAt).toLocaleString("en-PK")}
@@ -71,7 +71,7 @@ function ReportCard({ report }: { report: Report }) {
         </div>
         <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.85)" }}><Bot size={14} strokeWidth={1.75} /></div>
-          <span style={{ fontSize: "12px", color: "white", fontWeight: 500 }}>
+          <span style={{ fontSize: "12px", color: "var(--gh-ffffff)", fontWeight: 500 }}>
             {report._isDemo ? "Demo Report" : "AI Powered"}
           </span>
         </div>
@@ -79,7 +79,7 @@ function ReportCard({ report }: { report: Report }) {
 
       {/* Demo warning */}
       {report._isDemo && (
-        <div style={{ background: "#fff8c5", padding: "10px 20px", fontSize: "12px", color: "#7d4e00", borderBottom: "1px solid #e3b341", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ background: "var(--gh-fff8c5)", padding: "10px 20px", fontSize: "12px", color: "var(--gh-7d4e00)", borderBottom: "1px solid var(--gh-e3b341)", display: "flex", alignItems: "center", gap: "6px" }}>
           Demo report — AI quota exceeded. Report is based on listing data.
         </div>
       )}
@@ -94,14 +94,14 @@ function ReportCard({ report }: { report: Report }) {
             { label: "Estimated year", value: report.year?.toString() || "Unknown" },
             { label: "Condition", value: report.condition || "Unknown", badge: true },
           ].map(item => (
-            <div key={item.label} style={{ background: "#f6f8fa", borderRadius: "8px", padding: "12px" }}>
-              <p style={{ fontSize: "11px", color: "#8c959f", marginBottom: "4px" }}>{item.label}</p>
+            <div key={item.label} style={{ background: "var(--gh-f6f8fa)", borderRadius: "8px", padding: "12px" }}>
+              <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginBottom: "4px" }}>{item.label}</p>
               {item.badge ? (
                 <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 8px", borderRadius: "20px", background: condStyle.bg, color: condStyle.color }}>
                   {item.value}
                 </span>
               ) : (
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117" }}>{item.value}</p>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)" }}>{item.value}</p>
               )}
             </div>
           ))}
@@ -109,53 +109,53 @@ function ReportCard({ report }: { report: Report }) {
 
         {/* Damage score */}
         {report.damageScore !== undefined && (
-          <div style={{ background: "#f6f8fa", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ background: "var(--gh-f6f8fa)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
             <DamageBar score={report.damageScore} />
           </div>
         )}
 
         {/* Estimated value */}
         {report.estimate && (
-          <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "14px 16px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ background: "var(--gh-dafbe1)", border: "1px solid var(--gh-56d364)", borderRadius: "8px", padding: "14px 16px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <p style={{ fontSize: "12px", color: "#1a7f37", marginBottom: "2px" }}>Estimated market value</p>
-              <p style={{ fontSize: "22px", fontWeight: 800, color: "#1a7f37" }}>PKR {report.estimate.toLocaleString()}</p>
+              <p style={{ fontSize: "12px", color: "var(--gh-1a7f37)", marginBottom: "2px" }}>Estimated market value</p>
+              <p style={{ fontSize: "22px", fontWeight: 800, color: "var(--gh-1a7f37)" }}>PKR {report.estimate.toLocaleString()}</p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#1a7f37" }}><Wallet size={22} strokeWidth={1.75} /></div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gh-1a7f37)" }}><Wallet size={22} strokeWidth={1.75} /></div>
           </div>
         )}
 
         {/* Summary */}
         {report.summary && (
-          <div style={{ background: "#f6f8fa", borderRadius: "8px", padding: "14px 16px", marginBottom: "20px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Overall assessment</p>
-            <p style={{ fontSize: "13px", color: "#57606a", lineHeight: 1.6 }}>{report.summary}</p>
+          <div style={{ background: "var(--gh-f6f8fa)", borderRadius: "8px", padding: "14px 16px", marginBottom: "20px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Overall assessment</p>
+            <p style={{ fontSize: "13px", color: "var(--gh-57606a)", lineHeight: 1.6 }}>{report.summary}</p>
           </div>
         )}
 
         {/* Damages & Positives */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           {report.damages && report.damages.length > 0 && (
-            <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "14px" }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#cf222e", marginBottom: "10px" }}>Issues found</p>
+            <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "14px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--gh-cf222e)", marginBottom: "10px" }}>Issues found</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {report.damages.map((d, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                    <span style={{ color: "#cf222e", fontSize: "12px", flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: "12px", color: "#57606a", lineHeight: 1.5 }}>{d}</span>
+                    <span style={{ color: "var(--gh-cf222e)", fontSize: "12px", flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: "12px", color: "var(--gh-57606a)", lineHeight: 1.5 }}>{d}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
           {report.positives && report.positives.length > 0 && (
-            <div style={{ background: "#dafbe1", border: "1px solid #56d364", borderRadius: "8px", padding: "14px" }}>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "#1a7f37", marginBottom: "10px" }}>Good points</p>
+            <div style={{ background: "var(--gh-dafbe1)", border: "1px solid var(--gh-56d364)", borderRadius: "8px", padding: "14px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--gh-1a7f37)", marginBottom: "10px" }}>Good points</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {report.positives.map((p, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                    <span style={{ color: "#1a7f37", fontSize: "12px", flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: "12px", color: "#57606a", lineHeight: 1.5 }}>{p}</span>
+                    <span style={{ color: "var(--gh-1a7f37)", fontSize: "12px", flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: "12px", color: "var(--gh-57606a)", lineHeight: 1.5 }}>{p}</span>
                   </div>
                 ))}
               </div>
@@ -195,24 +195,24 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
   return (
     <div>
       {/* Upload section */}
-      <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "24px", marginBottom: "16px" }}>
-        <h2 style={{ fontSize: "15px", fontWeight: 600, color: "#0d1117", marginBottom: "4px" }}>Vehicle photos</h2>
-        <p style={{ fontSize: "13px", color: "#57606a", marginBottom: "16px" }}>
+      <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "24px", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "4px" }}>Vehicle photos</h2>
+        <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "16px" }}>
           Upload clear photos from multiple angles — front, rear, sides, interior, and any damage areas.
         </p>
 
         {images.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
             {images.map((url, i) => (
-              <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid #e1e4e8" }}>
+              <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--gh-e1e4e8)" }}>
                 <Image src={url} alt="" fill sizes="(max-width: 640px) 25vw, 160px" className="object-cover" />
                 <button
                   onClick={() => setImages(images.filter((_, j) => j !== i))}
-                  style={{ position: "absolute", top: "4px", right: "4px", width: "20px", height: "20px", background: "#cf222e", color: "white", border: "none", borderRadius: "50%", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  style={{ position: "absolute", top: "4px", right: "4px", width: "20px", height: "20px", background: "var(--gh-cf222e)", color: "var(--gh-ffffff)", border: "none", borderRadius: "50%", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   ×
                 </button>
                 {i === 0 && (
-                  <span style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.6)", color: "white", fontSize: "9px", padding: "2px 5px", borderRadius: "4px" }}>Main</span>
+                  <span style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.6)", color: "var(--gh-ffffff)", fontSize: "9px", padding: "2px 5px", borderRadius: "4px" }}>Main</span>
                 )}
               </div>
             ))}
@@ -245,8 +245,8 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
       </div>
 
       {/* Tips */}
-      <div style={{ background: "#fff8c5", border: "1px solid #e3b341", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
-        <p style={{ fontSize: "12px", color: "#7d4e00", fontWeight: 600, marginBottom: "6px" }}>Tips for best results</p>
+      <div style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
+        <p style={{ fontSize: "12px", color: "var(--gh-7d4e00)", fontWeight: 600, marginBottom: "6px" }}>Tips for best results</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
           {[
             "Take photos in good lighting",
@@ -254,13 +254,13 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
             "Photograph any scratches or dents closely",
             "Include interior and dashboard",
           ].map((tip, i) => (
-            <p key={i} style={{ fontSize: "12px", color: "#7d4e00" }}>• {tip}</p>
+            <p key={i} style={{ fontSize: "12px", color: "var(--gh-7d4e00)" }}>• {tip}</p>
           ))}
         </div>
       </div>
 
       {error && (
-        <div style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "12px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "16px" }}>
+        <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "12px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "16px" }}>
           {error}
         </div>
       )}
@@ -270,15 +270,15 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
         disabled={loading || images.length === 0}
         style={{
           width: "100%", padding: "13px",
-          background: loading || images.length === 0 ? "#8c959f" : "#0d1117",
-          color: "white", border: "none", borderRadius: "8px",
+          background: loading || images.length === 0 ? "var(--gh-8c959f)" : "var(--gh-0d1117)",
+          color: "var(--gh-ffffff)", border: "none", borderRadius: "8px",
           fontSize: "14px", fontWeight: 600,
           cursor: loading || images.length === 0 ? "not-allowed" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
         }}>
         {loading ? (
           <>
-            <span style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
+            <span style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "var(--gh-ffffff)", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
             Analyzing vehicle... this may take 15-30 seconds
           </>
         ) : (

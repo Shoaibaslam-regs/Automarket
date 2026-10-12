@@ -13,6 +13,7 @@ import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string };
 
@@ -224,16 +225,20 @@ export default function MobileNavDrawer({
         </div>
 
         {/* Footer */}
-        {user && (
-          <div className="border-t border-slate-100 p-2.5">
+        <div className="space-y-2 border-t border-slate-100 p-2.5">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-[11px] font-semibold text-slate-500">Theme</span>
+            <ThemeToggle />
+          </div>
+          {user && (
             <button
               onClick={() => { onClose(); onSignOut(); }}
               className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-100 transition hover:bg-rose-50"
             >
               <LogOut size={14} /> Sign out
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </div>
   );

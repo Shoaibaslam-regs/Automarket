@@ -58,7 +58,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
         .biz-root {
           display: flex;
           min-height: 100vh;
-          background: #f6f8fa;
+          background: var(--gh-f6f8fa);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .biz-content {

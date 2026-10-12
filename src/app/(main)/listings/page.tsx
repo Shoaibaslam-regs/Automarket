@@ -13,7 +13,7 @@ import {
   CONDITIONS, FUEL_TYPES, TRANSMISSIONS, filtersToSearchParams, hasFilters, parseFilters, type ListingFilters,
 } from "@/lib/listingFilters";
 
-const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford"];
+const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
 const TYPES = [
   ["", "All"],
   ["SALE", "For Sale"],

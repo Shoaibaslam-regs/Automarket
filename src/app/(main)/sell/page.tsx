@@ -15,7 +15,7 @@ import { formatLimit, planInfo } from "@/lib/plans";
 import LimitReachedCard from "@/components/subscription/LimitReachedCard";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
-const MAKES = ["Toyota", "Honda", "Suzuki", "Yamaha", "Kawasaki", "BMW", "Mercedes", "Hyundai", "Kia", "Ford", "Other"];
+const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki", "Other"];
 const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
 const TRANSMISSIONS = ["Manual", "Automatic", "Semi-automatic"];
 const CONDITIONS = ["NEW", "EXCELLENT", "GOOD", "FAIR", "POOR"];

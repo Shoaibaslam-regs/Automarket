@@ -43,16 +43,16 @@ export default async function InspectPage({
   } | null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: "32px 24px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: "32px 24px" }}>
       <div style={{ maxWidth: "860px", margin: "0 auto" }}>
 
         <div style={{ marginBottom: "24px" }}>
-          <a href={`/listings/${id}`} style={{ fontSize: "13px", color: "#57606a", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "16px" }}>
+          <a href={`/listings/${id}`} style={{ fontSize: "13px", color: "var(--gh-57606a)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px", marginBottom: "16px" }}>
             ← Back to listing
           </a>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0d1117", marginBottom: "4px" }}>AI vehicle inspection</h1>
-          <p style={{ fontSize: "14px", color: "#57606a" }}>
-            Upload photos of <strong style={{ color: "#0d1117" }}>{listing.title}</strong> — our AI will analyze damage, identify the vehicle and estimate its value.
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>AI vehicle inspection</h1>
+          <p style={{ fontSize: "14px", color: "var(--gh-57606a)" }}>
+            Upload photos of <strong style={{ color: "var(--gh-0d1117)" }}>{listing.title}</strong> — our AI will analyze damage, identify the vehicle and estimate its value.
           </p>
         </div>
 

@@ -31,11 +31,11 @@ type SlipData = {
 };
 
 const STATUS_LABEL: Record<BookingStatus, { text: string; color: string; bg: string }> = {
-  PENDING: { text: "PENDING", color: "#7d4e00", bg: "#fff8c5" },
-  CONFIRMED: { text: "CONFIRMED", color: "#0550ae", bg: "#ddf4ff" },
-  ACTIVE: { text: "VEHICLE OUT", color: "#1a7f37", bg: "#dafbe1" },
-  COMPLETED: { text: "COMPLETED", color: "#57606a", bg: "#f6f8fa" },
-  CANCELLED: { text: "CANCELLED", color: "#cf222e", bg: "#fff0f0" },
+  PENDING: { text: "PENDING", color: "var(--gh-7d4e00)", bg: "var(--gh-fff8c5)" },
+  CONFIRMED: { text: "CONFIRMED", color: "var(--gh-0550ae)", bg: "var(--gh-ddf4ff)" },
+  ACTIVE: { text: "VEHICLE OUT", color: "var(--gh-1a7f37)", bg: "var(--gh-dafbe1)" },
+  COMPLETED: { text: "COMPLETED", color: "var(--gh-57606a)", bg: "var(--gh-f6f8fa)" },
+  CANCELLED: { text: "CANCELLED", color: "var(--gh-cf222e)", bg: "var(--gh-fff0f0)" },
 };
 
 const date = (d?: string) => (d ? new Date(d).toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -70,15 +70,15 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f6f8fa] p-6">
-        <div className="rounded-2xl border border-[#ffcdd2] bg-white p-8 text-center">
-          <p className="text-sm font-semibold text-[#cf222e]">{error}</p>
-          <Link href="/business/bookings" className="mt-3 inline-block text-[13px] font-semibold text-[#0d1117] underline">Back to bookings</Link>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--gh-f6f8fa)] p-6">
+        <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-white p-8 text-center">
+          <p className="text-sm font-semibold text-[var(--gh-cf222e)]">{error}</p>
+          <Link href="/business/bookings" className="mt-3 inline-block text-[13px] font-semibold text-[var(--gh-0d1117)] underline">Back to bookings</Link>
         </div>
       </div>
     );
   }
-  if (!data) return <div className="min-h-screen animate-pulse bg-[#f6f8fa]" />;
+  if (!data) return <div className="min-h-screen animate-pulse bg-[var(--gh-f6f8fa)]" />;
 
   const { booking: b, organization: org } = data;
   const listing = b.rentalId?.listingId;
@@ -90,7 +90,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
   const status = STATUS_LABEL[b.status] ?? STATUS_LABEL.PENDING;
 
   return (
-    <div className="slip-root min-h-screen bg-[#f6f8fa] px-4 py-6 sm:px-6">
+    <div className="slip-root theme-static min-h-screen bg-[var(--gh-f6f8fa)] px-4 py-6 sm:px-6">
       <style>{`
         @page { size: A4; margin: 12mm; }
         @media print {
@@ -105,15 +105,15 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
 
       {/* Toolbar */}
       <div className="no-print mx-auto mb-4 flex max-w-[780px] items-center justify-between gap-3">
-        <Link href="/business/bookings" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#57606a] hover:text-[#0d1117]">
+        <Link href="/business/bookings" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">
           <ArrowLeft size={15} /> Bookings
         </Link>
-        <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-[#0d1117] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#24292f]">
+        <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)]">
           <Printer size={15} /> Print / Save PDF
         </button>
       </div>
 
-      <article className="slip-card mx-auto max-w-[780px] overflow-hidden rounded-2xl border border-[#e1e4e8] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
+      <article className="slip-card mx-auto max-w-[780px] overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
         {/* Letterhead */}
         <header className="flex flex-wrap items-start justify-between gap-6 bg-slate-950 px-8 py-7 text-white">
           <div className="flex items-start gap-4">
@@ -143,14 +143,14 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <section className="rounded-xl border border-[#e1e4e8] p-4">
+            <section className="rounded-xl border border-[var(--gh-e1e4e8)] p-4">
               <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Customer</h2>
               <Row label="Name" value={customer.name || "—"} />
               <Row label="Phone" value={customer.phone} />
               <Row label="Email" value={customer.email} />
               <Row label="CNIC" value={customer.cnic} />
             </section>
-            <section className="rounded-xl border border-[#e1e4e8] p-4">
+            <section className="rounded-xl border border-[var(--gh-e1e4e8)] p-4">
               <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>
               <Row label="Vehicle" value={listing?.title || "—"} />
               <Row label="Make / model" value={listing ? `${listing.make} ${listing.model} (${listing.year})` : undefined} />
@@ -159,12 +159,12 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             </section>
           </div>
 
-          <section className="mt-6 grid grid-cols-3 overflow-hidden rounded-xl border border-[#e1e4e8] text-center">
+          <section className="mt-6 grid grid-cols-3 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] text-center">
             <div className="p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Pickup</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">{date(b.startDate)}</p>
             </div>
-            <div className="border-x border-[#e1e4e8] bg-slate-50 p-4">
+            <div className="border-x border-[var(--gh-e1e4e8)] bg-slate-50 p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Duration</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">{days} day{days !== 1 ? "s" : ""}</p>
             </div>
@@ -174,12 +174,12 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             </div>
           </section>
 
-          <section className="mt-6 overflow-hidden rounded-xl border border-[#e1e4e8]">
+          <section className="mt-6 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)]">
             <table className="w-full text-[13px]">
               <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-400">
                 <tr><th className="px-4 py-2.5 font-bold">Charge</th><th className="px-4 py-2.5 text-right font-bold">Amount</th></tr>
               </thead>
-              <tbody className="divide-y divide-[#e1e4e8]">
+              <tbody className="divide-y divide-[var(--gh-e1e4e8)]">
                 <tr>
                   <td className="px-4 py-3 text-slate-700">Rental · {days} day{days !== 1 ? "s" : ""} × {pkr(rate)}</td>
                   <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">{pkr(b.totalAmount)}</td>
@@ -228,7 +228,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           </section>
         </div>
 
-        <footer className="border-t border-[#e1e4e8] bg-slate-50 px-8 py-3 text-center text-[11px] text-slate-400">
+        <footer className="border-t border-[var(--gh-e1e4e8)] bg-slate-50 px-8 py-3 text-center text-[11px] text-slate-400">
           {bookingNumber(b._id)} · Generated with AutoMarket Business
         </footer>
       </article>

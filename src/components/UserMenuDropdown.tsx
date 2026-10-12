@@ -12,6 +12,7 @@ import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 type Item = { href: string; label: string; icon: LucideIcon; count?: number };
 
@@ -153,6 +154,11 @@ export default function UserMenuDropdown({
           <ChevronRight size={15} className="relative text-slate-400" />
         </Link>
       )}
+
+      <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5">
+        <span className="text-[13px] font-medium text-slate-600">Theme</span>
+        <ThemeToggle compact />
+      </div>
 
       <div className="border-t border-slate-100 p-2">
         <button

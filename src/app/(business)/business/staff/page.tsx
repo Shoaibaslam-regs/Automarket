@@ -17,10 +17,10 @@ type StaffMember = {
 };
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-  OWNER:   { bg: "#fff8c5", color: "#7d4e00" },
-  MANAGER: { bg: "#ddf4ff", color: "#0550ae" },
-  SALES:   { bg: "#dafbe1", color: "#1a7f37" },
-  STAFF:   { bg: "#f6f8fa", color: "#57606a" },
+  OWNER:   { bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)" },
+  MANAGER: { bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)" },
+  SALES:   { bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)" },
+  STAFF:   { bg: "var(--gh-f6f8fa)", color: "var(--gh-57606a)" },
 };
 
 export default function StaffPage() {
@@ -100,47 +100,47 @@ export default function StaffPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f8fa", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
 
       {/* Invite modal */}
       {showInvite && (
         <div onClick={() => setShowInvite(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: "14px", width: "100%", maxWidth: "420px", padding: "24px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--gh-ffffff)", borderRadius: "14px", width: "100%", maxWidth: "420px", padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0d1117" }}>Add staff member</h2>
-              <button onClick={() => setShowInvite(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#8c959f" }}>×</button>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "var(--gh-0d1117)" }}>Add staff member</h2>
+              <button onClick={() => setShowInvite(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "var(--gh-8c959f)" }}>×</button>
             </div>
             <form onSubmit={inviteStaff} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Email address *</label>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Email address *</label>
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required
                   placeholder="staff@example.com"
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #d0d7de", borderRadius: "8px", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
-                <p style={{ fontSize: "11px", color: "#8c959f", marginTop: "4px" }}>The user must already have an AutoMarket account</p>
+                  style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
+                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>The user must already have an AutoMarket account</p>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>Role</label>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Role</label>
                 <Select value={inviteRole} onChange={setInviteRole} ariaLabel="Role"
                   options={[
                     { value: "MANAGER", label: "Manager — full access except billing" },
                     { value: "SALES", label: "Sales — manage customers & listings" },
                     { value: "STAFF", label: "Staff — view only" },
                   ]}
-                  className="h-10 rounded-lg border-[#d0d7de] text-[13px] font-normal text-[#0d1117]" />
+                  className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal text-[var(--gh-0d1117)]" />
               </div>
               {inviteResult && (
-                <div style={{ padding: "10px 14px", background: inviteResult.ok ? "#dafbe1" : "#fff0f0", borderRadius: "8px", fontSize: "13px", color: inviteResult.ok ? "#1a7f37" : "#cf222e" }}>
+                <div style={{ padding: "10px 14px", background: inviteResult.ok ? "var(--gh-dafbe1)" : "var(--gh-fff0f0)", borderRadius: "8px", fontSize: "13px", color: inviteResult.ok ? "var(--gh-1a7f37)" : "var(--gh-cf222e)" }}>
                   {inviteResult.message}{" "}
-                  {inviteResult.planLimit && <Link href="/pricing" style={{ color: "#0d1117", fontWeight: 700 }}>Upgrade plan →</Link>}
+                  {inviteResult.planLimit && <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 700 }}>Upgrade plan →</Link>}
                 </div>
               )}
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                 <button type="button" onClick={() => setShowInvite(false)}
-                  style={{ padding: "9px 18px", background: "#f6f8fa", border: "1px solid #e1e4e8", borderRadius: "8px", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "9px 18px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "8px", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
                   Cancel
                 </button>
                 <button type="submit" disabled={inviting}
-                  style={{ padding: "9px 18px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ padding: "9px 18px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {inviting ? "Adding..." : "Add member"}
                 </button>
               </div>
@@ -155,7 +155,7 @@ export default function StaffPage() {
         title={`Remove ${confirmRemove?.userId?.name || confirmRemove?.userId?.email || "team member"}`}
         description={confirmRemove && (
           <>
-            <strong style={{ color: "#0d1117" }}>{confirmRemove.userId?.name || confirmRemove.userId?.email}</strong> will lose access to
+            <strong style={{ color: "var(--gh-0d1117)" }}>{confirmRemove.userId?.name || confirmRemove.userId?.email}</strong> will lose access to
             this business straight away. Their AutoMarket account and their own listings are not deleted, and you can add them again later.
           </>
         )}
@@ -167,24 +167,24 @@ export default function StaffPage() {
       />
 
       {/* Header */}
-      <div style={{ padding: "20px 24px", background: "white", borderBottom: "1px solid #e1e4e8", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+      <div style={{ padding: "20px 24px", background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <Link href="/business/dashboard" style={{ fontSize: "12px", color: "#57606a", textDecoration: "none" }}>← Dashboard</Link>
-          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "#0d1117", marginTop: "4px" }}>Staff</h1>
+          <Link href="/business/dashboard" style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>← Dashboard</Link>
+          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--gh-0d1117)", marginTop: "4px" }}>Staff</h1>
           {sub && (
-            <p style={{ fontSize: "12px", color: teamFull ? "#cf222e" : "#57606a", marginTop: "2px" }}>
+            <p style={{ fontSize: "12px", color: teamFull ? "var(--gh-cf222e)" : "var(--gh-57606a)", marginTop: "2px" }}>
               {sub.usage.staff} of {formatLimit(sub.limits.staff)} team members on your plan (owner included)
             </p>
           )}
         </div>
         {canManage && (teamFull ? (
           <Link href="/pricing"
-            style={{ padding: "9px 18px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "#0d1117", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
+            style={{ padding: "9px 18px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "var(--gh-0d1117)", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
             Upgrade plan to add more
           </Link>
         ) : (
           <button onClick={() => setShowInvite(true)}
-            style={{ padding: "9px 18px", background: "#0d1117", color: "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "9px 18px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             + Add staff member
           </button>
         ))}
@@ -192,14 +192,14 @@ export default function StaffPage() {
 
       <div style={{ padding: "20px 24px", maxWidth: "800px" }}>
         {pageError && (
-          <div role="alert" style={{ background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "#cf222e", marginBottom: "14px" }}>
+          <div role="alert" style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "14px" }}>
             {pageError}
           </div>
         )}
 
         {/* Role guide */}
-        <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
-          <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117", marginBottom: "12px" }}>Role permissions</p>
+        <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "12px" }}>Role permissions</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px" }}>
             {[
               { role: "OWNER", perms: "Full access + billing" },
@@ -219,27 +219,27 @@ export default function StaffPage() {
         </div>
 
         {/* Staff list */}
-        <div style={{ background: "white", border: "1px solid #e1e4e8", borderRadius: "12px", overflow: "hidden" }}>
+        <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", overflow: "hidden" }}>
           {loading ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#57606a" }}>Loading...</div>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--gh-57606a)" }}>Loading...</div>
           ) : staff.length === 0 ? (
             <div style={{ padding: "48px", textAlign: "center" }}>
-              <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c959f" }}><Users size={25} strokeWidth={1.5} /></div>
-              <p style={{ fontSize: "14px", fontWeight: 600, color: "#0d1117", marginBottom: "6px" }}>No staff yet</p>
-              <p style={{ fontSize: "13px", color: "#57606a" }}>Add team members to help manage your business</p>
+              <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gh-8c959f)" }}><Users size={25} strokeWidth={1.5} /></div>
+              <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>No staff yet</p>
+              <p style={{ fontSize: "13px", color: "var(--gh-57606a)" }}>Add team members to help manage your business</p>
             </div>
           ) : staff.map((member, i) => {
             const roleStyle = ROLE_COLORS[member.role] || ROLE_COLORS.STAFF;
             return (
-              <div key={member._id} style={{ padding: "14px 20px", borderBottom: i < staff.length - 1 ? "1px solid #f6f8fa" : "none", display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-                <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "#0d1117", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>
+              <div key={member._id} style={{ padding: "14px 20px", borderBottom: i < staff.length - 1 ? "1px solid var(--gh-f6f8fa)" : "none", display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>
                   {member.userId?.name?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div style={{ flex: 1, minWidth: "150px" }}>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: "#0d1117" }}>{member.userId?.name || "Unknown"}</p>
-                  <p style={{ fontSize: "11px", color: "#8c959f" }}>{member.userId?.email}</p>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)" }}>{member.userId?.name || "Unknown"}</p>
+                  <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>{member.userId?.email}</p>
                 </div>
-                <p style={{ fontSize: "11px", color: "#8c959f" }}>
+                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>
                   Joined {new Date(member.joinedAt).toLocaleDateString("en-PK", { month: "short", year: "numeric" })}
                 </p>
                 {member.role !== "OWNER" && canManage ? (
@@ -256,7 +256,7 @@ export default function StaffPage() {
                 )}
                 {member.role !== "OWNER" && canManage && (
                   <button onClick={() => { setRemoveError(""); setConfirmRemove(member); }}
-                    style={{ padding: "5px 10px", background: "#fff0f0", border: "1px solid #ffcdd2", borderRadius: "7px", fontSize: "11px", color: "#cf222e", cursor: "pointer", fontFamily: "inherit" }}>
+                    style={{ padding: "5px 10px", background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "7px", fontSize: "11px", color: "var(--gh-cf222e)", cursor: "pointer", fontFamily: "inherit" }}>
                     Remove
                   </button>
                 )}

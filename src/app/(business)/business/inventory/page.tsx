@@ -29,11 +29,11 @@ type Vehicle = {
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  ACTIVE:   { bg: "#dafbe1", color: "#1a7f37" },
-  SOLD:     { bg: "#ddf4ff", color: "#0550ae" },
-  PENDING:  { bg: "#fff8c5", color: "#7d4e00" },
-  INACTIVE: { bg: "#f6f8fa", color: "#57606a" },
-  RENTED:   { bg: "#ffdfb6", color: "#953800" },
+  ACTIVE:   { bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)" },
+  SOLD:     { bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)" },
+  PENDING:  { bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)" },
+  INACTIVE: { bg: "var(--gh-f6f8fa)", color: "var(--gh-57606a)" },
+  RENTED:   { bg: "var(--gh-ffdfb6)", color: "var(--gh-953800)" },
 };
 
 const STATUS_OPTIONS = [
@@ -101,10 +101,10 @@ export default function InventoryPage() {
   });
 
   const summary = [
-    { label: "Total", count: vehicles.length, color: "#0d1117" },
-    { label: "Available", count: vehicles.filter(v => v.status === "ACTIVE").length, color: "#1a7f37" },
-    { label: "Sold", count: vehicles.filter(v => v.status === "SOLD").length, color: "#0550ae" },
-    { label: "Reserved", count: vehicles.filter(v => v.status === "PENDING").length, color: "#7d4e00" },
+    { label: "Total", count: vehicles.length, color: "var(--gh-0d1117)" },
+    { label: "Available", count: vehicles.filter(v => v.status === "ACTIVE").length, color: "var(--gh-1a7f37)" },
+    { label: "Sold", count: vehicles.filter(v => v.status === "SOLD").length, color: "var(--gh-0550ae)" },
+    { label: "Reserved", count: vehicles.filter(v => v.status === "PENDING").length, color: "var(--gh-7d4e00)" },
   ];
 
   const deleteButton = (v: Vehicle, compact = false) =>
@@ -113,23 +113,23 @@ export default function InventoryPage() {
         onClick={() => { setDeleteError(""); setConfirmDelete(v); }}
         disabled={deleting === v._id}
         aria-label={`Delete ${v.title}`}
-        className={`inline-flex items-center justify-center rounded-lg border border-[#ffcdd2] bg-[#fff0f0] text-[#cf222e] transition hover:bg-[#ffe3e3] disabled:opacity-50 ${compact ? "h-8 w-8" : "h-8 px-2.5"}`}
+        className={`inline-flex items-center justify-center rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)] transition hover:bg-[var(--gh-ffe3e3)] disabled:opacity-50 ${compact ? "h-8 w-8" : "h-8 px-2.5"}`}
       >
         <Trash2 size={13} strokeWidth={1.75} />
       </button>
     ) : null;
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa]">
+    <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
       <ConfirmDialog
         open={confirmDelete !== null}
         onOpenChange={o => !o && setConfirmDelete(null)}
         title={`Delete ${confirmDelete?.title ?? "vehicle"}`}
         description={confirmDelete && (
           <>
-            <strong style={{ color: "#0d1117" }}>{confirmDelete.title}</strong> will be removed from AutoMarket and buyers will no longer
+            <strong style={{ color: "var(--gh-0d1117)" }}>{confirmDelete.title}</strong> will be removed from AutoMarket and buyers will no longer
             be able to find it. If it was sold, consider marking it <strong>Sold</strong> instead to keep it in your reports.
-            {" "}<strong style={{ color: "#cf222e" }}>This can&apos;t be undone.</strong>
+            {" "}<strong style={{ color: "var(--gh-cf222e)" }}>This can&apos;t be undone.</strong>
           </>
         )}
         confirmLabel="Delete vehicle"
@@ -138,12 +138,12 @@ export default function InventoryPage() {
         onConfirm={deleteVehicle}
       />
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-5 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <div className="min-w-0">
-          <Link href="/business/dashboard" className="text-xs text-[#57606a] hover:text-[#0d1117]">← Dashboard</Link>
-          <h1 className="mt-1 text-lg font-bold text-[#0d1117]">Inventory</h1>
+          <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
+          <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Inventory</h1>
           {sub && (
-            <p className={`mt-0.5 text-xs ${listingsFull ? "text-[#cf222e]" : "text-[#57606a]"}`}>
+            <p className={`mt-0.5 text-xs ${listingsFull ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-57606a)]"}`}>
               {sub.usage.listings} of {formatLimit(sub.limits.listings)} active listings on your plan
               {listingsFull && " · mark a vehicle sold or upgrade to add more"}
             </p>
@@ -154,7 +154,7 @@ export default function InventoryPage() {
             <Crown size={15} strokeWidth={2} /> Upgrade to add more
           </Link>
         ) : (
-          <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[#0d1117] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#24292f]">
+          <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)]">
             <Plus size={15} strokeWidth={2} /> Add vehicle
           </Link>
         )}
@@ -164,7 +164,7 @@ export default function InventoryPage() {
         {/* Filters */}
         <div className="mb-4 flex flex-wrap gap-2.5">
           <div className="relative min-w-0 flex-[1_1_220px]">
-            <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c959f]" />
+            <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gh-8c959f)]" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -183,7 +183,7 @@ export default function InventoryPage() {
                   onClick={() => setView(v)}
                   aria-label={v === "grid" ? "Grid view" : "List view"}
                   aria-pressed={view === v}
-                  className={`flex w-10 items-center justify-center transition ${view === v ? "bg-[#0d1117] text-white" : "text-[#57606a] hover:bg-slate-50"}`}
+                  className={`flex w-10 items-center justify-center transition ${view === v ? "bg-[var(--gh-0d1117)] text-white" : "text-[var(--gh-57606a)] hover:bg-slate-50"}`}
                 >
                   {v === "grid" ? <LayoutGrid size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
                 </button>
@@ -195,7 +195,7 @@ export default function InventoryPage() {
         {/* Summary */}
         <div className="mb-4 flex flex-wrap gap-2">
           {summary.map(s => (
-            <div key={s.label} className="rounded-full border border-[#e1e4e8] bg-white px-3.5 py-1.5 text-xs font-semibold" style={{ color: s.color }}>
+            <div key={s.label} className="rounded-full border border-[var(--gh-e1e4e8)] bg-white px-3.5 py-1.5 text-xs font-semibold" style={{ color: s.color }}>
               {s.label}: {s.count}
             </div>
           ))}
@@ -206,39 +206,39 @@ export default function InventoryPage() {
             {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-[240px] animate-pulse rounded-2xl bg-white" />)}
           </div>
         ) : loadError ? (
-          <div className="rounded-2xl border border-[#ffcdd2] bg-[#fff0f0] p-6 text-center text-sm text-[#cf222e]">{loadError}</div>
+          <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)]">{loadError}</div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-[#e1e4e8] bg-white px-6 py-16 text-center">
-            <div className="mb-3 flex justify-center text-[#8c959f]"><Car size={32} strokeWidth={1.5} /></div>
-            <p className="mb-2 text-[15px] font-semibold text-[#0d1117]">No vehicles found</p>
-            <Link href="/sell" className="text-[13px] font-semibold text-[#0d1117]">Add your first vehicle →</Link>
+          <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-16 text-center">
+            <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><Car size={32} strokeWidth={1.5} /></div>
+            <p className="mb-2 text-[15px] font-semibold text-[var(--gh-0d1117)]">No vehicles found</p>
+            <Link href="/sell" className="text-[13px] font-semibold text-[var(--gh-0d1117)]">Add your first vehicle →</Link>
           </div>
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
             {filtered.map(v => (
-              <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[#e1e4e8] bg-white transition hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]">
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#f6f8fa]">
+              <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white transition hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]">
+                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gh-f6f8fa)]">
                   {v.images?.[0] ? (
                     <Image src={v.images[0]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-[#8c959f]"><Car size={25} strokeWidth={1.5} /></div>
+                    <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={25} strokeWidth={1.5} /></div>
                   )}
                   <span className="absolute left-2 top-2"><StatusPill status={v.status} /></span>
                 </div>
                 <div className="flex flex-1 flex-col p-3">
-                  <p className="truncate text-[13px] font-bold text-[#0d1117]">{v.title}</p>
-                  <p className="mb-2 truncate text-[11px] text-[#8c959f]">
+                  <p className="truncate text-[13px] font-bold text-[var(--gh-0d1117)]">{v.title}</p>
+                  <p className="mb-2 truncate text-[11px] text-[var(--gh-8c959f)]">
                     {v.make} {v.model} · {v.year}{v.mileage != null && ` · ${v.mileage.toLocaleString()} km`}
                   </p>
                   <div className="mb-2.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-extrabold text-[#0d1117]">PKR {v.price.toLocaleString()}</span>
-                    <span className="flex-shrink-0 text-[10px] text-[#8c959f]">{v.condition}</span>
+                    <span className="truncate text-sm font-extrabold text-[var(--gh-0d1117)]">PKR {v.price.toLocaleString()}</span>
+                    <span className="flex-shrink-0 text-[10px] text-[var(--gh-8c959f)]">{v.condition}</span>
                   </div>
                   {!v.canManage && v.sellerId?.name && (
-                    <p className="mb-2 truncate text-[11px] text-[#57606a]">Listed by {v.sellerId.name}</p>
+                    <p className="mb-2 truncate text-[11px] text-[var(--gh-57606a)]">Listed by {v.sellerId.name}</p>
                   )}
                   <div className="mt-auto flex gap-1.5">
-                    <Link href={`/listings/${v._id}`} className="flex h-8 flex-1 items-center justify-center rounded-lg border border-[#e1e4e8] bg-[#f6f8fa] text-[11px] font-semibold text-[#0d1117] transition hover:bg-[#eef1f4]">
+                    <Link href={`/listings/${v._id}`} className="flex h-8 flex-1 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] text-[11px] font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-eef1f4)]">
                       View
                     </Link>
                     {deleteButton(v)}
@@ -248,30 +248,30 @@ export default function InventoryPage() {
             ))}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[#e1e4e8] bg-white">
+          <div className="overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white">
             {filtered.map((v, i) => (
-              <div key={v._id} className={`flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[#f0f2f4]" : ""}`}>
-                <div className="relative h-11 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[#f6f8fa] sm:w-16">
+              <div key={v._id} className={`flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[var(--gh-f0f2f4)]" : ""}`}>
+                <div className="relative h-11 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--gh-f6f8fa)] sm:w-16">
                   {v.images?.[0]
                     ? <Image src={v.images[0]} alt="" fill sizes="64px" className="object-cover" />
-                    : <div className="flex h-full w-full items-center justify-center text-[#8c959f]"><Car size={14} strokeWidth={1.5} /></div>}
+                    : <div className="flex h-full w-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={14} strokeWidth={1.5} /></div>}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-[#0d1117]">{v.title}</p>
-                  <p className="flex min-w-0 items-center gap-1 truncate text-[11px] text-[#8c959f]">
+                  <p className="truncate text-[13px] font-semibold text-[var(--gh-0d1117)]">{v.title}</p>
+                  <p className="flex min-w-0 items-center gap-1 truncate text-[11px] text-[var(--gh-8c959f)]">
                     {v.make} · {v.year}{v.mileage != null && ` · ${v.mileage.toLocaleString()} km`}
                     {v.location && <span className="hidden items-center gap-0.5 md:inline-flex"> · <MapPin size={10} />{v.location}</span>}
                   </p>
                   {/* On small screens status + price move under the title instead of overflowing the row */}
                   <div className="mt-1 flex items-center gap-2 sm:hidden">
                     <StatusPill status={v.status} />
-                    <span className="truncate text-[13px] font-bold text-[#0d1117]">PKR {v.price.toLocaleString()}</span>
+                    <span className="truncate text-[13px] font-bold text-[var(--gh-0d1117)]">PKR {v.price.toLocaleString()}</span>
                   </div>
                 </div>
                 <span className="hidden sm:inline-flex"><StatusPill status={v.status} /></span>
-                <p className="hidden flex-shrink-0 text-sm font-bold text-[#0d1117] sm:block">PKR {v.price.toLocaleString()}</p>
+                <p className="hidden flex-shrink-0 text-sm font-bold text-[var(--gh-0d1117)] sm:block">PKR {v.price.toLocaleString()}</p>
                 <div className="flex flex-shrink-0 gap-1.5">
-                  <Link href={`/listings/${v._id}`} className="inline-flex h-8 items-center rounded-lg border border-[#e1e4e8] bg-[#f6f8fa] px-2.5 text-[11px] font-semibold text-[#0d1117] hover:bg-[#eef1f4]">View</Link>
+                  <Link href={`/listings/${v._id}`} className="inline-flex h-8 items-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-2.5 text-[11px] font-semibold text-[var(--gh-0d1117)] hover:bg-[var(--gh-eef1f4)]">View</Link>
                   {deleteButton(v, true)}
                 </div>
               </div>

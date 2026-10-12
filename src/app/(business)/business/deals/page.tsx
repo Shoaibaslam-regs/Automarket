@@ -89,20 +89,20 @@ function DealDialog({ open, onOpenChange, vehicles, editing, onSaved }: {
     onSaved();
   }
 
-  const input = "h-10 w-full rounded-lg border border-[#d0d7de] bg-white px-3 text-[13px] text-[#0d1117] outline-none focus:border-[#0d1117] focus:ring-2 focus:ring-[#0d1117]/10";
-  const label = "mb-1.5 block text-xs font-semibold text-[#0d1117]";
+  const input = "h-10 w-full rounded-lg border border-[var(--gh-d0d7de)] bg-white px-3 text-[13px] text-[var(--gh-0d1117)] outline-none focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10";
+  const label = "mb-1.5 block text-xs font-semibold text-[var(--gh-0d1117)]";
 
   return (
     <Dialog.Root open={open} onOpenChange={o => !saving && onOpenChange(o)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-black/50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] flex max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
-          <div className="flex items-center justify-between border-b border-[#e1e4e8] px-5 py-4">
-            <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-[#0d1117]">
+          <div className="flex items-center justify-between border-b border-[var(--gh-e1e4e8)] px-5 py-4">
+            <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-[var(--gh-0d1117)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white"><Tag size={15} /></span>
               {editing ? "Edit deal" : "New deal"}
             </Dialog.Title>
-            <Dialog.Close aria-label="Close" className="rounded-full p-1 text-[#8c959f] hover:bg-[#f6f8fa]"><X size={18} /></Dialog.Close>
+            <Dialog.Close aria-label="Close" className="rounded-full p-1 text-[var(--gh-8c959f)] hover:bg-[var(--gh-f6f8fa)]"><X size={18} /></Dialog.Close>
           </div>
           <Dialog.Description className="sr-only">Set a discount on your vehicles for a period. Deals show on your listings and business page.</Dialog.Description>
 
@@ -120,10 +120,10 @@ function DealDialog({ open, onOpenChange, vehicles, editing, onSaved }: {
               <div className="grid grid-cols-[1fr_140px] gap-3">
                 <div>
                   <span className={label}>Discount *</span>
-                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-[#f6f8fa] p-1 ring-1 ring-inset ring-[#e1e4e8]">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-[var(--gh-f6f8fa)] p-1 ring-1 ring-inset ring-[var(--gh-e1e4e8)]">
                     {(["PERCENT", "AMOUNT"] as const).map(t => (
                       <button key={t} type="button" onClick={() => set("discountType", t)} aria-pressed={form.discountType === t}
-                        className={`flex h-8 items-center justify-center gap-1 rounded-md text-xs font-semibold ${form.discountType === t ? "bg-[#0d1117] text-white" : "text-[#57606a]"}`}>
+                        className={`flex h-8 items-center justify-center gap-1 rounded-md text-xs font-semibold ${form.discountType === t ? "bg-[var(--gh-0d1117)] text-white" : "text-[var(--gh-57606a)]"}`}>
                         {t === "PERCENT" ? <><Percent size={12} /> Percent</> : "PKR amount"}
                       </button>
                     ))}
@@ -152,23 +152,23 @@ function DealDialog({ open, onOpenChange, vehicles, editing, onSaved }: {
                 <div className="grid grid-cols-2 gap-2">
                   {([["ALL", "All vehicles for sale"], ["PICK", "Chosen vehicles"]] as const).map(([v, t]) => (
                     <button key={v} type="button" onClick={() => set("scope", v)} aria-pressed={form.scope === v}
-                      className={`rounded-lg px-3 py-2.5 text-left text-xs font-semibold ring-1 ring-inset ${form.scope === v ? "bg-rose-50 text-rose-700 ring-2 ring-rose-500" : "text-[#57606a] ring-[#e1e4e8] hover:bg-[#f6f8fa]"}`}>
+                      className={`rounded-lg px-3 py-2.5 text-left text-xs font-semibold ring-1 ring-inset ${form.scope === v ? "bg-rose-50 text-rose-700 ring-2 ring-rose-500" : "text-[var(--gh-57606a)] ring-[var(--gh-e1e4e8)] hover:bg-[var(--gh-f6f8fa)]"}`}>
                       {t}
                     </button>
                   ))}
                 </div>
                 {form.scope === "PICK" && (
-                  <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-[#e1e4e8] p-1.5">
+                  <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-[var(--gh-e1e4e8)] p-1.5">
                     {vehicles.length === 0 ? (
-                      <p className="p-3 text-center text-xs text-[#8c959f]">No vehicles for sale yet.</p>
+                      <p className="p-3 text-center text-xs text-[var(--gh-8c959f)]">No vehicles for sale yet.</p>
                     ) : vehicles.map(v => {
                       const on = form.listingIds.includes(v.id);
                       return (
                         <button key={v.id} type="button" onClick={() => toggleVehicle(v.id)} aria-pressed={on}
-                          className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-xs ${on ? "bg-rose-50" : "hover:bg-[#f6f8fa]"}`}>
-                          <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${on ? "border-rose-600 bg-rose-600 text-white" : "border-[#d0d7de]"}`}>{on && <Check size={11} />}</span>
-                          <span className="min-w-0 flex-1 truncate font-medium text-[#0d1117]">{v.title}</span>
-                          <span className="tabular-nums text-[#57606a]">PKR {v.price.toLocaleString()}</span>
+                          className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-xs ${on ? "bg-rose-50" : "hover:bg-[var(--gh-f6f8fa)]"}`}>
+                          <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${on ? "border-rose-600 bg-rose-600 text-white" : "border-[var(--gh-d0d7de)]"}`}>{on && <Check size={11} />}</span>
+                          <span className="min-w-0 flex-1 truncate font-medium text-[var(--gh-0d1117)]">{v.title}</span>
+                          <span className="tabular-nums text-[var(--gh-57606a)]">PKR {v.price.toLocaleString()}</span>
                         </button>
                       );
                     })}
@@ -177,7 +177,7 @@ function DealDialog({ open, onOpenChange, vehicles, editing, onSaved }: {
               </div>
 
               {previewVehicle && value > 0 && (
-                <div className="rounded-xl bg-[#0d1117] p-4 text-white">
+                <div className="rounded-xl bg-[var(--gh-0d1117)] p-4 text-white">
                   <p className="text-[11px] uppercase tracking-wider text-white/50">Preview · {previewVehicle.title}</p>
                   <p className="mt-1 flex items-baseline gap-2">
                     <span className="text-lg font-bold text-rose-300">PKR {dealPrice(previewVehicle.price, { discountType: form.discountType, discountValue: value }).toLocaleString()}</span>
@@ -187,11 +187,11 @@ function DealDialog({ open, onOpenChange, vehicles, editing, onSaved }: {
                 </div>
               )}
 
-              {error && <div role="alert" className="rounded-lg border border-[#ffcdd2] bg-[#fff0f0] px-3 py-2.5 text-[13px] text-[#cf222e]">{error}</div>}
+              {error && <div role="alert" className="rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-3 py-2.5 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
             </div>
-            <div className="flex justify-end gap-2 border-t border-[#e1e4e8] px-5 py-4">
+            <div className="flex justify-end gap-2 border-t border-[var(--gh-e1e4e8)] px-5 py-4">
               <Dialog.Close asChild>
-                <button type="button" disabled={saving} className="rounded-lg border border-[#e1e4e8] bg-[#f6f8fa] px-4 py-2 text-[13px] font-semibold text-[#0d1117]">Cancel</button>
+                <button type="button" disabled={saving} className="rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-4 py-2 text-[13px] font-semibold text-[var(--gh-0d1117)]">Cancel</button>
               </Dialog.Close>
               <button type="submit" disabled={saving} className="rounded-lg bg-rose-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50">
                 {saving ? "Saving…" : editing ? "Save deal" : "Create deal"}
@@ -255,7 +255,7 @@ export default function BusinessDealsPage() {
   const live = deals.filter(d => now && dealState(d, now) === "LIVE").length;
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa]">
+    <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
       <DealDialog
         open={dialogOpen}
         onOpenChange={o => { setDialogOpen(o); if (!o) setEditing(null); }}
@@ -273,11 +273,11 @@ export default function BusinessDealsPage() {
         onConfirm={remove}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e1e4e8] bg-white px-4 py-5 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <div>
-          <Link href="/business/dashboard" className="text-xs text-[#57606a] hover:text-[#0d1117]">← Dashboard</Link>
-          <h1 className="mt-1 text-lg font-bold text-[#0d1117]">Deals</h1>
-          <p className="mt-0.5 text-xs text-[#57606a]">Discounts shown on your listings and business page · {live} live now</p>
+          <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
+          <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Deals</h1>
+          <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Discounts shown on your listings and business page · {live} live now</p>
         </div>
         {canManage && (
           <button onClick={() => { setEditing(null); setDialogOpen(true); }} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-rose-700">
@@ -287,14 +287,14 @@ export default function BusinessDealsPage() {
       </div>
 
       <div className="px-4 py-5 sm:px-6">
-        {pageError && <div role="alert" className="mb-4 rounded-xl border border-[#ffcdd2] bg-[#fff0f0] px-4 py-3 text-[13px] text-[#cf222e]">{pageError}</div>}
+        {pageError && <div role="alert" className="mb-4 rounded-xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-4 py-3 text-[13px] text-[var(--gh-cf222e)]">{pageError}</div>}
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">{[1, 2].map(i => <div key={i} className="h-40 animate-pulse rounded-2xl bg-white" />)}</div>
         ) : deals.length === 0 ? (
-          <div className="rounded-2xl border border-[#e1e4e8] bg-white px-6 py-14 text-center">
+          <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
             <div className="mb-3 flex justify-center text-rose-500"><Tag size={30} strokeWidth={1.5} /></div>
-            <p className="text-sm font-semibold text-[#0d1117]">No deals yet</p>
-            <p className="mt-1 text-[13px] text-[#57606a]">Run a discount to attract buyers. It appears on your listings and business page.</p>
+            <p className="text-sm font-semibold text-[var(--gh-0d1117)]">No deals yet</p>
+            <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Run a discount to attract buyers. It appears on your listings and business page.</p>
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -302,35 +302,35 @@ export default function BusinessDealsPage() {
               const state = now ? dealState(d, now) : "LIVE";
               const st = DEAL_STATE_STYLE[state];
               return (
-                <div key={d._id} className={`overflow-hidden rounded-2xl border bg-white ${state === "LIVE" ? "border-rose-200" : "border-[#e1e4e8]"}`}>
-                  <div className={`flex items-center justify-between gap-3 px-4 py-3 ${state === "LIVE" ? "bg-gradient-to-r from-rose-600 to-orange-500 text-white" : "bg-[#f6f8fa] text-[#0d1117]"}`}>
+                <div key={d._id} className={`overflow-hidden rounded-2xl border bg-white ${state === "LIVE" ? "border-rose-200" : "border-[var(--gh-e1e4e8)]"}`}>
+                  <div className={`flex items-center justify-between gap-3 px-4 py-3 ${state === "LIVE" ? "bg-gradient-to-r from-rose-600 to-orange-500 text-white" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]"}`}>
                     <p className="text-xl font-extrabold">{dealLabel(d)}</p>
                     <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                   </div>
                   <div className="p-4">
-                    <p className="font-semibold text-[#0d1117]">{d.title}</p>
-                    {d.description && <p className="mt-0.5 text-[13px] text-[#57606a]">{d.description}</p>}
-                    <p className="mt-2 text-xs text-[#57606a]">{fmt(d.startsAt)} → {fmt(d.endsAt)}</p>
-                    <p className="mt-1 truncate text-xs text-[#57606a]">
+                    <p className="font-semibold text-[var(--gh-0d1117)]">{d.title}</p>
+                    {d.description && <p className="mt-0.5 text-[13px] text-[var(--gh-57606a)]">{d.description}</p>}
+                    <p className="mt-2 text-xs text-[var(--gh-57606a)]">{fmt(d.startsAt)} → {fmt(d.endsAt)}</p>
+                    <p className="mt-1 truncate text-xs text-[var(--gh-57606a)]">
                       {d.listingIds.length === 0 ? "All vehicles for sale" : d.listingIds.map(id => vehicleTitle(id) ?? "Vehicle no longer for sale").join(", ")}
                     </p>
-                    {state === "DISABLED" && <p className="mt-2 text-xs font-semibold text-[#cf222e]">An AutoMarket admin switched this deal off. Contact the team if you think that&apos;s a mistake.</p>}
+                    {state === "DISABLED" && <p className="mt-2 text-xs font-semibold text-[var(--gh-cf222e)]">An AutoMarket admin switched this deal off. Contact the team if you think that&apos;s a mistake.</p>}
                     {canManage && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        <button onClick={() => { setEditing(d); setDialogOpen(true); }} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[#e1e4e8] bg-[#f6f8fa] px-2.5 py-1.5 text-xs font-semibold text-[#0d1117] disabled:opacity-50">
+                        <button onClick={() => { setEditing(d); setDialogOpen(true); }} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] disabled:opacity-50">
                           <Pencil size={12} /> Edit
                         </button>
                         {!d.disabledByAdmin && state !== "EXPIRED" && (
-                          <button onClick={() => togglePause(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[#e1e4e8] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0d1117] disabled:opacity-50">
+                          <button onClick={() => togglePause(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] disabled:opacity-50">
                             {d.paused ? <><Play size={12} /> Resume</> : <><Pause size={12} /> Pause</>}
                           </button>
                         )}
-                        <button onClick={() => setConfirmDelete(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[#ffcdd2] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#cf222e] disabled:opacity-50">
+                        <button onClick={() => setConfirmDelete(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-ffcdd2)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-cf222e)] disabled:opacity-50">
                           <Trash2 size={12} /> Delete
                         </button>
                       </div>
                     )}
-                    {d.createdBy?.name && <p className="mt-2 text-[10px] text-[#8c959f]">Created by {d.createdBy.name}</p>}
+                    {d.createdBy?.name && <p className="mt-2 text-[10px] text-[var(--gh-8c959f)]">Created by {d.createdBy.name}</p>}
                   </div>
                 </div>
               );

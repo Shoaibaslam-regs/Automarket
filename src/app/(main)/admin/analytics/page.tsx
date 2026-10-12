@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Calendar, Car, MessageSquare, Users } from "lucide-react";
 import { PageHeader, Panel, Segmented, StatCard } from "@/components/admin/ui";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -25,8 +26,9 @@ const SERIES = [
 ] as const;
 const SINGLE = "#2a78d6";
 
-const AXIS = { fontSize: 11, fill: "#94a3b8" };
-const GRID = "#eef2f6";
+// Chart colours are SVG attributes (no CSS variables), so they're chosen per theme in the page
+const CHART_LIGHT = { axis: "#94a3b8", grid: "#eef2f6", cursorLine: "#cbd5e1", cursorFill: "#f1f5f9" };
+const CHART_DARK = { axis: "#7d8ba1", grid: "#263248", cursorLine: "#475569", cursorFill: "#1a2436" };
 
 type AnalyticsData = {
   [key: string]: string | number;
@@ -90,6 +92,9 @@ function Legend() {
 }
 
 export default function AnalyticsPage() {
+  const c = useTheme().resolved === "dark" ? CHART_DARK : CHART_LIGHT;
+  const AXIS = { fontSize: 11, fill: c.axis };
+  const GRID = c.grid;
   const [period, setPeriod] = useState<Period>("daily");
   const [view, setView] = useState<"chart" | "table">("chart");
 
@@ -179,7 +184,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid stroke={GRID} vertical={false} />
                   <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={{ stroke: GRID }} minTickGap={16} />
                   <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#cbd5e1", strokeWidth: 1 }} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: c.cursorLine, strokeWidth: 1 }} />
                   {SERIES.map(s => (
                     <Line
                       key={s.key}
@@ -234,7 +239,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid stroke={GRID} vertical={false} />
                 <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={{ stroke: GRID }} minTickGap={16} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f1f5f9" }} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: c.cursorFill }} />
                 <Bar dataKey="bookings" name="Bookings" fill={SINGLE} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
@@ -258,7 +263,7 @@ export default function AnalyticsPage() {
                   allowDecimals={false}
                   tickFormatter={v => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
                 />
-                <Tooltip content={<ChartTooltip format={secondary.format} />} cursor={{ fill: "#f1f5f9" }} />
+                <Tooltip content={<ChartTooltip format={secondary.format} />} cursor={{ fill: c.cursorFill }} />
                 <Bar dataKey={secondary.key} name={secondary.title} fill={SINGLE} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
