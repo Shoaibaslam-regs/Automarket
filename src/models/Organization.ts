@@ -14,7 +14,15 @@ export interface IOrganization extends Document {
   description?: string;
   plan: "FREE" | "PRO" | "BUSINESS";
   planExpiresAt?: Date;
+  /** false while suspended by an admin */
   isActive: boolean;
+  suspension?: {
+    reason: string;
+    at: Date;
+    by: mongoose.Types.ObjectId;
+    /** Listings that were live when suspended; only these are switched back on at reinstatement */
+    listingIds: mongoose.Types.ObjectId[];
+  };
   settings: {
     allowPublicListings: boolean;
     currency: string;
@@ -38,6 +46,17 @@ const OrganizationSchema = new Schema<IOrganization>(
     plan: { type: String, enum: ["FREE", "PRO", "BUSINESS"], default: "FREE" },
     planExpiresAt: { type: Date },
     isActive: { type: Boolean, default: true },
+    suspension: {
+      type: new Schema(
+        {
+          reason: { type: String, required: true, maxlength: 500 },
+          at: { type: Date, required: true },
+          by: { type: Schema.Types.ObjectId, ref: "User", required: true },
+          listingIds: { type: [{ type: Schema.Types.ObjectId, ref: "Listing" }], default: [] },
+        },
+        { _id: false }
+      ),
+    },
     settings: {
       allowPublicListings: { type: Boolean, default: true },
       currency: { type: String, default: "PKR" },

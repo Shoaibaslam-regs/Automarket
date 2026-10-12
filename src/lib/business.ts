@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { Employee } from "@/models/Employee";
 import { Rental } from "@/models/Rental";
+import { Organization } from "@/models/Organization";
 
 /** User ids of everyone employed by an organization (owner included). */
 export async function getOrgUserIds(orgId: unknown): Promise<mongoose.Types.ObjectId[]> {
@@ -57,7 +58,14 @@ export async function getMembership(userId: string): Promise<{ organizationId: m
     .select("role")
     .lean<{ role: BusinessRole }>();
   if (!employee) return null;
+  // A suspended business can't use the console's APIs; Help & support doesn't go through here
+  if (await isOrganizationSuspended(user.organizationId)) return null;
   return { organizationId: user.organizationId, role: employee.role };
+}
+
+/** True when an admin has suspended the organization. */
+export async function isOrganizationSuspended(orgId: unknown): Promise<boolean> {
+  return !!(await Organization.exists({ _id: orgId, isActive: false }));
 }
 
 /**
@@ -69,4 +77,10 @@ export async function getBusinessRentals(userId: string) {
   return Rental.find({ ownerId: { $in: sellerIds } })
     .select("_id listingId ownerId dailyRate weeklyRate monthlyRate deposit")
     .lean<Array<{ _id: mongoose.Types.ObjectId; listingId: mongoose.Types.ObjectId; ownerId: mongoose.Types.ObjectId; dailyRate: number; weeklyRate?: number; monthlyRate?: number; deposit: number }>>();
+}
+
+/** True when the user works at a business that an admin has suspended. */
+export async function isUserBusinessSuspended(userId: string): Promise<boolean> {
+  const user = await User.findById(userId).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
+  return !!user?.organizationId && (await isOrganizationSuspended(user.organizationId));
 }

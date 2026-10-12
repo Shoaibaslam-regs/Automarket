@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
+import { auth } from "@/lib/auth";
+import { connectDB } from "@/lib/mongodb";
+import { Message } from "@/models/Message";
+import { Organization } from "@/models/Organization";
+import { User } from "@/models/User";
+import { getSupportAdmin, triggerPusher } from "@/lib/support";
+import { supportTopicLabel } from "@/lib/supportTopics";
+
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * Sends a support message to the AutoMarket team's inbox, prefixed with the topic and the sender's
+ * business and account ID so the admin has context. Works for suspended businesses too, so they can appeal.
+ * Returns the support admin's id so the client can open the conversation.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Sign in to contact the team" }, { status: 401 });
+    const { topic, message } = await req.json().catch(() => ({}));
+    const topicLabel = supportTopicLabel(topic);
+    if (!topicLabel) return NextResponse.json({ error: "Choose a topic" }, { status: 400 });
+    const text = typeof message === "string" ? message.trim() : "";
+    if (text.length < 10 || text.length > 2000) return NextResponse.json({ error: "Please write between 10 and 2000 characters" }, { status: 400 });
+
+    await connectDB();
+    const admin = await getSupportAdmin();
+    if (!admin) return NextResponse.json({ error: "The support team isn't available right now. Please try again later." }, { status: 503 });
+    if (admin._id.equals(session.user.id)) return NextResponse.json({ error: "You're the support admin." }, { status: 400 });
+
+    const me = await User.findById(session.user.id).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
+    const org = me?.organizationId ? await Organization.findById(me.organizationId).select("name").lean<{ name: string }>() : null;
+    const context = [org ? `Business: ${org.name}` : null, `ID #${session.user.id.slice(-6)}`].filter(Boolean).join(" · ");
+    const content = `[${topicLabel}] ${context}\n\n${text}`;
+
+    const recent = await Message.exists({
+      senderId: session.user.id,
+      receiverId: admin._id,
+      content,
+      createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
+    });
+    if (!recent) {
+      const created = await Message.create({ senderId: session.user.id, receiverId: admin._id, content });
+      const populated = await Message.findById(created._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
+      const adminId = admin._id.toString();
+      await triggerPusher(`chat-${[session.user.id, adminId].sort().join("-")}`, "new-message", populated);
+      await triggerPusher(`user-${adminId}`, "new-notification", { type: "message", from: session.user.name, preview: content.slice(0, 50) });
+    }
+    return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
+  } catch (error) {
+    console.error("Support message error:", error);
+    return NextResponse.json({ error: "Failed to send your message" }, { status: 500 });
+  }
+}

@@ -5,6 +5,7 @@ import { Employee } from "@/models/Employee";
 import { Listing } from "@/models/Listing";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { effectivePlanId } from "@/lib/plans";
+import { getOrgUserIds } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,8 @@ export async function GET() {
     const enriched = await Promise.all(
       orgs.map(async org => {
         const staffCount = await Employee.countDocuments({ organizationId: org._id });
-        const vehicleCount = await Listing.countDocuments({ sellerId: org.ownerId?._id });
+        // Inventory is every member's listings, not just the owner's
+        const vehicleCount = await Listing.countDocuments({ sellerId: { $in: await getOrgUserIds(org._id) } });
         // Plans live on the owner's account
         const plan = effectivePlanId(org.ownerId?.plan, org.ownerId?.planExpiresAt);
         return {

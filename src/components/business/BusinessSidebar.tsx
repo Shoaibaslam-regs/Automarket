@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BarChart3, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, House, LayoutDashboard, LogOut, MessageSquare,
+  ArrowLeftRight, BarChart3, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, MessageSquare,
   Settings, Sparkles, Star, Tag, User, Users, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
@@ -34,6 +34,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/staff", label: "Staff", icon: User },
   { href: "/business/reports", label: "Reports", icon: BarChart3 },
   { href: "/business/settings", label: "Settings", icon: Settings },
+  { href: "/business/support", label: "Help & support", icon: Headset },
 ];
 
 const TYPE_LABELS: Record<string, string> = { DEALER: "Dealer", RENTAL: "Rental", BOTH: "Dealer + Rental" };

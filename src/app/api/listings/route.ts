@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
 import { checkPlanLimit } from "@/lib/subscription";
+import { isUserBusinessSuspended } from "@/lib/business";
 
 export async function GET(req: NextRequest) {
   try {
@@ -84,6 +85,10 @@ export async function POST(req: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    if (await isUserBusinessSuspended(session.user.id)) {
+      return NextResponse.json({ error: "Your business is suspended, so new listings can't be posted. Contact support from your business console." }, { status: 403 });
     }
 
     // Free and premium plans cap how many listings can be live at once

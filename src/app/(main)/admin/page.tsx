@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, Store, Undo2, Users, Wallet } from "lucide-react";
+import { ArrowRight, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
@@ -14,7 +14,9 @@ import {
   DataTable,
   PageHeader,
   Panel,
+  SearchField,
   Segmented,
+  SelectField,
   StatCard,
   StatGrid,
   StatusBadge,
@@ -44,6 +46,7 @@ type Organization = {
   planSource?: PlanSource | null;
   city: string;
   isActive: boolean;
+  suspension?: { reason: string; at: string } | null;
   staffCount: number;
   vehicleCount: number;
   createdAt: string;
@@ -87,6 +90,42 @@ export default function AdminPage() {
     const data = await res.json().catch(() => ({}));
     setNotice(res.ok ? { ok: true, text: `${org.name} now has ${planInfo(plan).name} for free.` } : { ok: false, text: data.error || "Failed to gift plan" });
     setGiftFor(null);
+    reloadOrganizations();
+  }
+
+  // Businesses tab: search, status filter and suspension
+  const [bizSearch, setBizSearch] = useState("");
+  const [bizStatus, setBizStatus] = useState("");
+  const [suspendFor, setSuspendFor] = useState<Organization | null>(null);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [reinstateFor, setReinstateFor] = useState<Organization | null>(null);
+  const [suspending, setSuspending] = useState(false);
+
+  const bq = bizSearch.trim().toLowerCase().replace(/^#/, "");
+  const shownOrgs = organizations.filter(o =>
+    (!bq || [o.name, o.city, o.ownerId?.name ?? "", o.ownerId?.email ?? "", o._id, o.ownerId?._id ?? ""].some(v => v.toLowerCase().includes(bq))) &&
+    (!bizStatus || (bizStatus === "Suspended" ? !o.isActive : o.isActive))
+  );
+
+  async function changeSuspension(org: Organization, body: { action: "suspend"; reason: string } | { action: "reinstate" }) {
+    setSuspending(true);
+    const res = await fetch(`/api/admin/organizations/${org._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSuspending(false);
+    if (!res.ok) {
+      setNotice({ ok: false, text: data.error || "Failed to update business" });
+    } else if (body.action === "suspend") {
+      setNotice({ ok: true, text: `${org.name} is suspended. ${data.hiddenListings ?? 0} listing${data.hiddenListings === 1 ? " was" : "s were"} hidden and the owner was notified in Messages.` });
+    } else {
+      setNotice({ ok: true, text: `${org.name} is reinstated. ${data.restoredListings ?? 0} listing${data.restoredListings === 1 ? " is" : "s are"} live again.` });
+    }
+    setSuspendFor(null);
+    setSuspendReason("");
+    setReinstateFor(null);
     reloadOrganizations();
   }
 
@@ -263,17 +302,27 @@ export default function AdminPage() {
           <StatGrid>
             <StatCard label="Total businesses" value={organizations.length} icon={Building2} tone="neutral" />
             <StatCard label="Active" value={organizations.filter(o => o.isActive).length} icon={CircleCheck} tone="green" />
-            <StatCard label="Premium plans" value={organizations.filter(o => o.plan === "STARTER" || o.plan === "PRO").length} icon={Briefcase} tone="blue" />
-            <StatCard label="Unlimited plan" value={organizations.filter(o => o.plan === "UNLIMITED").length} icon={Briefcase} tone="amber" />
+            <StatCard label="Suspended" value={organizations.filter(o => !o.isActive).length} icon={Ban} tone="red" />
+            <StatCard label="Paid plans" value={organizations.filter(o => o.plan !== "FREE").length} icon={Briefcase} tone="amber" />
             <StatCard label="Dealers" value={organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length} icon={Store} tone="violet" />
             <StatCard label="Rental co." value={organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length} icon={KeyRound} tone="orange" />
           </StatGrid>
 
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">
+              {shownOrgs.length === organizations.length ? `${organizations.length} businesses` : `${shownOrgs.length} of ${organizations.length} businesses`}
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <SearchField value={bizSearch} onChange={setBizSearch} placeholder="Business, city, owner, email or ID…" />
+              <SelectField value={bizStatus} onChange={setBizStatus} options={["Active", "Suspended"]} allLabel="All statuses" ariaLabel="Filter by status" />
+            </div>
+          </div>
+
           <DataTable
-            rows={organizations}
+            rows={shownOrgs}
             rowKey={o => o._id}
-            cols="md:grid-cols-[minmax(0,2.1fr)_minmax(0,1.9fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_64px_56px_150px]"
-            empty="No businesses registered yet"
+            cols="md:grid-cols-[minmax(0,2.1fr)_minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_60px_52px_210px]"
+            empty={organizations.length ? "No businesses match your search" : "No businesses registered yet"}
             columns={[
               {
                 header: "Business",
@@ -285,12 +334,15 @@ export default function AdminPage() {
                     <div className="min-w-0">
                       <div className="flex min-w-0 items-center gap-2">
                         <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
-                        {!org.isActive && <Badge tone="red">Inactive</Badge>}
+                        {!org.isActive && <Badge tone="red">Suspended</Badge>}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         <CopyId id={org._id} />
                         <span className="truncate text-xs text-slate-500">{org.city}</span>
                       </div>
+                      {!org.isActive && org.suspension?.reason && (
+                        <p className="mt-0.5 truncate text-xs text-rose-600" title={org.suspension.reason}>Reason: {org.suspension.reason}</p>
+                      )}
                     </div>
                   </div>
                 ),
@@ -334,19 +386,86 @@ export default function AdminPage() {
                   ) : !org.ownerId?._id ? (
                     <p className="text-xs text-slate-400 md:text-right">No owner</p>
                   ) : (
-                    <div className="flex gap-1.5 md:justify-end">
+                    <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
                       <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
-                        <Gift size={13} /> Gift plan
+                        <Gift size={13} /> Plan
                       </button>
                       {isFreeGrant(org.planSource) && org.plan !== "FREE" && (
                         <button onClick={() => setRevokeFor(org)} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
                           <Undo2 size={13} />
                         </button>
                       )}
+                      {org.isActive ? (
+                        <button onClick={() => { setSuspendReason(""); setSuspendFor(org); }} className={`${btn.base} ${btn.danger} flex-1 md:flex-none`} title="Suspend business">
+                          <Ban size={13} /> Suspend
+                        </button>
+                      ) : (
+                        <button onClick={() => setReinstateFor(org)} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`} title="Reinstate business">
+                          <ShieldCheck size={13} /> Reinstate
+                        </button>
+                      )}
                     </div>
                   ),
               },
             ]}
+          />
+
+          <ConfirmDialog
+            open={suspendFor !== null}
+            onOpenChange={o => { if (!o) { setSuspendFor(null); setSuspendReason(""); } }}
+            onConfirm={() => {
+              if (!suspendFor) return;
+              if (suspendReason.trim().length < 5) { setNotice({ ok: false, text: "Give a reason of at least 5 characters" }); return; }
+              changeSuspension(suspendFor, { action: "suspend", reason: suspendReason.trim() });
+            }}
+            loading={suspending}
+            tone="danger"
+            icon={Ban}
+            title={`Suspend ${suspendFor?.name ?? "business"}?`}
+            confirmLabel="Suspend business"
+            loadingLabel="Suspending…"
+            description={
+              <>
+                <span className="block">
+                  Its live listings are hidden, its public page goes offline and its console is locked except Help &amp; support.
+                  The owner gets a message with your reason. Reinstating brings the same listings back.
+                </span>
+                <span className="mt-3 flex flex-wrap gap-1.5">
+                  {["Spam listings", "Fake or misleading vehicles", "Scam reports from buyers", "Abusive behaviour", "Duplicate accounts"].map(r => (
+                    <button key={r} type="button" onClick={() => setSuspendReason(r)}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${suspendReason === r ? "bg-rose-600 text-white ring-rose-600" : "text-slate-600 ring-slate-200 hover:bg-slate-50"}`}>
+                      {r}
+                    </button>
+                  ))}
+                </span>
+                <textarea
+                  value={suspendReason}
+                  onChange={e => setSuspendReason(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Reason shown to the owner…"
+                  aria-label="Suspension reason"
+                  className="mt-3 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                />
+              </>
+            }
+          />
+          <ConfirmDialog
+            open={reinstateFor !== null}
+            onOpenChange={o => !o && setReinstateFor(null)}
+            onConfirm={() => reinstateFor && changeSuspension(reinstateFor, { action: "reinstate" })}
+            loading={suspending}
+            tone="warn"
+            icon={ShieldCheck}
+            title={`Reinstate ${reinstateFor?.name ?? "business"}?`}
+            confirmLabel="Reinstate business"
+            loadingLabel="Reinstating…"
+            description={
+              <>
+                The public page comes back online, the console unlocks, and the listings hidden by the suspension go live again.
+                {reinstateFor?.suspension?.reason && <> It was suspended for: <strong className="font-semibold text-slate-900">{reinstateFor.suspension.reason}</strong>.</>}
+              </>
+            }
           />
 
           <PlanGiftDialog

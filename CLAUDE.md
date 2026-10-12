@@ -44,6 +44,10 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - **Business roles** are separate: `Employee.role` is one of `OWNER`, `MANAGER`, `SALES` or `STAFF`, linked to an `Organization`.
   - The `Employee` record is the source of truth. Read it with `getMembership(userId)`.
   - Check permissions with `can(role, permission)`, defined in `src/lib/business.ts`. The permissions are `manageTeam`, `editCustomers`, `deleteCustomers`, `manageBookings`, `manageDeals` and `replyReviews`.
+  - **Suspension.** Admins suspend a business with `PATCH /api/admin/organizations/[id]` (`suspend` with a reason, or `reinstate`).
+    - Suspending sets `Organization.isActive = false` and stores `suspension.listingIds`, the live listings it switched to `INACTIVE`, so reinstating restores exactly those. The owner is messaged in Messages.
+    - While suspended, `getMembership` returns null, so business APIs refuse. The `(business)` layout's `SuspensionGate` locks every page except `/business/support`, and posting or reactivating listings is refused (`isUserBusinessSuspended`).
+  - Business users contact the team from `/business/support`, which calls `POST /api/support/message` with a topic from `src/lib/supportTopics.ts`. The message lands in the support admin's Messages inbox and works while suspended, so the business can appeal.
   - Business routes must scope every query to `member.organizationId`. Customers can only be deleted by the owner, and only when their status is `SOLD` or `LOST` (`src/lib/customers.ts`).
 
 **Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` are registered with `defineModel(name, schema)` (`src/models/defineModel.ts`). In production it reuses the cached model. In development it replaces the cached model, so schema edits apply on hot reload without restarting the server. Use it for new models instead of `mongoose.models.X || mongoose.model(...)`.

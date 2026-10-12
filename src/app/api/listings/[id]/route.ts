@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import { checkPlanLimit } from "@/lib/subscription";
 import { SLOT_STATUSES } from "@/lib/plans";
+import { isUserBusinessSuspended } from "@/lib/business";
 
 export async function GET(
   req: NextRequest,
@@ -68,6 +69,10 @@ export async function PATCH(
     const update: Record<string, unknown> = {};
     for (const key of EDITABLE_FIELDS) {
       if (body && key in body) update[key] = body[key];
+    }
+
+    if ("status" in update && update.status === "ACTIVE" && (await isUserBusinessSuspended(session.user.id))) {
+      return NextResponse.json({ error: "Your business is suspended, so listings can't be switched back on." }, { status: 403 });
     }
 
     // Re-activating a sold or inactive listing takes a plan slot again
