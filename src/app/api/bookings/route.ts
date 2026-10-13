@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         // Walk-in bookings have no renter account and are managed in the business console
         source: { $ne: "WALK_IN" },
       })
-        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location" } })
+        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location type status" } })
         .populate("renterId", "name email phone")
         .sort({ createdAt: -1 })
         .lean();

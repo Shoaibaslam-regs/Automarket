@@ -13,6 +13,8 @@ export interface IBooking extends Document {
   /** Team member who created a walk-in booking */
   createdBy?: mongoose.Types.ObjectId;
   notes?: string;
+  /** Registration number of the vehicle handed over, shown on the booking and slip */
+  plateNumber?: string;
   startDate: Date;
   endDate: Date;
   totalAmount: number;
@@ -39,6 +41,7 @@ const BookingSchema = new Schema<IBooking>(
     customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     notes: { type: String },
+    plateNumber: { type: String, trim: true, maxlength: 20 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     totalAmount: { type: Number, required: true },

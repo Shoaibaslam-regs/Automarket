@@ -18,6 +18,7 @@ type SlipData = {
     renterId?: { name?: string; email: string; phone?: string } | null;
     createdBy?: { name?: string } | null;
     notes?: string;
+    plateNumber?: string;
     createdAt: string;
     confirmedAt?: string;
     startedAt?: string;
@@ -153,6 +154,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-xl border border-[var(--gh-e1e4e8)] p-4">
               <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>
               <Row label="Vehicle" value={listing?.title || "—"} />
+              <Row label="Number plate" value={b.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-black tracking-[0.12em] text-slate-900">{b.plateNumber}</span>} />
               <Row label="Make / model" value={listing ? `${listing.make} ${listing.model} (${listing.year})` : undefined} />
               <Row label="Colour" value={listing?.color} />
               <Row label="Fuel / gearbox" value={[listing?.fuelType, listing?.transmission].filter(Boolean).join(" · ") || undefined} />

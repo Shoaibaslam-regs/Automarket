@@ -10,6 +10,8 @@ import { can, getBusinessRentals, getMembership } from "@/lib/business";
 import { canTransition } from "@/lib/bookings";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
+import { Rental } from "@/models/Rental";
+import { normalizePlate } from "@/lib/plates";
 
 /** Finds a booking that belongs to one of the caller's business rental vehicles. */
 async function loadBusinessBooking(userId: string, id: string) {
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const [booking, organization] = await Promise.all([
       Booking.findById(found._id)
-        .populate({ path: "rentalId", select: "listingId dailyRate weeklyRate monthlyRate deposit", populate: { path: "listingId", select: "title make model year color fuelType transmission location images" } })
+        .populate({ path: "rentalId", select: "listingId dailyRate weeklyRate monthlyRate deposit plateNumber", populate: { path: "listingId", select: "title make model year color fuelType transmission location images" } })
         .populate("renterId", "name email phone")
         .populate("createdBy", "name")
         .lean(),
@@ -59,11 +61,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Your role can't manage bookings" }, { status: 403 });
     }
 
-    const { status } = await req.json().catch(() => ({}));
+    const { status, plateNumber } = await req.json().catch(() => ({}));
     const booking = await loadBusinessBooking(session.user.id, id);
     if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     if (!canTransition(booking.status, status)) {
       return NextResponse.json({ error: `A ${booking.status.toLowerCase()} booking can't be moved to ${String(status).toLowerCase()}` }, { status: 400 });
+    }
+
+    // Handing over records the number plate of the vehicle that went out
+    let plate: string | null = null;
+    if (status === "ACTIVE") {
+      plate = normalizePlate(plateNumber);
+      if (!plate) return NextResponse.json({ error: "Enter the number plate of the vehicle you're handing over, e.g. LEA-1234" }, { status: 400 });
+      booking.plateNumber = plate;
     }
 
     booking.status = status;
@@ -77,6 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const notifyRenter = booking.source !== "WALK_IN" && booking.renterId && (status === "CONFIRMED" || status === "CANCELLED");
     if (notifyRenter) booking.seenByRenter = false;
     await booking.save();
+    if (plate) await Rental.updateOne({ _id: booking.rentalId }, { $set: { plateNumber: plate } });
 
     if (notifyRenter) {
       try {

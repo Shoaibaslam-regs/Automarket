@@ -12,6 +12,8 @@ import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { BOOKING_STATUSES, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
+import AvailabilityControl from "@/components/listings/AvailabilityControl";
+import PlateDialog, { PlateBadge } from "@/components/bookings/PlateDialog";
 
 type Booking = {
   _id: string;
@@ -23,10 +25,11 @@ type Booking = {
   source?: "ONLINE" | "WALK_IN";
   walkIn?: { name: string; phone: string; email?: string; cnic?: string };
   notes?: string;
+  plateNumber?: string;
   createdAt: string;
   renterId?: { name?: string; email: string; phone?: string } | null;
   createdBy?: { name?: string } | null;
-  rentalId?: { dailyRate: number; listingId?: { title: string; make: string; model: string; images: string[] } | null } | null;
+  rentalId?: { dailyRate: number; plateNumber?: string; listingId?: { _id: string; title: string; make: string; model: string; images: string[]; type: string; status: string } | null } | null;
 };
 
 type Vehicle = { rentalId: string; title: string; image: string | null; dailyRate: number; deposit: number };
@@ -247,6 +250,8 @@ export default function BusinessBookingsPage() {
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<Booking | null>(null);
   const [removeError, setRemoveError] = useState("");
+  // Handing over asks for the number plate; it can also be corrected later
+  const [plateFor, setPlateFor] = useState<{ booking: Booking; handover: boolean } | null>(null);
   // "Now" for overdue checks, captured when bookings load so rendering stays pure
   const [now, setNow] = useState(0);
 
@@ -265,6 +270,14 @@ export default function BusinessBookingsPage() {
 
   useEffect(() => { fetchBookings(); }, []);
 
+  // Every booking of the same vehicle shows its tag, so update them all together
+  function setVehicleStatus(listingId: string, status: string) {
+    setBookings(prev => prev.map(x => {
+      const l = x.rentalId?.listingId;
+      return l && l._id === listingId ? { ...x, rentalId: { ...x.rentalId!, listingId: { ...l, status } } } : x;
+    }));
+  }
+
   async function updateStatus(b: Booking, status: BookingStatus) {
     setUpdating(b._id);
     setActionError("");
@@ -282,6 +295,18 @@ export default function BusinessBookingsPage() {
     fetchBookings();
     // Accepting or declining a request changes the pending count on the sidebar badge
     refreshNotificationCounts();
+  }
+
+  async function savePlate(plate: string): Promise<string | null> {
+    if (!plateFor) return null;
+    const { booking: b, handover } = plateFor;
+    const res = handover
+      ? await fetch(`/api/business/bookings/${b._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ACTIVE", plateNumber: plate }) })
+      : await fetch(`/api/bookings/${b._id}/plate`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plateNumber: plate }) });
+    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the number plate";
+    setPlateFor(null);
+    fetchBookings();
+    return null;
   }
 
   async function removeBooking() {
@@ -328,6 +353,17 @@ export default function BusinessBookingsPage() {
         onOpenChange={setNewOpen}
         vehicles={vehicles}
         onCreated={id => { setNewOpen(false); setCreated(id); fetchBookings(); }}
+      />
+      <PlateDialog
+        open={plateFor !== null}
+        onOpenChange={o => !o && setPlateFor(null)}
+        title={plateFor?.handover ? "Hand over vehicle" : "Number plate"}
+        description={plateFor?.handover
+          ? `Enter the number plate of the ${plateFor.booking.rentalId?.listingId?.title ?? "vehicle"} going out to ${customerOf(plateFor.booking).name}. It's printed on the booking slip.`
+          : "Correct the number plate shown on this booking and its slip."}
+        confirmLabel={plateFor?.handover ? "Hand over" : "Save plate"}
+        initial={plateFor ? plateFor.booking.plateNumber ?? plateFor.booking.rentalId?.plateNumber : undefined}
+        onSave={savePlate}
       />
       <ConfirmDialog
         open={confirmCancel !== null}
@@ -490,7 +526,18 @@ export default function BusinessBookingsPage() {
                       </span>
                       {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> OVERDUE</span>}
                     </div>
-                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="min-w-0 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
+                      {b.plateNumber ? (
+                        canManage && b.status !== "CANCELLED" ? (
+                          <button onClick={() => setPlateFor({ booking: b, handover: false })} title="Change number plate"><PlateBadge plate={b.plateNumber} /></button>
+                        ) : <PlateBadge plate={b.plateNumber} />
+                      ) : canManage && (b.status === "ACTIVE" || b.status === "COMPLETED") && (
+                        <button onClick={() => setPlateFor({ booking: b, handover: false })} className="rounded-md border border-dashed border-[var(--gh-d0d7de)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gh-57606a)] hover:border-[var(--gh-0d1117)] hover:text-[var(--gh-0d1117)]">
+                          + Number plate
+                        </button>
+                      )}
+                    </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--gh-57606a)]">
                       <span className="flex items-center gap-1"><CalendarDays size={12} /> {fmt(b.startDate)} → {fmt(b.endDate)} ({days}d)</span>
                       <span className="flex items-center gap-1"><UserRound size={12} /> {c.name}</span>
@@ -517,7 +564,7 @@ export default function BusinessBookingsPage() {
                       )}
                       {canManage && b.status === "CONFIRMED" && (
                         <>
-                          <button onClick={() => updateStatus(b, "ACTIVE")} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The customer has collected the vehicle">
+                          <button onClick={() => setPlateFor({ booking: b, handover: true })} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The customer has collected the vehicle">
                             <KeyRound size={13} /> Hand over
                           </button>
                           <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>Cancel</button>
@@ -549,6 +596,19 @@ export default function BusinessBookingsPage() {
                         </a>
                       )}
                     </div>
+                    {canManage && listing?._id && b.status !== "CANCELLED" && (
+                      <div className="flex items-center gap-2 sm:justify-end">
+                        <span className="text-[11px] text-[var(--gh-8c959f)]">Vehicle tag</span>
+                        <AvailabilityControl
+                          key={`${listing._id}-${listing.status}`}
+                          id={listing._id}
+                          type={listing.type}
+                          status={listing.status}
+                          allow={["ACTIVE", "RENTED"]}
+                          onChanged={s => setVehicleStatus(listing._id, s)}
+                        />
+                      </div>
+                    )}
                     {b.createdBy?.name && <p className="text-[10px] text-[var(--gh-8c959f)]">Booked by {b.createdBy.name}</p>}
                   </div>
                 </div>

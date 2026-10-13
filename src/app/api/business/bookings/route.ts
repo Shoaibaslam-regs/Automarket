@@ -25,7 +25,7 @@ export async function GET() {
 
     const [bookings, listings] = await Promise.all([
       Booking.find({ rentalId: { $in: rentalIds }, deletedByOwner: { $ne: true } })
-        .populate({ path: "rentalId", select: "listingId dailyRate deposit", populate: { path: "listingId", select: "title images make model year location" } })
+        .populate({ path: "rentalId", select: "listingId dailyRate deposit plateNumber", populate: { path: "listingId", select: "title images make model year location type status" } })
         .populate("renterId", "name email phone")
         .populate("customerId", "name phone")
         .populate("createdBy", "name")

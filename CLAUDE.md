@@ -72,6 +72,10 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - `source: "WALK_IN"` bookings have no `renterId`. They store customer details in `walkIn` instead, so treat `renterId` as optional. The personal `/api/bookings?role=owner` list excludes them.
 - The business console (`/business/bookings`, `/api/business/bookings`) creates walk-ins and enforces the status flow in `src/lib/bookings.ts`: PENDING → CONFIRMED → ACTIVE (handed over) → COMPLETED, with cancellation before handover.
 - `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
+- **Number plates.** `Booking.plateNumber` records the vehicle handed over, and `Rental.plateNumber` remembers the last one to prefill the next handover.
+  - In the business console, "Hand over" opens `PlateDialog` (`components/bookings/`) and sends `{ status: "ACTIVE", plateNumber }`. The business route requires the plate for that move.
+  - Personal owners add or correct it with `PATCH /api/bookings/[id]/plate`. Business members with `manageBookings` can use that route for business vehicles too.
+  - `normalizePlate` (`src/lib/plates.ts`) validates and uppercases plates. They show on the booking cards, the business slip and the personal print slip.
 - Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
 - The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
 
@@ -107,7 +111,9 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 
 **Terms.** `/terms` is a static page. `src/lib/terms.ts` holds `TERMS_UPDATED`, which must be bumped when the text changes. Registration requires `acceptTerms: true` and stores `User.termsAcceptedAt`. Google sign-ups get it on first sign-in, because the sign-in page says continuing means agreeing.
 
-**Sold and rented tags.** Owners mark a listing Available, Sold or Rented with `components/listings/AvailabilityControl.tsx`, which calls `PATCH /api/listings/[id]/availability`. The control appears in the dashboard's MyListings, the business inventory and the listing page's Manage box.
+**Sold and rented tags.** Owners mark a listing Available, Sold or Rented with `components/listings/AvailabilityControl.tsx`, which calls `PATCH /api/listings/[id]/availability`. The control appears in the dashboard's MyListings and the listing page's Manage box. Its `allow` prop narrows the choices:
+  - The business inventory offers only Available/Sold.
+  - The Rented tag is applied from bookings: the personal Bookings "received" tab and `/business/bookings`, which offer Available/Rented on each booking's vehicle.
 - The seller can always change it. The owner, managers and sales staff of the seller's business can change their teammates' listings too.
 - `src/lib/availability.ts` (client-safe) says which tags fit a listing type: SALE can be Sold, RENT can be Rented, BOTH can be either.
 - Every status change sets `Listing.statusChangedAt`. The plan limit is checked when a sold listing becomes available or rented again.

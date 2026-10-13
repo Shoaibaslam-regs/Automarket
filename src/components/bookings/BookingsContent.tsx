@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Trash2, TriangleAlert } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
+import AvailabilityControl from "@/components/listings/AvailabilityControl";
+import PlateDialog, { PlateBadge } from "@/components/bookings/PlateDialog";
 
 type ListingInfo = {
   _id: string;
@@ -15,6 +17,8 @@ type ListingInfo = {
   model: string;
   year: number;
   location: string;
+  type?: string;
+  status?: string;
 };
 
 type OwnerInfo = {
@@ -33,8 +37,9 @@ type Booking = {
   createdAt: string;
   confirmedAt?: string;
   cancelledAt?: string;
+  plateNumber?: string;
   renterId: { name: string; email: string; phone?: string };
-  rentalId: { _id: string; listingId: ListingInfo; dailyRate: number };
+  rentalId: { _id: string; listingId: ListingInfo; dailyRate: number; plateNumber?: string };
   owner?: OwnerInfo;
 };
 
@@ -67,6 +72,7 @@ function generateSlip(booking: Booking, tab: string) {
   <div class="header"><div class="logo">AutoMarket</div><div style="font-size:14px;color:#57606a;margin-top:4px">Rental Booking Slip</div><div style="font-size:11px;color:#8c959f;margin-top:4px">Booking ID: ${booking._id}</div></div>
   <div class="section"><div class="section-title">Vehicle details</div>
   <div class="row"><span class="label">Vehicle</span><span class="value">${listing?.title || "N/A"}</span></div>
+  ${booking.plateNumber ? `<div class="row"><span class="label">Number plate</span><span class="value" style="border:2px solid #0d1117;border-radius:4px;padding:0 6px;font-family:monospace;letter-spacing:2px">${booking.plateNumber}</span></div>` : ""}
   <div class="row"><span class="label">Make & model</span><span class="value">${listing?.make} ${listing?.model} ${listing?.year}</span></div>
   <div class="row"><span class="label">Location</span><span class="value">${listing?.location || "N/A"}</span></div></div>
   <div class="section"><div class="section-title">Booking details</div>
@@ -168,6 +174,18 @@ export default function BookingsContent() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; action: "cancel" | "decline" } | null>(null);
+  // The owner records the number plate when handing the vehicle over
+  const [plateFor, setPlateFor] = useState<Booking | null>(null);
+
+  async function savePlate(plate: string): Promise<string | null> {
+    if (!plateFor) return null;
+    const res = await fetch(`/api/bookings/${plateFor._id}/plate`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plateNumber: plate }) });
+    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the number plate";
+    const id = plateFor._id;
+    setBookings(prev => prev.map(b => (b._id === id ? { ...b, plateNumber: plate } : b)));
+    setPlateFor(null);
+    return null;
+  }
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -229,6 +247,15 @@ export default function BookingsContent() {
     <div className="adm-page">
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
+        <PlateDialog
+          open={plateFor !== null}
+          onOpenChange={o => !o && setPlateFor(null)}
+          title="Number plate"
+          description={`Enter the number plate of the ${plateFor?.rentalId?.listingId?.title ?? "vehicle"} you're handing over. It shows on the booking and the slip for you and the renter.`}
+          confirmLabel="Save plate"
+          initial={plateFor ? plateFor.plateNumber ?? plateFor.rentalId?.plateNumber : undefined}
+          onSave={savePlate}
+        />
         {deleteTarget && <ConfirmPopup message="This booking will be removed from your view." onConfirm={confirmDelete} onCancel={() => { setDeleteTarget(null); setDeleteError(""); }} loading={deleting} error={deleteError} />}
         {cancelTarget && (
           <ConfirmPopup
@@ -301,6 +328,18 @@ export default function BookingsContent() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
                         <p style={{ fontSize: "12px", color: "var(--gh-57606a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
+                        {booking.plateNumber ? (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
+                            <PlateBadge plate={booking.plateNumber} />
+                            {tab === "received" && booking.status !== "CANCELLED" && (
+                              <button onClick={() => setPlateFor(booking)} style={{ fontSize: "11px", color: "var(--gh-57606a)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Change</button>
+                            )}
+                          </span>
+                        ) : tab === "received" && ["CONFIRMED", "COMPLETED"].includes(booking.status) && (
+                          <button onClick={() => setPlateFor(booking)} style={{ marginTop: "6px", padding: "2px 8px", fontSize: "11px", fontWeight: 600, color: "var(--gh-57606a)", background: "var(--gh-ffffff)", border: "1px dashed var(--gh-d0d7de)", borderRadius: "6px", cursor: "pointer" }}>
+                            + Add number plate
+                          </button>
+                        )}
                       </div>
                       {tab === "mine" && listingId && (
                         <Link className="bk-listing-actions" href={`/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "var(--gh-0d1117)", textDecoration: "none", flexShrink: 0 }}>View listing →</Link>
@@ -369,6 +408,19 @@ export default function BookingsContent() {
                     )}
                     {tab === "mine" && ["PENDING", "CONFIRMED"].includes(booking.status) && (
                       <button onClick={() => setCancelTarget({ id: booking._id, action: "cancel" })} disabled={updating === booking._id} style={{ padding: "8px 18px", background: "var(--gh-ffffff)", color: "var(--gh-cf222e)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "7px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Cancel booking</button>
+                    )}
+                    {tab === "received" && listing?._id && listing.type && listing.status && booking.status !== "CANCELLED" && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>Vehicle tag</span>
+                        <AvailabilityControl
+                          key={`${listing._id}-${listing.status}`}
+                          id={listing._id}
+                          type={listing.type}
+                          status={listing.status}
+                          allow={["ACTIVE", "RENTED"]}
+                          onChanged={s => setBookings(prev => prev.map(x => (x.rentalId?.listingId?._id === listing._id ? { ...x, rentalId: { ...x.rentalId, listingId: { ...x.rentalId.listingId, status: s } } } : x)))}
+                        />
+                      </span>
                     )}
                     {["CONFIRMED", "COMPLETED"].includes(booking.status) && (
                       <button onClick={() => generateSlip(booking, tab)} style={{ padding: "8px 16px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", color: "var(--gh-0d1117)", borderRadius: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Generate slip</button>

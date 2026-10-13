@@ -15,21 +15,23 @@ const ACTIVE_STYLE: Record<Availability, string> = {
  * Sold and rented vehicles stay visible to buyers with a tag, so they move on to other vehicles.
  * Refreshes the page's server data after a change; `onChanged` lets client pages reload their own lists.
  */
-export default function AvailabilityControl({ id, type, status, onChanged, size = "sm" }: {
+export default function AvailabilityControl({ id, type, status, onChanged, size = "sm", allow }: {
   id: string;
   type: string;
   status: string;
   onChanged?: (status: Availability) => void;
   size?: "sm" | "md";
+  /** Only offer these tags, e.g. bookings offer Available/Rented and inventory Available/Sold */
+  allow?: Availability[];
 }) {
   const router = useRouter();
   const [current, setCurrent] = useState(status);
   const [busy, setBusy] = useState<Availability | null>(null);
   const [error, setError] = useState("");
-  const options = availabilityOptions(type);
+  const options = availabilityOptions(type).filter(o => !allow || allow.includes(o));
 
-  // Pending (reserved) and inactive listings aren't managed here
-  if (!["ACTIVE", "SOLD", "RENTED"].includes(current)) return null;
+  // Pending (reserved) and inactive listings aren't managed here, and a single choice isn't a switch
+  if (!["ACTIVE", "SOLD", "RENTED"].includes(current) || options.length < 2) return null;
 
   async function choose(next: Availability) {
     if (next === current || busy) return;

@@ -241,7 +241,7 @@ export default function InventoryPage() {
                   )}
                   {v.canSetAvailability && (
                     <div className="mb-2.5">
-                      <AvailabilityControl id={v._id} type={v.type} status={v.status} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
+                      <AvailabilityControl id={v._id} type={v.type} status={v.status} allow={["ACTIVE", "SOLD"]} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
                     </div>
                   )}
                   <div className="mt-auto flex gap-1.5">
@@ -279,7 +279,7 @@ export default function InventoryPage() {
                 <p className="hidden flex-shrink-0 text-sm font-bold text-[var(--gh-0d1117)] sm:block">PKR {v.price.toLocaleString()}</p>
                 {v.canSetAvailability && (
                   <span className="hidden lg:block">
-                    <AvailabilityControl id={v._id} type={v.type} status={v.status} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
+                    <AvailabilityControl id={v._id} type={v.type} status={v.status} allow={["ACTIVE", "SOLD"]} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
                   </span>
                 )}
                 <div className="flex flex-shrink-0 gap-1.5">
