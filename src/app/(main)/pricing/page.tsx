@@ -7,8 +7,9 @@ import PlanCards from "@/components/subscription/PlanCards";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
+import VerifiedBadgeOffer from "@/components/subscription/VerifiedBadgeOffer";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLANS, PLAN_LIST, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
+import { PLANS, PLAN_LIST, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Active listings", value: p => formatLimit(p.limits.listings) },
@@ -33,6 +34,10 @@ const FAQ = [
   {
     q: "Does my team share one plan?",
     a: "Yes. Everyone in a business uses the owner's plan, and all of their listings count towards it.",
+  },
+  {
+    q: "What is the Verified badge?",
+    a: `A PKR ${VERIFIED_BADGE.price.toLocaleString()}/month add-on for businesses, on top of any plan. After our team checks your business, a blue Verified tick shows on your business page and listings.`,
   },
   {
     q: "How do I pay?",
@@ -72,6 +77,8 @@ export default function PricingPage() {
 
       <div className="relative mx-auto -mt-28 max-w-[1240px] px-4 pb-16 sm:px-6">
         <PlanCards currentPlanId={sub?.planId ?? null} signedIn={signedIn} onUpgrade={setUpgrading} />
+
+        <VerifiedBadgeOffer />
 
         {/* Current usage */}
         {sub && current && (

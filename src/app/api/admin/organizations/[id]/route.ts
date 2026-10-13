@@ -6,6 +6,10 @@ import { Listing } from "@/models/Listing";
 import { Message } from "@/models/Message";
 import { getOrgUserIds } from "@/lib/business";
 import { triggerPusher } from "@/lib/support";
+import { isVerified } from "@/lib/plans";
+
+const BADGE_MONTHS = [1, 3, 6, 12];
+const fmtDate = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 
 /** Tells the owner in Messages, from the acting admin, so they can reply there to appeal. */
 async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.Types.ObjectId, content: string) {
@@ -21,8 +25,10 @@ async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.T
 }
 
 /**
- * Warns, suspends or reinstates a business.
- * Body: { action: "warn", reason } | { action: "suspend", reason } | { action: "reinstate" }.
+ * Warns, suspends or reinstates a business, or manages its Verified badge.
+ * Body: { action: "warn", reason } | { action: "suspend", reason } | { action: "reinstate" }
+ *     | { action: "verify", months: 1 | 3 | 6 | 12 | null, source: "PAID" | "ADMIN_GRANT" }
+ *     | { action: "rejectVerification", reason } | { action: "unverify", reason? }.
  * A warning is optional: it only records the notice and messages the owner.
  * Suspending hides the business's live listings (remembered, so reinstating switches back on exactly
  * those), takes its public page offline and locks its console apart from Help & support.
@@ -33,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Business not found" }, { status: 404 });
-    const { action, reason } = await req.json().catch(() => ({}));
+    const { action, reason, months, source } = await req.json().catch(() => ({}));
     const org = await Organization.findById(id);
     if (!org) return NextResponse.json({ error: "Business not found" }, { status: 404 });
     const memberIds = await getOrgUserIds(org._id);
@@ -82,9 +88,61 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ ok: true, restoredListings: restored.modifiedCount });
     }
 
+    if (action === "verify") {
+      if (months !== null && !BADGE_MONTHS.includes(months)) return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+      if (source !== "PAID" && source !== "ADMIN_GRANT") return NextResponse.json({ error: "Say whether it was paid or a gift" }, { status: 400 });
+      const now = new Date();
+      const current = org.verification;
+      const renewing = isVerified(current);
+      let expiresAt: Date | undefined;
+      if (months !== null) {
+        // A renewal adds the months on top of the time still left
+        expiresAt = new Date(renewing && current?.expiresAt ? current.expiresAt : now);
+        expiresAt.setMonth(expiresAt.getMonth() + months);
+      }
+      org.verification = {
+        verifiedAt: renewing && current?.verifiedAt ? current.verifiedAt : now,
+        expiresAt,
+        source,
+        by: gate.admin._id,
+      };
+      await org.save();
+      await notifyOwner(gate.admin._id, org.ownerId,
+        `Your business "${org.name}" is now Verified on AutoMarket${source === "ADMIN_GRANT" ? " (complimentary)" : ""}. ` +
+        `The Verified badge shows on your business page and listings${expiresAt ? ` until ${fmtDate(expiresAt)}` : ""}.`);
+      return NextResponse.json({ ok: true, expiresAt: expiresAt ?? null });
+    }
+
+    if (action === "rejectVerification") {
+      const why = typeof reason === "string" ? reason.trim() : "";
+      if (why.length < 5 || why.length > 500) return NextResponse.json({ error: "Give a reason of 5 to 500 characters" }, { status: 400 });
+      if (!org.verification?.requestedAt) return NextResponse.json({ error: "This business has no open badge request" }, { status: 400 });
+      org.verification.requestedAt = undefined;
+      org.verification.requestedBy = undefined;
+      org.verification.rejectedAt = new Date();
+      org.verification.rejectionReason = why;
+      await org.save();
+      await notifyOwner(gate.admin._id, org.ownerId,
+        `Your Verified badge request for "${org.name}" wasn't approved. Reason: ${why}. You can request it again once that's sorted. Reply here if you have questions.`);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "unverify") {
+      if (!org.verification?.verifiedAt) return NextResponse.json({ error: "This business doesn't have the Verified badge" }, { status: 400 });
+      const why = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
+      org.verification.verifiedAt = undefined;
+      org.verification.expiresAt = undefined;
+      org.verification.source = undefined;
+      org.verification.by = undefined;
+      await org.save();
+      await notifyOwner(gate.admin._id, org.ownerId,
+        `The Verified badge has been removed from your business "${org.name}" on AutoMarket${why ? `. Reason: ${why}` : ""}. Reply here if you have questions.`);
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Business suspension error:", error);
+    console.error("Business update error:", error);
     return NextResponse.json({ error: "Failed to update business" }, { status: 500 });
   }
 }

@@ -100,3 +100,42 @@ export function isFreeGrant(source: unknown): boolean {
 export function planSourceLabel(source: unknown): string | null {
   return source === "TRIAL" ? "Free trial" : source === "ADMIN_GRANT" ? "Complimentary" : source === "PAID" ? "Paid" : null;
 }
+
+/**
+ * Verified badge: a separate add-on for businesses, not a plan tier. Like a paid plan it is
+ * requested from the team, approved by an admin for a number of months, and can be gifted.
+ */
+export const VERIFIED_BADGE = {
+  name: "Verified badge",
+  /** Monthly price in PKR */
+  price: 500,
+  features: [
+    "Blue Verified tick on your business page",
+    "Verified label on every listing your team posts",
+    "Checked by the AutoMarket team, so buyers trust you faster",
+    "Works with any plan, Free included",
+  ],
+};
+
+/** The badge fields stored on an Organization. Dates may be strings once sent to the client. */
+export type BadgeVerification = {
+  verifiedAt?: Date | string | null;
+  expiresAt?: Date | string | null;
+  source?: "PAID" | "ADMIN_GRANT" | null;
+  requestedAt?: Date | string | null;
+  rejectedAt?: Date | string | null;
+  rejectionReason?: string | null;
+};
+
+/** Whether the badge is in force right now: approved and not past its end date. */
+export function isVerified(v: BadgeVerification | null | undefined): boolean {
+  if (!v?.verifiedAt) return false;
+  return !v.expiresAt || new Date(v.expiresAt).getTime() > Date.now();
+}
+
+export type BadgeState = "NONE" | "VERIFIED" | "EXPIRED";
+
+export function badgeState(v: BadgeVerification | null | undefined): BadgeState {
+  if (isVerified(v)) return "VERIFIED";
+  return v?.verifiedAt ? "EXPIRED" : "NONE";
+}

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "@/models/User";
+import { Message } from "@/models/Message";
 
 type SupportAdmin = { _id: mongoose.Types.ObjectId; name?: string };
 
@@ -28,4 +29,12 @@ export async function triggerPusher(channel: string, event: string, data: unknow
   } catch (e) {
     console.error("Pusher error:", e);
   }
+}
+
+/** Posts a chat message and pushes it to both sides in real time, like a message sent from the Messages page. */
+export async function sendChatMessage(senderId: string, receiverId: string, content: string, fromName?: string | null) {
+  const message = await Message.create({ senderId, receiverId, content });
+  const populated = await Message.findById(message._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
+  await triggerPusher(`chat-${[senderId, receiverId].sort().join("-")}`, "new-message", populated);
+  await triggerPusher(`user-${receiverId}`, "new-notification", { type: "message", from: fromName, preview: content.slice(0, 50) });
 }

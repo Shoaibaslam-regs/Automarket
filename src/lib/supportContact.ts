@@ -9,6 +9,12 @@ export function upgradeRequestText(planName: string, price: number, user?: { id?
   return `Hi AutoMarket team, I'd like to upgrade to the ${planName} plan (PKR ${price.toLocaleString()}/month).${who} How can I pay?`;
 }
 
+/** The message a business owner sends when asking for the Verified badge. */
+export function badgeRequestText(businessName: string, price: number, user?: { id?: string; email?: string | null }) {
+  const who = user?.id ? ` My AutoMarket ID is #${user.id.slice(-6)}${user.email ? ` (${user.email})` : ""}.` : "";
+  return `Hi AutoMarket team, I'd like the Verified badge for my business "${businessName}" (PKR ${price.toLocaleString()}/month).${who} How can I pay?`;
+}
+
 export function whatsappLink(text: string): string | null {
   return SUPPORT_WHATSAPP ? `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(text)}` : null;
 }

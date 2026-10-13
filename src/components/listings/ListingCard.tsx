@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, BadgeCheck } from "lucide-react";
+import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2 } from "lucide-react";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified, type BadgeVerification } from "@/lib/plans";
 import { IListing } from "@/models/Listing";
 import { formatLakh } from "@/lib/format";
 import FavoriteButton from "./FavoriteButton";
@@ -20,7 +22,7 @@ const TYPE_BADGE: Record<IListing["type"], { label: string; className: string }>
   BOTH: { label: "Sale & Rent", className: "bg-indigo-500/90 text-white" },
 };
 
-type CardSeller = { name?: string; image?: string; organizationId?: { name?: string } | null };
+type CardSeller = { name?: string; image?: string; organizationId?: { name?: string; verification?: BadgeVerification } | null };
 
 // sellerId is populated ({ name, image, organizationId }) on the browse feed and a bare ObjectId elsewhere
 function sellerOf(listing: Props["listing"]): CardSeller | null {
@@ -30,11 +32,13 @@ function sellerOf(listing: Props["listing"]): CardSeller | null {
 
 /** Business sellers show their business name with a badge; private sellers show their own name. */
 function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean }) {
-  const business = seller.organizationId && typeof seller.organizationId === "object" ? seller.organizationId.name : undefined;
+  const org = seller.organizationId && typeof seller.organizationId === "object" ? seller.organizationId : null;
+  const business = org?.name;
   if (business) {
+    const verified = isVerified(org.verification);
     return (
-      <span className="flex min-w-0 items-center gap-1 font-medium text-indigo-700" title={`Listed by ${business} (business account)`}>
-        <BadgeCheck size={13} className="flex-shrink-0" />
+      <span className="flex min-w-0 items-center gap-1 font-medium text-indigo-700" title={`Listed by ${business} (${verified ? "verified business" : "business account"})`}>
+        {verified ? <VerifiedBadge variant="icon" size={14} /> : <Building2 size={13} className="flex-shrink-0" />}
         <span className="truncate">{business}</span>
       </span>
     );

@@ -14,7 +14,8 @@ import { SITE_URL } from "@/lib/site";
 import { formatLakh } from "@/lib/format";
 import { getBestDealForListing, getBusinessRatings, getSellerBusinesses } from "@/lib/reviews";
 import { dealLabel, dealPrice } from "@/lib/deals";
-import { BadgeCheck, Building2, ChevronRight, MapPin, Tag, UserRound } from "lucide-react";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { Building2, ChevronRight, MapPin, Tag, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
@@ -253,9 +254,11 @@ export default async function ListingDetailPage({ params }: Props) {
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-gray-700">Listed by</h2>
-                {l.sellerId && (business ? (
+                {l.sellerId && (business?.verified ? (
+                  <VerifiedBadge />
+                ) : business ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-200">
-                    <BadgeCheck size={12} /> Business account
+                    <Building2 size={12} /> Business account
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">

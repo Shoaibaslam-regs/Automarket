@@ -8,6 +8,7 @@ import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
 import { Inspection } from "@/models/Inspection";
 import { getBusinessRatings, getSellerBusinesses } from "@/lib/reviews";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { formatLakh } from "@/lib/format";
 import { MAX_COMPARE } from "@/lib/compare";
 import StarRating from "@/components/reviews/StarRating";
@@ -146,7 +147,10 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
       label: "Seller",
       values: cols.map(c =>
         c.business ? (
-          <a key={c.id} href={`/dealers/${c.business.slug}`} className="text-sm font-semibold text-indigo-700 hover:underline">{c.business.name}</a>
+          <a key={c.id} href={`/dealers/${c.business.slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:underline">
+            {c.business.name}
+            {c.business.verified && <VerifiedBadge variant="icon" size={14} />}
+          </a>
         ) : (
           <span key={c.id}>{c.l.sellerId?.name ? `${c.l.sellerId.name} · Private` : dash}</span>
         )

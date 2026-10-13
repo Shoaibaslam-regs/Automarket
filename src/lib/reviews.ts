@@ -7,10 +7,11 @@ import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getBusinessRentals, getOrgUserIds } from "@/lib/business";
+import { isVerified, type BadgeVerification } from "@/lib/plans";
 
 type Oid = mongoose.Types.ObjectId;
 export type RatingSummary = { average: number; count: number };
-export type SellerBusiness = { id: string; name: string; slug: string; type: string; city?: string; logo?: string };
+export type SellerBusiness = { id: string; name: string; slug: string; type: string; city?: string; logo?: string; verified: boolean };
 
 /** Average rating and review count per business, for any number of businesses in one query. */
 export async function getBusinessRatings(orgIds: string[]): Promise<Map<string, RatingSummary>> {
@@ -31,13 +32,13 @@ export async function getSellerBusinesses(sellerIds: string[]): Promise<Map<stri
     .select("organizationId")
     .lean<Array<{ _id: Oid; organizationId: Oid }>>();
   const orgs = await Organization.find({ _id: { $in: users.map(u => u.organizationId) }, isActive: { $ne: false } })
-    .select("name slug type city logo")
-    .lean<Array<{ _id: Oid; name: string; slug: string; type: string; city?: string; logo?: string }>>();
+    .select("name slug type city logo verification.verifiedAt verification.expiresAt")
+    .lean<Array<{ _id: Oid; name: string; slug: string; type: string; city?: string; logo?: string; verification?: BadgeVerification }>>();
   const byId = new Map(orgs.map(o => [String(o._id), o]));
   const out = new Map<string, SellerBusiness>();
   for (const u of users) {
     const o = byId.get(String(u.organizationId));
-    if (o) out.set(String(u._id), { id: String(o._id), name: o.name, slug: o.slug, type: o.type, city: o.city, logo: o.logo });
+    if (o) out.set(String(u._id), { id: String(o._id), name: o.name, slug: o.slug, type: o.type, city: o.city, logo: o.logo, verified: isVerified(o.verification) });
   }
   return out;
 }

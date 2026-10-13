@@ -31,6 +31,20 @@ export interface IOrganization extends Document {
     acknowledgedAt?: Date;
     acknowledgedBy?: mongoose.Types.ObjectId;
   }>;
+  /**
+   * Verified badge (see VERIFIED_BADGE in lib/plans). verifiedAt is set while granted; requestedAt marks an
+   * open request from the owner and is cleared when an admin approves or rejects it.
+   */
+  verification?: {
+    verifiedAt?: Date;
+    expiresAt?: Date;
+    source?: "PAID" | "ADMIN_GRANT";
+    by?: mongoose.Types.ObjectId;
+    requestedAt?: Date;
+    requestedBy?: mongoose.Types.ObjectId;
+    rejectedAt?: Date;
+    rejectionReason?: string;
+  };
   settings: {
     allowPublicListings: boolean;
     currency: string;
@@ -79,6 +93,21 @@ const OrganizationSchema = new Schema<IOrganization>(
         ),
       ],
       default: [],
+    },
+    verification: {
+      type: new Schema(
+        {
+          verifiedAt: { type: Date },
+          expiresAt: { type: Date },
+          source: { type: String, enum: ["PAID", "ADMIN_GRANT"] },
+          by: { type: Schema.Types.ObjectId, ref: "User" },
+          requestedAt: { type: Date },
+          requestedBy: { type: Schema.Types.ObjectId, ref: "User" },
+          rejectedAt: { type: Date },
+          rejectionReason: { type: String, maxlength: 500 },
+        },
+        { _id: false }
+      ),
     },
     settings: {
       allowPublicListings: { type: Boolean, default: true },

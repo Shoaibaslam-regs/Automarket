@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
+import { isFreeGrant, isVerified, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
+import VerifyBadgeDialog, { type BadgeAction } from "@/components/admin/VerifyBadgeDialog";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import {
   Badge,
   ConfirmDialog,
@@ -48,6 +50,7 @@ type Organization = {
   isActive: boolean;
   suspension?: { reason: string; at: string } | null;
   warnings?: Array<{ reason: string; at: string; acknowledgedAt?: string }>;
+  verification?: BadgeVerification | null;
   staffCount: number;
   vehicleCount: number;
   createdAt: string;
@@ -105,10 +108,36 @@ export default function AdminPage() {
   const [suspending, setSuspending] = useState(false);
 
   const bq = bizSearch.trim().toLowerCase().replace(/^#/, "");
+  const matchesStatus = (o: Organization) =>
+    !bizStatus ||
+    (bizStatus === "Suspended" ? !o.isActive
+      : bizStatus === "Badge requests" ? !!o.verification?.requestedAt
+      : bizStatus === "Verified" ? isVerified(o.verification)
+      : o.isActive);
   const shownOrgs = organizations.filter(o =>
     (!bq || [o.name, o.city, o.ownerId?.name ?? "", o.ownerId?.email ?? "", o._id, o.ownerId?._id ?? ""].some(v => v.toLowerCase().includes(bq))) &&
-    (!bizStatus || (bizStatus === "Suspended" ? !o.isActive : o.isActive))
+    matchesStatus(o)
   );
+  const badgeRequests = organizations.filter(o => o.verification?.requestedAt);
+
+  // Verified badge: approve (paid or gift), reject the owner's request, or remove it
+  const [badgeFor, setBadgeFor] = useState<Organization | null>(null);
+  async function saveBadge(body: BadgeAction) {
+    const org = badgeFor;
+    if (!org) return;
+    const res = await fetch(`/api/admin/organizations/${org._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) setNotice({ ok: false, text: data.error || "Failed to update the badge" });
+    else if (body.action === "verify") setNotice({ ok: true, text: `${org.name} is verified${data.expiresAt ? ` until ${fmtPlanDate(data.expiresAt)}` : ""}. The owner was told in Messages.` });
+    else if (body.action === "rejectVerification") setNotice({ ok: true, text: `${org.name}'s badge request was rejected and the owner was told why.` });
+    else setNotice({ ok: true, text: `The Verified badge was removed from ${org.name}.` });
+    setBadgeFor(null);
+    reloadOrganizations();
+  }
 
   async function changeSuspension(org: Organization, body: { action: "suspend" | "warn"; reason: string } | { action: "reinstate" }) {
     setSuspending(true);
@@ -315,20 +344,32 @@ export default function AdminPage() {
             <StatCard label="Rental co." value={organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length} icon={KeyRound} tone="orange" />
           </StatGrid>
 
+          {badgeRequests.length > 0 && bizStatus !== "Badge requests" && (
+            <div className="mb-4 flex flex-col gap-3 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-800 ring-1 ring-inset ring-sky-200 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-center gap-2">
+                <BadgeCheck size={16} className="flex-shrink-0" />
+                {badgeRequests.length === 1 ? `${badgeRequests[0].name} asked` : `${badgeRequests.length} businesses asked`} for the Verified badge.
+              </p>
+              <button onClick={() => setBizStatus("Badge requests")} className="inline-flex items-center gap-1 self-start rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-200 transition hover:bg-sky-100 sm:self-auto">
+                Review <ArrowRight size={13} />
+              </button>
+            </div>
+          )}
+
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500">
               {shownOrgs.length === organizations.length ? `${organizations.length} businesses` : `${shownOrgs.length} of ${organizations.length} businesses`}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <SearchField value={bizSearch} onChange={setBizSearch} placeholder="Business, city, owner, email or ID…" />
-              <SelectField value={bizStatus} onChange={setBizStatus} options={["Active", "Suspended"]} allLabel="All statuses" ariaLabel="Filter by status" />
+              <SelectField value={bizStatus} onChange={setBizStatus} options={["Active", "Suspended", "Verified", "Badge requests"]} allLabel="All statuses" ariaLabel="Filter by status" />
             </div>
           </div>
 
           <DataTable
             rows={shownOrgs}
             rowKey={o => o._id}
-            cols="md:grid-cols-[minmax(0,2fr)_minmax(0,1.7fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_56px_48px_270px]"
+            cols="md:grid-cols-[minmax(0,2fr)_minmax(0,1.7fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_56px_48px_340px]"
             empty={organizations.length ? "No businesses match your search" : "No businesses registered yet"}
             columns={[
               {
@@ -342,6 +383,8 @@ export default function AdminPage() {
                       <div className="flex min-w-0 items-center gap-2">
                         <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
                         {!org.isActive && <Badge tone="red">Suspended</Badge>}
+                        {isVerified(org.verification) && <VerifiedBadge variant="icon" />}
+                        {org.verification?.requestedAt && <Badge tone="blue"><BadgeCheck size={10} /> Badge request</Badge>}
                         {org.isActive && (org.warnings?.length ?? 0) > 0 && (
                           <span title={`Last warning: ${org.warnings![org.warnings!.length - 1].reason}`}>
                             <Badge tone="amber"><AlertTriangle size={10} /> {org.warnings!.length} warning{org.warnings!.length !== 1 ? "s" : ""}</Badge>
@@ -399,6 +442,14 @@ export default function AdminPage() {
                     <p className="text-xs text-slate-400 md:text-right">No owner</p>
                   ) : (
                     <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
+                      <button
+                        onClick={() => setBadgeFor(org)}
+                        className={`${btn.base} ${btn.secondary} relative flex-1 md:flex-none`}
+                        title={org.verification?.requestedAt ? "Review badge request" : "Verified badge"}
+                      >
+                        <BadgeCheck size={13} className={isVerified(org.verification) ? "text-sky-600" : ""} /> Badge
+                        {org.verification?.requestedAt && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-sky-500 ring-2 ring-white" />}
+                      </button>
                       <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
                         <Gift size={13} /> Plan
                       </button>
@@ -535,6 +586,11 @@ export default function AdminPage() {
             }
           />
 
+          <VerifyBadgeDialog
+            target={badgeFor && { name: badgeFor.name, ownerLabel: badgeFor.ownerId?.name || badgeFor.ownerId?.email, verification: badgeFor.verification }}
+            onClose={() => setBadgeFor(null)}
+            onSave={saveBadge}
+          />
           <PlanGiftDialog
             target={giftFor && {
               name: giftFor.name,

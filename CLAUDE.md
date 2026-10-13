@@ -75,6 +75,12 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
 - The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
 
+**Verified badge.** A PKR 500/month add-on for businesses, separate from plans. `VERIFIED_BADGE`, `isVerified` and `badgeState` are in `src/lib/plans.ts`.
+- It is stored on `Organization.verification`. `verifiedAt`/`expiresAt`/`source` (`PAID` or `ADMIN_GRANT`) record the grant. `requestedAt` marks an open request from the owner, and `rejectedAt`/`rejectionReason` record the last refusal. Always check with `isVerified()`, because an expired badge keeps its `verifiedAt`.
+- The owner requests it from the pricing page (`VerifiedBadgeOffer`, which calls `POST /api/business/verification`). That records `requestedAt` and messages the support admin.
+- Admins handle it from the Badge button in the Businesses tab (`VerifyBadgeDialog`), which calls `PATCH /api/admin/organizations/[id]` with `verify`, `rejectVerification` or `unverify`. Renewing adds the months to the time left.
+- Public pages show `components/VerifiedBadge.tsx`. Unverified businesses use a building icon so only verified ones show a tick. Public queries select only `verification.verifiedAt verification.expiresAt`. `getSellerBusinesses` returns `verified`.
+
 **Reviews and deals.**
 - Reviews belong to **businesses**, not individual sellers or listings. `BusinessReview` allows one review per user per organization, and the business can add a public `reply`.
 - Only people who dealt with the business may review it (`canReviewBusiness` in `src/lib/reviews.ts`): they booked, messaged a member, or are a CRM customer. Members can't review their own business.

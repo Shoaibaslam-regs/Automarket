@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     const listings = await Listing.find(query)
       // Public feed: only what a card shows. Contact details stay on the listing page.
       // The seller's business (if any) lets cards show "listed by a business" vs a private seller
-      .populate({ path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug" } })
+      .populate({ path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" } })
       .sort({ featured: -1, ...sortOrder })
       .skip(skip)
       .limit(limit)

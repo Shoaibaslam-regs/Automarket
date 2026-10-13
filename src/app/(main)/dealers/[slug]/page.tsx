@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
-import { BadgeCheck, Building2, CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
+import { Building2, CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
@@ -13,6 +13,8 @@ import { Deal } from "@/models/Deal";
 import { getOrgUserIds } from "@/lib/business";
 import { canReviewBusiness } from "@/lib/reviews";
 import { dealLabel } from "@/lib/deals";
+import { isVerified, type BadgeVerification } from "@/lib/plans";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import DealerVehicles from "@/components/listings/DealerVehicles";
 import StarRating from "@/components/reviews/StarRating";
 import BusinessReviews, { type ReviewViewer } from "@/components/reviews/BusinessReviews";
@@ -22,6 +24,7 @@ type Props = { params: Promise<{ slug: string }> };
 type Org = {
   _id: mongoose.Types.ObjectId; name: string; slug: string; type: "DEALER" | "RENTAL" | "BOTH";
   city?: string; address?: string; phone?: string; email?: string; description?: string; createdAt: Date;
+  verification?: BadgeVerification;
 };
 
 const REVIEW_PAGE = 10;
@@ -30,7 +33,7 @@ const TYPE_LABEL: Record<Org["type"], string> = { DEALER: "Car dealer", RENTAL: 
 const getBusiness = cache(async (slug: string) => {
   await connectDB();
   return Organization.findOne({ slug, isActive: { $ne: false } })
-    .select("name slug type city address phone email description createdAt")
+    .select("name slug type city address phone email description createdAt verification.verifiedAt verification.expiresAt")
     .lean<Org>();
 });
 
@@ -94,9 +97,13 @@ export default async function DealerPage({ params }: Props) {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{org.name}</h1>
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-200 ring-1 ring-inset ring-white/15">
-                  <BadgeCheck size={13} /> Business account
-                </span>
+                {isVerified(org.verification) ? (
+                  <VerifiedBadge tone="dark" className="px-2.5 py-1" />
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-200 ring-1 ring-inset ring-white/15">
+                    <Building2 size={13} /> Business account
+                  </span>
+                )}
               </div>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
                 <span className="flex items-center gap-1"><Building2 size={14} /> {TYPE_LABEL[org.type]}</span>
