@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
+import { bookingCnic } from "@/lib/plates";
 
 type SlipData = {
   booking: {
@@ -19,6 +20,7 @@ type SlipData = {
     createdBy?: { name?: string } | null;
     notes?: string;
     plateNumber?: string;
+    renterCnic?: string;
     createdAt: string;
     confirmedAt?: string;
     startedAt?: string;
@@ -85,9 +87,9 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
   const listing = b.rentalId?.listingId;
   const days = rentalDays(b.startDate, b.endDate);
   const rate = b.rentalId?.dailyRate ?? Math.round(b.totalAmount / days);
-  const customer = b.source === "WALK_IN" && b.walkIn
-    ? { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email, cnic: b.walkIn.cnic }
-    : { name: b.renterId?.name, phone: b.renterId?.phone, email: b.renterId?.email, cnic: undefined };
+  const customer = b.walkIn && (b.source === "WALK_IN" || !b.renterId)
+    ? { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email, cnic: bookingCnic(b) }
+    : { name: b.renterId?.name, phone: b.renterId?.phone, email: b.renterId?.email, cnic: bookingCnic(b) };
   const status = STATUS_LABEL[b.status] ?? STATUS_LABEL.PENDING;
 
   return (
@@ -149,7 +151,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
               <Row label="Name" value={customer.name || "—"} />
               <Row label="Phone" value={customer.phone} />
               <Row label="Email" value={customer.email} />
-              <Row label="CNIC" value={customer.cnic} />
+              <Row label="CNIC" value={customer.cnic && <span className="font-mono tracking-wide">{customer.cnic}</span>} />
             </section>
             <section className="rounded-xl border border-[var(--gh-e1e4e8)] p-4">
               <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>

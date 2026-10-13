@@ -72,10 +72,11 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - `source: "WALK_IN"` bookings have no `renterId`. They store customer details in `walkIn` instead, so treat `renterId` as optional. The personal `/api/bookings?role=owner` list excludes them.
 - The business console (`/business/bookings`, `/api/business/bookings`) creates walk-ins and enforces the status flow in `src/lib/bookings.ts`: PENDING → CONFIRMED → ACTIVE (handed over) → COMPLETED, with cancellation before handover.
 - `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
-- **Number plates.** `Booking.plateNumber` records the vehicle handed over, and `Rental.plateNumber` remembers the last one to prefill the next handover.
-  - In the business console, "Hand over" opens `PlateDialog` (`components/bookings/`) and sends `{ status: "ACTIVE", plateNumber }`. The business route requires the plate for that move.
-  - Personal owners add or correct it with `PATCH /api/bookings/[id]/plate`. Business members with `manageBookings` can use that route for business vehicles too.
-  - `normalizePlate` (`src/lib/plates.ts`) validates and uppercases plates. They show on the booking cards, the business slip and the personal print slip.
+- **Handover details: number plate and renter CNIC.**
+  - `Booking.plateNumber` and `Booking.renterCnic` are recorded at handover. `Rental.plateNumber` remembers the last plate to prefill the next one. Walk-ins may also carry `walkIn.cnic`, so read the CNIC with `bookingCnic(b)`.
+  - In the business console, "Hand over" opens `HandoverDialog` (`components/bookings/`) and sends `{ status: "ACTIVE", plateNumber, cnic }`. The business route requires both for that move.
+  - Personal owners add or correct both with `PATCH /api/bookings/[id]/handover`. Business members with `manageBookings` can use that route for business vehicles too.
+  - `normalizePlate`, `normalizeCnic` and `formatCnicInput` are in `src/lib/plates.ts`. Cards show both values with `HandoverDetails`, and both slips print them.
 - Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
 - The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
 
@@ -108,6 +109,17 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - Routes that change those pages expire the tags straight away with `invalidateListingAndSeller`, `invalidateBusinessPage` or `invalidateBusinessSlug`. These are listing create/edit/delete, admin listing changes, AI inspection, business settings, deals, reviews and replies, and admin business actions. A new mutation that changes what those pages show must call one of them.
 - `GET /api/listings` (the public browse feed) sends `Cache-Control: public, s-maxage=60, stale-while-revalidate=60` for the CDN.
 - Don't cache anything per user: dashboards, the business console, admin and messages.
+
+**Deleting accounts.** Users delete their own account from Profile & settings (`components/profile/DeleteAccount.tsx`, `GET`/`DELETE /api/profile/account`). They must type their email, and their password if they have one.
+- `checkAccountDeletion` (`src/lib/accountDeletion.ts`) blocks the delete when:
+  - the account is the platform owner or an admin
+  - the user still owns a business (delete it first in Business settings)
+  - the user has confirmed or ongoing bookings, as renter or owner
+- `deleteAccount` removes their listings, rentals, inspections, favourites, saved searches, messages, reviews and staff membership, plus their UploadThing files. Photos a business deal still uses are kept.
+  - Pending bookings are cancelled. Bookings they made as a renter keep their name and phone in `walkIn` and lose `renterId`, and business pages fall back to those details.
+  - CRM customers keep their records but lose the `userId` link.
+- The admin user delete (`DELETE /api/admin/users/[id]`) uses the same cleanup, with `byAdmin` relaxing the admin and booking checks.
+- Deleting a business (`DELETE /api/business/organizations`) also removes its deals and reviews.
 
 **Terms.** `/terms` is a static page. `src/lib/terms.ts` holds `TERMS_UPDATED`, which must be bumped when the text changes. Registration requires `acceptTerms: true` and stores `User.termsAcceptedAt`. Google sign-ups get it on first sign-in, because the sign-in page says continuing means agreeing.
 

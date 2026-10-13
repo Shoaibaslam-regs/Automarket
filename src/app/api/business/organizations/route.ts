@@ -8,7 +8,9 @@ import { auth } from "@/lib/auth";
 import { getSubscription } from "@/lib/subscription";
 import { getMembership } from "@/lib/business";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
-import { invalidateBusinessSlug } from "@/lib/pageCache";
+import { invalidateBusinessSlug, invalidateDeal } from "@/lib/pageCache";
+import { Deal } from "@/models/Deal";
+import { BusinessReview } from "@/models/BusinessReview";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -132,12 +134,16 @@ export async function DELETE(req: NextRequest) {
 
     await Customer.deleteMany({ organizationId: org._id });
     await Employee.deleteMany({ organizationId: org._id });
+    // Its deals and reviews belong to the business and go with it
+    await Deal.deleteMany({ organizationId: org._id });
+    await BusinessReview.deleteMany({ organizationId: org._id });
     await User.updateMany(
       { organizationId: org._id },
       { $unset: { organizationId: "", organizationRole: "" } }
     );
     await Organization.findByIdAndDelete(org._id);
     invalidateBusinessSlug(org.slug);
+    await invalidateDeal(null, null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

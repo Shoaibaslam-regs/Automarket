@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { isPlatformOwner, requireAdminApi } from "@/lib/adminAuth";
+import { checkAccountDeletion, deleteAccount } from "@/lib/accountDeletion";
 
 const ROLES = ["USER", "SELLER", "ADMIN"] as const;
 const ACCESS_LEVELS = ["FULL", "READ_ONLY"] as const;
@@ -63,7 +64,10 @@ export async function DELETE(
     if (isPlatformOwner(target.email)) {
       return NextResponse.json({ error: "The platform owner can't be deleted" }, { status: 403 });
     }
-    await User.findByIdAndDelete(id);
+    // Same cleanup as a user deleting their own account; business owners must have the business removed first
+    const check = await checkAccountDeletion(id, { byAdmin: true });
+    if (check.blockers.length) return NextResponse.json({ error: check.blockers[0] }, { status: 409 });
+    await deleteAccount(id);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });

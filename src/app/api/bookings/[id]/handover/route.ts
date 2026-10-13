@@ -5,10 +5,10 @@ import { connectDB } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import { Rental } from "@/models/Rental";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
-import { normalizePlate } from "@/lib/plates";
+import { normalizeCnic, normalizePlate } from "@/lib/plates";
 
 /**
- * Sets the number plate of the vehicle on a booking. Body: { plateNumber }.
+ * Sets the handover details on a booking: the vehicle's number plate and the renter's CNIC. Body: { plateNumber, cnic }.
  * Allowed for the vehicle's owner, and for business members who manage bookings on their business's vehicles.
  * The plate is also remembered on the rental so the next handover is prefilled.
  */
@@ -34,16 +34,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     if (booking.status === "CANCELLED") return NextResponse.json({ error: "This booking was cancelled" }, { status: 400 });
 
-    const { plateNumber } = await req.json().catch(() => ({}));
+    const { plateNumber, cnic } = await req.json().catch(() => ({}));
     const plate = normalizePlate(plateNumber);
     if (!plate) return NextResponse.json({ error: "Enter the number plate, e.g. LEA-1234" }, { status: 400 });
+    const renterCnic = normalizeCnic(cnic);
+    if (!renterCnic) return NextResponse.json({ error: "Enter the renter's 13-digit CNIC, e.g. 35202-1234567-1" }, { status: 400 });
 
     booking.plateNumber = plate;
+    booking.renterCnic = renterCnic;
     await booking.save();
     await Rental.updateOne({ _id: rental._id }, { $set: { plateNumber: plate } });
-    return NextResponse.json({ plateNumber: plate });
+    return NextResponse.json({ plateNumber: plate, renterCnic });
   } catch (error) {
-    console.error("Booking plate error:", error);
-    return NextResponse.json({ error: "Failed to save the number plate" }, { status: 500 });
+    console.error("Booking handover details error:", error);
+    return NextResponse.json({ error: "Failed to save the handover details" }, { status: 500 });
   }
 }

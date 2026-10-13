@@ -15,6 +15,8 @@ export interface IBooking extends Document {
   notes?: string;
   /** Registration number of the vehicle handed over, shown on the booking and slip */
   plateNumber?: string;
+  /** Renter's CNIC, checked by the owner at handover; walk-ins may also have walkIn.cnic */
+  renterCnic?: string;
   startDate: Date;
   endDate: Date;
   totalAmount: number;
@@ -42,6 +44,7 @@ const BookingSchema = new Schema<IBooking>(
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     notes: { type: String },
     plateNumber: { type: String, trim: true, maxlength: 20 },
+    renterCnic: { type: String, trim: true, maxlength: 15 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     totalAmount: { type: Number, required: true },

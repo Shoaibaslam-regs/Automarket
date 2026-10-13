@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Trash2, TriangleAlert } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
-import PlateDialog, { PlateBadge } from "@/components/bookings/PlateDialog";
+import HandoverDialog, { HandoverDetails } from "@/components/bookings/HandoverDialog";
 
 type ListingInfo = {
   _id: string;
@@ -38,6 +38,7 @@ type Booking = {
   confirmedAt?: string;
   cancelledAt?: string;
   plateNumber?: string;
+  renterCnic?: string;
   renterId: { name: string; email: string; phone?: string };
   rentalId: { _id: string; listingId: ListingInfo; dailyRate: number; plateNumber?: string };
   owner?: OwnerInfo;
@@ -83,11 +84,13 @@ function generateSlip(booking: Booking, tab: string) {
   <div class="row"><span class="label">Requested on</span><span class="value">${fmtTime(booking.createdAt)}</span></div>
   ${booking.confirmedAt ? `<div class="row"><span class="label">Confirmed on</span><span class="value">${fmtTime(booking.confirmedAt)}</span></div>` : ""}
   ${booking.cancelledAt ? `<div class="row"><span class="label">Cancelled on</span><span class="value">${fmtTime(booking.cancelledAt)}</span></div>` : ""}
+  ${tab === "mine" && booking.renterCnic ? `<div class="row"><span class="label">Your CNIC</span><span class="value" style="font-family:monospace;letter-spacing:1px">${booking.renterCnic}</span></div>` : ""}
   </div>
   ${tab === "received" ? `<div class="section"><div class="section-title">Renter details</div>
   <div class="row"><span class="label">Name</span><span class="value">${booking.renterId?.name || "N/A"}</span></div>
   <div class="row"><span class="label">Email</span><span class="value">${booking.renterId?.email || "N/A"}</span></div>
   ${booking.renterId?.phone ? `<div class="row"><span class="label">Phone</span><span class="value">${booking.renterId.phone}</span></div>` : ""}
+  ${booking.renterCnic ? `<div class="row"><span class="label">CNIC</span><span class="value" style="font-family:monospace;letter-spacing:1px">${booking.renterCnic}</span></div>` : ""}
   </div>` : `<div class="section"><div class="section-title">Owner details</div>
   <div class="row"><span class="label">Name</span><span class="value">${booking.owner?.name || "N/A"}</span></div>
   <div class="row"><span class="label">Email</span><span class="value">${booking.owner?.email || "N/A"}</span></div>
@@ -174,15 +177,15 @@ export default function BookingsContent() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [cancelTarget, setCancelTarget] = useState<{ id: string; action: "cancel" | "decline" } | null>(null);
-  // The owner records the number plate when handing the vehicle over
+  // The owner records the number plate and renter's CNIC when handing the vehicle over
   const [plateFor, setPlateFor] = useState<Booking | null>(null);
 
-  async function savePlate(plate: string): Promise<string | null> {
+  async function saveHandover(details: { plateNumber: string; cnic: string }): Promise<string | null> {
     if (!plateFor) return null;
-    const res = await fetch(`/api/bookings/${plateFor._id}/plate`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plateNumber: plate }) });
-    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the number plate";
+    const res = await fetch(`/api/bookings/${plateFor._id}/handover`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(details) });
+    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the handover details";
     const id = plateFor._id;
-    setBookings(prev => prev.map(b => (b._id === id ? { ...b, plateNumber: plate } : b)));
+    setBookings(prev => prev.map(b => (b._id === id ? { ...b, plateNumber: details.plateNumber, renterCnic: details.cnic } : b)));
     setPlateFor(null);
     return null;
   }
@@ -247,14 +250,15 @@ export default function BookingsContent() {
     <div className="adm-page">
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-        <PlateDialog
+        <HandoverDialog
           open={plateFor !== null}
           onOpenChange={o => !o && setPlateFor(null)}
-          title="Number plate"
-          description={`Enter the number plate of the ${plateFor?.rentalId?.listingId?.title ?? "vehicle"} you're handing over. It shows on the booking and the slip for you and the renter.`}
-          confirmLabel="Save plate"
-          initial={plateFor ? plateFor.plateNumber ?? plateFor.rentalId?.plateNumber : undefined}
-          onSave={savePlate}
+          title="Handover details"
+          description={`Record the number plate of the ${plateFor?.rentalId?.listingId?.title ?? "vehicle"} and the renter's CNIC. Both show on the booking and the slip.`}
+          confirmLabel="Save details"
+          initialPlate={plateFor ? plateFor.plateNumber ?? plateFor.rentalId?.plateNumber : undefined}
+          initialCnic={plateFor?.renterCnic}
+          onSave={saveHandover}
         />
         {deleteTarget && <ConfirmPopup message="This booking will be removed from your view." onConfirm={confirmDelete} onCancel={() => { setDeleteTarget(null); setDeleteError(""); }} loading={deleting} error={deleteError} />}
         {cancelTarget && (
@@ -328,18 +332,6 @@ export default function BookingsContent() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
                         <p style={{ fontSize: "12px", color: "var(--gh-57606a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
-                        {booking.plateNumber ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
-                            <PlateBadge plate={booking.plateNumber} />
-                            {tab === "received" && booking.status !== "CANCELLED" && (
-                              <button onClick={() => setPlateFor(booking)} style={{ fontSize: "11px", color: "var(--gh-57606a)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Change</button>
-                            )}
-                          </span>
-                        ) : tab === "received" && ["CONFIRMED", "COMPLETED"].includes(booking.status) && (
-                          <button onClick={() => setPlateFor(booking)} style={{ marginTop: "6px", padding: "2px 8px", fontSize: "11px", fontWeight: 600, color: "var(--gh-57606a)", background: "var(--gh-ffffff)", border: "1px dashed var(--gh-d0d7de)", borderRadius: "6px", cursor: "pointer" }}>
-                            + Add number plate
-                          </button>
-                        )}
                       </div>
                       {tab === "mine" && listingId && (
                         <Link className="bk-listing-actions" href={`/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "var(--gh-0d1117)", textDecoration: "none", flexShrink: 0 }}>View listing →</Link>
@@ -355,6 +347,16 @@ export default function BookingsContent() {
                           <a href={`mailto:${booking.renterId.email}`} style={{ padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", color: "var(--gh-0d1117)", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Email</a>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {(booking.plateNumber || booking.renterCnic || (tab === "received" && ["CONFIRMED", "COMPLETED"].includes(booking.status))) && (
+                    <div style={{ marginBottom: "14px" }}>
+                      <HandoverDetails
+                        plate={booking.plateNumber}
+                        cnic={booking.renterCnic}
+                        onEdit={tab === "received" && booking.status !== "CANCELLED" ? () => setPlateFor(booking) : undefined}
+                      />
                     </div>
                   )}
 

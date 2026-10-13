@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { UploadButton } from "@/lib/uploadthing-client";
 import Image from "next/image";
 import UserIdBadge from "@/components/UserIdBadge";
+import DeleteAccount from "@/components/profile/DeleteAccount";
 
 type UserProfile = {
   name?: string;
@@ -234,6 +235,8 @@ export default function ProfilePage() {
             </form>
           </div>
         )}
+
+        <DeleteAccount />
 
         {/* Member since */}
         <p style={{ fontSize: "12px", color: "var(--gh-8c959f)", textAlign: "center", marginTop: "16px" }}>

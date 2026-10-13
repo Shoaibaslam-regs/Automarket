@@ -13,7 +13,8 @@ import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { BOOKING_STATUSES, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
-import PlateDialog, { PlateBadge } from "@/components/bookings/PlateDialog";
+import HandoverDialog, { HandoverDetails } from "@/components/bookings/HandoverDialog";
+import { bookingCnic } from "@/lib/plates";
 
 type Booking = {
   _id: string;
@@ -26,6 +27,7 @@ type Booking = {
   walkIn?: { name: string; phone: string; email?: string; cnic?: string };
   notes?: string;
   plateNumber?: string;
+  renterCnic?: string;
   createdAt: string;
   renterId?: { name?: string; email: string; phone?: string } | null;
   createdBy?: { name?: string } | null;
@@ -48,7 +50,8 @@ const pkr = (n: number) => `PKR ${n.toLocaleString()}`;
 const toInputDate = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
 function customerOf(b: Booking) {
-  if (b.source === "WALK_IN" && b.walkIn) return { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email };
+  // Walk-ins, and online bookings whose renter later deleted their account, keep the details on the booking
+  if (b.walkIn && (b.source === "WALK_IN" || !b.renterId)) return { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email };
   return { name: b.renterId?.name || "Customer", phone: b.renterId?.phone, email: b.renterId?.email };
 }
 
@@ -250,7 +253,7 @@ export default function BusinessBookingsPage() {
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<Booking | null>(null);
   const [removeError, setRemoveError] = useState("");
-  // Handing over asks for the number plate; it can also be corrected later
+  // Handing over asks for the number plate and renter's CNIC; both can be corrected later
   const [plateFor, setPlateFor] = useState<{ booking: Booking; handover: boolean } | null>(null);
   // "Now" for overdue checks, captured when bookings load so rendering stays pure
   const [now, setNow] = useState(0);
@@ -297,13 +300,13 @@ export default function BusinessBookingsPage() {
     refreshNotificationCounts();
   }
 
-  async function savePlate(plate: string): Promise<string | null> {
+  async function saveHandover(details: { plateNumber: string; cnic: string }): Promise<string | null> {
     if (!plateFor) return null;
     const { booking: b, handover } = plateFor;
     const res = handover
-      ? await fetch(`/api/business/bookings/${b._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ACTIVE", plateNumber: plate }) })
-      : await fetch(`/api/bookings/${b._id}/plate`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plateNumber: plate }) });
-    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the number plate";
+      ? await fetch(`/api/business/bookings/${b._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ACTIVE", ...details }) })
+      : await fetch(`/api/bookings/${b._id}/handover`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(details) });
+    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't save the handover details";
     setPlateFor(null);
     fetchBookings();
     return null;
@@ -354,16 +357,17 @@ export default function BusinessBookingsPage() {
         vehicles={vehicles}
         onCreated={id => { setNewOpen(false); setCreated(id); fetchBookings(); }}
       />
-      <PlateDialog
+      <HandoverDialog
         open={plateFor !== null}
         onOpenChange={o => !o && setPlateFor(null)}
-        title={plateFor?.handover ? "Hand over vehicle" : "Number plate"}
+        title={plateFor?.handover ? "Hand over vehicle" : "Handover details"}
         description={plateFor?.handover
-          ? `Enter the number plate of the ${plateFor.booking.rentalId?.listingId?.title ?? "vehicle"} going out to ${customerOf(plateFor.booking).name}. It's printed on the booking slip.`
-          : "Correct the number plate shown on this booking and its slip."}
-        confirmLabel={plateFor?.handover ? "Hand over" : "Save plate"}
-        initial={plateFor ? plateFor.booking.plateNumber ?? plateFor.booking.rentalId?.plateNumber : undefined}
-        onSave={savePlate}
+          ? `Record the number plate of the ${plateFor.booking.rentalId?.listingId?.title ?? "vehicle"} and ${customerOf(plateFor.booking).name}'s CNIC. Both are printed on the booking slip.`
+          : "Correct the number plate and CNIC shown on this booking and its slip."}
+        confirmLabel={plateFor?.handover ? "Hand over" : "Save details"}
+        initialPlate={plateFor ? plateFor.booking.plateNumber ?? plateFor.booking.rentalId?.plateNumber : undefined}
+        initialCnic={plateFor ? bookingCnic(plateFor.booking) : undefined}
+        onSave={saveHandover}
       />
       <ConfirmDialog
         open={confirmCancel !== null}
@@ -526,24 +530,22 @@ export default function BusinessBookingsPage() {
                       </span>
                       {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> OVERDUE</span>}
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="min-w-0 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
-                      {b.plateNumber ? (
-                        canManage && b.status !== "CANCELLED" ? (
-                          <button onClick={() => setPlateFor({ booking: b, handover: false })} title="Change number plate"><PlateBadge plate={b.plateNumber} /></button>
-                        ) : <PlateBadge plate={b.plateNumber} />
-                      ) : canManage && (b.status === "ACTIVE" || b.status === "COMPLETED") && (
-                        <button onClick={() => setPlateFor({ booking: b, handover: false })} className="rounded-md border border-dashed border-[var(--gh-d0d7de)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gh-57606a)] hover:border-[var(--gh-0d1117)] hover:text-[var(--gh-0d1117)]">
-                          + Number plate
-                        </button>
-                      )}
-                    </div>
+                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--gh-57606a)]">
                       <span className="flex items-center gap-1"><CalendarDays size={12} /> {fmt(b.startDate)} → {fmt(b.endDate)} ({days}d)</span>
                       <span className="flex items-center gap-1"><UserRound size={12} /> {c.name}</span>
                       {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-1 font-semibold text-[var(--gh-0d1117)]"><Phone size={12} /> {c.phone}</a>}
                     </div>
                     {b.notes && <p className="mt-1.5 truncate text-xs italic text-[var(--gh-8c959f)]">“{b.notes}”</p>}
+                    {(b.plateNumber || bookingCnic(b) || (canManage && (b.status === "ACTIVE" || b.status === "COMPLETED"))) && (
+                      <div className="mt-2.5 max-w-[460px]">
+                        <HandoverDetails
+                          plate={b.plateNumber}
+                          cnic={bookingCnic(b)}
+                          onEdit={canManage && b.status !== "CANCELLED" ? () => setPlateFor({ booking: b, handover: false }) : undefined}
+                        />
+                      </div>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-5">
                       <div><p className="text-[11px] text-[var(--gh-8c959f)]">Rental</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount)}</p></div>
                       <div><p className="text-[11px] text-[var(--gh-8c959f)]">Deposit</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.deposit)}</p></div>

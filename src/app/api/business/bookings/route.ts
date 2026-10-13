@@ -8,6 +8,7 @@ import { Customer } from "@/models/Customer";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
 import { rentalDays } from "@/lib/bookings";
 import { ensureBookingCustomer } from "@/lib/customerSync";
+import { normalizeCnic } from "@/lib/plates";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       name: str(customer.name) || linkedCustomer?.name || "",
       phone: str(customer.phone) || linkedCustomer?.phone || "",
       email: str(customer.email) || linkedCustomer?.email || undefined,
-      cnic: str(customer.cnic) || undefined,
+      cnic: normalizeCnic(customer.cnic) ?? (str(customer.cnic) || undefined),
     };
     if (!walkIn.name || !walkIn.phone) return NextResponse.json({ error: "Customer name and phone are required" }, { status: 400 });
 

@@ -11,7 +11,7 @@ import { canTransition } from "@/lib/bookings";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
 import { Rental } from "@/models/Rental";
-import { normalizePlate } from "@/lib/plates";
+import { normalizeCnic, normalizePlate } from "@/lib/plates";
 
 /** Finds a booking that belongs to one of the caller's business rental vehicles. */
 async function loadBusinessBooking(userId: string, id: string) {
@@ -61,19 +61,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Your role can't manage bookings" }, { status: 403 });
     }
 
-    const { status, plateNumber } = await req.json().catch(() => ({}));
+    const { status, plateNumber, cnic } = await req.json().catch(() => ({}));
     const booking = await loadBusinessBooking(session.user.id, id);
     if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     if (!canTransition(booking.status, status)) {
       return NextResponse.json({ error: `A ${booking.status.toLowerCase()} booking can't be moved to ${String(status).toLowerCase()}` }, { status: 400 });
     }
 
-    // Handing over records the number plate of the vehicle that went out
+    // Handing over records the number plate of the vehicle that went out and the renter's CNIC
     let plate: string | null = null;
     if (status === "ACTIVE") {
       plate = normalizePlate(plateNumber);
       if (!plate) return NextResponse.json({ error: "Enter the number plate of the vehicle you're handing over, e.g. LEA-1234" }, { status: 400 });
+      const renterCnic = normalizeCnic(cnic);
+      if (!renterCnic) return NextResponse.json({ error: "Enter the renter's 13-digit CNIC, e.g. 35202-1234567-1" }, { status: 400 });
       booking.plateNumber = plate;
+      booking.renterCnic = renterCnic;
     }
 
     booking.status = status;
