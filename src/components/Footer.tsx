@@ -25,6 +25,7 @@ export default function Footer() {
               title: "Buy",
               links: [
                 ["Cars for sale", "/listings?type=SALE"],
+                ["Hot deals", "/deals"],
                 ["Bikes", "/listings?search=bike"],
                 ["All listings", "/listings"],
               ],

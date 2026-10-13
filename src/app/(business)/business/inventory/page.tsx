@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Car, Crown, LayoutGrid, List, MapPin, Plus, Search, Trash2 } from "lucide-react";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
+import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
@@ -26,6 +27,7 @@ type Vehicle = {
   createdAt: string;
   sellerId?: { _id: string; name?: string } | null;
   canManage: boolean;
+  canSetAvailability?: boolean;
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
@@ -237,6 +239,11 @@ export default function InventoryPage() {
                   {!v.canManage && v.sellerId?.name && (
                     <p className="mb-2 truncate text-[11px] text-[var(--gh-57606a)]">Listed by {v.sellerId.name}</p>
                   )}
+                  {v.canSetAvailability && (
+                    <div className="mb-2.5">
+                      <AvailabilityControl id={v._id} type={v.type} status={v.status} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
+                    </div>
+                  )}
                   <div className="mt-auto flex gap-1.5">
                     <Link href={`/listings/${v._id}`} className="flex h-8 flex-1 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] text-[11px] font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-eef1f4)]">
                       View
@@ -270,6 +277,11 @@ export default function InventoryPage() {
                 </div>
                 <span className="hidden sm:inline-flex"><StatusPill status={v.status} /></span>
                 <p className="hidden flex-shrink-0 text-sm font-bold text-[var(--gh-0d1117)] sm:block">PKR {v.price.toLocaleString()}</p>
+                {v.canSetAvailability && (
+                  <span className="hidden lg:block">
+                    <AvailabilityControl id={v._id} type={v.type} status={v.status} onChanged={s => { setVehicles(prev => prev.map(x => (x._id === v._id ? { ...x, status: s } : x))); refreshSub(); }} />
+                  </span>
+                )}
                 <div className="flex flex-shrink-0 gap-1.5">
                   <Link href={`/listings/${v._id}`} className="inline-flex h-8 items-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-2.5 text-[11px] font-semibold text-[var(--gh-0d1117)] hover:bg-[var(--gh-eef1f4)]">View</Link>
                   {deleteButton(v, true)}

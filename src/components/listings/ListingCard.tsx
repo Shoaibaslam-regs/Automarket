@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2 } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { closedTag } from "@/lib/availability";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 import { IListing } from "@/models/Listing";
 import { formatLakh } from "@/lib/format";
@@ -51,6 +52,23 @@ function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean 
       </span>
       <span className="truncate">{compact ? seller.name.split(" ")[0] : seller.name}</span>
     </span>
+  );
+}
+
+/** Greys out the photo of a sold or rented vehicle and stamps it, so buyers move on to available ones. */
+function ClosedStamp({ status }: { status: string }) {
+  const tag = closedTag(status);
+  if (!tag) return null;
+  return (
+    <div className="theme-static pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-slate-950/45 backdrop-grayscale">
+      <span
+        className={`-rotate-12 rounded-lg border-2 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] shadow-lg sm:text-base ${
+          tag.tone === "sold" ? "border-rose-200 bg-rose-600/90 text-white" : "border-sky-200 bg-sky-600/90 text-white"
+        }`}
+      >
+        {tag.label}
+      </span>
+    </div>
   );
 }
 
@@ -112,6 +130,7 @@ export default function ListingCard({ listing, layout = "grid", eager }: Props) 
             {/* Soft gradients so overlaid chips stay legible on any photo */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/25 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+            <ClosedStamp status={listing.status} />
 
             <div className="absolute left-2 top-2 flex items-center gap-1 sm:left-2.5 sm:top-2.5">
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide shadow-sm backdrop-blur sm:px-2.5 sm:py-1 sm:text-[11px] ${badge.className}`}>
@@ -229,6 +248,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
           )}
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/45 to-transparent" />
+          <ClosedStamp status={listing.status} />
 
           <div className="absolute left-2 top-2 flex items-center gap-1 sm:left-2.5 sm:top-2.5">
             {listing.featured && (

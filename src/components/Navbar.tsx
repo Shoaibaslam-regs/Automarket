@@ -149,6 +149,7 @@ export default function Navbar() {
           <div className="nav-desktop" style={{ alignItems: "center", gap: "2px", flex: 1, justifyContent: "center" }}>
             <Link href="/listings" className="nav-link">Browse</Link>
             <Link href="/listings?type=RENT" className="nav-link">Rentals</Link>
+            <Link href="/deals" className="nav-link">Deals</Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
             {session?.user && (
               <>

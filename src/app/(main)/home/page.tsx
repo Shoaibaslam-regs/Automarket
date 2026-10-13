@@ -13,6 +13,8 @@ import { Listing, IListing } from "@/models/Listing";
 import ListingCard from "@/components/listings/ListingCard";
 import BrandLogos from "@/components/BrandLogos";
 import ProvinceCities from "@/components/ProvinceCities";
+import DealCard from "@/components/deals/DealCard";
+import { getLiveDeals } from "@/lib/publicDeals";
 import Footer from "@/components/Footer";
 
 type ListingWithId = IListing & { _id: string };
@@ -99,7 +101,8 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default async function HomePage() {
-  const { forSale, forRent, stats } = await getData();
+  const [{ forSale, forRent, stats }, deals] = await Promise.all([getData(), getLiveDeals({ sort: "discount", limit: 4 }).catch(() => [])]);
+  const now = new Date().getTime();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -198,6 +201,16 @@ export default async function HomePage() {
         </section>
 
         {/* ── Latest for sale ── */}
+        {/* ── Hot deals (only while some are running) ── */}
+        {deals.length > 0 && (
+          <section>
+            <SectionHeader eyebrow="Limited time" title="Hot deals" href="/deals" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {deals.map(d => <DealCard key={d._id} deal={d} now={now} />)}
+            </div>
+          </section>
+        )}
+
         <section>
           <SectionHeader eyebrow="Fresh arrivals" title="Latest for sale" href="/listings?type=SALE" />
           {forSale.length === 0 ? (

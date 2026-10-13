@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ban, CircleCheck, ExternalLink, Tag, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Ban, CircleCheck, ExternalLink, ImageOff, Tag, Trash2 } from "lucide-react";
 import { Badge, ConfirmDialog, DataTable, PageHeader, SearchField, SelectField, StatCard, StatGrid, btn, type Tone } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { DEAL_STATE_STYLE, dealLabel, dealState, type DealState } from "@/lib/deals";
+import { DEAL_STATE_STYLE, dealLabel, dealPrice, dealState, type DealState } from "@/lib/deals";
+import { formatLakh } from "@/lib/format";
 
 type AdminDeal = {
   _id: string;
@@ -12,7 +14,12 @@ type AdminDeal = {
   description?: string;
   discountType: "PERCENT" | "AMOUNT";
   discountValue: number;
-  listingIds: string[];
+  make: string;
+  model: string;
+  year: number;
+  location: string;
+  images: string[];
+  price: number;
   startsAt: string;
   endsAt: string;
   paused: boolean;
@@ -61,7 +68,7 @@ export default function AdminDealsPage() {
   const stateOf = (d: AdminDeal) => (now ? dealState(d, now) : "LIVE");
   const q = search.toLowerCase();
   const filtered = deals.filter(d =>
-    (d.title.toLowerCase().includes(q) || (d.organizationId?.name ?? "").toLowerCase().includes(q)) &&
+    [d.title, d.organizationId?.name ?? "", `${d.make} ${d.model}`, d.location].some(v => v.toLowerCase().includes(q)) &&
     (!stateFilter || DEAL_STATE_STYLE[stateOf(d)].label === stateFilter)
   );
   const count = (s: DealState) => deals.filter(d => stateOf(d) === s).length;
@@ -73,7 +80,7 @@ export default function AdminDealsPage() {
         description={loading ? "Loading…" : `${deals.length} deal${deals.length !== 1 ? "s" : ""} from businesses`}
         actions={
           <>
-            <SearchField value={search} onChange={setSearch} placeholder="Search deal or business…" />
+            <SearchField value={search} onChange={setSearch} placeholder="Deal, vehicle, city or business…" />
             <SelectField value={stateFilter} onChange={setStateFilter} options={Object.values(DEAL_STATE_STYLE).map(s => s.label)} allLabel="All states" ariaLabel="Filter by state" />
           </>
         }
@@ -98,12 +105,17 @@ export default function AdminDealsPage() {
           {
             header: "Deal",
             cell: d => (
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">{d.title}</p>
-                <p className="truncate text-xs text-slate-500">
-                  <span className="font-semibold text-rose-600">{dealLabel(d)}</span> · {d.listingIds.length ? `${d.listingIds.length} vehicle${d.listingIds.length !== 1 ? "s" : ""}` : "all vehicles"}
-                </p>
-              </div>
+              <a href={`/deals/${d._id}`} target="_blank" rel="noreferrer" className="group flex min-w-0 items-center gap-3">
+                <span className="relative flex h-11 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-slate-300">
+                  {d.images?.[0] ? <Image src={d.images[0]} alt="" fill sizes="56px" className="object-cover" /> : <ImageOff size={16} />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-900 group-hover:underline">{d.title}</span>
+                  <span className="block truncate text-xs text-slate-500">
+                    <span className="font-semibold text-rose-600">{dealLabel(d)}</span> · PKR {formatLakh(dealPrice(d.price, d))} · {d.make} {d.model} {d.year} · {d.location}
+                  </span>
+                </span>
+              </a>
             ),
           },
           {
@@ -151,7 +163,7 @@ export default function AdminDealsPage() {
         {...(pending?.action === "delete"
           ? { tone: "danger" as const, icon: Trash2, title: `Delete "${pending.deal.title}"?`, description: <>This permanently removes the deal from {pending.deal.organizationId?.name ?? "the business"}. It can&apos;t be undone.</>, confirmLabel: "Delete deal", loadingLabel: "Deleting…" }
           : pending?.action === "disable"
-          ? { tone: "warn" as const, icon: Ban, title: `Disable "${pending.deal.title}"?`, description: <>The deal stops showing on listings and the business page. {pending.deal.organizationId?.name ?? "The business"} sees it as disabled by an admin and can&apos;t switch it back on.</>, confirmLabel: "Disable deal", loadingLabel: "Disabling…" }
+          ? { tone: "warn" as const, icon: Ban, title: `Disable "${pending.deal.title}"?`, description: <>The deal is hidden from the Deals page and the business page. {pending.deal.organizationId?.name ?? "The business"} sees it as disabled by an admin and can&apos;t switch it back on.</>, confirmLabel: "Disable deal", loadingLabel: "Disabling…" }
           : { tone: "neutral" as const, icon: CircleCheck, title: `Enable "${pending?.deal.title ?? "deal"}" again?`, description: <>The deal shows again while it&apos;s within its dates and not paused by the business.</>, confirmLabel: "Enable deal", loadingLabel: "Enabling…" })}
       />
     </>

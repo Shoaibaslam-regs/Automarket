@@ -1,4 +1,4 @@
-// Client-safe deal helpers shared by the deals API, business console, listing page and admin.
+// Client-safe deal helpers shared by the deals API, business console, public deal pages and admin.
 
 export type DealLike = {
   discountType: "PERCENT" | "AMOUNT";
@@ -12,6 +12,12 @@ export type DealLike = {
 export type DealState = "LIVE" | "SCHEDULED" | "EXPIRED" | "PAUSED" | "DISABLED";
 
 export const MAX_PERCENT = 90;
+export const MAX_DEAL_IMAGES = 10;
+
+/** Days left until a deal ends, counting today; 0 once it has ended. */
+export function daysLeft(endsAt: Date | string, now = Date.now()): number {
+  return Math.max(0, Math.ceil((new Date(endsAt).getTime() - now) / 86_400_000));
+}
 
 export function dealState(d: DealLike, now = Date.now()): DealState {
   if (d.disabledByAdmin) return "DISABLED";
@@ -32,10 +38,11 @@ export function dealPrice(price: number, d: Pick<DealLike, "discountType" | "dis
   return Math.max(0, price - off);
 }
 
+/** Inline styles for state badges; theme variables, so they adapt to dark mode */
 export const DEAL_STATE_STYLE: Record<DealState, { label: string; color: string; bg: string }> = {
-  LIVE: { label: "Live", color: "#1a7f37", bg: "#dafbe1" },
-  SCHEDULED: { label: "Scheduled", color: "#0550ae", bg: "#ddf4ff" },
-  EXPIRED: { label: "Ended", color: "#57606a", bg: "#f6f8fa" },
-  PAUSED: { label: "Paused", color: "#7d4e00", bg: "#fff8c5" },
-  DISABLED: { label: "Disabled by admin", color: "#cf222e", bg: "#fff0f0" },
+  LIVE: { label: "Live", color: "var(--gh-1a7f37)", bg: "var(--gh-dafbe1)" },
+  SCHEDULED: { label: "Scheduled", color: "var(--gh-0550ae)", bg: "var(--gh-ddf4ff)" },
+  EXPIRED: { label: "Ended", color: "var(--gh-57606a)", bg: "var(--gh-f6f8fa)" },
+  PAUSED: { label: "Paused", color: "var(--gh-7d4e00)", bg: "var(--gh-fff8c5)" },
+  DISABLED: { label: "Disabled by admin", color: "var(--gh-cf222e)", bg: "var(--gh-fff0f0)" },
 };

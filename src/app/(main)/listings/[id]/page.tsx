@@ -14,10 +14,11 @@ import type { Metadata } from "next";
 import ImageGallery from "@/components/ui/ImageGallery";
 import { SITE_URL } from "@/lib/site";
 import { formatLakh } from "@/lib/format";
-import { getBestDealForListing, getBusinessRatings, getSellerBusinesses, type SellerBusiness } from "@/lib/reviews";
-import { dealLabel, dealPrice } from "@/lib/deals";
+import { getBusinessRatings, getSellerBusinesses, type SellerBusiness } from "@/lib/reviews";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import { Building2, ChevronRight, MapPin, Tag, UserRound } from "lucide-react";
+import AvailabilityControl from "@/components/listings/AvailabilityControl";
+import { closedTag } from "@/lib/availability";
+import { Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
@@ -41,15 +42,12 @@ const loadListingPage = (id: string) =>
         Rental.findOne({ listingId: id }).lean(),
         Inspection.findOne({ listingId: id }).lean(),
       ]);
-      // Who listed it: a business (with its rating and any live deal) or a private seller
+      // Who listed it: a business (with its rating) or a private seller
       const sellerId = listing.sellerId?._id?.toString();
       const business = sellerId ? (await getSellerBusinesses([sellerId])).get(sellerId) ?? null : null;
-      const isForSale = listing.type === "SALE" || listing.type === "BOTH";
-      const [ratings, deal] = business
-        ? await Promise.all([getBusinessRatings([business.id]), isForSale ? getBestDealForListing(business.id, id, listing.price) : null])
-        : [new Map(), null];
+      const ratings = business ? await getBusinessRatings([business.id]) : new Map();
       const rating = (business && ratings.get(business.id)) || { average: 0, count: 0 };
-      return JSON.parse(JSON.stringify({ listing, rental, inspection, business, rating, deal }));
+      return JSON.parse(JSON.stringify({ listing, rental, inspection, business, rating }));
     },
     ["listing-page", id],
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [listingTag(id)] }
@@ -64,7 +62,6 @@ const getListingPage = cache(async (id: string) => {
     inspection: unknown;
     business: SellerBusiness | null;
     rating: { average: number; count: number };
-    deal: Awaited<ReturnType<typeof getBestDealForListing>>;
   } | null>;
 });
 const getListing = async (id: string) => (await getListingPage(id))?.listing ?? null;
@@ -146,7 +143,9 @@ export default async function ListingDetailPage({ params }: Props) {
   const isOwner = !!viewerId && viewerId === sellerId;
 
   const isForSale = l.type === "SALE" || l.type === "BOTH";
-  const { business, rating, deal } = page;
+  const { business, rating } = page;
+  // Sold or rented: shown with a tag so visitors move on to vehicles they can still buy or rent
+  const closed = closedTag(l.status);
 
   const specs = [
     { label: "Condition", value: l.condition },
@@ -215,30 +214,34 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
                 <div className="text-right">
                   {/* Rent-only listings store the daily rate as their price */}
-                  {deal && (
-                    <p className="text-sm font-medium text-gray-400 line-through">PKR {formatLakh(l.price)}</p>
-                  )}
-                  <p className={`text-2xl font-bold ${deal ? "text-rose-600" : "text-gray-900"}`}>
-                    PKR {l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(deal ? dealPrice(l.price, deal) : l.price)}
+                  <p className="text-2xl font-bold text-gray-900">
+                    PKR {l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(l.price)}
                     {l.type === "RENT" && <span className="text-sm font-medium text-gray-400">/day</span>}
                   </p>
                   {l.type !== "RENT" && l.price >= 1e5 && (
-                    <p className="text-xs text-gray-400">PKR {(deal ? dealPrice(l.price, deal) : l.price).toLocaleString("en-PK")}</p>
+                    <p className="text-xs text-gray-400">PKR {l.price.toLocaleString("en-PK")}</p>
                   )}
                   {rental && l.type !== "RENT" && (
                     <p className="text-sm text-green-600 mt-1">PKR {rental.dailyRate.toLocaleString()}/day</p>
                   )}
                 </div>
               </div>
-              {deal && business && (
-                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 px-4 py-3 ring-1 ring-inset ring-rose-200">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-600 text-white"><Tag size={16} /></span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-rose-700">{deal.title} · {dealLabel(deal)}</p>
-                    <p className="text-xs text-rose-600/80">
-                      {deal.description ? `${deal.description} · ` : ""}Offer by {business.name}, ends {new Date(deal.endsAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+              {closed && (
+                <div className={`mt-4 flex flex-col gap-3 rounded-xl px-4 py-3 ring-1 ring-inset sm:flex-row sm:items-center sm:justify-between ${closed.tone === "sold" ? "bg-rose-50 ring-rose-200" : "bg-sky-50 ring-sky-200"}`}>
+                  <div>
+                    <p className={`text-sm font-bold ${closed.tone === "sold" ? "text-rose-700" : "text-sky-700"}`}>
+                      {closed.tone === "sold" ? "This vehicle has been sold" : "This vehicle is rented out right now"}
+                    </p>
+                    <p className={`text-xs ${closed.tone === "sold" ? "text-rose-600/80" : "text-sky-700/80"}`}>
+                      {closed.tone === "sold" ? "It's no longer available. Have a look at similar vehicles." : "It isn't available to book at the moment. Message the owner or check similar vehicles."}
                     </p>
                   </div>
+                  <Link
+                    href={`/listings?make=${encodeURIComponent(l.make.trim())}${closed.tone === "rented" ? "&type=RENT" : ""}&available=1`}
+                    className="inline-flex flex-shrink-0 items-center justify-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  >
+                    See similar {l.make.trim()} vehicles <ChevronRight size={13} />
+                  </Link>
                 </div>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
@@ -394,7 +397,11 @@ export default async function ListingDetailPage({ params }: Props) {
                   </div>
                 </div>
 
-                {!isOwner && session?.user && (
+                {closed ? (
+                  <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2.5 text-center text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200">
+                    {closed.tone === "sold" ? "Sold, so it can't be booked" : "Rented out right now, so it can't be booked"}
+                  </p>
+                ) : !isOwner && session?.user && (
                   <Link
                     href={`/rentals/${l._id}/book`}
                     className="mt-4 w-full block text-center py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
@@ -402,7 +409,7 @@ export default async function ListingDetailPage({ params }: Props) {
                     Book now
                   </Link>
                 )}
-                {!isOwner && !session?.user && (
+                {!closed && !isOwner && !session?.user && (
                   <Link
                     href="/login"
                     style={{ display: "block", marginTop: "12px", padding: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", textDecoration: "none" }}
@@ -413,12 +420,16 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
             )}
 
-            {isForSale && <EmiCalculator price={l.price} />}
+            {isForSale && !closed && <EmiCalculator price={l.price} />}
 
             {/* Owner actions */}
             {isOwner && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">Manage listing</h2>
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs text-gray-500">Mark it sold or rented when it&apos;s taken, so buyers see it straight away.</p>
+                  <AvailabilityControl id={id} type={l.type} status={l.status} size="md" />
+                </div>
                 <div className="space-y-2">
                   <Link href={`/sell/edit/${l._id}`}
                     className="w-full block text-center py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition">

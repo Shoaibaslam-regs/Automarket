@@ -1,16 +1,32 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
+import { CONDITIONS } from "../lib/vehicleOptions";
 
-/** A business's promotion: a discount on its whole inventory or on chosen vehicles, for a period. */
-export interface IDeal extends Document {
+/**
+ * A business's deal: a stand-alone offer on a vehicle with its own photos and details, published for a
+ * period. It is separate from listings; nothing has to be listed first.
+ */
+export interface IDeal extends Omit<Document, "model"> {
   organizationId: mongoose.Types.ObjectId;
   title: string;
   description?: string;
+  make: string;
+  model: string;
+  year: number;
+  mileage?: number;
+  fuelType?: string;
+  transmission?: string;
+  color?: string;
+  condition: string;
+  /** City */
+  location: string;
+  /** AI-checked vehicle photos; the first is the main one */
+  images: string[];
+  /** Normal price in PKR, before the discount */
+  price: number;
   discountType: "PERCENT" | "AMOUNT";
-  /** Percent (1–90) or PKR amount off the sale price */
+  /** Percent (1–90) or PKR amount off `price` */
   discountValue: number;
-  /** Vehicles the deal covers; empty means every vehicle the business lists */
-  listingIds: mongoose.Types.ObjectId[];
   startsAt: Date;
   endsAt: Date;
   /** Paused by the business */
@@ -26,10 +42,20 @@ const DealSchema = new Schema<IDeal>(
   {
     organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
     title: { type: String, required: true, trim: true, maxlength: 80 },
-    description: { type: String, trim: true, maxlength: 500 },
+    description: { type: String, trim: true, maxlength: 2000 },
+    make: { type: String, required: true, trim: true },
+    model: { type: String, required: true, trim: true },
+    year: { type: Number, required: true },
+    mileage: { type: Number, min: 0 },
+    fuelType: { type: String },
+    transmission: { type: String },
+    color: { type: String, trim: true },
+    condition: { type: String, enum: CONDITIONS, required: true },
+    location: { type: String, required: true, trim: true },
+    images: { type: [String], default: [] },
+    price: { type: Number, required: true, min: 1 },
     discountType: { type: String, enum: ["PERCENT", "AMOUNT"], required: true },
     discountValue: { type: Number, required: true, min: 1 },
-    listingIds: { type: [{ type: Schema.Types.ObjectId, ref: "Listing" }], default: [] },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
     paused: { type: Boolean, default: false },
@@ -40,5 +66,7 @@ const DealSchema = new Schema<IDeal>(
 );
 
 DealSchema.index({ organizationId: 1, endsAt: -1 });
+// The public deals page looks up running deals by date
+DealSchema.index({ endsAt: 1, startsAt: 1 });
 
 export const Deal = defineModel<IDeal>("Deal", DealSchema);

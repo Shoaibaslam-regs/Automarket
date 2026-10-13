@@ -70,7 +70,7 @@ export default function PricingPage() {
             <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoMarket Premium</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
-            Start free with {PLANS.FREE.limits.listings} listings and a team of {PLANS.FREE.limits.staff}. Upgrade when you need more listings, a bigger team and full showroom management.
+            Start free with {PLANS.FREE.limits.listings} active listings. Upgrade when you need more listings, staff accounts for your team and full showroom management.
           </p>
         </div>
       </section>

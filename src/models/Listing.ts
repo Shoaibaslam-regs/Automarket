@@ -17,6 +17,8 @@ export interface IListing extends Omit<Document, "model"> {
   location: string;
   images: string[];
   status: "ACTIVE" | "SOLD" | "RENTED" | "PENDING" | "INACTIVE";
+  /** When the owner last marked it available, sold or rented; sold and rented listings stay visible (tagged) for a while after this */
+  statusChangedAt?: Date;
   featured: boolean;
   sellerId: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -48,6 +50,7 @@ const ListingSchema = new Schema<IListing>(
       enum: ["ACTIVE", "SOLD", "RENTED", "PENDING", "INACTIVE"],
       default: "ACTIVE",
     },
+    statusChangedAt: { type: Date },
     featured: { type: Boolean, default: false },
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },

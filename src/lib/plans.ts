@@ -26,8 +26,8 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Free",
     tagline: "Get started with a few vehicles and a small team",
     price: 0,
-    limits: { listings: 5, staff: 2, customers: 5 },
-    features: ["5 active listings", "Team of 2 (owner + 1 staff)", "AI-verified photos", "Buyer messaging", "Up to 5 customer leads"],
+    limits: { listings: 3, staff: 1, customers: 5 },
+    features: ["3 active listings", "Just you (no staff accounts)", "AI-verified photos", "Buyer messaging", "Up to 5 customer leads"],
   },
   STARTER: {
     id: "STARTER",
@@ -35,8 +35,8 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Premium",
     tagline: "For regular sellers and small showrooms",
     price: 500,
-    limits: { listings: 20, staff: 5, customers: 50 },
-    features: ["20 active listings", "Team of 5 (owner + 4 staff)", "Up to 50 customer leads", "Rental management", "Sales reports"],
+    limits: { listings: 10, staff: 3, customers: 50 },
+    features: ["10 active listings", "Team of 3 (owner + 2 staff)", "Up to 50 customer leads", "Rental management", "Sales reports"],
   },
   PRO: {
     id: "PRO",
@@ -44,8 +44,8 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Premium Plus",
     tagline: "For growing dealerships",
     price: 1200,
-    limits: { listings: 50, staff: 10, customers: 150 },
-    features: ["50 active listings", "Team of 10", "Up to 150 customer leads", "Rental management", "Sales reports", "Priority support"],
+    limits: { listings: 25, staff: 6, customers: 150 },
+    features: ["25 active listings", "Team of 6 (owner + 5 staff)", "Up to 150 customer leads", "Rental management", "Sales reports", "Priority support"],
     highlight: true,
   },
   UNLIMITED: {

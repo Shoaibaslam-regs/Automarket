@@ -3,41 +3,60 @@ import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Deal } from "@/models/Deal";
-import { can, getMembership } from "@/lib/business";
+import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
-import { invalidateBusinessPage } from "@/lib/pageCache";
+import { invalidateDeal } from "@/lib/pageCache";
 
-async function gate(id: string) {
+/** Finds a deal of the caller's business. `manage` also requires the manageDeals permission. */
+async function gate(id: string, manage: boolean) {
   const session = await auth();
   if (!session?.user?.id) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   if (!mongoose.Types.ObjectId.isValid(id)) return { error: NextResponse.json({ error: "Deal not found" }, { status: 404 }) };
   await connectDB();
   const member = await getMembership(session.user.id);
   if (!member) return { error: NextResponse.json({ error: "No organization" }, { status: 404 }) };
-  if (!can(member.role, "manageDeals")) return { error: NextResponse.json({ error: "Only the owner or a manager can manage deals" }, { status: 403 }) };
+  if (manage && !can(member.role, "manageDeals")) return { error: NextResponse.json({ error: "Only the owner or a manager can manage deals" }, { status: 403 }) };
   const deal = await Deal.findOne({ _id: id, organizationId: member.organizationId });
   if (!deal) return { error: NextResponse.json({ error: "Deal not found" }, { status: 404 }) };
-  return { deal, userId: session.user.id };
+  return { deal, member };
+}
+
+/** One deal, for the edit form. */
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const g = await gate((await params).id, false);
+    if (g.error) return g.error;
+    return NextResponse.json({ deal: g.deal, permissions: { canManage: can(g.member.role, "manageDeals") } });
+  } catch (error) {
+    console.error("Deal GET error:", error);
+    return NextResponse.json({ error: "Failed to load deal" }, { status: 500 });
+  }
 }
 
 /** Edits a deal, or just pauses/resumes it with `{ paused }`. Admin-disabled deals stay disabled. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const g = await gate(id);
+    const g = await gate((await params).id, true);
     if (g.error) return g.error;
     const body = await req.json().catch(() => ({}));
 
     if (Object.keys(body).length === 1 && typeof body.paused === "boolean") {
       g.deal.paused = body.paused;
     } else {
-      const parsed = await parseDealInput(body, g.userId);
+      const parsed = await parseDealInput(body, {
+        memberIds: await getOrgUserIds(g.member.organizationId),
+        existingImages: g.deal.images,
+      });
       if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
       g.deal.set(parsed.data);
+      // Fields left empty in the form are cleared rather than kept
+      for (const key of ["description", "mileage", "fuelType", "transmission", "color"] as const) {
+        if (parsed.data[key] === undefined) g.deal.set(key, undefined);
+      }
       if (typeof body.paused === "boolean") g.deal.paused = body.paused;
     }
     await g.deal.save();
-    await invalidateBusinessPage(g.deal.organizationId);
+    await invalidateDeal(g.deal._id, g.deal.organizationId);
     return NextResponse.json({ deal: g.deal });
   } catch (error) {
     console.error("Deal PATCH error:", error);
@@ -47,11 +66,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const g = await gate(id);
+    const g = await gate((await params).id, true);
     if (g.error) return g.error;
     await g.deal.deleteOne();
-    await invalidateBusinessPage(g.deal.organizationId);
+    await invalidateDeal(g.deal._id, g.deal.organizationId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Deal DELETE error:", error);

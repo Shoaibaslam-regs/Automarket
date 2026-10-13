@@ -5,6 +5,16 @@ export const CONDITIONS = ["NEW", "EXCELLENT", "GOOD", "FAIR", "POOR"] as const;
 export const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"] as const;
 export const TRANSMISSIONS = ["Manual", "Automatic", "Semi-automatic"] as const;
 
+/** Sold and rented vehicles stay in browse results, tagged, for this many days after the owner marks them. */
+export const CLOSED_VISIBLE_DAYS = 30;
+export const CLOSED_STATUSES = ["SOLD", "RENTED"] as const;
+
+/** Statuses the public can see: available listings, plus recently sold or rented ones. */
+export function publicStatusQuery(now = new Date()): Record<string, unknown> {
+  const since = new Date(now.getTime() - CLOSED_VISIBLE_DAYS * 86_400_000);
+  return { $or: [{ status: "ACTIVE" }, { status: { $in: CLOSED_STATUSES }, statusChangedAt: { $gte: since } }] };
+}
+
 /** Every browse filter. Shared by the listings API, the browse page URL and saved-search alerts. */
 export type ListingFilters = {
   search?: string;
@@ -70,9 +80,12 @@ const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const contains = (v: string) => new RegExp(escape(v), "i");
 const exact = (v: string) => new RegExp(`^${escape(v)}$`, "i");
 
-/** MongoDB query for ACTIVE listings matching the filters. */
-export function buildListingQuery(f: ListingFilters): Record<string, unknown> {
-  const q: Record<string, unknown> = { status: "ACTIVE" };
+/**
+ * MongoDB query for ACTIVE listings matching the filters.
+ * With `includeClosed`, recently sold or rented listings are included too (the public browse feed shows them tagged).
+ */
+export function buildListingQuery(f: ListingFilters, opts: { includeClosed?: boolean } = {}): Record<string, unknown> {
+  const q: Record<string, unknown> = opts.includeClosed ? { $and: [publicStatusQuery()] } : { status: "ACTIVE" };
   if (f.type) q.type = f.type;
   if (f.condition) q.condition = f.condition;
   if (f.make) q.make = contains(f.make);

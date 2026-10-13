@@ -12,10 +12,11 @@ import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { Listing, type IListing } from "@/models/Listing";
 import { BusinessReview } from "@/models/BusinessReview";
-import { Deal } from "@/models/Deal";
 import { getOrgUserIds } from "@/lib/business";
 import { canReviewBusiness } from "@/lib/reviews";
-import { dealLabel } from "@/lib/deals";
+import { getLiveDeals } from "@/lib/publicDeals";
+import { publicStatusQuery } from "@/lib/listingFilters";
+import DealCard from "@/components/deals/DealCard";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import DealerVehicles from "@/components/listings/DealerVehicles";
@@ -34,11 +35,10 @@ type Org = {
 const REVIEW_PAGE = 10;
 const TYPE_LABEL: Record<Org["type"], string> = { DEALER: "Car dealer", RENTAL: "Rental company", BOTH: "Dealer & rentals" };
 
-type DealRow = { _id: string; title: string; description?: string; discountType: "PERCENT" | "AMOUNT"; discountValue: number; endsAt: string; listingIds: Array<{ _id: string; title: string }> };
 
 /**
  * The parts of the page that are the same for every visitor, cached for PUBLIC_CACHE_SECONDS and cleared when
- * the business, its listings, deals or reviews change. Cached values are plain JSON: ids and dates are strings.
+ * the business, its listings or reviews change (deals are loaded and cached separately). Cached values are plain JSON: ids and dates are strings.
  */
 const loadBusinessPage = (slug: string) =>
   unstable_cache(
@@ -49,20 +49,16 @@ const loadBusinessPage = (slug: string) =>
         .lean<Org>();
       if (!org) return null;
       const memberIds = await getOrgUserIds(org._id);
-      const now = new Date();
-      const [listings, deals, ratingRows, firstReviews] = await Promise.all([
-        Listing.find({ sellerId: { $in: memberIds }, status: "ACTIVE" }).sort({ featured: -1, createdAt: -1 }).limit(24).lean(),
-        Deal.find({ organizationId: org._id, paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } })
-          .sort({ endsAt: 1 })
-          .populate("listingIds", "title")
-          .lean(),
+      const [listings, ratingRows, firstReviews] = await Promise.all([
+        // Recently sold or rented vehicles stay on show (stamped) after the available ones
+        Listing.find({ sellerId: { $in: memberIds }, ...publicStatusQuery() }).sort({ status: 1, featured: -1, createdAt: -1 }).limit(24).lean(),
         BusinessReview.aggregate<{ _id: number; count: number }>([
           { $match: { organizationId: org._id } },
           { $group: { _id: "$rating", count: { $sum: 1 } } },
         ]),
         BusinessReview.find({ organizationId: org._id }).sort({ createdAt: -1 }).limit(REVIEW_PAGE).populate("reviewerId", "name image").lean(),
       ]);
-      return JSON.parse(JSON.stringify({ org, memberIds, listings, deals, ratingRows, firstReviews }));
+      return JSON.parse(JSON.stringify({ org, memberIds, listings, ratingRows, firstReviews }));
     },
     ["business-page", slug],
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [businessTag(slug)] }
@@ -70,7 +66,6 @@ const loadBusinessPage = (slug: string) =>
     org: Org;
     memberIds: string[];
     listings: Array<IListing & { _id: string }>;
-    deals: DealRow[];
     ratingRows: Array<{ _id: number; count: number }>;
     firstReviews: Parameters<typeof toReviewView>[0][];
   } | null>;
@@ -93,7 +88,9 @@ export default async function DealerPage({ params }: Props) {
   const { slug } = await params;
   const page = await getBusinessPage(slug);
   if (!page) notFound();
-  const { org, memberIds, listings, deals, ratingRows, firstReviews } = page;
+  const { org, memberIds, listings, ratingRows, firstReviews } = page;
+  const deals = await getLiveDeals({ orgId: String(org._id), limit: 12 });
+  const nowMs = new Date().getTime();
 
   const session = await auth();
   const viewerId = session?.user?.id;
@@ -113,8 +110,9 @@ export default async function DealerPage({ params }: Props) {
 
   const isMember = !!viewerId && memberIds.includes(viewerId);
   const viewer: ReviewViewer = !viewerId ? "anon" : isMember ? "member" : eligible || myReview ? "eligible" : "ineligible";
-  const forSale = listings.filter(l => l.type !== "RENT").length;
-  const forRent = listings.filter(l => l.type !== "SALE").length;
+  const available = listings.filter(l => l.status === "ACTIVE");
+  const forSale = available.filter(l => l.type !== "RENT").length;
+  const forRent = available.filter(l => l.type !== "SALE").length;
   const since = new Date(org.createdAt).getFullYear();
 
   return (
@@ -181,19 +179,8 @@ export default async function DealerPage({ params }: Props) {
           {deals.length > 0 && (
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900"><Tag size={18} className="text-rose-600" /> Current deals</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {deals.map(d => (
-                  <div key={String(d._id)} className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 to-orange-500 p-4 text-white shadow-lg shadow-rose-500/20">
-                    <div aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
-                    <p className="relative text-2xl font-extrabold">{dealLabel(d)}</p>
-                    <p className="relative mt-0.5 font-semibold">{d.title}</p>
-                    {d.description && <p className="relative mt-1 text-sm text-white/85">{d.description}</p>}
-                    <p className="relative mt-3 text-xs text-white/80">
-                      {d.listingIds.length === 0 ? "On every vehicle for sale" : `On ${d.listingIds.map(l => l.title).join(", ")}`} · ends{" "}
-                      {new Date(d.endsAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
-                    </p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {deals.map(d => <DealCard key={d._id} deal={d} now={nowMs} showBusiness={false} />)}
               </div>
             </section>
           )}

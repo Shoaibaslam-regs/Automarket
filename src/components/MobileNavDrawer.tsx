@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
-  Briefcase, Calendar, Car, ChevronRight, Crown, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare,
+  Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare,
   Search, Settings, ShieldCheck, Sparkles, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
@@ -121,6 +121,13 @@ export default function MobileNavDrawer({
       <style>{`
         @keyframes mnFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes mnSlide { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes mnGlow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45), 0 8px 22px -12px rgba(244, 63, 94, 0.45) }
+          50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0), 0 12px 28px -10px rgba(244, 63, 94, 0.6) }
+        }
+        @keyframes mnFlame { 0%, 100% { transform: scale(1) rotate(-4deg) } 50% { transform: scale(1.18) rotate(5deg) } }
+        @keyframes mnShine { from { transform: translateX(-120%) skewX(-20deg) } to { transform: translateX(320%) skewX(-20deg) } }
+        @media (prefers-reduced-motion: reduce) { .mn-hot, .mn-hot * { animation: none !important } }
       `}</style>
 
       <aside className="absolute inset-y-0 right-0 flex w-[min(80vw,300px)] animate-[mnSlide_0.28s_cubic-bezier(0.22,1,0.36,1)] flex-col bg-white shadow-2xl shadow-slate-950/40">
@@ -193,7 +200,33 @@ export default function MobileNavDrawer({
             </div>
           )}
 
-          {section("Explore", browse)}
+          <div>
+            <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Explore</p>
+            {/* Hot deals: highlighted like the province picker's capital card */}
+            <Link
+              href="/deals"
+              onClick={onClose}
+              aria-current={isActive("/deals") ? "page" : undefined}
+              className="mn-hot mb-1 block animate-[mnGlow_2.2s_ease-in-out_infinite] rounded-lg bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 p-[1.5px]"
+            >
+              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-[6.5px] bg-white px-2 py-1.5">
+                <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-[mnShine_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" />
+                <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-sm shadow-rose-500/30">
+                  <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />
+                </span>
+                <span className="relative min-w-0 flex-1 truncate text-[13px] font-bold text-slate-900">Hot deals</span>
+                <span className="relative inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-rose-600 ring-1 ring-inset ring-rose-200">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+                  </span>
+                  Hot
+                </span>
+                <ChevronRight size={13} className="relative text-slate-300" />
+              </span>
+            </Link>
+            <div className="space-y-0.5">{browse.map(row)}</div>
+          </div>
           {user && section("Account", account)}
 
           {user?.role === "ADMIN" && (

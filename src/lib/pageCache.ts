@@ -12,6 +12,9 @@ export const PUBLIC_CACHE_SECONDS = 60;
 
 export const listingTag = (id: string) => `listing:${id}`;
 export const businessTag = (slug: string) => `business:${slug}`;
+export const dealTag = (id: string) => `deal:${id}`;
+/** Every list of deals: the public deals page and the home page strip */
+export const DEALS_TAG = "deals";
 
 // expire: 0 drops the entry now, so the next visit (often the owner checking their change) gets fresh data
 const NOW = { expire: 0 };
@@ -36,6 +39,13 @@ export async function invalidateBusinessPage(orgId: unknown) {
   if (!orgId || !mongoose.Types.ObjectId.isValid(String(orgId))) return;
   const org = await Organization.findById(orgId).select("slug").lean<{ slug?: string }>();
   if (org?.slug) expire(businessTag(org.slug));
+}
+
+/** A deal changed: clear its own page, every deals list and its business's page. */
+export async function invalidateDeal(dealId: unknown, orgId: unknown) {
+  if (dealId) expire(dealTag(String(dealId)));
+  expire(DEALS_TAG);
+  await invalidateBusinessPage(orgId);
 }
 
 /** A listing changed: clear its page and, when the seller belongs to a business, that business's page. */

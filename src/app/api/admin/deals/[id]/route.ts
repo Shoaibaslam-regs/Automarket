@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { Deal } from "@/models/Deal";
-import { invalidateBusinessPage } from "@/lib/pageCache";
+import { invalidateDeal } from "@/lib/pageCache";
 
 /** Disables or re-enables a deal (`{ disabledByAdmin }`), e.g. a misleading or abusive offer. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (typeof disabledByAdmin !== "boolean") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     const deal = await Deal.findByIdAndUpdate(id, { $set: { disabledByAdmin } }, { new: true });
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
-    await invalidateBusinessPage(deal.organizationId);
+    await invalidateDeal(deal._id, deal.organizationId);
     return NextResponse.json({ deal });
   } catch (error) {
     console.error("Admin deal PATCH error:", error);
@@ -30,7 +30,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     const deleted = await Deal.findByIdAndDelete(id);
-    if (deleted) await invalidateBusinessPage(deleted.organizationId);
+    if (deleted) await invalidateDeal(deleted._id, deleted.organizationId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Admin deal DELETE error:", error);

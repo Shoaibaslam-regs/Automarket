@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
-import { getInventorySellerIds } from "@/lib/business";
+import { getInventorySellerIds, getMembership } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +22,13 @@ export async function GET() {
       .lean<Array<Record<string, unknown> & { sellerId?: { _id: unknown } | null }>>();
 
     // Edit/delete is only ever allowed on your own listings; the API enforces this too.
-    const withPermissions = listings.map(l => ({
-      ...l,
-      canManage: String(l.sellerId?._id ?? "") === session.user.id,
-    }));
+    // Marking sold/rented/available is also open to the owner, managers and sales staff (see the availability route).
+    const member = await getMembership(session.user.id);
+    const teamAvailability = !!member && ["OWNER", "MANAGER", "SALES"].includes(member.role);
+    const withPermissions = listings.map(l => {
+      const mine = String(l.sellerId?._id ?? "") === session.user.id;
+      return { ...l, canManage: mine, canSetAvailability: mine || teamAvailability };
+    });
 
     return NextResponse.json({ listings: withPermissions });
   } catch (error) {

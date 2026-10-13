@@ -29,7 +29,9 @@ export async function GET(req: NextRequest) {
     };
     const sortOrder = SORTS[sort] ?? SORTS.createdAt;
 
-    const query = buildListingQuery(parseFilters(searchParams));
+    // Recently sold or rented vehicles stay visible with a tag unless the visitor asks for available ones only
+    const availableOnly = searchParams.get("available") === "1";
+    const query = buildListingQuery(parseFilters(searchParams), { includeClosed: !availableOnly });
     // Listings without a mileage would otherwise sort first as "lowest"
     if (sort === "mileage_asc" && !query.mileage) query.mileage = { $ne: null };
 
@@ -40,7 +42,8 @@ export async function GET(req: NextRequest) {
       // Public feed: only what a card shows. Contact details stay on the listing page.
       // The seller's business (if any) lets cards show "listed by a business" vs a private seller
       .populate({ path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" } })
-      .sort({ featured: -1, ...sortOrder })
+      // "ACTIVE" sorts before "RENTED" and "SOLD", so available vehicles always come first
+      .sort({ status: 1, featured: -1, ...sortOrder })
       .skip(skip)
       .limit(limit)
       .lean();

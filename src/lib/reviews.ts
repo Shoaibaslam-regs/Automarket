@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { BusinessReview } from "@/models/BusinessReview";
 import { Booking } from "@/models/Booking";
 import { Customer } from "@/models/Customer";
-import { Deal } from "@/models/Deal";
 import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
@@ -66,19 +65,3 @@ export async function canReviewBusiness(reviewerId: string, orgId: string): Prom
   return !!(await Booking.exists({ renterId: reviewer, rentalId: { $in: rentalIds }, status: { $in: ["CONFIRMED", "ACTIVE", "COMPLETED"] } }));
 }
 
-/** The live deal giving the biggest discount on this listing, if its business is running one. */
-export async function getBestDealForListing(orgId: string, listingId: string, price: number) {
-  const now = new Date();
-  const deals = await Deal.find({
-    organizationId: orgId,
-    paused: false,
-    disabledByAdmin: false,
-    startsAt: { $lte: now },
-    endsAt: { $gte: now },
-    $or: [{ listingIds: { $size: 0 } }, { listingIds: new mongoose.Types.ObjectId(listingId) }],
-  })
-    .select("title description discountType discountValue endsAt")
-    .lean<Array<{ _id: Oid; title: string; description?: string; discountType: "PERCENT" | "AMOUNT"; discountValue: number; endsAt: Date }>>();
-  const off = (d: (typeof deals)[number]) => (d.discountType === "PERCENT" ? (price * d.discountValue) / 100 : d.discountValue);
-  return deals.sort((a, b) => off(b) - off(a))[0] ?? null;
-}

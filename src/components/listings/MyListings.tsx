@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Car, Eye, ImageOff, LayoutGrid, List, MapPin, Plus, ScanSearch } from "lucide-react";
 import DeleteListing from "./DeleteListing";
+import AvailabilityControl from "./AvailabilityControl";
 import { formatLakh } from "@/lib/format";
 
 export type MyListing = {
@@ -30,6 +31,7 @@ const STATUS_STYLE: Record<string, string> = {
   RENTED: "bg-sky-50 text-sky-700 ring-sky-200",
   INACTIVE: "bg-slate-100 text-slate-500 ring-slate-200",
 };
+const STATUS_TEXT: Record<string, string> = { ACTIVE: "Available", PENDING: "Reserved", SOLD: "Sold", RENTED: "Rented", INACTIVE: "Hidden" };
 const TYPE_LABEL = { SALE: "For sale", RENT: "For rent", BOTH: "Sale & rent" } as const;
 
 function Price({ l, className }: { l: MyListing; className: string }) {
@@ -121,7 +123,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
                   <span className="flex h-full items-center justify-center text-slate-300"><ImageOff size={22} /></span>
                 )}
                 <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset sm:left-3 sm:top-3 sm:text-[11px] ${STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE}`}>
-                  {l.status}
+                  {STATUS_TEXT[l.status] ?? l.status}
                 </span>
                 <span className="absolute right-2 top-2 hidden rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 sm:right-3 sm:top-3 sm:block">
                   {TYPE_LABEL[l.type]}
@@ -131,7 +133,10 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
                 <p className="truncate text-[13px] font-semibold text-slate-900 sm:text-base">{l.title}</p>
                 <p className="mt-0.5 truncate text-[11px] text-slate-500 sm:text-xs">{l.make} {l.model} · {l.year}</p>
                 <Price l={l} className="mt-1.5 text-base font-extrabold text-slate-900 sm:text-lg" />
-                <div className="mt-auto border-t border-slate-100 pt-2.5 sm:pt-3"><Actions l={l} /></div>
+                <div className="mt-auto space-y-2 border-t border-slate-100 pt-2.5 sm:pt-3">
+                  <AvailabilityControl id={l.id} type={l.type} status={l.status} />
+                  <Actions l={l} />
+                </div>
               </div>
             </article>
           ))}
@@ -150,14 +155,17 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex items-start justify-between gap-2">
                   <p className="min-w-0 truncate font-semibold text-slate-900">{l.title}</p>
-                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE}`}>{l.status}</span>
+                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE}`}>{STATUS_TEXT[l.status] ?? l.status}</span>
                 </div>
                 <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-500">
                   {l.make} {l.model} · {l.year} · {TYPE_LABEL[l.type]}
                   <span className="hidden items-center gap-0.5 sm:inline-flex">· <MapPin size={11} />{l.location}</span>
                 </p>
                 <Price l={l} className="mt-1 text-lg font-extrabold text-slate-900" />
-                <div className="mt-auto pt-2"><Actions l={l} /></div>
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
+                  <AvailabilityControl id={l.id} type={l.type} status={l.status} />
+                  <div className="min-w-0 flex-1"><Actions l={l} /></div>
+                </div>
               </div>
             </article>
           ))}

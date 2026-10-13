@@ -105,6 +105,8 @@ export default function ListingsPage({
   const [fuelType, setFuelType] = useState(str(initial.fuelType));
   const [transmission, setTransmission] = useState(str(initial.transmission));
   const [sort, setSort] = useState<string>(initialSort);
+  // Sold and rented vehicles are shown (tagged) unless the visitor hides them
+  const [availableOnly, setAvailableOnly] = useState(initialParams.available === "1");
   const [view, setView] = useState<"grid" | "list">(initialParams.view === "list" ? "list" : "grid");
   const [saveState, setSaveState] = useState<{ query: string; status: "saving" | "saved" | "error"; message?: string } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -133,6 +135,7 @@ export default function ListingsPage({
   const filterQuery = filtersToSearchParams(filters).toString();
   const params = filtersToSearchParams(filters);
   if (sort !== "createdAt") params.set("sort", sort);
+  if (availableOnly) params.set("available", "1");
   if (page > 1) params.set("page", String(page));
   // view only changes presentation, so it goes in the address bar but not in the API query (no refetch)
   const urlParams = new URLSearchParams(params);
@@ -517,7 +520,16 @@ export default function ListingsPage({
                 )}
               </div>
 
-              <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+              <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none">
+                <label className="inline-flex h-10 flex-shrink-0 cursor-pointer select-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={availableOnly}
+                    onChange={e => { setAvailableOnly(e.target.checked); setPage(1); }}
+                    className="h-4 w-4 accent-slate-900"
+                  />
+                  Hide sold &amp; rented
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowFilters(true)}

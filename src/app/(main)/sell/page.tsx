@@ -11,14 +11,11 @@ import {
 import ImageUpload from "@/components/ui/ImageUpload";
 import Select from "@/components/ui/Select";
 import { formatLakh } from "@/lib/format";
+import { CONDITIONS, FUEL_TYPES, MAKES, TRANSMISSIONS } from "@/lib/vehicleOptions";
 import { formatLimit, planInfo } from "@/lib/plans";
 import LimitReachedCard from "@/components/subscription/LimitReachedCard";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
-const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki", "Other"];
-const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
-const TRANSMISSIONS = ["Manual", "Automatic", "Semi-automatic"];
-const CONDITIONS = ["NEW", "EXCELLENT", "GOOD", "FAIR", "POOR"];
 const MAX_YEAR = new Date().getFullYear() + 1;
 
 const LISTING_TYPES: { value: string; label: string; hint: string; icon: LucideIcon }[] = [

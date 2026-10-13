@@ -83,6 +83,8 @@ export async function PATCH(
       if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     }
 
+    if ("status" in update && update.status !== listing.status) update.statusChangedAt = new Date();
+
     // Ownership is re-checked in the write itself so the update can never touch someone else's listing
     const updated = await Listing.findOneAndUpdate(
       { _id: id, sellerId: session.user.id },
