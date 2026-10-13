@@ -51,7 +51,7 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - Business users contact the team from `/business/support`, which calls `POST /api/support/message` with a topic from `src/lib/supportTopics.ts`. The message lands in the support admin's Messages inbox and works while suspended, so the business can appeal.
   - Business routes must scope every query to `member.organizationId`. Customers can only be deleted by the owner, and only when their status is `SOLD` or `LOST` (`src/lib/customers.ts`).
 
-**Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` are registered with `defineModel(name, schema)` (`src/models/defineModel.ts`). In production it reuses the cached model. In development it replaces the cached model, so schema edits apply on hot reload without restarting the server. Use it for new models instead of `mongoose.models.X || mongoose.model(...)`.
+**Data.** Call `connectDB()` from `src/lib/mongodb.ts` before any query. It caches the connection on `global` for hot reload and serverless. Models in `src/models/` are registered with `defineModel(name, schema)` (`src/models/defineModel.ts`). In production it reuses the cached model. In development it replaces the cached model only when the schema's fields changed (it compares a fingerprint), so schema edits apply on hot reload. Replacing a model on every reload made routes that still held the old model hang with "buffering timed out". Use it for new models instead of `mongoose.models.X || mongoose.model(...)`.
 - Business inventory is not owned by the organization directly. It is the listings whose `sellerId` is any organization member; see `getInventorySellerIds` in `src/lib/business.ts`.
 
 **Plans and limits.** `src/lib/plans.ts` is the single source for plan names, prices and limits: `FREE`, `STARTER` ("Premium"), `PRO` ("Premium Plus") and `UNLIMITED`. A `null` limit means unlimited. The file is client-safe, and all UI text reads its numbers from it.
@@ -85,10 +85,22 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - Reviews belong to **businesses**, not individual sellers or listings. `BusinessReview` allows one review per user per organization, and the business can add a public `reply`.
 - Only people who dealt with the business may review it (`canReviewBusiness` in `src/lib/reviews.ts`): they booked, messaged a member, or are a CRM customer. Members can't review their own business.
 - `src/lib/reviews.ts` also provides `getBusinessRatings`, `getSellerBusinesses` (seller id → business, used to label listings "Business" or "Private seller") and `getBestDealForListing`.
-- The public business page is `/dealers/[slug]` (`Organization.slug`), with its reviews API at `/api/businesses/[slug]/reviews`. The business console has `/business/reviews` and `/business/deals`.
+- The public business page is `/dealers/[slug]` (`Organization.slug`), with its reviews API at `/api/businesses/[slug]/reviews`. Old `/biz/<slug>` links redirect there (`next.config.ts`). The business console has `/business/reviews` and `/business/deals`.
+- The business picture is `Organization.logo`. The owner or a manager sets it in business settings (`BusinessProfileCard`, using the `profileImage` upload endpoint). `PATCH /api/business/organizations` only changes the fields it is sent, and accepts only UploadThing URLs (`isUploadedImageUrl` in `src/lib/uploadUrls.ts`). It shows on the dealer page, the listing "Listed by" box and the console sidebar, which reloads on the `ORG_UPDATED_EVENT` window event.
 - A `Deal` takes a percent or PKR amount off sale prices, for all of the business's sale vehicles (empty `listingIds`) or chosen ones, between `startsAt` and `endsAt`. Its state comes from `dealState` in `src/lib/deals.ts`, which is client-safe.
 - Admins see and disable deals at `/admin/deals`. `disabledByAdmin` can't be undone by the business.
 - The old per-seller `Review` model and `/api/reviews` were removed. Their documents are left in the `reviews` collection but nothing reads them.
+
+**Public caching (60 seconds).** `src/lib/pageCache.ts` sets `PUBLIC_CACHE_SECONDS` and has the tag helpers.
+- The two home pages use `export const revalidate = 60`.
+- The listing page and the `/dealers/[slug]` page call `auth()`, so they render per request. They cache their visitor-independent database reads with `unstable_cache`, tagged `listing:<id>` and `business:<slug>`. `"use cache"` would need Cache Components, which this app doesn't enable.
+  - Cached values are plain JSON, so ids and dates are strings. After a cache hit nothing has called `connectDB()`, so connect before any extra live query.
+  - Viewer-specific parts stay live: the dealer page's own review and review eligibility.
+- Routes that change those pages expire the tags straight away with `invalidateListingAndSeller`, `invalidateBusinessPage` or `invalidateBusinessSlug`. These are listing create/edit/delete, admin listing changes, AI inspection, business settings, deals, reviews and replies, and admin business actions. A new mutation that changes what those pages show must call one of them.
+- `GET /api/listings` (the public browse feed) sends `Cache-Control: public, s-maxage=60, stale-while-revalidate=60` for the CDN.
+- Don't cache anything per user: dashboards, the business console, admin and messages.
+
+**Terms.** `/terms` is a static page. `src/lib/terms.ts` holds `TERMS_UPDATED`, which must be bumped when the text changes. Registration requires `acceptTerms: true` and stores `User.termsAcceptedAt`. Google sign-ups get it on first sign-in, because the sign-in page says continuing means agreeing.
 
 **Listing filters.** `src/lib/listingFilters.ts` is the single source for browse filters. `parseFilters` turns URL or object input into `buildListingQuery`, the Mongo query that always includes `status: "ACTIVE"`. `listingMatches` is an in-memory twin of that query. The listings API, the browse page URL state and saved-search alerts all use this module, so a new filter must be added to it and to both the query builder and the matcher.
 - When a listing is created, `POST /api/listings` uses `after()` to run `notifySavedSearches` (`src/lib/savedSearchAlerts.ts`), which emails users whose saved searches match.

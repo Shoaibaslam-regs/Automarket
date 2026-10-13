@@ -9,6 +9,7 @@ import { Crown } from "lucide-react";
 import { planInfo, planSourceLabel } from "@/lib/plans";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
+import BusinessProfileCard from "@/components/business/BusinessProfileCard";
 
 type Organization = {
   _id: string;
@@ -21,6 +22,7 @@ type Organization = {
   address?: string;
   description?: string;
   slug: string;
+  logo?: string;
   ownerId: string;
   isActive: boolean;
 };
@@ -120,6 +122,7 @@ export default function BusinessSettingsPage() {
   const { data: session } = useSession();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [org, setOrg] = useState<Organization | null>(null);
+  const [myRole, setMyRole] = useState<string | null>(null);
   const { data: sub } = useSubscription();
   const plan = planInfo(sub?.planId ?? org?.plan);
   const [loading, setLoading] = useState(true);
@@ -134,6 +137,7 @@ export default function BusinessSettingsPage() {
       .then(d => {
         if (d.organization) {
           setOrg(d.organization);
+          setMyRole(d.myRole ?? null);
           setForm({
             name: d.organization.name || "",
             phone: d.organization.phone || "",
@@ -214,6 +218,16 @@ export default function BusinessSettingsPage() {
           )}
         </div>
 
+        {org && (
+          <BusinessProfileCard
+            name={org.name}
+            slug={org.slug}
+            logo={org.logo}
+            canEditLogo={myRole === "OWNER" || myRole === "MANAGER"}
+            onLogoChange={logo => setOrg(o => (o ? { ...o, logo } : o))}
+          />
+        )}
+
         {/* Business info */}
         <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "24px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "20px" }}>Business information</h2>
@@ -256,14 +270,6 @@ export default function BusinessSettingsPage() {
               <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Business description</label>
               <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3}
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "13px", outline: "none", resize: "none", boxSizing: "border-box" }} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Business URL slug</label>
-              <div style={{ display: "flex", alignItems: "center", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", background: "var(--gh-f6f8fa)" }}>
-                <span style={{ fontSize: "13px", color: "var(--gh-8c959f)" }}>automarket.com/biz/</span>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)" }}>{org?.slug}</span>
-              </div>
-              <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>Your public business profile URL — cannot be changed</p>
             </div>
             <button type="submit" disabled={saving}
               style={{ padding: "11px", background: saving ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>

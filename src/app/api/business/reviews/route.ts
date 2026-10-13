@@ -6,6 +6,7 @@ import { BusinessReview } from "@/models/BusinessReview";
 import { Organization } from "@/models/Organization";
 import { can, getMembership } from "@/lib/business";
 import { getBusinessRatings } from "@/lib/reviews";
+import { invalidateBusinessPage } from "@/lib/pageCache";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export async function PATCH(req: NextRequest) {
       { new: true }
     );
     if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    await invalidateBusinessPage(member.organizationId);
     return NextResponse.json({ review });
   } catch (error) {
     console.error("Business review reply error:", error);

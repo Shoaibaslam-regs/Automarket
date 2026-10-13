@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 
 import { Inspection } from "@/models/Inspection";
 import { Listing } from "@/models/Listing";
+import { invalidateListingPage } from "@/lib/pageCache";
 
 type GeminiReport = {
   make: string;
@@ -350,6 +351,7 @@ export async function POST(req: NextRequest) {
           new: true,
         }
       );
+    invalidateListingPage(listingId);
 
     return NextResponse.json({
       success: true,

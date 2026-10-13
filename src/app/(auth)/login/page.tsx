@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { TERMS_PATH } from "@/lib/terms";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -82,6 +83,10 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </button>
+          <p style={{ textAlign: "center", fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "8px", lineHeight: 1.5 }}>
+            New here? Continuing with Google means you agree to our{" "}
+            <Link href={TERMS_PATH} style={{ color: "var(--gh-57606a)", textDecoration: "underline" }}>Terms &amp; Conditions</Link>.
+          </p>
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Don&apos;t have an account?{" "}
@@ -93,7 +98,7 @@ export default function LoginPage() {
       {/* Footer */}
       <footer style={{ background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", textAlign: "center", flexShrink: 0 }}>
         <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "8px", flexWrap: "wrap" }}>
-          {[["Browse listings", "/listings"], ["Sell a vehicle", "/sell"], ["Rent a vehicle", "/listings?type=RENT"]].map(([label, href]) => (
+          {[["Browse listings", "/listings"], ["Sell a vehicle", "/sell"], ["Rent a vehicle", "/listings?type=RENT"], ["Terms & Conditions", TERMS_PATH]].map(([label, href]) => (
             <Link key={label} href={href} style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>

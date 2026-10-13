@@ -5,7 +5,11 @@ import { User } from "@/models";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, phone } = await req.json();
+    const { name, email, password, phone, acceptTerms } = await req.json();
+
+    if (acceptTerms !== true) {
+      return NextResponse.json({ error: "Please accept the Terms & Conditions to create an account" }, { status: 400 });
+    }
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -39,6 +43,7 @@ export async function POST(req: NextRequest) {
       password: hashedPassword,
       phone,
       role: "USER",
+      termsAcceptedAt: new Date(),
     });
 
     return NextResponse.json(

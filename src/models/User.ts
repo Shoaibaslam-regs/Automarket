@@ -22,6 +22,8 @@ export interface IUser extends Document {
   trialUsedAt?: Date;
   trialPlan?: PlanId;
   planGrantedBy?: mongoose.Types.ObjectId;
+  /** When the user agreed to the Terms & Conditions (at sign-up; Google sign-ups agree by continuing) */
+  termsAcceptedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +46,7 @@ const UserSchema = new Schema<IUser>(
     trialUsedAt: { type: Date },
     trialPlan: { type: String, enum: PLAN_IDS },
     planGrantedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    termsAcceptedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TERMS_PATH } from "@/lib/terms";
 
 export default function Footer() {
   return (
@@ -62,11 +63,15 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-200 pt-4 text-center">
+        <div className="flex flex-col items-center gap-2 border-t border-gray-200 pt-4 text-center sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-400">
             © {new Date().getFullYear()} AutoMarket Pakistan.
             All rights reserved.
           </p>
+          <div className="flex gap-4 text-xs">
+            <Link href={TERMS_PATH} className="text-gray-500 transition hover:text-black">Terms &amp; Conditions</Link>
+            <Link href="/pricing" className="text-gray-500 transition hover:text-black">Pricing</Link>
+          </div>
         </div>
 
       </div>

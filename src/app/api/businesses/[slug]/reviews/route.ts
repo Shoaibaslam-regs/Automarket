@@ -6,6 +6,7 @@ import { BusinessReview } from "@/models/BusinessReview";
 import { Organization } from "@/models/Organization";
 import { canReviewBusiness, getBusinessRatings } from "@/lib/reviews";
 import { triggerPusher } from "@/lib/support";
+import { invalidateBusinessSlug } from "@/lib/pageCache";
 
 const PAGE_SIZE = 10;
 
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     ).populate("reviewerId", "name image");
 
     await triggerPusher(`user-${org.ownerId}`, "new-notification", { type: "review", rating });
+    invalidateBusinessSlug(slug);
     return NextResponse.json({ review });
   } catch (error) {
     console.error("Business review POST error:", error);
@@ -89,6 +91,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ s
     const org = await findBusiness(slug);
     if (!org) return NextResponse.json({ error: "Business not found" }, { status: 404 });
     await BusinessReview.deleteOne({ organizationId: org._id, reviewerId: session.user.id });
+    invalidateBusinessSlug(slug);
     return NextResponse.json({ deleted: true });
   } catch (error) {
     console.error("Business review DELETE error:", error);

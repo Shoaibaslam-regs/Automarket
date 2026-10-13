@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Deal } from "@/models/Deal";
 import { can, getMembership } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
+import { invalidateBusinessPage } from "@/lib/pageCache";
 
 async function gate(id: string) {
   const session = await auth();
@@ -36,6 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (typeof body.paused === "boolean") g.deal.paused = body.paused;
     }
     await g.deal.save();
+    await invalidateBusinessPage(g.deal.organizationId);
     return NextResponse.json({ deal: g.deal });
   } catch (error) {
     console.error("Deal PATCH error:", error);
@@ -49,6 +51,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const g = await gate(id);
     if (g.error) return g.error;
     await g.deal.deleteOne();
+    await invalidateBusinessPage(g.deal.organizationId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Deal DELETE error:", error);

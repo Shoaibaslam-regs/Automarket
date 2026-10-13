@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { checkPlanLimit } from "@/lib/subscription";
 import { SLOT_STATUSES } from "@/lib/plans";
 import { isUserBusinessSuspended } from "@/lib/business";
+import { invalidateListingAndSeller } from "@/lib/pageCache";
 
 export async function GET(
   req: NextRequest,
@@ -92,6 +93,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    await invalidateListingAndSeller(id, session.user.id);
     return NextResponse.json({ listing: updated });
   } catch (error) {
     return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
@@ -126,6 +128,7 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    await invalidateListingAndSeller(id, session.user.id);
     return NextResponse.json({ message: "Listing deleted" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete listing" }, { status: 500 });

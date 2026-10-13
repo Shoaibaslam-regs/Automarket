@@ -7,6 +7,7 @@ import { Message } from "@/models/Message";
 import { getOrgUserIds } from "@/lib/business";
 import { triggerPusher } from "@/lib/support";
 import { isVerified } from "@/lib/plans";
+import { invalidateBusinessSlug, invalidateListingPage } from "@/lib/pageCache";
 
 const BADGE_MONTHS = [1, 3, 6, 12];
 const fmtDate = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -54,6 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `Warning ${count > 1 ? `#${count} ` : ""}for your business "${org.name}" on AutoMarket: ${why}. ` +
         `Please fix this to avoid a suspension. Reply here if you have questions.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true, warnings: count });
     }
 
@@ -64,6 +66,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       const live = await Listing.find({ sellerId: { $in: memberIds }, status: "ACTIVE" }).distinct("_id");
       await Listing.updateMany({ _id: { $in: live } }, { $set: { status: "INACTIVE" } });
+      live.forEach(invalidateListingPage);
       org.isActive = false;
       org.suspension = { reason: why, at: new Date(), by: gate.admin._id, listingIds: live };
       await org.save();
@@ -71,6 +74,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `Your business "${org.name}" has been suspended on AutoMarket. Reason: ${why}. ` +
         `Its ${live.length} live listing${live.length !== 1 ? "s are" : " is"} hidden and its public page is offline. Reply here if you'd like to appeal.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true, hiddenListings: live.length });
     }
 
@@ -79,12 +83,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const toRestore = org.suspension?.listingIds ?? [];
       // Only listings still inactive come back; anything the business has since sold or deleted stays as it is
       const restored = await Listing.updateMany({ _id: { $in: toRestore }, status: "INACTIVE" }, { $set: { status: "ACTIVE" } });
+      toRestore.forEach(invalidateListingPage);
       org.isActive = true;
       org.suspension = undefined;
       await org.save();
 
       await notifyOwner(gate.admin._id, org.ownerId,
         `Good news: your business "${org.name}" has been reinstated on AutoMarket. Your public page is back and ${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s are" : " is"} live again.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true, restoredListings: restored.modifiedCount });
     }
 
@@ -110,6 +116,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `Your business "${org.name}" is now Verified on AutoMarket${source === "ADMIN_GRANT" ? " (complimentary)" : ""}. ` +
         `The Verified badge shows on your business page and listings${expiresAt ? ` until ${fmtDate(expiresAt)}` : ""}.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true, expiresAt: expiresAt ?? null });
     }
 
@@ -124,6 +131,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await org.save();
       await notifyOwner(gate.admin._id, org.ownerId,
         `Your Verified badge request for "${org.name}" wasn't approved. Reason: ${why}. You can request it again once that's sorted. Reply here if you have questions.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true });
     }
 
@@ -137,6 +145,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await org.save();
       await notifyOwner(gate.admin._id, org.ownerId,
         `The Verified badge has been removed from your business "${org.name}" on AutoMarket${why ? `. Reason: ${why}` : ""}. Reply here if you have questions.`);
+      invalidateBusinessSlug(org.slug);
       return NextResponse.json({ ok: true });
     }
 

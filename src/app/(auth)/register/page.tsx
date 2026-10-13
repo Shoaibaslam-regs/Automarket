@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import { TERMS_PATH } from "@/lib/terms";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function RegisterPage() {
     name: "", email: "", phone: "", password: "", confirm: "",
   });
   const [error, setError] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -23,6 +25,10 @@ export default function RegisterPage() {
     setError("");
     if (form.password !== form.confirm) {
       setError("Passwords do not match");
+      return;
+    }
+    if (!acceptTerms) {
+      setError("Please accept the Terms & Conditions to continue");
       return;
     }
     if (form.phone.trim().length < 10) {
@@ -38,6 +44,7 @@ export default function RegisterPage() {
         email: form.email,
         phone: form.phone,
         password: form.password,
+        acceptTerms,
       }),
     });
     const data = await res.json();
@@ -92,6 +99,15 @@ export default function RegisterPage() {
               </div>
             ))}
 
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "var(--gh-57606a)", lineHeight: 1.5, cursor: "pointer" }}>
+              <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)} required
+                style={{ marginTop: "3px", width: "15px", height: "15px", accentColor: "var(--gh-0d1117)", flexShrink: 0 }} />
+              <span>
+                I agree to the{" "}
+                <Link href={TERMS_PATH} target="_blank" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Terms &amp; Conditions</Link>
+              </span>
+            </label>
+
             <button type="submit" disabled={loading}
               style={{ padding: "11px", background: loading ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", marginTop: "4px" }}>
               {loading ? "Creating account..." : "Create account"}
@@ -108,7 +124,7 @@ export default function RegisterPage() {
       {/* Footer */}
       <footer style={{ background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", textAlign: "center", flexShrink: 0 }}>
         <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "8px", flexWrap: "wrap" }}>
-          {[["Browse listings", "/listings"], ["Sell a vehicle", "/sell"], ["Rent a vehicle", "/listings?type=RENT"]].map(([label, href]) => (
+          {[["Browse listings", "/listings"], ["Sell a vehicle", "/sell"], ["Rent a vehicle", "/listings?type=RENT"], ["Terms & Conditions", TERMS_PATH]].map(([label, href]) => (
             <Link key={label} href={href} style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>

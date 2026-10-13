@@ -8,11 +8,13 @@ import { Inspection } from "@/models/Inspection";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { PUBLIC_CACHE_SECONDS, listingTag } from "@/lib/pageCache";
 import type { Metadata } from "next";
 import ImageGallery from "@/components/ui/ImageGallery";
 import { SITE_URL } from "@/lib/site";
 import { formatLakh } from "@/lib/format";
-import { getBestDealForListing, getBusinessRatings, getSellerBusinesses } from "@/lib/reviews";
+import { getBestDealForListing, getBusinessRatings, getSellerBusinesses, type SellerBusiness } from "@/lib/reviews";
 import { dealLabel, dealPrice } from "@/lib/deals";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { Building2, ChevronRight, MapPin, Tag, UserRound } from "lucide-react";
@@ -23,12 +25,49 @@ import StarRating from "@/components/reviews/StarRating";
 
 type Props = { params: Promise<{ id: string }> };
 
-// Shared by generateMetadata and the page, so the listing is only fetched once per request
-const getListing = cache(async (id: string) => {
+/**
+ * Everything on the page that is the same for every visitor, cached for PUBLIC_CACHE_SECONDS and cleared
+ * when the listing is edited. Cached values come back as plain JSON: ids and dates are strings.
+ */
+const loadListingPage = (id: string) =>
+  unstable_cache(
+    async () => {
+      await connectDB();
+      const listing = await Listing.findById(id).populate("sellerId", "name image phone createdAt").lean<{
+        price: number; type: string; sellerId?: { _id?: mongoose.Types.ObjectId } | null;
+      }>();
+      if (!listing) return null;
+      const [rental, inspection] = await Promise.all([
+        Rental.findOne({ listingId: id }).lean(),
+        Inspection.findOne({ listingId: id }).lean(),
+      ]);
+      // Who listed it: a business (with its rating and any live deal) or a private seller
+      const sellerId = listing.sellerId?._id?.toString();
+      const business = sellerId ? (await getSellerBusinesses([sellerId])).get(sellerId) ?? null : null;
+      const isForSale = listing.type === "SALE" || listing.type === "BOTH";
+      const [ratings, deal] = business
+        ? await Promise.all([getBusinessRatings([business.id]), isForSale ? getBestDealForListing(business.id, id, listing.price) : null])
+        : [new Map(), null];
+      const rating = (business && ratings.get(business.id)) || { average: 0, count: 0 };
+      return JSON.parse(JSON.stringify({ listing, rental, inspection, business, rating, deal }));
+    },
+    ["listing-page", id],
+    { revalidate: PUBLIC_CACHE_SECONDS, tags: [listingTag(id)] }
+  )();
+
+// Shared by generateMetadata and the page, so the data is only read once per request
+const getListingPage = cache(async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  await connectDB();
-  return Listing.findById(id).populate("sellerId", "name image phone createdAt").lean();
+  return loadListingPage(id) as Promise<{
+    listing: unknown;
+    rental: unknown;
+    inspection: unknown;
+    business: SellerBusiness | null;
+    rating: { average: number; count: number };
+    deal: Awaited<ReturnType<typeof getBestDealForListing>>;
+  } | null>;
 });
+const getListing = async (id: string) => (await getListingPage(id))?.listing ?? null;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -83,7 +122,8 @@ export default async function ListingDetailPage({ params }: Props) {
     } | null;
   };
 
-  const rental = await Rental.findOne({ listingId: id }).lean() as {
+  const page = (await getListingPage(id))!;
+  const rental = page.rental as {
     _id: mongoose.Types.ObjectId;
     dailyRate: number;
     weeklyRate?: number;
@@ -91,7 +131,7 @@ export default async function ListingDetailPage({ params }: Props) {
     deposit: number;
   } | null;
 
-  const inspection = await Inspection.findOne({ listingId: id }).lean() as {
+  const inspection = page.inspection as {
     make?: string;
     model?: string;
     year?: number;
@@ -106,16 +146,7 @@ export default async function ListingDetailPage({ params }: Props) {
   const isOwner = !!viewerId && viewerId === sellerId;
 
   const isForSale = l.type === "SALE" || l.type === "BOTH";
-
-  // Who listed it: a business (with its rating and any live deal) or a private seller
-  const business = sellerId ? (await getSellerBusinesses([sellerId])).get(sellerId) : undefined;
-  const [businessRatings, deal] = business
-    ? await Promise.all([
-        getBusinessRatings([business.id]),
-        isForSale ? getBestDealForListing(business.id, id, l.price) : null,
-      ])
-    : [new Map(), null];
-  const rating = (business && businessRatings.get(business.id)) || { average: 0, count: 0 };
+  const { business, rating, deal } = page;
 
   const specs = [
     { label: "Condition", value: l.condition },
@@ -270,8 +301,8 @@ export default async function ListingDetailPage({ params }: Props) {
                 <>
                   {business ? (
                     <Link href={`/dealers/${business.slug}`} className="group -m-2 flex items-center gap-3 rounded-xl p-2 transition hover:bg-gray-50">
-                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-bold text-white">
-                        {business.name[0]?.toUpperCase()}
+                      <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-bold text-white">
+                        {business.logo ? <Image src={business.logo} alt="" fill sizes="44px" className="object-cover" /> : business.name[0]?.toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-gray-900">{business.name}</p>

@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { PUBLIC_CACHE_SECONDS, businessTag } from "@/lib/pageCache";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
 import { Building2, CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
@@ -25,17 +28,56 @@ type Org = {
   _id: mongoose.Types.ObjectId; name: string; slug: string; type: "DEALER" | "RENTAL" | "BOTH";
   city?: string; address?: string; phone?: string; email?: string; description?: string; createdAt: Date;
   verification?: BadgeVerification;
+  logo?: string;
 };
 
 const REVIEW_PAGE = 10;
 const TYPE_LABEL: Record<Org["type"], string> = { DEALER: "Car dealer", RENTAL: "Rental company", BOTH: "Dealer & rentals" };
 
-const getBusiness = cache(async (slug: string) => {
-  await connectDB();
-  return Organization.findOne({ slug, isActive: { $ne: false } })
-    .select("name slug type city address phone email description createdAt verification.verifiedAt verification.expiresAt")
-    .lean<Org>();
-});
+type DealRow = { _id: string; title: string; description?: string; discountType: "PERCENT" | "AMOUNT"; discountValue: number; endsAt: string; listingIds: Array<{ _id: string; title: string }> };
+
+/**
+ * The parts of the page that are the same for every visitor, cached for PUBLIC_CACHE_SECONDS and cleared when
+ * the business, its listings, deals or reviews change. Cached values are plain JSON: ids and dates are strings.
+ */
+const loadBusinessPage = (slug: string) =>
+  unstable_cache(
+    async () => {
+      await connectDB();
+      const org = await Organization.findOne({ slug, isActive: { $ne: false } })
+        .select("name slug type city logo address phone email description createdAt verification.verifiedAt verification.expiresAt")
+        .lean<Org>();
+      if (!org) return null;
+      const memberIds = await getOrgUserIds(org._id);
+      const now = new Date();
+      const [listings, deals, ratingRows, firstReviews] = await Promise.all([
+        Listing.find({ sellerId: { $in: memberIds }, status: "ACTIVE" }).sort({ featured: -1, createdAt: -1 }).limit(24).lean(),
+        Deal.find({ organizationId: org._id, paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } })
+          .sort({ endsAt: 1 })
+          .populate("listingIds", "title")
+          .lean(),
+        BusinessReview.aggregate<{ _id: number; count: number }>([
+          { $match: { organizationId: org._id } },
+          { $group: { _id: "$rating", count: { $sum: 1 } } },
+        ]),
+        BusinessReview.find({ organizationId: org._id }).sort({ createdAt: -1 }).limit(REVIEW_PAGE).populate("reviewerId", "name image").lean(),
+      ]);
+      return JSON.parse(JSON.stringify({ org, memberIds, listings, deals, ratingRows, firstReviews }));
+    },
+    ["business-page", slug],
+    { revalidate: PUBLIC_CACHE_SECONDS, tags: [businessTag(slug)] }
+  )() as Promise<{
+    org: Org;
+    memberIds: string[];
+    listings: Array<IListing & { _id: string }>;
+    deals: DealRow[];
+    ratingRows: Array<{ _id: number; count: number }>;
+    firstReviews: Parameters<typeof toReviewView>[0][];
+  } | null>;
+
+// Shared by generateMetadata and the page, so the data is only read once per request
+const getBusinessPage = cache(loadBusinessPage);
+const getBusiness = async (slug: string) => (await getBusinessPage(slug))?.org ?? null;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -49,25 +91,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DealerPage({ params }: Props) {
   const { slug } = await params;
-  const org = await getBusiness(slug);
-  if (!org) notFound();
+  const page = await getBusinessPage(slug);
+  if (!page) notFound();
+  const { org, memberIds, listings, deals, ratingRows, firstReviews } = page;
 
   const session = await auth();
   const viewerId = session?.user?.id;
-  const memberIds = await getOrgUserIds(org._id);
-  const now = new Date();
 
-  const [listings, deals, ratingRows, firstReviews, myReview, eligible] = await Promise.all([
-    Listing.find({ sellerId: { $in: memberIds }, status: "ACTIVE" }).sort({ featured: -1, createdAt: -1 }).limit(24).lean<Array<IListing & { _id: mongoose.Types.ObjectId }>>(),
-    Deal.find({ organizationId: org._id, paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } })
-      .sort({ endsAt: 1 })
-      .populate("listingIds", "title")
-      .lean<Array<{ _id: mongoose.Types.ObjectId; title: string; description?: string; discountType: "PERCENT" | "AMOUNT"; discountValue: number; endsAt: Date; listingIds: Array<{ _id: mongoose.Types.ObjectId; title: string }> }>>(),
-    BusinessReview.aggregate<{ _id: number; count: number }>([
-      { $match: { organizationId: org._id } },
-      { $group: { _id: "$rating", count: { $sum: 1 } } },
-    ]),
-    BusinessReview.find({ organizationId: org._id }).sort({ createdAt: -1 }).limit(REVIEW_PAGE).populate("reviewerId", "name image").lean(),
+  // Only the viewer's own review and whether they may write one are read fresh on every visit.
+  // A cache hit skips the loader, so connect here before querying.
+  if (viewerId) await connectDB();
+  const [myReview, eligible] = await Promise.all([
     viewerId ? BusinessReview.findOne({ organizationId: org._id, reviewerId: viewerId }).populate("reviewerId", "name image").lean() : null,
     viewerId ? canReviewBusiness(viewerId, String(org._id)) : false,
   ]);
@@ -77,7 +111,7 @@ export default async function DealerPage({ params }: Props) {
   const count = distribution.reduce((a, b) => a + b, 0);
   const average = count ? Math.round((distribution.reduce((sum, c, star) => sum + c * star, 0) / count) * 10) / 10 : 0;
 
-  const isMember = !!viewerId && memberIds.some(id => String(id) === viewerId);
+  const isMember = !!viewerId && memberIds.includes(viewerId);
   const viewer: ReviewViewer = !viewerId ? "anon" : isMember ? "member" : eligible || myReview ? "eligible" : "ineligible";
   const forSale = listings.filter(l => l.type !== "RENT").length;
   const forRent = listings.filter(l => l.type !== "SALE").length;
@@ -91,9 +125,17 @@ export default async function DealerPage({ params }: Props) {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
         <div className="relative mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-12">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-2xl font-extrabold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
-              {org.name[0]?.toUpperCase()}
-            </span>
+            {org.logo ? (
+              <span className="flex-shrink-0 self-start rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px]">
+                <span className="relative block h-16 w-16 overflow-hidden rounded-[14px] bg-slate-900 sm:h-20 sm:w-20">
+                  <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
+                </span>
+              </span>
+            ) : (
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-2xl font-extrabold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
+                {org.name[0]?.toUpperCase()}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{org.name}</h1>
@@ -159,7 +201,7 @@ export default async function DealerPage({ params }: Props) {
           {/* Vehicles: plain JSON for the client component (ObjectIds and Dates don't cross the boundary) */}
           <DealerVehicles
             businessName={org.name}
-            listings={JSON.parse(JSON.stringify(listings)) as Array<IListing & { _id: string }>}
+            listings={listings}
           />
 
           <BusinessReviews

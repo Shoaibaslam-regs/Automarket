@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+// CommonJS config file, so require is the right way to load the palette here
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const colors = require("tailwindcss/colors");
 
 // Every neutral and accent colour reads from a CSS variable defined in src/app/theme.css

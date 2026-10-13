@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Deal } from "@/models/Deal";
 import { can, getMembership } from "@/lib/business";
 import { getDealableListings, parseDealInput } from "@/lib/dealInput";
+import { invalidateBusinessPage } from "@/lib/pageCache";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
     const parsed = await parseDealInput(await req.json().catch(() => null), session.user.id);
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
     const deal = await Deal.create({ ...parsed.data, organizationId: member.organizationId, createdBy: session.user.id });
+    await invalidateBusinessPage(member.organizationId);
     return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {
     console.error("Deals POST error:", error);

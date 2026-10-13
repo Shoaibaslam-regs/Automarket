@@ -60,6 +60,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             image: user.image,
             emailVerified: new Date(),
+            // The sign-in page says continuing with Google means agreeing to the terms
+            termsAcceptedAt: new Date(),
             role: "USER",
           });
         }

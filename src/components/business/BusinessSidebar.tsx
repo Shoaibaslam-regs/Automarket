@@ -17,12 +17,16 @@ import { useSubscription, type SubscriptionInfo } from "@/components/subscriptio
 import { formatLimit, planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 
+/** Fired after the business picture changes so the sidebar reloads it. */
+export const ORG_UPDATED_EVENT = "business-org-updated";
+
 type Organization = {
   name: string;
   type: string;
   plan: string;
   city: string;
   slug?: string;
+  logo?: string;
 };
 
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
@@ -65,8 +69,8 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
         className="flex w-full items-center gap-3 rounded-2xl bg-white/[0.06] p-2.5 text-left ring-1 ring-inset ring-white/10 transition hover:bg-white/10"
       >
         <span className="relative flex-shrink-0 rounded-xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[1.5px]">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-slate-900 text-sm font-extrabold text-white">
-            {org?.name?.[0]?.toUpperCase() || "B"}
+          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[10px] bg-slate-900 text-sm font-extrabold text-white">
+            {org?.logo ? <Image src={org.logo} alt="" fill sizes="36px" className="object-cover" /> : org?.name?.[0]?.toUpperCase() || "B"}
           </span>
           <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-slate-950" />
         </span>
@@ -294,10 +298,15 @@ export default function BusinessSidebar() {
   const hasUnread = counts.messages + counts.ownerBookings > 0;
 
   useEffect(() => {
-    fetch("/api/business/organizations")
-      .then(r => r.json())
-      .then(d => setOrg(d.organization))
-      .catch(() => {});
+    const load = () =>
+      fetch("/api/business/organizations")
+        .then(r => r.json())
+        .then(d => setOrg(d.organization))
+        .catch(() => {});
+    load();
+    // Settings fires this after the business picture changes
+    window.addEventListener(ORG_UPDATED_EVENT, load);
+    return () => window.removeEventListener(ORG_UPDATED_EVENT, load);
   }, []);
 
   useEffect(() => {

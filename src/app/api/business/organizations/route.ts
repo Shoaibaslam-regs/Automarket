@@ -6,6 +6,9 @@ import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { auth } from "@/lib/auth";
 import { getSubscription } from "@/lib/subscription";
+import { getMembership } from "@/lib/business";
+import { isUploadedImageUrl } from "@/lib/uploadUrls";
+import { invalidateBusinessSlug } from "@/lib/pageCache";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -22,8 +25,11 @@ export async function GET() {
     if (!org) return NextResponse.json({ organization: null });
     // Plans live on the owner's account; report the one in force rather than the legacy org field
     const sub = await getSubscription(session.user.id);
-    return NextResponse.json({ organization: { ...org, plan: sub.planId } });
-  } catch {
+    // The caller's role lets the settings page show only what they may change
+    const member = await getMembership(session.user.id);
+    return NextResponse.json({ organization: { ...org, plan: sub.planId }, myRole: member?.role ?? null });
+  } catch (error) {
+    console.error("Get org error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -72,15 +78,37 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
     const user = await User.findById(session.user.id);
     if (!user?.organizationId) return NextResponse.json({ error: "No organization" }, { status: 404 });
-    const body = await req.json();
-    const { name, phone, email, city, address, description } = body;
+    const body = (await req.json().catch(() => null)) ?? {};
+    // Only fields actually sent are changed, so the logo can be saved on its own
+    const update: Record<string, unknown> = {};
+    for (const key of ["name", "phone", "email", "city", "address", "description"] as const) {
+      if (typeof body[key] === "string") update[key] = body[key];
+    }
+    if (update.name !== undefined && !String(update.name).trim()) {
+      return NextResponse.json({ error: "Business name is required" }, { status: 400 });
+    }
+    if (body.logo !== undefined) {
+      const member = await getMembership(session.user.id);
+      if (!member || !["OWNER", "MANAGER"].includes(member.role)) {
+        return NextResponse.json({ error: "Only the owner or a manager can change the business picture" }, { status: 403 });
+      }
+      if (body.logo !== "" && !isUploadedImageUrl(body.logo)) {
+        return NextResponse.json({ error: "Upload the picture here first" }, { status: 400 });
+      }
+    }
+    const removeLogo = body.logo === "";
+    if (body.logo && !removeLogo) update.logo = body.logo;
     const org = await Organization.findByIdAndUpdate(
       user.organizationId,
-      { name, phone, email, city, address, description },
+      removeLogo ? { $set: update, $unset: { logo: "" } } : { $set: update },
       { new: true }
     );
+    if (org) invalidateBusinessSlug(org.slug);
     return NextResponse.json({ organization: org });
-  } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+  } catch (error) {
+    console.error("Update org error:", error);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -109,6 +137,7 @@ export async function DELETE(req: NextRequest) {
       { $unset: { organizationId: "", organizationRole: "" } }
     );
     await Organization.findByIdAndDelete(org._id);
+    invalidateBusinessSlug(org.slug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

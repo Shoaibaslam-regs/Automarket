@@ -8,6 +8,7 @@ import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
 import { checkPlanLimit } from "@/lib/subscription";
 import { isUserBusinessSuspended } from "@/lib/business";
+import { PUBLIC_CACHE_SECONDS, invalidateListingAndSeller } from "@/lib/pageCache";
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,15 +45,20 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .lean();
 
-    return NextResponse.json({
-      listings,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        listings,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
       },
-    });
+      // The public feed is the same for everyone, so the CDN may serve it for PUBLIC_CACHE_SECONDS per
+      // filter URL (and a stale copy for as long again while it refreshes). Browsers always ask the CDN.
+      { headers: { "Cache-Control": `public, max-age=0, s-maxage=${PUBLIC_CACHE_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_SECONDS}` } }
+    );
   } catch (error) {
     console.error("Get listings error:", error);
     return NextResponse.json(
@@ -134,6 +140,8 @@ export async function POST(req: NextRequest) {
     // Email users whose saved searches match, without delaying the seller's response
     after(() => notifySavedSearches(listing.toObject()).catch(err => console.error("Saved search alerts failed:", err)));
 
+    // A business member's new listing should appear on the business page straight away
+    await invalidateListingAndSeller(listing._id, session.user.id);
     return NextResponse.json({ listing }, { status: 201 });
   } catch (error) {
     console.error("Create listing error:", error);
