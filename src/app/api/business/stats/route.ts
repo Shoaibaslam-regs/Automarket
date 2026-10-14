@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getOrgDealIds } from "@/lib/dealBookings";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { Customer } from "@/models/Customer";
@@ -22,6 +23,8 @@ export async function GET() {
 
     // Bookings have no organization field; they belong to the business through its rental vehicles
     const rentalIds = (await getBusinessRentals(session.user.id)).map(r => r._id);
+    // Bookings on the business's rental vehicles, its rent deals, and walk-ins for unlisted vehicles
+    const bookingScope = { $or: [{ rentalId: { $in: rentalIds } }, { dealId: { $in: await getOrgDealIds(orgId) } }, { organizationId: orgId }] };
 
     const thisMonth = new Date();
     thisMonth.setDate(1);
@@ -58,26 +61,26 @@ export async function GET() {
       Customer.countDocuments({ organizationId: orgId, status: "TEST_DRIVE" }),
       Customer.countDocuments({ organizationId: orgId, status: "SOLD" }),
       Booking.aggregate<{ _id: string; count: number }>([
-        { $match: { rentalId: { $in: rentalIds } } },
+        { $match: bookingScope },
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
       Booking.aggregate<{ _id: string | null; count: number }>([
-        { $match: { rentalId: { $in: rentalIds }, status: { $ne: "CANCELLED" } } },
+        { $match: { ...bookingScope, status: { $ne: "CANCELLED" } } },
         { $group: { _id: "$source", count: { $sum: 1 } } },
       ]),
       Booking.aggregate<{ _id: { y: number; m: number }; total: number }>([
-        { $match: { rentalId: { $in: rentalIds }, status: "COMPLETED" } },
+        { $match: { ...bookingScope, status: "COMPLETED" } },
         { $addFields: { doneAt: completedOn } },
         { $match: { doneAt: { $gte: sixMonthsAgo } } },
         { $group: { _id: { y: { $year: "$doneAt" }, m: { $month: "$doneAt" } }, total: { $sum: "$totalAmount" } } },
       ]),
       Booking.aggregate<{ total: number }>([
-        { $match: { rentalId: { $in: rentalIds }, status: "COMPLETED" } },
+        { $match: { ...bookingScope, status: "COMPLETED" } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
       ]),
       // Deposits currently held for vehicles that are out
       Booking.aggregate<{ total: number }>([
-        { $match: { rentalId: { $in: rentalIds }, status: "ACTIVE" } },
+        { $match: { ...bookingScope, status: "ACTIVE" } },
         { $group: { _id: null, total: { $sum: "$deposit" } } },
       ]),
       Listing.aggregate<{ count: number; value: number }>([

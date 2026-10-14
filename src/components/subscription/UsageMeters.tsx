@@ -5,7 +5,7 @@ import { formatLimit, type PlanLimits } from "@/lib/plans";
 import type { SubscriptionInfo } from "./useSubscription";
 
 const METERS: { key: keyof PlanLimits; label: string; icon: LucideIcon; businessOnly?: boolean }[] = [
-  { key: "listings", label: "Active listings", icon: Car },
+  { key: "listings", label: "Listings & deals this month", icon: Car },
   { key: "staff", label: "Team members", icon: Users, businessOnly: true },
   { key: "customers", label: "Customers", icon: UserRound, businessOnly: true },
 ];
@@ -31,6 +31,9 @@ export default function UsageMeters({ sub, compact = false }: { sub: Subscriptio
             <p className="mt-2 text-lg font-bold tabular-nums text-slate-900">
               {used.toLocaleString()} <span className="text-sm font-medium text-slate-400">/ {formatLimit(limit)}</span>
             </p>
+            {key === "listings" && limit !== null && sub.listingsResetAt && (
+              <p className="-mt-0.5 text-[11px] text-slate-400">Deleted ones still count · resets {new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}</p>
+            )}
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
               <div
                 className={`h-full rounded-full transition-all duration-700 ${

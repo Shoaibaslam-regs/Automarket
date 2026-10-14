@@ -7,7 +7,7 @@ import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type 
 import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
-import PlanGiftDialog from "@/components/admin/PlanGiftDialog";
+import PlanGiftDialog, { type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 
 type AdminAccess = "FULL" | "READ_ONLY";
 
@@ -207,12 +207,14 @@ export default function AdminUsersPage() {
     setAccessFor(null);
   }
 
-  async function savePlan(plan: PlanId, months: number | null) {
+  async function savePlan(plan: PlanId, months: number, source: PlanSourceChoice) {
     if (!planFor) return;
     await send(
       `/api/admin/users/${planFor._id}/plan`,
-      json("PATCH", { plan, months }),
-      `${displayName(planFor)} now has ${planInfo(plan).name} for free.`
+      json("PATCH", { plan, months, source }),
+      source === "PAID"
+        ? `${displayName(planFor)} has ${planInfo(plan).name} for 30 days.`
+        : `${displayName(planFor)} now has ${planInfo(plan).name} for free.`
     );
     setPlanFor(null);
   }
@@ -309,7 +311,7 @@ export default function AdminUsersPage() {
               const busy = updating === user._id;
               return (
                 <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
-                  <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
+                  <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
                     <Gift size={13} /> Plan
                   </button>
                   {isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (

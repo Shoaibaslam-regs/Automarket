@@ -18,6 +18,8 @@ import { getSubscription, getUsage } from "@/lib/subscription";
 import { formatLimit, isFreeGrant, planSourceLabel } from "@/lib/plans";
 import MyListings from "@/components/listings/MyListings";
 import UserIdBadge from "@/components/UserIdBadge";
+// Registers the model for the deal bookings populate below
+import "@/models/Deal";
 
 type Oid = mongoose.Types.ObjectId;
 type MyListing = {
@@ -27,6 +29,7 @@ type MyListing = {
 type UpcomingBooking = {
   _id: Oid; startDate: Date; endDate: Date; status: string; totalAmount: number;
   rentalId?: { listingId?: { _id: Oid; title: string; images?: string[] } | null } | null;
+  dealId?: { _id: Oid; title: string; images?: string[] } | null;
 };
 
 // Personal dashboard: the marketplace's light slate + indigo look; the business console is the dark mirror
@@ -60,6 +63,7 @@ export default async function DashboardPage() {
       .sort({ startDate: 1 })
       .limit(3)
       .populate({ path: "rentalId", select: "listingId", populate: { path: "listingId", select: "title images" } })
+      .populate("dealId", "title images")
       .lean<UpcomingBooking[]>(),
     User.findById(userId).select("createdAt organizationId image").lean<{ createdAt: Date; organizationId?: Oid; image?: string }>(),
     getSubscription(userId),
@@ -136,7 +140,7 @@ export default async function DashboardPage() {
           <div className="relative mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/80">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-800">
-                {usage.listings} of {formatLimit(limit)} active listings used
+                {usage.listings} of {formatLimit(limit)} listings & deals used this month
                 {sub.expiresAt && <span className="ml-2 text-xs font-normal text-slate-500">· plan until {day(sub.expiresAt)}</span>}
               </p>
               {sub.planId !== "UNLIMITED" && (
@@ -211,7 +215,7 @@ export default async function DashboardPage() {
               ) : (
                 <ul className="mt-3 space-y-2">
                   {upcoming.map(b => {
-                    const v = b.rentalId?.listingId;
+                    const v = b.rentalId?.listingId ?? b.dealId;
                     return (
                       <li key={String(b._id)}>
                         <Link href="/bookings" className="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-slate-50">
@@ -219,7 +223,10 @@ export default async function DashboardPage() {
                             {v?.images?.[0] ? <Image src={v.images[0]} alt="" fill sizes="56px" className="object-cover" /> : <span className="flex h-full items-center justify-center text-slate-300"><Car size={16} /></span>}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[13px] font-semibold text-slate-900">{v?.title ?? "Vehicle removed"}</span>
+                            <span className="block truncate text-[13px] font-semibold text-slate-900">
+                              {b.dealId && <span className="theme-static mr-1.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px align-middle text-[9px] font-extrabold text-white">DEAL</span>}
+                              {v?.title ?? "Vehicle removed"}
+                            </span>
                             <span className="block text-[11px] text-slate-500">{day(b.startDate)} → {day(b.endDate)}</span>
                           </span>
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING}`}>{b.status}</span>

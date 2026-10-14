@@ -3,10 +3,9 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
-import { checkPlanLimit } from "@/lib/subscription";
-import { SLOT_STATUSES } from "@/lib/plans";
 import { isUserBusinessSuspended } from "@/lib/business";
 import { invalidateListingAndSeller } from "@/lib/pageCache";
+import { cleanAddress } from "@/lib/address";
 
 export async function GET(
   req: NextRequest,
@@ -40,7 +39,7 @@ export async function GET(
 // and timestamps are never writable here; admins use /api/admin/listings/[id] for those.
 const EDITABLE_FIELDS = [
   "title", "description", "price", "type", "condition", "make", "model", "year",
-  "mileage", "color", "fuelType", "transmission", "location", "images", "status",
+  "mileage", "color", "fuelType", "transmission", "location", "address", "images", "status",
 ] as const;
 
 export async function PATCH(
@@ -76,14 +75,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Your business is suspended, so listings can't be switched back on." }, { status: 403 });
     }
 
-    // Re-activating a sold or inactive listing takes a plan slot again
-    const takesSlot = (status: unknown) => (SLOT_STATUSES as readonly unknown[]).includes(status);
-    if ("status" in update && takesSlot(update.status) && !takesSlot(listing.status)) {
-      const overLimit = await checkPlanLimit(session.user.id, "listings");
-      if (overLimit) return NextResponse.json(overLimit, { status: 403 });
-    }
-
     if ("status" in update && update.status !== listing.status) update.statusChangedAt = new Date();
+    if ("address" in update) update.address = cleanAddress(update.address);
 
     // Ownership is re-checked in the write itself so the update can never touch someone else's listing
     const updated = await Listing.findOneAndUpdate(

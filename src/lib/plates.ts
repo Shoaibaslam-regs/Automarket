@@ -8,6 +8,15 @@ export function normalizePlate(value: unknown): string | null {
   return /^[A-Z0-9][A-Z0-9 -]{1,14}$/.test(plate) && /\d/.test(plate) ? plate : null;
 }
 
+/**
+ * Regex that matches the same plate however it was written: "ABC-777", "ABC 777" and "abc777" are one car.
+ * Expects a plate from normalizePlate (letters, digits, spaces and dashes only).
+ */
+export function samePlatePattern(plate: string): RegExp {
+  const chars = plate.toUpperCase().replace(/[^A-Z0-9]/g, "").split("");
+  return new RegExp(`^${chars.join("[\\s-]*")}$`, "i");
+}
+
 /** Formats a CNIC as 12345-1234567-1 from any spacing or dashes; null unless it has exactly 13 digits. */
 export function normalizeCnic(value: unknown): string | null {
   if (typeof value !== "string") return null;

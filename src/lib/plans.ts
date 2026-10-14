@@ -27,7 +27,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: "Get started with a few vehicles and a small team",
     price: 0,
     limits: { listings: 3, staff: 1, customers: 5 },
-    features: ["3 active listings", "Just you (no staff accounts)", "AI-verified photos", "Buyer messaging", "Up to 5 customer leads"],
+    features: ["3 listings or deals a month", "Just you (no staff accounts)", "AI-verified photos", "Buyer messaging", "Up to 5 customer leads"],
   },
   STARTER: {
     id: "STARTER",
@@ -36,7 +36,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: "For regular sellers and small showrooms",
     price: 500,
     limits: { listings: 10, staff: 3, customers: 50 },
-    features: ["10 active listings", "Team of 3 (owner + 2 staff)", "Up to 50 customer leads", "Rental management", "Sales reports"],
+    features: ["10 listings or deals a month", "Team of 3 (owner + 2 staff)", "Up to 50 customer leads", "Rental management", "Sales reports"],
   },
   PRO: {
     id: "PRO",
@@ -45,17 +45,17 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: "For growing dealerships",
     price: 1200,
     limits: { listings: 25, staff: 6, customers: 150 },
-    features: ["25 active listings", "Team of 6 (owner + 5 staff)", "Up to 150 customer leads", "Rental management", "Sales reports", "Priority support"],
+    features: ["25 listings or deals a month", "Team of 6 (owner + 5 staff)", "Up to 150 customer leads", "Rental management", "Sales reports", "Priority support"],
     highlight: true,
   },
   UNLIMITED: {
     id: "UNLIMITED",
     accent: "var(--gh-9a6700)",
-    name: "Unlimited",
+    name: "Ultimate",
     tagline: "Run your whole business on AutoMarket",
     price: 5000,
     limits: { listings: null, staff: null, customers: null },
-    features: ["Unlimited listings", "Unlimited staff", "Unlimited customers", "Full business management", "Advanced reports", "Dedicated support"],
+    features: ["Unlimited listings and deals", "Unlimited staff", "Unlimited customers", "Full business management", "Advanced reports", "Dedicated support"],
   },
 };
 
@@ -72,8 +72,23 @@ export function effectivePlanId(plan: unknown, expiresAt?: Date | string | null)
   return plan;
 }
 
-/** Listings in these statuses take up a plan slot; sold and inactive ones free it again. */
-export const SLOT_STATUSES = ["ACTIVE", "PENDING", "RENTED"] as const;
+/**
+ * The listing limit is a monthly quota shared by listings and deals: every one created in the calendar month
+ * counts, even if it is deleted later. Months follow Pakistan time (UTC+5, no daylight saving).
+ */
+const PKT_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+/** Start of the current quota month (midnight on the 1st, Pakistan time). */
+export function quotaMonthStart(now = new Date()): Date {
+  const pk = new Date(now.getTime() + PKT_OFFSET_MS);
+  return new Date(Date.UTC(pk.getUTCFullYear(), pk.getUTCMonth(), 1) - PKT_OFFSET_MS);
+}
+
+/** When the listing quota next resets (the 1st of next month, Pakistan time). */
+export function quotaResetsAt(now = new Date()): Date {
+  const pk = new Date(now.getTime() + PKT_OFFSET_MS);
+  return new Date(Date.UTC(pk.getUTCFullYear(), pk.getUTCMonth() + 1, 1) - PKT_OFFSET_MS);
+}
 
 export function formatLimit(limit: number | null): string {
   return limit === null ? "Unlimited" : limit.toLocaleString();
@@ -92,6 +107,17 @@ export function planInfo(plan: unknown): Plan {
 export type PlanSource = "PAID" | "ADMIN_GRANT" | "TRIAL";
 
 export const TRIAL_MONTHS = 1;
+
+/**
+ * Every paid plan runs for whole 30-day periods and then ends: the account falls back to Free
+ * (effectivePlanId) until the plan is bought again. Nothing runs without an end date.
+ */
+export const PLAN_PERIOD_DAYS = 30;
+
+/** `from` plus `periods` plan periods of PLAN_PERIOD_DAYS each. */
+export function addPlanPeriods(from: Date, periods: number): Date {
+  return new Date(from.getTime() + periods * PLAN_PERIOD_DAYS * 86_400_000);
+}
 
 export function isFreeGrant(source: unknown): boolean {
   return source === "ADMIN_GRANT" || source === "TRIAL";

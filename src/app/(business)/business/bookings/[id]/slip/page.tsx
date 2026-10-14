@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import { bookingCnic } from "@/lib/plates";
+import { dealLabel } from "@/lib/deals";
 
 type SlipData = {
   booking: {
@@ -21,13 +22,15 @@ type SlipData = {
     notes?: string;
     plateNumber?: string;
     renterCnic?: string;
+    offListVehicle?: { title: string; dailyRate: number; deposit: number } | null;
     createdAt: string;
     confirmedAt?: string;
     startedAt?: string;
     completedAt?: string;
+    dealId?: { title: string; make: string; model: string; year: number; address?: string; location?: string; vehicleCount?: number; discountType: "PERCENT" | "AMOUNT"; discountValue: number } | null;
     rentalId?: {
       dailyRate: number;
-      listingId?: { title: string; make: string; model: string; year: number; color?: string; fuelType?: string; transmission?: string; location?: string } | null;
+      listingId?: { title: string; make: string; model: string; year: number; color?: string; fuelType?: string; transmission?: string; location?: string; address?: string } | null;
     } | null;
   };
   organization: { name: string; phone?: string; email?: string; address?: string; city?: string; type?: string } | null;
@@ -84,13 +87,18 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
   if (!data) return <div className="min-h-screen animate-pulse bg-[var(--gh-f6f8fa)]" />;
 
   const { booking: b, organization: org } = data;
-  const listing = b.rentalId?.listingId;
+  const deal = b.dealId ?? null;
+  // A deal booking shows the deal's vehicle details in place of a listing's
+  const listing = b.rentalId?.listingId ?? (deal ? { title: deal.title, make: deal.make, model: deal.model, year: deal.year } as NonNullable<NonNullable<typeof b.rentalId>["listingId"]> : undefined);
   const days = rentalDays(b.startDate, b.endDate);
-  const rate = b.rentalId?.dailyRate ?? Math.round(b.totalAmount / days);
+  const rate = b.rentalId?.dailyRate ?? b.offListVehicle?.dailyRate ?? Math.round(b.totalAmount / days);
   const customer = b.walkIn && (b.source === "WALK_IN" || !b.renterId)
     ? { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email, cnic: bookingCnic(b) }
     : { name: b.renterId?.name, phone: b.renterId?.phone, email: b.renterId?.email, cnic: bookingCnic(b) };
   const status = STATUS_LABEL[b.status] ?? STATUS_LABEL.PENDING;
+  // Where the customer collects the vehicle: the deal's or listing's address, else the business address
+  const pickup = deal?.address || b.rentalId?.listingId?.address || org?.address;
+  const pickupCity = deal?.location || b.rentalId?.listingId?.location || org?.city;
 
   return (
     <div className="slip-root theme-static min-h-screen bg-[var(--gh-f6f8fa)] px-4 py-6 sm:px-6">
@@ -140,6 +148,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <span className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider" style={{ background: status.bg, color: status.color }}>{status.text}</span>
             <span className="text-xs text-slate-500">
+              {deal && <span className="mr-2 inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
               {b.source === "WALK_IN" ? "Walk-in booking" : "Online booking via AutoMarket"} · created {dateTime(b.createdAt)}
               {b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
             </span>
@@ -155,10 +164,12 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             </section>
             <section className="rounded-xl border border-[var(--gh-e1e4e8)] p-4">
               <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>
-              <Row label="Vehicle" value={listing?.title || "—"} />
+              <Row label={deal ? "Deal" : "Vehicle"} value={listing?.title || b.offListVehicle?.title || "—"} />
+              {deal && (deal.vehicleCount ?? 1) > 1 && <Row label="Cars in package" value={String(deal.vehicleCount)} />}
               <Row label="Number plate" value={b.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-black tracking-[0.12em] text-slate-900">{b.plateNumber}</span>} />
               <Row label="Make / model" value={listing ? `${listing.make} ${listing.model} (${listing.year})` : undefined} />
               <Row label="Colour" value={listing?.color} />
+              <Row label="Pickup address" value={pickup && <span className="block max-w-[220px] text-right">{pickup}{pickupCity && !pickup.toLowerCase().includes(pickupCity.toLowerCase()) ? `, ${pickupCity}` : ""}</span>} />
               <Row label="Fuel / gearbox" value={[listing?.fuelType, listing?.transmission].filter(Boolean).join(" · ") || undefined} />
             </section>
           </div>

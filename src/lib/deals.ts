@@ -14,6 +14,9 @@ export type DealState = "LIVE" | "SCHEDULED" | "EXPIRED" | "PAUSED" | "DISABLED"
 export const MAX_PERCENT = 90;
 export const MAX_DEAL_IMAGES = 10;
 
+/** Rent deals are bookable packages priced per day; deals saved before the type existed are sales. */
+export const isRentDeal = (d: { dealType?: string | null }) => d.dealType === "RENT";
+
 /** Days left until a deal ends, counting today; 0 once it has ended. */
 export function daysLeft(endsAt: Date | string, now = Date.now()): number {
   return Math.max(0, Math.ceil((new Date(endsAt).getTime() - now) / 86_400_000));

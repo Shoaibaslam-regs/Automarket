@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { User } from "@/models/User";
 import Landing, { type LandingStats, type ShowcaseListing } from "@/components/landing/Landing";
+import { getLiveDeals } from "@/lib/publicDeals";
 
 // Real numbers and listings, refreshed at most once a minute
 export const revalidate = 60;
@@ -45,6 +46,10 @@ async function getData(): Promise<{ listings: ShowcaseListing[]; stats: LandingS
 }
 
 export default async function LandingPage() {
-  const { listings, stats } = await getData();
-  return <Landing listings={listings} stats={stats} />;
+  // Deals are read through their own 60-second cache, cleared whenever a deal changes
+  const [{ listings, stats }, deals] = await Promise.all([
+    getData(),
+    getLiveDeals({ sort: "discount", limit: 3 }).catch(() => []),
+  ]);
+  return <Landing listings={listings} stats={stats} deals={deals} now={new Date().getTime()} />;
 }

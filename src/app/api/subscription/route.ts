@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { getSubscription, getUsage } from "@/lib/subscription";
+import { quotaResetsAt } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,10 @@ export async function GET() {
       hasBusiness: !!sub.organizationId,
       limits: sub.plan.limits,
       usage,
+      // The listing limit is per calendar month; this is when it starts again
+      listingsResetAt: quotaResetsAt(),
+      // Whole days until a paid plan ends (it then falls back to Free); null on Free
+      planDaysLeft: sub.expiresAt ? Math.max(0, Math.ceil((new Date(sub.expiresAt).getTime() - Date.now()) / 86_400_000)) : null,
     });
   } catch (error) {
     console.error("Subscription error:", error);

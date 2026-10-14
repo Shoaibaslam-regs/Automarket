@@ -75,7 +75,7 @@ export default function PlanCards({
               <div className="mt-5 flex items-baseline gap-1.5">
                 <span className={`text-sm font-semibold ${dark ? "text-slate-400" : "text-slate-500"}`}>PKR</span>
                 <span className="text-4xl font-extrabold tracking-tight tabular-nums">{plan.price.toLocaleString()}</span>
-                <span className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{plan.price === 0 ? "forever" : "/ month"}</span>
+                <span className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{plan.price === 0 ? "forever" : "/ 30 days"}</span>
               </div>
 
               {/* Limits */}

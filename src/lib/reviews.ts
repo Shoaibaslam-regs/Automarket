@@ -6,6 +6,7 @@ import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getBusinessRentals, getOrgUserIds } from "@/lib/business";
+import { getOrgDealIds } from "@/lib/dealBookings";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 
 type Oid = mongoose.Types.ObjectId;
@@ -62,6 +63,12 @@ export async function canReviewBusiness(reviewerId: string, orgId: string): Prom
   const owner = await Organization.findById(orgId).select("ownerId").lean<{ ownerId: Oid }>();
   if (!owner) return false;
   const rentalIds = (await getBusinessRentals(String(owner.ownerId))).map(r => r._id);
-  return !!(await Booking.exists({ renterId: reviewer, rentalId: { $in: rentalIds }, status: { $in: ["CONFIRMED", "ACTIVE", "COMPLETED"] } }));
+  // Booking one of its rental vehicles or one of its rent deals both count
+  const dealIds = await getOrgDealIds(orgId);
+  return !!(await Booking.exists({
+    renterId: reviewer,
+    $or: [{ rentalId: { $in: rentalIds } }, { dealId: { $in: dealIds } }, { organizationId: new mongoose.Types.ObjectId(orgId) }],
+    status: { $in: ["CONFIRMED", "ACTIVE", "COMPLETED"] },
+  }));
 }
 

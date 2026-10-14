@@ -5,7 +5,9 @@ import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { Listing } from "@/models/Listing";
 import { getInventorySellerIds } from "@/lib/business";
-import { PLANS, SLOT_STATUSES, effectivePlanId, formatLimit, type Plan, type PlanId, type PlanSource } from "@/lib/plans";
+import { PLANS, effectivePlanId, formatLimit, quotaMonthStart, quotaResetsAt, type Plan, type PlanId, type PlanSource } from "@/lib/plans";
+import { ListingLog } from "@/models/ListingLog";
+import { Deal } from "@/models/Deal";
 
 type PlanFields = {
   _id: mongoose.Types.ObjectId;
@@ -61,10 +63,26 @@ export async function getSubscription(userId: string): Promise<Subscription> {
   };
 }
 
+/**
+ * Listings and deals created this quota month by the account (the whole team for a business), deleted ones
+ * included. They share one quota. Anything posted before the log existed is counted from the documents themselves.
+ */
+async function listingsThisMonth(sellerIds: mongoose.Types.ObjectId[]): Promise<number> {
+  const since = quotaMonthStart();
+  const logs = await ListingLog.find({ sellerId: { $in: sellerIds }, createdAt: { $gte: since } }).select("listingId dealId").lean<Array<{ listingId?: mongoose.Types.ObjectId; dealId?: mongoose.Types.ObjectId }>>();
+  const loggedListings = logs.flatMap(l => (l.listingId ? [l.listingId] : []));
+  const loggedDeals = logs.flatMap(l => (l.dealId ? [l.dealId] : []));
+  const [unloggedListings, unloggedDeals] = await Promise.all([
+    Listing.countDocuments({ sellerId: { $in: sellerIds }, createdAt: { $gte: since }, _id: { $nin: loggedListings } }),
+    Deal.countDocuments({ createdBy: { $in: sellerIds }, createdAt: { $gte: since }, _id: { $nin: loggedDeals } }),
+  ]);
+  return logs.length + unloggedListings + unloggedDeals;
+}
+
 export async function getUsage(userId: string, sub: Subscription): Promise<Usage> {
   const sellerIds = await getInventorySellerIds(userId);
   const [listings, staff, customers] = await Promise.all([
-    Listing.countDocuments({ sellerId: { $in: sellerIds }, status: { $in: SLOT_STATUSES } }),
+    listingsThisMonth(sellerIds),
     sub.organizationId ? Employee.countDocuments({ organizationId: sub.organizationId }) : Promise.resolve(1),
     sub.organizationId ? Customer.countDocuments({ organizationId: sub.organizationId }) : Promise.resolve(0),
   ]);
@@ -72,7 +90,7 @@ export async function getUsage(userId: string, sub: Subscription): Promise<Usage
 }
 
 const LIMIT_NOUNS: Record<LimitKind, string> = {
-  listings: "active listings",
+  listings: "new listings and deals a month",
   staff: "team members",
   customers: "customers",
 };
@@ -87,8 +105,11 @@ export async function checkPlanLimit(userId: string, kind: LimitKind) {
   if (limit === null) return null;
   const used = (await getUsage(userId, sub))[kind];
   if (used < limit) return null;
+  const resets = kind === "listings"
+    ? ` Your quota resets on ${quotaResetsAt().toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}.`
+    : "";
   return {
-    error: `Your ${sub.plan.name} plan allows ${formatLimit(limit)} ${LIMIT_NOUNS[kind]}. Upgrade your plan to add more.`,
+    error: `Your ${sub.plan.name} plan allows ${formatLimit(limit)} ${LIMIT_NOUNS[kind]}.${resets} Upgrade your plan to add more.`,
     code: "PLAN_LIMIT_REACHED",
     kind,
     limit,

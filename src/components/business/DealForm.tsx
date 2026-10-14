@@ -11,10 +11,15 @@ import { formatLakh } from "@/lib/format";
 import { MAX_DEAL_IMAGES, MAX_PERCENT, dealLabel, dealPrice } from "@/lib/deals";
 import { CONDITIONS, FUEL_TYPES, MAKES, TRANSMISSIONS, conditionLabel } from "@/lib/vehicleOptions";
 import { FEDERAL_CAPITAL, PROVINCES } from "@/lib/provinces";
+import { MAX_ADDRESS } from "@/lib/address";
 
-const CITIES = [...new Set([FEDERAL_CAPITAL, ...PROVINCES.flatMap(p => [p.capital, ...p.cities])])].sort((a, b) => a.localeCompare(b));
+export const CITIES = [...new Set([FEDERAL_CAPITAL, ...PROVINCES.flatMap(p => [p.capital, ...p.cities])])].sort((a, b) => a.localeCompare(b));
 
 export type DealFormValues = {
+  dealType: "SALE" | "RENT";
+  /** Cars in a rent package */
+  vehicleCount: string;
+  deposit: string;
   title: string;
   description: string;
   make: string;
@@ -26,6 +31,7 @@ export type DealFormValues = {
   color: string;
   condition: string;
   location: string;
+  address: string;
   images: string[];
   price: string;
   discountType: "PERCENT" | "AMOUNT";
@@ -40,8 +46,9 @@ export function blankDeal(): DealFormValues {
   const end = new Date();
   end.setDate(end.getDate() + 14);
   return {
+    dealType: "SALE", vehicleCount: "1", deposit: "",
     title: "", description: "", make: "", model: "", year: String(new Date().getFullYear()), mileage: "", fuelType: "", transmission: "", color: "",
-    condition: "EXCELLENT", location: "", images: [], price: "", discountType: "PERCENT", discountValue: "10",
+    condition: "EXCELLENT", location: "", address: "", images: [], price: "", discountType: "PERCENT", discountValue: "10",
     startsAt: toInputDate(new Date()), endsAt: toInputDate(end),
   };
 }
@@ -86,6 +93,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
   const [error, setError] = useState("");
   const set = <K extends keyof DealFormValues>(k: K, v: DealFormValues[K]) => setForm(p => ({ ...p, [k]: v }));
 
+  const rent = form.dealType === "RENT";
   const price = Number(form.price) || 0;
   const discount = { discountType: form.discountType, discountValue: Number(form.discountValue) || 0 };
   const final = price > 0 && discount.discountValue > 0 ? dealPrice(price, discount) : 0;
@@ -98,7 +106,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
     const res = await fetch(dealId ? `/api/business/deals/${dealId}` : "/api/business/deals", {
       method: dealId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, price, discountValue: discount.discountValue }),
+      body: JSON.stringify({ ...form, price, discountValue: discount.discountValue, vehicleCount: rent ? Number(form.vehicleCount) || 1 : 1, deposit: rent ? form.deposit : "" }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setSaving(false); setError(data.error || "Failed to save the deal"); return; }
@@ -136,6 +144,13 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
               <Select value={form.location} onChange={v => set("location", v)} ariaLabel="City" required className={selectCls}
                 options={[{ value: "", label: "Select city" }, ...CITIES.map(c => ({ value: c, label: c }))]} />
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Shop / pickup address" htmlFor="deal-address">
+                <input id="deal-address" required minLength={5} maxLength={MAX_ADDRESS} value={form.address} onChange={e => set("address", e.target.value)}
+                  placeholder="Shop 12, Main Shahrah-e-Faisal, near FTC" className={input} />
+                <p className="mt-1 text-xs text-slate-500">Shown on the deal page, bookings and slips so customers know where to come.</p>
+              </Field>
+            </div>
             <Field label="Fuel" optional>
               <Select value={form.fuelType} onChange={v => set("fuelType", v)} ariaLabel="Fuel" className={selectCls}
                 options={[{ value: "", label: "Not specified" }, ...FUEL_TYPES.map(f => ({ value: f, label: f }))]} />
@@ -150,8 +165,20 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
           </div>
         </Section>
 
-        <Section icon={Tag} title="The deal" hint="What buyers see first. Explain what makes this offer special.">
+        <Section icon={Tag} title="The deal" hint="What customers see first. Explain what makes this offer special.">
           <div className="space-y-4">
+            <div>
+              <span className="mb-1.5 block text-xs font-semibold text-slate-900">Deal type <span className="text-rose-600">*</span></span>
+              <div role="radiogroup" aria-label="Deal type" className="grid grid-cols-2 gap-2">
+                {([["SALE", "For sale", "A discounted vehicle to buy"], ["RENT", "For rent", "A rental package customers can book, e.g. cars for a wedding"]] as const).map(([v, label, hint]) => (
+                  <button key={v} type="button" role="radio" aria-checked={form.dealType === v} onClick={() => set("dealType", v)}
+                    className={`rounded-xl p-3 text-left ring-1 ring-inset transition ${form.dealType === v ? "bg-rose-50 ring-2 ring-rose-500" : "ring-slate-200 hover:bg-slate-50"}`}>
+                    <span className="block text-sm font-semibold text-slate-900">{label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             <Field label="Title" htmlFor="deal-title">
               <input id="deal-title" required minLength={3} maxLength={80} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Eid offer: Corolla Altis 2022, free first service" className={input} />
             </Field>
@@ -160,7 +187,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
                 placeholder="What's included, warranty, registration, how long the offer lasts…" className={`${input} h-auto resize-y py-2.5`} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Normal price (PKR)" htmlFor="deal-price">
+              <Field label={rent ? "Normal price per day (PKR)" : "Normal price (PKR)"} htmlFor="deal-price">
                 <input id="deal-price" type="number" required min={1} value={form.price} onChange={e => set("price", e.target.value)} placeholder="6500000" className={input} />
                 {price > 0 && <p className="mt-1 text-xs text-slate-500">PKR {formatLakh(price)}</p>}
               </Field>
@@ -179,6 +206,17 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
                     value={form.discountValue} onChange={e => set("discountValue", e.target.value)} className={input} />
                 </div>
               </div>
+              {rent && (
+                <>
+                  <Field label="Cars in this package" htmlFor="deal-cars">
+                    <input id="deal-cars" type="number" min={1} max={50} required value={form.vehicleCount} onChange={e => set("vehicleCount", e.target.value)} className={input} />
+                    <p className="mt-1 text-xs text-slate-500">The price per day covers all of them. List the cars in the details.</p>
+                  </Field>
+                  <Field label="Security deposit (PKR)" htmlFor="deal-deposit" optional>
+                    <input id="deal-deposit" type="number" min={0} value={form.deposit} onChange={e => set("deposit", e.target.value)} placeholder="20000" className={input} />
+                  </Field>
+                </>
+              )}
               <Field label="Starts" htmlFor="deal-start">
                 <input id="deal-start" type="date" required value={form.startsAt} onChange={e => set("startsAt", e.target.value)} className={input} />
               </Field>
@@ -211,7 +249,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
             <p className="mt-0.5 line-clamp-2 text-[15px] font-semibold text-slate-900">{form.title || "Your deal title"}</p>
             {final > 0 ? (
               <p className="mt-2 flex flex-wrap items-baseline gap-x-2">
-                <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(final)}</span>
+                <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(final)}{rent && <span className="text-xs font-semibold">/day</span>}</span>
                 <span className="text-xs text-slate-400 line-through">{formatLakh(price)}</span>
               </p>
             ) : (
@@ -236,7 +274,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
           </Link>
         </div>
         <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-          Published deals appear on the Deals page and your business page between the start and end dates.
+          Published deals appear on the Deals page and your business page between the start and end dates.{rent ? " Customers can book rent deals; the bookings show in Bookings with a DEAL tag." : ""}
         </p>
       </aside>
     </form>

@@ -24,6 +24,14 @@ export default function DealFilters({ makes, cities }: { makes: string[]; cities
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+      <div role="group" aria-label="Deal type" className="col-span-2 inline-flex h-10 rounded-xl bg-white p-1 ring-1 ring-inset ring-slate-200 sm:col-span-1">
+        {([["", "All"], ["SALE", "For sale"], ["RENT", "For rent"]] as const).map(([v, label]) => (
+          <button key={v} type="button" onClick={() => set("type", v)} aria-pressed={value("type") === v}
+            className={`flex-1 rounded-lg px-3 text-xs font-semibold transition sm:flex-none ${value("type") === v ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-900"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
       <Select value={value("make")} onChange={v => set("make", v)} ariaLabel="Make" className="h-10 sm:w-44"
         options={[{ value: "", label: "All makes" }, ...makes.map(m => ({ value: m, label: m }))]} />
       <Select value={value("city")} onChange={v => set("city", v)} ariaLabel="City" className="h-10 sm:w-44"

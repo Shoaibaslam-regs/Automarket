@@ -28,7 +28,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
                 </span>
                 <Dialog.Title className="relative mt-4 text-xl font-bold tracking-tight">Upgrade to {plan.name}</Dialog.Title>
                 <p className="relative mt-1 text-sm text-slate-400">
-                  <span className="font-semibold text-white">{formatPlanPrice(plan.price)}</span> / month · {formatLimit(plan.limits.listings)} listings
+                  <span className="font-semibold text-white">{formatPlanPrice(plan.price)}</span> / 30 days · {formatLimit(plan.limits.listings)} listings
                 </p>
               </div>
 

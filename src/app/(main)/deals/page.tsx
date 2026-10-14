@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/deals" },
 };
 
-type Props = { searchParams: Promise<{ make?: string; city?: string; sort?: string }> };
+type Props = { searchParams: Promise<{ make?: string; city?: string; sort?: string; type?: string }> };
 
 const SORTS = ["ending", "newest", "discount"] as const;
 
@@ -20,11 +20,11 @@ export default async function DealsPage({ searchParams }: Props) {
   const sp = await searchParams;
   const sort = (SORTS as readonly string[]).includes(sp.sort ?? "") ? (sp.sort as Filters["sort"]) : "ending";
   const [deals, facets] = await Promise.all([
-    getLiveDeals({ make: sp.make, city: sp.city, sort }),
+    getLiveDeals({ make: sp.make, city: sp.city, sort, type: sp.type === "RENT" || sp.type === "SALE" ? sp.type : "" }),
     getDealFacets(),
   ]);
   const now = new Date().getTime();
-  const filtered = !!(sp.make || sp.city);
+  const filtered = !!(sp.make || sp.city || sp.type);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -37,7 +37,7 @@ export default async function DealsPage({ searchParams }: Props) {
           </span>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Hot deals</h1>
           <p className="mt-2 max-w-[560px] text-sm leading-relaxed text-slate-400">
-            Special prices from dealers and showrooms across Pakistan. Every deal has its own photos and ends on the date shown.
+            Special prices from dealers, showrooms and rental companies across Pakistan: cars for sale, and rental packages you can book for weddings, trips and events.
           </p>
         </div>
       </section>

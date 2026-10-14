@@ -12,6 +12,10 @@ export type SubscriptionInfo = {
   hasBusiness: boolean;
   limits: PlanLimits;
   usage: { listings: number; staff: number; customers: number };
+  /** The listing limit is monthly; when the count starts again */
+  listingsResetAt?: string;
+  /** Days until the paid plan ends and the account is back on Free; null on Free */
+  planDaysLeft?: number | null;
 };
 
 /** Loads /api/subscription. Pass `enabled: false` for signed-out visitors so no request is made. */

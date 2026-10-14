@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ type FormState = {
   type: string; condition: string;
   make: string; model: string; year: string;
   mileage: string; color: string; fuelType: string;
-  transmission: string; location: string;
+  transmission: string; location: string; address: string;
   images: string[];
   dailyRate: string; weeklyRate: string; monthlyRate: string;
   deposit: string; availableFrom: string;
@@ -46,7 +46,7 @@ const INITIAL_FORM: FormState = {
   type: "SALE", condition: "GOOD",
   make: "", model: "", year: "",
   mileage: "", color: "", fuelType: "",
-  transmission: "", location: "",
+  transmission: "", location: "", address: "",
   images: [],
   dailyRate: "", weeklyRate: "", monthlyRate: "",
   deposit: "", availableFrom: "",
@@ -103,6 +103,18 @@ export default function SellPage() {
   const [limitError, setLimitError] = useState(false);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+
+  // Business sellers start with their shop address and city from Business settings
+  useEffect(() => {
+    fetch("/api/business/organizations")
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const org = d?.organization as { address?: string; city?: string } | null;
+        if (!org?.address && !org?.city) return;
+        setForm(prev => ({ ...prev, address: prev.address || org.address || "", location: prev.location || org.city || "" }));
+      })
+      .catch(() => {});
+  }, []);
   const [published, setPublished] = useState<{ id: string; type: string; price: number } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -301,7 +313,7 @@ export default function SellPage() {
             <p className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-inset ring-slate-200">
               <span className="font-semibold" style={{ color: planInfo(sub.planId).accent }}>{planInfo(sub.planId).name} plan</span>
               <span className="text-slate-300">·</span>
-              <span className="tabular-nums">{sub.usage.listings} of {formatLimit(sub.limits.listings)} active listings used</span>
+              <span className="tabular-nums">{sub.usage.listings} of {formatLimit(sub.limits.listings)} listings & deals used this month</span>
               {sub.planId !== "UNLIMITED" && (
                 <Link href="/pricing" className="font-semibold text-indigo-600 hover:text-indigo-700">Upgrade</Link>
               )}
@@ -369,8 +381,8 @@ export default function SellPage() {
             used={sub.usage.listings}
             limit={sub.limits.listings}
             hint={sub.inheritedFromOwner
-              ? "Your business owner can upgrade, or mark an older listing as sold to free a slot."
-              : "Upgrade to post more, or mark an older listing as sold to free a slot."}
+              ? `Every listing and deal posted this month counts, even deleted ones. Your business owner can upgrade, or wait until ${sub.listingsResetAt ? new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" }) : "next month"}.`
+              : `Every listing and deal posted this month counts, even deleted ones. Upgrade to post more, or wait until ${sub.listingsResetAt ? new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" }) : "next month"}.`}
           />
         )}
         <div className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] ${listingsFull ? "hidden" : ""}`}>
@@ -503,6 +515,10 @@ export default function SellPage() {
                           <input id="location" name="location" value={form.location} onChange={handleChange} required
                             placeholder="e.g. Karachi, Lahore" className={`${inputClass} pl-10`} />
                         </div>
+                      </Field>
+                      <Field label="Address" htmlFor="address" optional hint="Where buyers can see or collect the vehicle, e.g. your shop. Shown on the listing and on booking slips.">
+                        <input id="address" name="address" value={form.address} onChange={handleChange} maxLength={200}
+                          placeholder="e.g. Shop 12, Main Shahrah-e-Faisal, near FTC" className={inputClass} />
                       </Field>
                       <Field label="Description" htmlFor="description">
                         <textarea id="description" name="description" value={form.description} onChange={handleChange} required

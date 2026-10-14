@@ -10,6 +10,12 @@ export interface IDeal extends Omit<Document, "model"> {
   organizationId: mongoose.Types.ObjectId;
   title: string;
   description?: string;
+  /** SALE: a discounted vehicle for sale. RENT: a bookable rental package, priced per day */
+  dealType: "SALE" | "RENT";
+  /** Cars in the package, e.g. 3 for a wedding convoy; 1 for a single vehicle */
+  vehicleCount: number;
+  /** Refundable security deposit for RENT deals, in PKR */
+  deposit?: number;
   make: string;
   model: string;
   year: number;
@@ -20,9 +26,11 @@ export interface IDeal extends Omit<Document, "model"> {
   condition: string;
   /** City */
   location: string;
+  /** Shop / pickup address where the deal is offered */
+  address?: string;
   /** AI-checked vehicle photos; the first is the main one */
   images: string[];
-  /** Normal price in PKR, before the discount */
+  /** Normal price in PKR before the discount: the sale price, or for RENT deals the package price per day */
   price: number;
   discountType: "PERCENT" | "AMOUNT";
   /** Percent (1–90) or PKR amount off `price` */
@@ -43,6 +51,9 @@ const DealSchema = new Schema<IDeal>(
     organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
     title: { type: String, required: true, trim: true, maxlength: 80 },
     description: { type: String, trim: true, maxlength: 2000 },
+    dealType: { type: String, enum: ["SALE", "RENT"], default: "SALE" },
+    vehicleCount: { type: Number, min: 1, max: 50, default: 1 },
+    deposit: { type: Number, min: 0 },
     make: { type: String, required: true, trim: true },
     model: { type: String, required: true, trim: true },
     year: { type: Number, required: true },
@@ -52,6 +63,7 @@ const DealSchema = new Schema<IDeal>(
     color: { type: String, trim: true },
     condition: { type: String, enum: CONDITIONS, required: true },
     location: { type: String, required: true, trim: true },
+    address: { type: String, trim: true, maxlength: 200 },
     images: { type: [String], default: [] },
     price: { type: Number, required: true, min: 1 },
     discountType: { type: String, enum: ["PERCENT", "AMOUNT"], required: true },

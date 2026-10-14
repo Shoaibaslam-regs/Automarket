@@ -88,7 +88,7 @@ export default function Select({
           sideOffset={6}
           collisionPadding={12}
           className={twMerge(
-            "z-[1000] max-h-[min(320px,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-24px)] overflow-hidden",
+            "z-[1100] max-h-[min(320px,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-24px)] overflow-hidden",
             "rounded-xl border border-slate-200 bg-white shadow-[0_10px_32px_-8px_rgba(15,23,42,0.22)] animate-[fadeDown_0.14s_ease]",
             contentClassName
           )}

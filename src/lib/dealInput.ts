@@ -2,10 +2,14 @@ import mongoose from "mongoose";
 import { VehicleImage } from "@/models/VehicleImage";
 import { MAX_DEAL_IMAGES, MAX_PERCENT, dealPrice } from "@/lib/deals";
 import { CONDITIONS } from "@/lib/vehicleOptions";
+import { cleanAddress } from "@/lib/address";
 
 export type DealInput = {
   title: string;
   description?: string;
+  dealType: "SALE" | "RENT";
+  vehicleCount: number;
+  deposit?: number;
   make: string;
   model: string;
   year: number;
@@ -15,6 +19,7 @@ export type DealInput = {
   color?: string;
   condition: string;
   location: string;
+  address: string;
   images: string[];
   price: number;
   discountType: "PERCENT" | "AMOUNT";
@@ -52,9 +57,17 @@ export async function parseDealInput(
   if (!(CONDITIONS as readonly string[]).includes(condition)) return { error: "Choose the vehicle's condition" };
   const location = text(b.location, 60);
   if (!location) return { error: "Choose the city" };
+  const address = cleanAddress(b.address);
+  if (address.length < 5) return { error: "Enter your shop address, where customers can see or collect the vehicle" };
+
+  const dealType = b.dealType === "RENT" ? "RENT" : "SALE";
+  const vehicleCount = b.vehicleCount === undefined || b.vehicleCount === "" ? 1 : Number(b.vehicleCount);
+  if (!Number.isInteger(vehicleCount) || vehicleCount < 1 || vehicleCount > 50) return { error: "Cars in the package must be 1 to 50" };
+  const deposit = dealType === "RENT" && b.deposit !== undefined && b.deposit !== "" ? Number(b.deposit) : undefined;
+  if (deposit !== undefined && (!Number.isFinite(deposit) || deposit < 0)) return { error: "The deposit must be 0 or more" };
 
   const price = Number(b.price);
-  if (!Number.isFinite(price) || price < 1) return { error: "Enter the normal price in PKR" };
+  if (!Number.isFinite(price) || price < 1) return { error: dealType === "RENT" ? "Enter the normal price per day in PKR" : "Enter the normal price in PKR" };
   const discountType = b.discountType;
   if (discountType !== "PERCENT" && discountType !== "AMOUNT") return { error: "Choose a percentage or a fixed amount off" };
   const discountValue = Number(b.discountValue);
@@ -87,6 +100,9 @@ export async function parseDealInput(
     data: {
       title,
       description: description || undefined,
+      dealType,
+      vehicleCount,
+      deposit: deposit !== undefined ? Math.round(deposit) : undefined,
       make,
       model,
       year,
@@ -96,6 +112,7 @@ export async function parseDealInput(
       color: text(b.color, 30) || undefined,
       condition,
       location,
+      address,
       images,
       price: Math.round(price),
       discountType,

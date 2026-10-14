@@ -24,7 +24,7 @@ const PAID = PLAN_LIST.filter(p => p.id !== "FREE");
 
 /**
  * Admin dashboard box: look up anyone's plan by name, email, ID or business name,
- * then gift a plan, start their one-time free trial, or revoke a free plan.
+ * then activate a paid plan or gift one, start their one-time free trial, or revoke a free plan.
  */
 export default function PlanLookup() {
   const { canWrite } = useAdminAccess();
@@ -145,7 +145,7 @@ export default function PlanLookup() {
                         </button>
                       )}
                       <button onClick={() => setGiftFor(r)} disabled={busy} className={`${btn.base} ${btn.secondary}`}>
-                        <Gift size={13} /> Gift
+                        <Gift size={13} /> Plan
                       </button>
                       {!free && isFreeGrant(r.source) && (
                         <button onClick={() => setRevokeFor(r)} disabled={busy} aria-label="Revoke plan" title="Revoke plan" className={`${btn.base} ${btn.danger}`}>
@@ -175,10 +175,11 @@ export default function PlanLookup() {
           planExpiresAt: giftFor.expiresAt,
         }}
         onClose={() => setGiftFor(null)}
-        onSave={async (plan, months) => {
+        onSave={async (plan, months, source) => {
           const r = giftFor;
           if (!r) return;
-          await send(`/api/admin/users/${r.id}/plan`, json("PATCH", { plan, months }), `${who(r)} now has ${planInfo(plan).name} for free.`);
+          await send(`/api/admin/users/${r.id}/plan`, json("PATCH", { plan, months, source }),
+            source === "PAID" ? `${who(r)} has ${planInfo(plan).name} for 30 days.` : `${who(r)} now has ${planInfo(plan).name} for free.`);
           setGiftFor(null);
         }}
       />

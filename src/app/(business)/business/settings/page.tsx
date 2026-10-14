@@ -199,7 +199,7 @@ export default function BusinessSettingsPage() {
               </span>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Current plan</p>
-                <p className="text-lg font-bold">{plan.name}{plan.price > 0 && <span className="ml-1.5 text-sm font-medium text-slate-400">PKR {plan.price.toLocaleString()}/mo</span>}</p>
+                <p className="text-lg font-bold">{plan.name}{plan.price > 0 && <span className="ml-1.5 text-sm font-medium text-slate-400">PKR {plan.price.toLocaleString()} / 30 days</span>}</p>
                 {sub?.expiresAt && (
                   <p className="text-xs text-slate-400">
                     {planSourceLabel(sub.source) && sub.source !== "PAID" ? `${planSourceLabel(sub.source)} · ` : ""}until {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}

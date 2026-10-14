@@ -5,7 +5,7 @@ import { ArrowRight, Crown, Lock } from "lucide-react";
 import { PLAN_LIST, formatLimit, planInfo } from "@/lib/plans";
 import ContactTeam from "./ContactTeam";
 
-const NOUNS = { listings: "active listings", staff: "team members", customers: "customers" } as const;
+const NOUNS = { listings: "new listings and deals a month", staff: "team members", customers: "customers" } as const;
 
 /** Shown in place of an "add" form once the plan's limit for `kind` is used up. */
 export default function LimitReachedCard({

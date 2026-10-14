@@ -4,10 +4,11 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Trash2, TriangleAlert } from "lucide-react";
+import { MapPin, Trash2, TriangleAlert } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import HandoverDialog, { HandoverDetails } from "@/components/bookings/HandoverDialog";
+import { mapsUrl } from "@/lib/address";
 
 type ListingInfo = {
   _id: string;
@@ -17,6 +18,7 @@ type ListingInfo = {
   model: string;
   year: number;
   location: string;
+  address?: string;
   type?: string;
   status?: string;
 };
@@ -41,6 +43,8 @@ type Booking = {
   renterCnic?: string;
   renterId: { name: string; email: string; phone?: string };
   rentalId: { _id: string; listingId: ListingInfo; dailyRate: number; plateNumber?: string };
+  /** Deal bookings have a deal instead of a listed vehicle */
+  dealId?: { _id: string; title: string; images: string[]; make: string; model: string; year: number; location: string; address?: string; vehicleCount?: number } | null;
   owner?: OwnerInfo;
 };
 
@@ -60,8 +64,18 @@ function fmtTime(d: string) {
   return new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+/** What was booked, as listing-shaped info: the deal for deal bookings, otherwise the listed vehicle. */
+function bookedItem(booking: Booking): ListingInfo | undefined {
+  if (booking.rentalId?.listingId) return booking.rentalId.listingId;
+  const d = booking.dealId;
+  return d ? { _id: d._id, title: d.title, images: d.images, make: d.make, model: d.model, year: d.year, location: d.location, address: d.address } : undefined;
+}
+
+/** The slip is written as raw HTML, so text typed by users is escaped first. */
+const escapeHtml = (v: string) => v.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
 function generateSlip(booking: Booking, tab: string) {
-  const listing = booking.rentalId?.listingId;
+  const listing = bookedItem(booking);
   const days = Math.ceil((new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24));
   // The slip opens in its own window without the theme variables, so use the plain light-theme colours
   const plain = (v: string) => v.replace(/var\(--gh-([0-9a-f]{6})\)/g, "#$1");
@@ -70,12 +84,13 @@ function generateSlip(booking: Booking, tab: string) {
   const html = `<!DOCTYPE html><html><head><title>Booking Slip — AutoMarket</title>
   <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:40px auto;color:#0d1117;padding:0 20px}.header{text-align:center;border-bottom:2px solid #0d1117;padding-bottom:20px;margin-bottom:24px}.logo{font-size:24px;font-weight:800}.section{margin-bottom:20px}.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#57606a;margin-bottom:10px;border-bottom:1px solid #e1e4e8;padding-bottom:6px}.row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0}.label{color:#57606a}.value{font-weight:600}.total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:12px 0;border-top:2px solid #0d1117;margin-top:8px}.status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:${statusStyle.bg};color:${statusStyle.color}}.footer{text-align:center;font-size:11px;color:#8c959f;margin-top:32px;border-top:1px solid #e1e4e8;padding-top:16px}</style>
   </head><body>
-  <div class="header"><div class="logo">AutoMarket</div><div style="font-size:14px;color:#57606a;margin-top:4px">Rental Booking Slip</div><div style="font-size:11px;color:#8c959f;margin-top:4px">Booking ID: ${booking._id}</div></div>
+  <div class="header"><div class="logo">AutoMarket</div><div style="font-size:14px;color:#57606a;margin-top:4px">${booking.dealId ? "Deal Booking Slip" : "Rental Booking Slip"}</div><div style="font-size:11px;color:#8c959f;margin-top:4px">Booking ID: ${booking._id}</div></div>
   <div class="section"><div class="section-title">Vehicle details</div>
-  <div class="row"><span class="label">Vehicle</span><span class="value">${listing?.title || "N/A"}</span></div>
+  <div class="row"><span class="label">Vehicle</span><span class="value">${escapeHtml(listing?.title || "N/A")}</span></div>
   ${booking.plateNumber ? `<div class="row"><span class="label">Number plate</span><span class="value" style="border:2px solid #0d1117;border-radius:4px;padding:0 6px;font-family:monospace;letter-spacing:2px">${booking.plateNumber}</span></div>` : ""}
-  <div class="row"><span class="label">Make & model</span><span class="value">${listing?.make} ${listing?.model} ${listing?.year}</span></div>
-  <div class="row"><span class="label">Location</span><span class="value">${listing?.location || "N/A"}</span></div></div>
+  <div class="row"><span class="label">Make & model</span><span class="value">${escapeHtml(`${listing?.make ?? ""} ${listing?.model ?? ""} ${listing?.year ?? ""}`)}</span></div>
+  <div class="row"><span class="label">Location</span><span class="value">${escapeHtml(listing?.location || "N/A")}</span></div>
+  ${listing?.address ? `<div class="row"><span class="label">Pickup address</span><span class="value" style="text-align:right;max-width:60%">${escapeHtml(listing.address)}</span></div>` : ""}</div>
   <div class="section"><div class="section-title">Booking details</div>
   <div class="row"><span class="label">Pick-up</span><span class="value">${fmt(booking.startDate)}</span></div>
   <div class="row"><span class="label">Return</span><span class="value">${fmt(booking.endDate)}</span></div>
@@ -87,14 +102,14 @@ function generateSlip(booking: Booking, tab: string) {
   ${tab === "mine" && booking.renterCnic ? `<div class="row"><span class="label">Your CNIC</span><span class="value" style="font-family:monospace;letter-spacing:1px">${booking.renterCnic}</span></div>` : ""}
   </div>
   ${tab === "received" ? `<div class="section"><div class="section-title">Renter details</div>
-  <div class="row"><span class="label">Name</span><span class="value">${booking.renterId?.name || "N/A"}</span></div>
-  <div class="row"><span class="label">Email</span><span class="value">${booking.renterId?.email || "N/A"}</span></div>
-  ${booking.renterId?.phone ? `<div class="row"><span class="label">Phone</span><span class="value">${booking.renterId.phone}</span></div>` : ""}
+  <div class="row"><span class="label">Name</span><span class="value">${escapeHtml(booking.renterId?.name || "N/A")}</span></div>
+  <div class="row"><span class="label">Email</span><span class="value">${escapeHtml(booking.renterId?.email || "N/A")}</span></div>
+  ${booking.renterId?.phone ? `<div class="row"><span class="label">Phone</span><span class="value">${escapeHtml(booking.renterId.phone)}</span></div>` : ""}
   ${booking.renterCnic ? `<div class="row"><span class="label">CNIC</span><span class="value" style="font-family:monospace;letter-spacing:1px">${booking.renterCnic}</span></div>` : ""}
   </div>` : `<div class="section"><div class="section-title">Owner details</div>
-  <div class="row"><span class="label">Name</span><span class="value">${booking.owner?.name || "N/A"}</span></div>
-  <div class="row"><span class="label">Email</span><span class="value">${booking.owner?.email || "N/A"}</span></div>
-  ${booking.owner?.phone ? `<div class="row"><span class="label">Phone</span><span class="value">${booking.owner.phone}</span></div>` : ""}
+  <div class="row"><span class="label">Name</span><span class="value">${escapeHtml(booking.owner?.name || "N/A")}</span></div>
+  <div class="row"><span class="label">Email</span><span class="value">${escapeHtml(booking.owner?.email || "N/A")}</span></div>
+  ${booking.owner?.phone ? `<div class="row"><span class="label">Phone</span><span class="value">${escapeHtml(booking.owner.phone)}</span></div>` : ""}
   </div>`}
   <div class="section"><div class="section-title">Payment summary</div>
   <div class="row"><span class="label">Rental × ${days} days</span><span class="value">PKR ${booking.totalAmount.toLocaleString()}</span></div>
@@ -318,8 +333,9 @@ export default function BookingsContent() {
             {bookings.map(booking => {
               const statusStyle = STATUS_COLORS[booking.status] || STATUS_COLORS.PENDING;
               const days = Math.ceil((new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24));
-              const listing = booking.rentalId?.listingId as ListingInfo | undefined;
+              const listing = bookedItem(booking);
               const listingId = listing?._id;
+              const isDeal = !!booking.dealId;
               return (
                 <div key={booking._id} className="bk-card" style={{ background: "var(--gh-ffffff)", border: booking.status === "PENDING" && tab === "received" ? "1px solid var(--gh-e3b341)" : booking.status === "CONFIRMED" && tab === "mine" ? "1px solid var(--gh-56d364)" : "1px solid var(--gh-e1e4e8)", borderRadius: "12px" }}>
                   <StatusBanner status={booking.status} tab={tab} />
@@ -330,11 +346,23 @@ export default function BookingsContent() {
                         {listing.images?.[0] ? <Image src={listing.images[0]} alt="" fill sizes="64px" className="object-cover" /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "var(--gh-8c959f)" }}>No img</div>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.title}</p>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {isDeal && (
+                            <span className="theme-static mr-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-[7px] py-px align-middle text-[10px] font-extrabold tracking-wide text-white">
+                              DEAL{(booking.dealId?.vehicleCount ?? 1) > 1 ? ` · ${booking.dealId!.vehicleCount} CARS` : ""}
+                            </span>
+                          )}
+                          {listing.title}
+                        </p>
                         <p style={{ fontSize: "12px", color: "var(--gh-57606a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
+                        {listing.address && booking.status !== "CANCELLED" && (
+                          <a href={mapsUrl(listing.address, listing.location)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "3px", fontSize: "12px", color: "var(--gh-0550ae)", textDecoration: "none" }}>
+                            <MapPin size={12} /> Pickup: {listing.address}
+                          </a>
+                        )}
                       </div>
                       {tab === "mine" && listingId && (
-                        <Link className="bk-listing-actions" href={`/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "var(--gh-0d1117)", textDecoration: "none", flexShrink: 0 }}>View listing →</Link>
+                        <Link className="bk-listing-actions" href={isDeal ? `/deals/${listingId}` : `/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "var(--gh-0d1117)", textDecoration: "none", flexShrink: 0 }}>{isDeal ? "View deal →" : "View listing →"}</Link>
                       )}
                       {tab === "received" && booking.renterId && (
                         <div className="bk-listing-actions" style={{ display: "flex", gap: "6px", flexShrink: 0 }}>

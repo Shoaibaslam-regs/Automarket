@@ -149,7 +149,7 @@ export default function UserMenuDropdown({
           </span>
           <span className="relative min-w-0 flex-1">
             <span className="block text-[13px] font-bold">Go Premium</span>
-            <span className="block truncate text-[11px] text-slate-300">More listings from PKR 500/month</span>
+            <span className="block truncate text-[11px] text-slate-300">More listings from PKR 500 / 30 days</span>
           </span>
           <ChevronRight size={15} className="relative text-slate-400" />
         </Link>

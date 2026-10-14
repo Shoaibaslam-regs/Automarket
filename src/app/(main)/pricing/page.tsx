@@ -12,7 +12,7 @@ import { useSubscription } from "@/components/subscription/useSubscription";
 import { PLANS, PLAN_LIST, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
-  { label: "Active listings", value: p => formatLimit(p.limits.listings) },
+  { label: "Listings & deals per month", value: p => formatLimit(p.limits.listings) },
   { label: "Team members (incl. owner)", value: p => formatLimit(p.limits.staff) },
   { label: "Customer leads", value: p => formatLimit(p.limits.customers) },
   { label: "AI-verified photos", value: () => true },
@@ -24,12 +24,12 @@ const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = 
 
 const FAQ = [
   {
-    q: "What counts as an active listing?",
-    a: "Listings that are active, pending or rented. When you mark a vehicle as sold or inactive, the slot frees up for a new one.",
+    q: "How does the listing limit work?",
+    a: "It's a monthly quota shared by listings and deals: every listing or deal you post in a calendar month counts, even if you delete it later. The count starts again on the 1st of each month. Marking a vehicle sold or rented doesn't use your quota.",
   },
   {
     q: "What happens when I reach my limit?",
-    a: "Your existing listings stay live, but you can't publish new ones until you upgrade or mark an older listing as sold.",
+    a: "Your existing listings stay live, but you can't post new ones until the 1st of next month or until you upgrade. Deleting a listing or deal doesn't give the quota back.",
   },
   {
     q: "Does my team share one plan?",
@@ -38,6 +38,10 @@ const FAQ = [
   {
     q: "What is the Verified badge?",
     a: `A PKR ${VERIFIED_BADGE.price.toLocaleString()}/month add-on for businesses, on top of any plan. After our team checks your business, a blue Verified tick shows on your business page and listings.`,
+  },
+  {
+    q: "How long does a plan last?",
+    a: "Paid plans run for 30 days from the day they're activated. When the 30 days are up your account moves back to the Free plan automatically, and you buy the plan again to continue. Paying before it ends adds 30 days to the time you have left.",
   },
   {
     q: "How do I pay?",
@@ -70,7 +74,7 @@ export default function PricingPage() {
             <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoMarket Premium</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
-            Start free with {PLANS.FREE.limits.listings} active listings. Upgrade when you need more listings, staff accounts for your team and full showroom management.
+            Start free with {PLANS.FREE.limits.listings} listings or deals a month. Upgrade when you need more listings, staff accounts for your team and full showroom management.
           </p>
         </div>
       </section>
@@ -99,7 +103,7 @@ export default function PricingPage() {
                 )}
                 {sub.expiresAt && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
-                    <CalendarClock size={13} /> Renews or ends {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                    <CalendarClock size={13} /> Ends {new Date(sub.expiresAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })} · buy again to keep it
                   </span>
                 )}
               </div>
@@ -121,7 +125,7 @@ export default function PricingPage() {
                   {PLAN_LIST.map(p => (
                     <th key={p.id} className="px-4 py-4 text-center">
                       <span className="block text-sm font-bold" style={{ color: p.accent }}>{p.name}</span>
-                      <span className="block text-xs font-medium text-slate-400">PKR {p.price.toLocaleString()}{p.price ? "/mo" : ""}</span>
+                      <span className="block text-xs font-medium text-slate-400">PKR {p.price.toLocaleString()}{p.price ? " / 30 days" : ""}</span>
                     </th>
                   ))}
                 </tr>

@@ -7,6 +7,9 @@ import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { ensureBookingCustomer } from "@/lib/customerSync";
+import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
+import { DEAL_BOOKING_FIELDS } from "@/lib/dealBookings";
+import { Organization } from "@/models/Organization";
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
         // Walk-in bookings have no renter account and are managed in the business console
         source: { $ne: "WALK_IN" },
       })
-        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location type status" } })
+        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location address type status" } })
         .populate("renterId", "name email phone")
         .sort({ createdAt: -1 })
         .lean();
@@ -39,7 +42,8 @@ export async function GET(req: NextRequest) {
         renterId: session.user.id,
         deletedByRenter: { $ne: true },
       })
-        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location" } })
+        .populate({ path: "rentalId", populate: { path: "listingId", select: "title images make model year location address" } })
+        .populate("dealId", DEAL_BOOKING_FIELDS)
         .populate("renterId", "name email phone")
         .sort({ createdAt: -1 })
         .lean();
@@ -50,6 +54,12 @@ export async function GET(req: NextRequest) {
         const rental = b.rentalId as { ownerId: { toString: () => string } } | null;
         if (rental?.ownerId) {
           const owner = await User.findById(rental.ownerId).select("name email phone").lean();
+          return { ...b, owner };
+        }
+        // Deal bookings are with the business that published the deal
+        const deal = b.dealId as { organizationId?: unknown } | null;
+        if (deal?.organizationId) {
+          const owner = await Organization.findById(deal.organizationId).select("name email phone").lean();
           return { ...b, owner };
         }
         return b;
@@ -80,8 +90,8 @@ export async function POST(req: NextRequest) {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    if (start >= end) {
-      return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
+    if (!validBookingDates(start, end)) {
+      return NextResponse.json({ error: "The return date can't be before the pickup date" }, { status: 400 });
     }
 
     if (start < new Date()) {
@@ -100,14 +110,14 @@ export async function POST(req: NextRequest) {
     const conflict = await Booking.findOne({
       rentalId,
       status: { $in: ["PENDING", "CONFIRMED", "ACTIVE"] },
-      $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }],
+      ...bookingClashQuery(start, end),
     });
 
     if (conflict) {
       return NextResponse.json({ error: "Vehicle is not available for selected dates" }, { status: 400 });
     }
 
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const days = rentalDays(start, end);
     const totalAmount = days * rental.dailyRate;
     const deposit = rental.deposit || 0;
 

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Building2, Gift } from "lucide-react";
-import { PLAN_LIST, formatLimit, planInfo, type PlanId } from "@/lib/plans";
+import { Building2, Crown, Gift } from "lucide-react";
+import { PLAN_LIST, PLAN_PERIOD_DAYS, formatLimit, planInfo, type PlanId } from "@/lib/plans";
 
 export type PlanGiftTarget = {
   /** Shown in the title: a user's name/email, or a business name */
@@ -16,35 +16,34 @@ export type PlanGiftTarget = {
 
 const PAID_PLANS = PLAN_LIST.filter(p => p.id !== "FREE");
 
-const DURATIONS: { value: number | null; label: string }[] = [
-  { value: 1, label: "1 month" },
-  { value: 3, label: "3 months" },
-  { value: 6, label: "6 months" },
-  { value: 12, label: "1 year" },
-  { value: null, label: "No end date" },
-];
+/** Gift lengths in 30-day periods; every plan ends, so there is no "no end date" */
+const DURATIONS: { value: number; label: string }[] = [1, 3, 6, 12].map(n => ({ value: n, label: `${n * PLAN_PERIOD_DAYS} days` }));
+
+export type PlanSourceChoice = "PAID" | "ADMIN_GRANT";
 
 export const fmtPlanDate = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 
 /**
- * Gifts a paid plan for free, to a user or (through its owner) a business.
- * Taking a plan back is a separate "Revoke" action, not an option here.
+ * Activates a plan for a user or (through its owner) a business: either paid (one 30-day period,
+ * renewals add 30 days) or a free gift. Every plan ends, after which the account is on Free again.
+ * Taking a gift back is a separate "Revoke" action, not an option here.
  */
 export default function PlanGiftDialog({ target, onClose, onSave }: {
   target: PlanGiftTarget | null;
   onClose: () => void;
-  onSave: (plan: PlanId, months: number | null) => Promise<void>;
+  onSave: (plan: PlanId, months: number, source: PlanSourceChoice) => Promise<void>;
 }) {
   const [plan, setPlan] = useState<PlanId | null>(null);
-  const [months, setMonths] = useState<number | null>(1);
+  const [months, setMonths] = useState(1);
+  const [source, setSource] = useState<PlanSourceChoice>("PAID");
   const [busy, setBusy] = useState(false);
   const selected = plan ?? (target && target.effectivePlan !== "FREE" ? target.effectivePlan : "STARTER");
 
-  function reset() { setPlan(null); setMonths(1); }
+  function reset() { setPlan(null); setMonths(1); setSource("PAID"); }
 
   async function save() {
     setBusy(true);
-    await onSave(selected, months);
+    await onSave(selected, source === "PAID" ? 1 : months, source);
     setBusy(false);
     reset();
   }
@@ -58,12 +57,12 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
             <>
               <div className="flex gap-4">
                 <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950">
-                  <Gift size={20} />
+                  <Crown size={20} />
                 </span>
                 <div className="min-w-0">
-                  <Dialog.Title className="text-base font-semibold text-slate-900">Gift a plan to {target.name}</Dialog.Title>
+                  <Dialog.Title className="text-base font-semibold text-slate-900">Activate a plan for {target.name}</Dialog.Title>
                   <Dialog.Description className="mt-1 text-sm text-slate-500">
-                    Free of charge. Currently on <strong className="font-semibold text-slate-700">{planInfo(target.effectivePlan).name}</strong>
+                    Plans last {PLAN_PERIOD_DAYS} days at a time, then the account goes back to Free. Currently on <strong className="font-semibold text-slate-700">{planInfo(target.effectivePlan).name}</strong>
                     {target.planExpiresAt && target.effectivePlan !== "FREE" ? ` until ${fmtPlanDate(target.planExpiresAt)}` : ""}.
                   </Dialog.Description>
                 </div>
@@ -77,6 +76,20 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
                   </span>
                 </p>
               )}
+
+              <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Payment</p>
+              <div role="radiogroup" aria-label="Payment" className="mt-2 grid grid-cols-2 gap-2">
+                {([["PAID", "Paid", `${PLAN_PERIOD_DAYS} days per payment`], ["ADMIN_GRANT", "Gift", "Free, you choose how long"]] as const).map(([v, label, hint]) => (
+                  <button key={v} type="button" role="radio" aria-checked={source === v} onClick={() => setSource(v)}
+                    className={`flex items-start gap-2.5 rounded-xl p-3 text-left ring-1 ring-inset transition ${source === v ? "bg-amber-50 ring-2 ring-amber-500" : "ring-slate-200 hover:bg-slate-50"}`}>
+                    {v === "PAID" ? <Crown size={16} className="mt-0.5 flex-shrink-0 text-amber-600" /> : <Gift size={16} className="mt-0.5 flex-shrink-0 text-violet-600" />}
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-900">{label}</span>
+                      <span className="block text-xs text-slate-500">{hint}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
 
               <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Plan</p>
               <div role="radiogroup" aria-label="Plan" className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -100,6 +113,13 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
                 })}
               </div>
 
+              {source === "PAID" ? (
+                <p className="mt-5 rounded-xl bg-slate-50 px-3.5 py-3 text-[13px] text-slate-600 ring-1 ring-inset ring-slate-200">
+                  Runs for {PLAN_PERIOD_DAYS} days from today. If they already have this plan, the {PLAN_PERIOD_DAYS} days are added to the time left.
+                  When it ends the account goes back to Free until they pay again.
+                </p>
+              ) : (
+              <>
               <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Duration</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {DURATIONS.map(d => (
@@ -116,6 +136,8 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
                   </button>
                 ))}
               </div>
+              </>
+              )}
 
               <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Dialog.Close asChild>
@@ -129,7 +151,7 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
                   disabled={busy}
                   className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {busy ? "Saving…" : `Gift ${planInfo(selected).name}`}
+                  {busy ? "Saving…" : source === "PAID" ? `Activate ${planInfo(selected).name} · ${PLAN_PERIOD_DAYS} days` : `Gift ${planInfo(selected).name}`}
                 </button>
               </div>
             </>

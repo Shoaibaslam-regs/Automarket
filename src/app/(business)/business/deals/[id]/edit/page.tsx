@@ -5,15 +5,18 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import DealForm, { toInputDate, type DealFormValues } from "@/components/business/DealForm";
 
-type DealDoc = Omit<DealFormValues, "year" | "mileage" | "price" | "discountValue" | "startsAt" | "endsAt" | "description" | "fuelType" | "transmission" | "color"> & {
+type DealDoc = Omit<DealFormValues, "year" | "mileage" | "price" | "discountValue" | "startsAt" | "endsAt" | "description" | "fuelType" | "transmission" | "color" | "dealType" | "vehicleCount" | "deposit" | "address"> & {
+  address?: string;
   description?: string; fuelType?: string; transmission?: string; color?: string;
+  dealType?: "SALE" | "RENT"; vehicleCount?: number; deposit?: number;
   year: number; mileage?: number; price: number; discountValue: number; startsAt: string; endsAt: string;
 };
 
 const toForm = (d: DealDoc): DealFormValues => ({
+  dealType: d.dealType === "RENT" ? "RENT" : "SALE", vehicleCount: String(d.vehicleCount ?? 1), deposit: d.deposit != null ? String(d.deposit) : "",
   title: d.title, description: d.description ?? "", make: d.make, model: d.model, year: String(d.year),
   mileage: d.mileage != null ? String(d.mileage) : "", fuelType: d.fuelType ?? "", transmission: d.transmission ?? "", color: d.color ?? "",
-  condition: d.condition, location: d.location, images: d.images, price: String(d.price),
+  condition: d.condition, location: d.location, address: d.address ?? "", images: d.images, price: String(d.price),
   discountType: d.discountType, discountValue: String(d.discountValue),
   startsAt: toInputDate(new Date(d.startsAt)), endsAt: toInputDate(new Date(d.endsAt)),
 });

@@ -57,11 +57,19 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 **Plans and limits.** `src/lib/plans.ts` is the single source for plan names, prices and limits: `FREE`, `STARTER` ("Premium"), `PRO` ("Premium Plus") and `UNLIMITED`. A `null` limit means unlimited. The file is client-safe, and all UI text reads its numbers from it.
 - The plan lives on the **user** (`User.plan`, `planExpiresAt`, `planSource`). Business members inherit the owner's plan, and `Organization.plan` is a legacy field that is no longer read.
 - `src/lib/subscription.ts` provides `getSubscription`, `getUsage` and `checkPlanLimit(userId, "listings" | "staff" | "customers")`.
-  - It is enforced server-side in `POST /api/listings`, in listing re-activation in `PATCH /api/listings/[id]`, and in the staff and customer POST routes.
+  - It is enforced server-side in `POST /api/listings`, `POST /api/business/deals` and the staff and customer POST routes.
   - When the limit is reached, those routes return 403 with `code: "PLAN_LIMIT_REACHED"`.
-  - Listings count against the limit only while their status is `ACTIVE`, `PENDING` or `RENTED`. Staff counts include the owner.
+  - **The listing limit is a monthly quota shared by listings and deals** (there is no separate deal limit). Every listing or deal created in the calendar month (Pakistan time, see `quotaMonthStart`/`quotaResetsAt` in `plans.ts`) counts, even after it is deleted.
+    - `POST /api/listings` and `POST /api/business/deals` check `checkPlanLimit(userId, "listings")` and write a `ListingLog` entry (`listingId` or `dealId`) that is never removed.
+    - `getUsage` counts this month's log entries for the whole team, plus any listings or deals from this month that have no log entry yet.
+    - Re-activating or re-tagging an existing listing doesn't use quota. `/api/subscription` returns `listingsResetAt`.
+  - Staff counts include the owner.
 - Clients read `/api/subscription` through `useSubscription()` (`components/subscription/`).
-- There is no payment integration. Admins grant plans through `PATCH /api/admin/users/[id]/plan`, and users ask for one through `POST /api/support/upgrade-request`.
+- There is no payment integration. Admins activate plans through `PATCH /api/admin/users/[id]/plan` (`PlanGiftDialog`), and users ask for one through `POST /api/support/upgrade-request`.
+- **Every paid plan ends.** Plans run in 30-day periods (`PLAN_PERIOD_DAYS`, `addPlanPeriods` in `plans.ts`), and there is no "no end date".
+  - `source: "PAID"` gives one period. If the same plan is still running (paid, gifted or a trial), the new 30 days are added to the time left.
+  - Gifts (`ADMIN_GRANT`) last 1, 3, 6 or 12 periods. The trial lasts `TRIAL_MONTHS` periods.
+  - Once `planExpiresAt` passes, `effectivePlanId` treats the account as Free until the plan is bought again. `/api/subscription` returns `planDaysLeft`.
 - `User.planSource` is `PAID`, `ADMIN_GRANT` (a gift) or `TRIAL`. Use `isFreeGrant()` from `src/lib/plans.ts` for "an admin can revoke this".
 - Each account gets one free trial (`TRIAL_MONTHS` long), started with `trial: true` on the plan route. `User.trialUsedAt` is set atomically and never cleared, so revoking a trial doesn't allow another.
 - The admin dashboard's **Plan lookup** box (`components/admin/PlanLookup.tsx`, `/api/admin/plans/lookup`) searches by name, email, business name, or full or short ID.
@@ -72,6 +80,14 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - `source: "WALK_IN"` bookings have no `renterId`. They store customer details in `walkIn` instead, so treat `renterId` as optional. The personal `/api/bookings?role=owner` list excludes them.
 - The business console (`/business/bookings`, `/api/business/bookings`) creates walk-ins and enforces the status flow in `src/lib/bookings.ts`: PENDING → CONFIRMED → ACTIVE (handed over) → COMPLETED, with cancellation before handover.
 - `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
+- **Walk-ins for unlisted vehicles.** The New booking dialog has an "Other vehicle (not listed on AutoMarket)" option (picker value `other`). The business types in the vehicle, daily rate, deposit and an optional plate.
+  - Such a booking has no `rentalId` or `dealId`. It stores `offListVehicle` and carries the business in `Booking.organizationId`, which `businessBookingQuery`, stats, counts, `ensureBookingCustomer`, the handover route and review eligibility all check.
+  - Clashes are only checked when a plate is given, using `samePlatePattern` (spaces and dashes are ignored).
+  - New booking is always available, even when the business has no listed rental vehicles.
+- **Booking dates** (`src/lib/bookings.ts`).
+  - A return date may equal the pickup date (`validBookingDates`), and `rentalDays` charges at least one day, so 23 → 23 and 23 → 24 Oct are both one day.
+  - A booking holds the vehicle or deal from pickup up to, but not including, the return day, and a same-day booking holds just that day. The return day is therefore free for the next pickup.
+  - Every clash check (listing rentals, walk-ins, deal bookings) must use `bookingClashQuery(start, end)`.
 - **Handover details: number plate and renter CNIC.**
   - `Booking.plateNumber` and `Booking.renterCnic` are recorded at handover. `Rental.plateNumber` remembers the last plate to prefill the next one. Walk-ins may also carry `walkIn.cnic`, so read the CNIC with `bookingCnic(b)`.
   - In the business console, "Hand over" opens `HandoverDialog` (`components/bookings/`) and sends `{ status: "ACTIVE", plateNumber, cnic }`. The business route requires both for that move.
@@ -96,7 +112,14 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - The owner or a manager (`manageDeals`) creates and edits deals at `/business/deals/new` and `/business/deals/[id]/edit`, using `components/business/DealForm.tsx`.
   - `parseDealInput` (`src/lib/dealInput.ts`) validates the input. Photos go through the same AI-checked `vehicleImages` upload as listings: each URL must have a `VehicleImage` record from a member of the business, or already be on the deal.
   - `dealState`, `dealPrice`, `dealLabel` and `MAX_DEAL_IMAGES` are in client-safe `src/lib/deals.ts`. Shared vehicle option lists are in `src/lib/vehicleOptions.ts`.
-  - The public pages are `/deals` (filters for make, city and sort in the URL) and `/deals/[id]`. The business page and the home page "Hot deals" strip show `components/deals/DealCard.tsx`. All of them read through `src/lib/publicDeals.ts` (`getLiveDeals`, `getDealPage`), which hides deals of suspended businesses.
+  - The public pages are `/deals` (filters for make, city and sort in the URL) and `/deals/[id]`. The business page and the home page "Hot deals" strip show `components/deals/DealCard.tsx`. The landing page (`/`) has its own dark `HotDealCard` in `components/landing/Landing.tsx`, fed the top 3 deals by discount from `src/app/(main)/page.tsx`. All of them read through `src/lib/publicDeals.ts` (`getLiveDeals`, `getDealPage`), which hides deals of suspended businesses.
+  - **Deal types.** `Deal.dealType` is `SALE` or `RENT`. Older deals have no type and count as sales (`isRentDeal`).
+    - A RENT deal is a bookable package: `price` is per day for the whole package, `vehicleCount` is the number of cars (for example an event convoy), and `deposit` is optional.
+    - Customers book rent deals at `/deals/[id]/book` (the shared `BookingForm` with `dealId`), which calls `POST /api/deals/[id]/book`. The pickup date must be on or before the deal's end, overlapping bookings are refused, and the business's own members can't book.
+  - **Deal bookings** are ordinary `Booking`s with `dealId` set and no `rentalId`, so they go through the normal flow (confirm, handover with plate and CNIC, return, slip). They show a DEAL tag.
+    - `src/lib/dealBookings.ts` (`businessBookingQuery`, `getOrgDealIds`, `DEAL_BOOKING_FIELDS`) includes them in business booking lists, booking details, stats, pending counts and review eligibility.
+    - Walk-ins can be made for a rent deal: the picker value is `deal:<id>`.
+    - `ensureBookingCustomer` takes the business from the deal. Never assume `booking.rentalId` exists.
 - Admins see and disable deals at `/admin/deals`. `disabledByAdmin` can't be undone by the business.
 - The old per-seller `Review` model and `/api/reviews` were removed. Their documents are left in the `reviews` collection but nothing reads them.
 
@@ -128,9 +151,15 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - The Rented tag is applied from bookings: the personal Bookings "received" tab and `/business/bookings`, which offer Available/Rented on each booking's vehicle.
 - The seller can always change it. The owner, managers and sales staff of the seller's business can change their teammates' listings too.
 - `src/lib/availability.ts` (client-safe) says which tags fit a listing type: SALE can be Sold, RENT can be Rented, BOTH can be either.
-- Every status change sets `Listing.statusChangedAt`. The plan limit is checked when a sold listing becomes available or rented again.
+- Every status change sets `Listing.statusChangedAt`. Changing the tag never uses the monthly listing quota.
 - The public sees sold and rented vehicles for `CLOSED_VISIBLE_DAYS` (30) after the change, through `publicStatusQuery`. They appear on browse (sorted `status: 1`, so available ones come first; `available=1` hides them) and on the dealer page.
 - `ListingCard` greys them out with a "Sold out" or "Rented" stamp. The listing page shows a banner with a "see similar" link, and hides booking and the financing calculator.
+
+**Addresses.** Listings (`Listing.address`, optional) and deals (`Deal.address`, required by `parseDealInput`) carry a shop or pickup address.
+- `src/lib/address.ts` (client-safe) has `cleanAddress` and `mapsUrl` (a Google Maps search link).
+- The Sell form and New deal form prefill the address and city from Business settings (`Organization.address`/`city`) for business members.
+- The address shows on the listing page ("Where to see the vehicle"), the deal page and deal booking page, the renter's booking card, and both slips as "Pickup address". The business slip falls back to the business address.
+- The personal print slip is raw HTML, so escape user text in it with `escapeHtml`.
 
 **Listing filters.** `src/lib/listingFilters.ts` is the single source for browse filters. `parseFilters` turns URL or object input into `buildListingQuery`, the Mongo query for `status: "ACTIVE"` listings. The browse API passes `includeClosed` to add recently sold and rented ones. `listingMatches` is an in-memory twin of that query. The listings API, the browse page URL state and saved-search alerts all use this module, so a new filter must be added to it and to both the query builder and the matcher.
 - When a listing is created, `POST /api/listings` uses `after()` to run `notifySavedSearches` (`src/lib/savedSearchAlerts.ts`), which emails users whose saved searches match.

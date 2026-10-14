@@ -136,6 +136,11 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
       <div className="relative flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-white">
           <Crown size={13} className="text-amber-300" /> {plan.name} plan
+          {sub.planDaysLeft != null && sub.planId !== "FREE" && (
+            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${sub.planDaysLeft <= 7 ? "bg-rose-400/20 text-rose-200" : "bg-white/10 text-slate-300"}`}>
+              {sub.planDaysLeft <= 1 ? "ends today" : `${sub.planDaysLeft}d left`}
+            </span>
+          )}
         </p>
         <span className={`text-[11px] tabular-nums ${full ? "font-semibold text-rose-300" : "text-slate-400"}`}>
           {used}/{formatLimit(limit)}
@@ -147,7 +152,7 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="relative mt-1.5 text-[10px] text-slate-500">Active listings</p>
+      <p className="relative mt-1.5 text-[10px] text-slate-500">Listings & deals this month{sub.listingsResetAt && limit !== null ? ` · resets ${new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}` : ""}</p>
       {sub.planId !== "UNLIMITED" && (
         <Link
           href="/pricing"

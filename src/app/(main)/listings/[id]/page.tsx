@@ -18,6 +18,7 @@ import { getBusinessRatings, getSellerBusinesses, type SellerBusiness } from "@/
 import VerifiedBadge from "@/components/VerifiedBadge";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { closedTag } from "@/lib/availability";
+import { mapsUrl } from "@/lib/address";
 import { Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
@@ -107,6 +108,7 @@ export default async function ListingDetailPage({ params }: Props) {
     transmission?: string;
     color?: string;
     location: string;
+    address?: string;
     condition: string;
     images: string[];
     type: string;
@@ -423,6 +425,18 @@ export default async function ListingDetailPage({ params }: Props) {
             {isForSale && !closed && <EmiCalculator price={l.price} />}
 
             {/* Owner actions */}
+            {l.address && (
+              <a href={mapsUrl(l.address, l.location)} target="_blank" rel="noreferrer" className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-gray-300">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><MapPin size={17} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">Where to see the vehicle</span>
+                  <span className="mt-0.5 block text-sm font-semibold text-gray-900">{l.address}</span>
+                  <span className="block text-xs text-gray-500">{l.location}</span>
+                  <span className="mt-1.5 inline-block text-xs font-semibold text-indigo-600 group-hover:underline">Open in Google Maps</span>
+                </span>
+              </a>
+            )}
+
             {isOwner && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">Manage listing</h2>

@@ -5,6 +5,8 @@ import { Deal } from "@/models/Deal";
 import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
 import { invalidateDeal } from "@/lib/pageCache";
+import { checkPlanLimit } from "@/lib/subscription";
+import { ListingLog } from "@/models/ListingLog";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +38,12 @@ export async function POST(req: NextRequest) {
 
     const parsed = await parseDealInput(await req.json().catch(() => null), { memberIds: await getOrgUserIds(member.organizationId) });
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    // Deals share the plan's monthly listing quota
+    const overLimit = await checkPlanLimit(session.user.id, "listings");
+    if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     const deal = await Deal.create({ ...parsed.data, organizationId: member.organizationId, createdBy: session.user.id });
+    // Counts toward the quota for good, even if the deal is deleted later
+    await ListingLog.create({ sellerId: session.user.id, dealId: deal._id });
     await invalidateDeal(deal._id, member.organizationId);
     return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {

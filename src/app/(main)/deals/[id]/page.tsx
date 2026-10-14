@@ -3,15 +3,16 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { cache } from "react";
-import { ArrowLeft, Building2, CalendarDays, ChevronRight, Clock3, MapPin, MessageSquare, Phone, Tag } from "lucide-react";
+import { ArrowLeft, Building2, CalendarCheck, CalendarDays, CarFront, ChevronRight, Clock3, MapPin, MessageSquare, Phone, Tag } from "lucide-react";
 import ImageGallery from "@/components/ui/ImageGallery";
 import StarRating from "@/components/reviews/StarRating";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import DealCard, { endsText } from "@/components/deals/DealCard";
 import Footer from "@/components/Footer";
 import { formatLakh } from "@/lib/format";
-import { DEAL_STATE_STYLE, dealLabel, dealPrice, dealState } from "@/lib/deals";
+import { DEAL_STATE_STYLE, dealLabel, dealPrice, dealState, isRentDeal } from "@/lib/deals";
 import { conditionLabel } from "@/lib/vehicleOptions";
+import { mapsUrl } from "@/lib/address";
 import { getDealPage, getLiveDeals } from "@/lib/publicDeals";
 import { SITE_URL } from "@/lib/site";
 
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getPage((await params).id);
   if (!page) return { title: "Deal not found" };
   const { deal } = page;
-  const title = `${dealLabel(deal)}: ${deal.title} — PKR ${formatLakh(dealPrice(deal.price, deal))} in ${deal.location}`;
+  const title = `${dealLabel(deal)}: ${deal.title} — PKR ${formatLakh(dealPrice(deal.price, deal))}${isRentDeal(deal) ? "/day" : ""} in ${deal.location}`;
   const description = (deal.description || `${deal.year} ${deal.make} ${deal.model} offered by ${deal.business.name}.`).replace(/\s+/g, " ").slice(0, 160);
   const images = deal.images[0] ? [{ url: deal.images[0], alt: deal.title }] : undefined;
   return {
@@ -49,6 +50,8 @@ export default async function DealPage({ params }: Props) {
   const live = state === "LIVE";
   const final = dealPrice(deal.price, deal);
   const saving = deal.price - final;
+  const rent = isRentDeal(deal);
+  const cars = deal.vehicleCount ?? 1;
   const more = (await getLiveDeals({ orgId: business.id, limit: 5 })).filter(d => d._id !== deal._id).slice(0, 4);
 
   const specs = [
@@ -61,6 +64,9 @@ export default async function DealPage({ params }: Props) {
     { label: "Transmission", value: deal.transmission },
     { label: "Colour", value: deal.color },
     { label: "City", value: deal.location },
+    { label: "Deal type", value: rent ? "Rental package" : "For sale" },
+    { label: "Cars in package", value: cars > 1 ? String(cars) : null },
+    { label: "Security deposit", value: rent && deal.deposit ? `PKR ${deal.deposit.toLocaleString("en-PK")}` : null },
   ].filter((s): s is { label: string; value: string } => !!s.value);
 
   const jsonLd = {
@@ -117,9 +123,9 @@ export default async function DealPage({ params }: Props) {
                 <div aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/15 blur-2xl" />
                 <p className="relative text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75">{deal.make} · {deal.year}</p>
                 <h1 className="relative mt-1 text-xl font-bold leading-snug">{deal.title}</h1>
-                <p className="relative mt-3 text-3xl font-extrabold">PKR {formatLakh(final)}</p>
+                <p className="relative mt-3 text-3xl font-extrabold">PKR {formatLakh(final)}{rent && <span className="text-base font-semibold text-white/80"> /day</span>}</p>
                 <p className="relative mt-0.5 text-sm text-white/80">
-                  <span className="line-through">PKR {formatLakh(deal.price)}</span> · You save PKR {saving.toLocaleString("en-PK")}
+                  <span className="line-through">PKR {formatLakh(deal.price)}</span> · You save PKR {saving.toLocaleString("en-PK")}{rent ? " a day" : ""}
                 </p>
                 <p className="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
                   <Clock3 size={12} /> {live ? endsText(deal.endsAt, now) : DEAL_STATE_STYLE[state].label}
@@ -127,8 +133,28 @@ export default async function DealPage({ params }: Props) {
               </div>
               <div className="space-y-2 p-4">
                 <p className="flex items-center gap-2 text-xs text-slate-500"><CalendarDays size={13} /> {fmt(deal.startsAt)} to {fmt(deal.endsAt)}</p>
-                <p className="flex items-center gap-2 text-xs text-slate-500"><MapPin size={13} /> {deal.location}</p>
+                {deal.address ? (
+                  <a href={mapsUrl(deal.address, deal.location)} target="_blank" rel="noreferrer" className="group flex items-start gap-2 text-xs text-slate-600">
+                    <MapPin size={13} className="mt-0.5 flex-shrink-0 text-rose-500" />
+                    <span>
+                      <span className="font-medium text-slate-900">{deal.address}</span>, {deal.location}
+                      <span className="ml-1 font-semibold text-indigo-600 group-hover:underline">Open in Maps</span>
+                    </span>
+                  </a>
+                ) : (
+                  <p className="flex items-center gap-2 text-xs text-slate-500"><MapPin size={13} /> {deal.location}</p>
+                )}
+                {rent && cars > 1 && (
+                  <p className="flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-200">
+                    <CarFront size={14} /> Package of {cars} cars, booked together
+                  </p>
+                )}
                 <div className="grid gap-2 pt-2">
+                  {rent && live && (
+                    <Link href={`/deals/${deal._id}/book`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/25 transition hover:opacity-90">
+                      <CalendarCheck size={16} /> Book this deal
+                    </Link>
+                  )}
                   <Link href={`/messages?with=${business.ownerId}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
                     <MessageSquare size={16} /> Message {business.name}
                   </Link>

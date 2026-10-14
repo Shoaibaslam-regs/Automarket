@@ -14,6 +14,8 @@ type AdminDeal = {
   description?: string;
   discountType: "PERCENT" | "AMOUNT";
   discountValue: number;
+  dealType?: "SALE" | "RENT";
+  vehicleCount?: number;
   make: string;
   model: string;
   year: number;
@@ -112,7 +114,7 @@ export default function AdminDealsPage() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-slate-900 group-hover:underline">{d.title}</span>
                   <span className="block truncate text-xs text-slate-500">
-                    <span className="font-semibold text-rose-600">{dealLabel(d)}</span> · PKR {formatLakh(dealPrice(d.price, d))} · {d.make} {d.model} {d.year} · {d.location}
+                    <span className="font-semibold text-rose-600">{dealLabel(d)}</span> · {d.dealType === "RENT" ? `Rent${(d.vehicleCount ?? 1) > 1 ? ` (${d.vehicleCount} cars)` : ""} · PKR ${formatLakh(dealPrice(d.price, d))}/day` : `Sale · PKR ${formatLakh(dealPrice(d.price, d))}`} · {d.make} {d.model} {d.year} · {d.location}
                   </span>
                 </span>
               </a>

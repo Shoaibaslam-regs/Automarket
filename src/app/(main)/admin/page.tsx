@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
-import PlanGiftDialog, { fmtPlanDate } from "@/components/admin/PlanGiftDialog";
+import PlanGiftDialog, { fmtPlanDate, type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, isVerified, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
@@ -83,16 +83,18 @@ export default function AdminPage() {
       .catch(() => {});
 
   // Business plans live on the owner's account, so both actions target the owner's user id
-  async function giftPlan(plan: PlanId, months: number | null) {
+  async function giftPlan(plan: PlanId, months: number, source: PlanSourceChoice) {
     const org = giftFor;
     if (!org?.ownerId?._id) return;
     const res = await fetch(`/api/admin/users/${org.ownerId._id}/plan`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan, months }),
+      body: JSON.stringify({ plan, months, source }),
     });
     const data = await res.json().catch(() => ({}));
-    setNotice(res.ok ? { ok: true, text: `${org.name} now has ${planInfo(plan).name} for free.` } : { ok: false, text: data.error || "Failed to gift plan" });
+    setNotice(res.ok
+      ? { ok: true, text: source === "PAID" ? `${org.name} has ${planInfo(plan).name} for 30 days.` : `${org.name} now has ${planInfo(plan).name} for free.` }
+      : { ok: false, text: data.error || "Failed to update the plan" });
     setGiftFor(null);
     reloadOrganizations();
   }
@@ -450,7 +452,7 @@ export default function AdminPage() {
                         <BadgeCheck size={13} className={isVerified(org.verification) ? "text-sky-600" : ""} /> Badge
                         {org.verification?.requestedAt && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-sky-500 ring-2 ring-white" />}
                       </button>
-                      <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Gift a plan">
+                      <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
                         <Gift size={13} /> Plan
                       </button>
                       {isFreeGrant(org.planSource) && org.plan !== "FREE" && (

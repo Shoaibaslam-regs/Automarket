@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { requireAdminApi } from "@/lib/adminAuth";
-import { PLANS, TRIAL_MONTHS, effectivePlanId, isFreeGrant, isPlanId } from "@/lib/plans";
+import { PLANS, TRIAL_MONTHS, addPlanPeriods, effectivePlanId, isFreeGrant, isPlanId } from "@/lib/plans";
 
+/** Gift lengths, in 30-day plan periods */
 const DURATIONS = [1, 3, 6, 12];
 
 /**
- * Gives a user a plan for free, or moves them back to Free.
- * Body: { plan: PlanId, months: 1 | 3 | 6 | 12 | null }. `months: null` means no end date.
+ * Activates a plan for a user, or moves them back to Free.
+ * Body: { plan: PlanId, source: "PAID" | "ADMIN_GRANT", months }.
+ * - PAID: the customer paid for one 30-day period. If the same plan is still running (paid, gifted or a trial)
+ *   the 30 days are added to the time left. When it ends the account falls back to Free until they buy again.
+ * - ADMIN_GRANT (a gift): `months` is 1, 3, 6 or 12 periods of 30 days. Every plan has an end date.
  * With `trial: true` it starts the account's one-time free trial instead (TRIAL_MONTHS long);
  * a second trial is refused for good, even after the first is revoked.
  */
@@ -22,14 +26,14 @@ export async function PATCH(
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const { plan, months, trial } = await req.json().catch(() => ({}));
+    const { plan, months, trial, source = "ADMIN_GRANT" } = await req.json().catch(() => ({}));
+    if (source !== "PAID" && source !== "ADMIN_GRANT") return NextResponse.json({ error: "Say whether it was paid or a gift" }, { status: 400 });
     if (!isPlanId(plan)) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
 
     if (trial === true) {
       if (plan === "FREE") return NextResponse.json({ error: "Choose a paid plan for the trial" }, { status: 400 });
       const now = new Date();
-      const expiresAt = new Date(now);
-      expiresAt.setMonth(expiresAt.getMonth() + TRIAL_MONTHS);
+      const expiresAt = addPlanPeriods(now, TRIAL_MONTHS);
       // The trialUsedAt condition makes "only once" hold even if two admins click at the same time
       const user = await User.findOneAndUpdate(
         { _id: id, trialUsedAt: { $exists: false } },
@@ -46,20 +50,25 @@ export async function PATCH(
       );
     }
 
-    if (plan !== "FREE" && months !== null && !DURATIONS.includes(months)) {
-      return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+    if (plan !== "FREE" && source === "ADMIN_GRANT" && !DURATIONS.includes(months)) {
+      return NextResponse.json({ error: "Choose how long the gift lasts" }, { status: 400 });
     }
 
     let update;
     if (plan === "FREE") {
       update = { $set: { plan }, $unset: { planExpiresAt: "", planSource: "", planGrantedBy: "" } };
     } else {
-      const expiresAt = months === null ? null : new Date(Date.now());
-      if (expiresAt) expiresAt.setMonth(expiresAt.getMonth() + months);
-      update = {
-        $set: { plan, planSource: "ADMIN_GRANT", planGrantedBy: gate.admin._id, ...(expiresAt && { planExpiresAt: expiresAt }) },
-        ...(expiresAt ? {} : { $unset: { planExpiresAt: "" } }),
-      };
+      const now = new Date();
+      let expiresAt: Date;
+      if (source === "PAID") {
+        // Paying for the plan they already have (paid, gifted or trial) adds the 30 days after the time left
+        const current = await User.findById(id).select("plan planExpiresAt").lean<{ plan?: string; planExpiresAt?: Date }>();
+        const stillRunning = current?.plan === plan && current.planExpiresAt && current.planExpiresAt > now;
+        expiresAt = addPlanPeriods(stillRunning ? current!.planExpiresAt! : now, 1);
+      } else {
+        expiresAt = addPlanPeriods(now, months);
+      }
+      update = { $set: { plan, planSource: source, planGrantedBy: gate.admin._id, planExpiresAt: expiresAt } };
     }
 
     const user = await User.findByIdAndUpdate(id, update, { new: true }).select("name email plan planExpiresAt planSource");

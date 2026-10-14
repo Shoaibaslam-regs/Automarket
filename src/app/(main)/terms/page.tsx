@@ -55,7 +55,7 @@ const SECTIONS: Section[] = [
         <li>Describe the vehicle honestly: make, model, year, mileage, condition, accident history and any defects you know of. Prices are in Pakistani Rupees.</li>
         <li>Photos must be real photos of the vehicle being listed. Uploads are checked automatically and photos that are not of a vehicle are rejected.</li>
         <li>Mark a vehicle as sold or inactive once it is no longer available.</li>
-        <li>How many active listings you can have depends on your plan. Listings that are active, pending or rented count towards it.</li>
+        <li>Your plan sets how many listings and deals you can post each calendar month, together. Every one posted counts towards it, including ones you later delete.</li>
         <li>We may edit, hide or remove any listing that breaks these terms, without notice.</li>
       </ul>
     ),
@@ -97,14 +97,14 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <p>
-          The Free plan costs nothing. Paid plans are billed monthly: {paidPlans}. The Verified badge is a separate add-on for
+          The Free plan costs nothing. Paid plans run for 30 days per payment: {paidPlans}. The Verified badge is a separate add-on for
           businesses at PKR {VERIFIED_BADGE.price.toLocaleString()} per month. Current prices and limits are always shown on the{" "}
           <Link href="/pricing">pricing page</Link>.
         </p>
         <ul>
           <li>Online payment isn&apos;t available yet. You request a plan or the badge, our team sends payment details, and an admin activates it once payment is received.</li>
           <li>Each account can have one free trial of {TRIAL_MONTHS} month{TRIAL_MONTHS === 1 ? "" : "s"}. Plans given for free or as a trial can be withdrawn by us.</li>
-          <li>When a plan ends, your account moves to Free. Existing listings stay, but you can&apos;t add more than the Free limits allow.</li>
+          <li>When the 30 days are up (or a gift or trial ends), your account moves back to Free automatically until you buy a plan again. Existing listings stay, but you can&apos;t add more than the Free limits allow.</li>
           <li>Fees already paid are not refundable, except where Pakistani law requires a refund.</li>
           <li>
             The Verified badge means our team checked the business&apos;s details when it was approved. It is not a guarantee of any

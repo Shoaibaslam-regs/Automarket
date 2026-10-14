@@ -146,7 +146,7 @@ export default function InventoryPage() {
           <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Inventory</h1>
           {sub && (
             <p className={`mt-0.5 text-xs ${listingsFull ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-57606a)]"}`}>
-              {sub.usage.listings} of {formatLimit(sub.limits.listings)} active listings on your plan
+              {sub.usage.listings} of {formatLimit(sub.limits.listings)} listings & deals used this month
               {listingsFull && " · mark a vehicle sold or upgrade to add more"}
             </p>
           )}

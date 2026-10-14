@@ -12,12 +12,17 @@ import { sendBookingConfirmedEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
 import { Rental } from "@/models/Rental";
 import { normalizeCnic, normalizePlate } from "@/lib/plates";
+import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
+import { Deal } from "@/models/Deal";
 
 /** Finds a booking that belongs to one of the caller's business rental vehicles. */
 async function loadBusinessBooking(userId: string, id: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  const rentals = await getBusinessRentals(userId);
-  return Booking.findOne({ _id: id, rentalId: { $in: rentals.map(r => r._id) } });
+  const member = await getMembership(userId);
+  if (!member) return null;
+  // Bookings on the business's rental vehicles or on its rent deals
+  const { query } = await businessBookingQuery(userId, member.organizationId);
+  return Booking.findOne({ _id: id, ...query });
 }
 
 /** Everything the printable booking slip needs. */
@@ -35,7 +40,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const [booking, organization] = await Promise.all([
       Booking.findById(found._id)
-        .populate({ path: "rentalId", select: "listingId dailyRate weeklyRate monthlyRate deposit plateNumber", populate: { path: "listingId", select: "title make model year color fuelType transmission location images" } })
+        .populate({ path: "rentalId", select: "listingId dailyRate weeklyRate monthlyRate deposit plateNumber", populate: { path: "listingId", select: "title make model year color fuelType transmission location address images" } })
+        .populate("dealId", DEAL_BOOKING_FIELDS)
         .populate("renterId", "name email phone")
         .populate("createdBy", "name")
         .lean(),
@@ -90,13 +96,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const notifyRenter = booking.source !== "WALK_IN" && booking.renterId && (status === "CONFIRMED" || status === "CANCELLED");
     if (notifyRenter) booking.seenByRenter = false;
     await booking.save();
-    if (plate) await Rental.updateOne({ _id: booking.rentalId }, { $set: { plateNumber: plate } });
+    if (plate && booking.rentalId) await Rental.updateOne({ _id: booking.rentalId }, { $set: { plateNumber: plate } });
 
     if (notifyRenter) {
       try {
-        const rental = (await getBusinessRentals(session.user.id)).find(r => r._id.equals(booking.rentalId));
+        const rental = booking.rentalId ? (await getBusinessRentals(session.user.id)).find(r => r._id.equals(booking.rentalId!)) : undefined;
+        const deal = booking.dealId ? await Deal.findById(booking.dealId).select("title").lean<{ title: string }>() : null;
         const [listing, renter, org] = await Promise.all([
-          Listing.findById(rental?.listingId).select("title").lean<{ title: string }>(),
+          deal ? Promise.resolve(deal) : Listing.findById(rental?.listingId).select("title").lean<{ title: string }>(),
           User.findById(booking.renterId).select("name email").lean<{ name?: string; email: string }>(),
           Organization.findById(member.organizationId).select("phone").lean<{ phone?: string }>(),
         ]);

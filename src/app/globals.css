@@ -360,6 +360,24 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
   animation: lp-shine 3.2s ease-in-out infinite;
 }
+/* Hot deal cards: a slow warm light sweeping across the whole card, staggered per card with --lp-shimmer-delay */
+@keyframes lp-deal-shimmer {
+  0%   { transform: translateX(-160%) skewX(-18deg); }
+  45%, 100% { transform: translateX(360%) skewX(-18deg); }
+}
+.lp-deal-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 55%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 237, 213, 0.12) 25%, rgba(255, 255, 255, 0.42) 50%, rgba(253, 164, 175, 0.16) 75%, transparent);
+  mix-blend-mode: soft-light;
+  animation: lp-deal-shimmer 4.8s ease-in-out infinite;
+  animation-delay: var(--lp-shimmer-delay, 0s);
+}
+.lp-deal-shimmer:hover::after { animation-duration: 2.4s; }
 .lp-scan        { animation: lp-scan 3.6s ease-in-out infinite; }
 .lp-pulse-ring  { animation: lp-pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
@@ -390,7 +408,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .lp-aurora, .lp-gradient-text, .lp-float, .lp-marquee, .lp-scan, .lp-pulse-ring, .lp-border-spin,
-  .lp-shine::after, .lp-reveal .lp-pop { animation: none !important; }
+  .lp-shine::after, .lp-deal-shimmer::after, .lp-reveal .lp-pop { animation: none !important; }
   .lp-rise { animation: none; opacity: 1; }
   .lp-reveal { opacity: 1; transform: none; transition: none; }
 }

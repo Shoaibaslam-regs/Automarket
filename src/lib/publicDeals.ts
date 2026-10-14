@@ -17,6 +17,10 @@ export type PublicDeal = {
   _id: string;
   title: string;
   description?: string;
+  /** Older deals have no type and are sales */
+  dealType?: "SALE" | "RENT";
+  vehicleCount?: number;
+  deposit?: number;
   make: string;
   model: string;
   year: number;
@@ -26,6 +30,7 @@ export type PublicDeal = {
   color?: string;
   condition: string;
   location: string;
+  address?: string;
   images: string[];
   price: number;
   discountType: "PERCENT" | "AMOUNT";
@@ -47,19 +52,22 @@ const toBusiness = (o: OrgRow): DealBusiness => ({
 /** Running right now: started, not ended, not paused or switched off by an admin. */
 const liveQuery = (now: Date) => ({ paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } });
 
-export type DealFilters = { make?: string; city?: string; orgId?: string; sort?: "ending" | "newest" | "discount"; limit?: number };
+export type DealFilters = { make?: string; city?: string; orgId?: string; type?: "SALE" | "RENT" | ""; sort?: "ending" | "newest" | "discount"; limit?: number };
 
 /**
  * Live deals from active (not suspended) businesses, cached for PUBLIC_CACHE_SECONDS per filter set.
  * Any deal change clears every cached list (DEALS_TAG).
  */
 export function getLiveDeals(filters: DealFilters = {}): Promise<PublicDeal[]> {
-  const f = { make: filters.make || "", city: filters.city || "", orgId: filters.orgId || "", sort: filters.sort || "ending", limit: filters.limit ?? 60 };
+  const f = { make: filters.make || "", city: filters.city || "", orgId: filters.orgId || "", type: filters.type || "", sort: filters.sort || "ending", limit: filters.limit ?? 60 };
   return unstable_cache(
     async () => {
       await connectDB();
       const query: Record<string, unknown> = liveQuery(new Date());
       if (f.make) query.make = f.make;
+      // Deals saved before rent deals existed have no type and count as sales
+      if (f.type === "RENT") query.dealType = "RENT";
+      if (f.type === "SALE") query.dealType = { $ne: "RENT" };
       if (f.city) query.location = new RegExp(`^${f.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
       if (f.orgId && mongoose.Types.ObjectId.isValid(f.orgId)) query.organizationId = new mongoose.Types.ObjectId(f.orgId);
       const sort: Record<string, 1 | -1> = f.sort === "newest" ? { createdAt: -1 } : { endsAt: 1 };

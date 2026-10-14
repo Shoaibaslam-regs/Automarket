@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, Info } from "lucide-react";
+import { rentalDays, validBookingDates } from "@/lib/bookings";
 
 interface Props {
-  rentalId: string;
-  listingId: string;
+  /** Book a rental listing... */
+  rentalId?: string;
+  /** ...or a rent deal, whose pickup must fall before the deal ends (`availableTo`) */
+  dealId?: string;
+  listingId?: string;
   dailyRate: number;
   deposit: number;
   availableFrom: string;
@@ -26,7 +30,7 @@ function fmtDay(value: string) {
 const dateInputClass =
   "block h-12 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-base text-slate-900 outline-none transition hover:border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:text-sm";
 
-export default function BookingForm({ rentalId, dailyRate, deposit, availableFrom, availableTo }: Props) {
+export default function BookingForm({ rentalId, dealId, dailyRate, deposit, availableFrom, availableTo }: Props) {
   const router = useRouter();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -36,9 +40,8 @@ export default function BookingForm({ rentalId, dailyRate, deposit, availableFro
   const today = new Date().toISOString().split("T")[0];
   const minDate = availableFrom > today ? availableFrom.split("T")[0] : today;
 
-  const days = startDate && endDate
-    ? Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
+  // A same-day return counts as one day; the return day is free for the next customer
+  const days = startDate && endDate && validBookingDates(startDate, endDate) ? rentalDays(startDate, endDate) : 0;
 
   const totalRent = days > 0 ? days * dailyRate : 0;
   const totalPayable = totalRent + deposit;
@@ -46,15 +49,15 @@ export default function BookingForm({ rentalId, dailyRate, deposit, availableFro
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!startDate || !endDate) { setError("Please select both dates"); return; }
-    if (days <= 0) { setError("End date must be after start date"); return; }
+    if (days <= 0) { setError("The return date can't be before the pickup date"); return; }
 
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/bookings", {
+    const res = await fetch(dealId ? `/api/deals/${dealId}/book` : "/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rentalId, startDate, endDate }),
+      body: JSON.stringify(dealId ? { startDate, endDate } : { rentalId, startDate, endDate }),
     });
 
     const data = await res.json();
@@ -71,8 +74,8 @@ export default function BookingForm({ rentalId, dailyRate, deposit, availableFro
       <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
         <h2 className="text-base font-semibold text-slate-900">Select your dates</h2>
         <p className="mt-0.5 text-[13px] text-slate-500">
-          Available from {fmtDay(minDate)}
-          {availableTo && <> until {fmtDay(availableTo)}</>}
+          {dealId ? <>Pick up between {fmtDay(minDate)}{availableTo && <> and {fmtDay(availableTo)}</>}, when the deal ends</> : <>Available from {fmtDay(minDate)}
+          {availableTo && <> until {fmtDay(availableTo)}</>}</>}
         </p>
       </div>
 
@@ -120,6 +123,8 @@ export default function BookingForm({ rentalId, dailyRate, deposit, availableFro
             </div>
           </div>
         </div>
+
+        <p className="-mt-2 text-xs text-slate-500">Returning the same day? Choose the same date for both. One day is charged either way, and the vehicle is free again for others from your return date.</p>
 
         {/* Price breakdown */}
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">

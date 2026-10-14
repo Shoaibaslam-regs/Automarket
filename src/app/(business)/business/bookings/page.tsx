@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  AlertTriangle, CalendarCheck, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
+  AlertTriangle, CalendarCheck, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
   Store, Trash2, Undo2, UserRound, X,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
@@ -31,6 +31,9 @@ type Booking = {
   createdAt: string;
   renterId?: { name?: string; email: string; phone?: string } | null;
   createdBy?: { name?: string } | null;
+  offListVehicle?: { title: string; dailyRate: number; deposit: number } | null;
+  /** Set for bookings of a rent deal (package) instead of a listed vehicle */
+  dealId?: { _id: string; title: string; images: string[]; vehicleCount?: number } | null;
   rentalId?: { dailyRate: number; plateNumber?: string; listingId?: { _id: string; title: string; make: string; model: string; images: string[]; type: string; status: string } | null } | null;
 };
 
@@ -49,13 +52,21 @@ const fmt = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numer
 const pkr = (n: number) => `PKR ${n.toLocaleString()}`;
 const toInputDate = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
+/** What was booked: the deal for deal bookings, otherwise the listed vehicle. */
+const bookedTitle = (b: Booking) => b.dealId?.title ?? b.rentalId?.listingId?.title ?? b.offListVehicle?.title ?? "Vehicle";
+
 function customerOf(b: Booking) {
   // Walk-ins, and online bookings whose renter later deleted their account, keep the details on the booking
   if (b.walkIn && (b.source === "WALK_IN" || !b.renterId)) return { name: b.walkIn.name, phone: b.walkIn.phone, email: b.walkIn.email };
   return { name: b.renterId?.name || "Customer", phone: b.renterId?.phone, email: b.renterId?.email };
 }
 
-const EMPTY_FORM = { rentalId: "", customerId: "", name: "", phone: "", email: "", cnic: "", startDate: "", endDate: "", notes: "", status: "CONFIRMED" };
+const EMPTY_FORM = {
+  rentalId: "", customerId: "", name: "", phone: "", email: "", cnic: "", startDate: "", endDate: "", notes: "", status: "CONFIRMED",
+  // A vehicle that isn't listed on AutoMarket (rentalId "other")
+  offTitle: "", offPlate: "", offRate: "", offDeposit: "",
+};
+const OTHER_VEHICLE = "other";
 
 /** Walk-in booking form: pick a vehicle and dates, then a CRM customer or new details. Shows the live price. */
 function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
@@ -77,8 +88,14 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
       .catch(() => setCustomers([]));
   }, [open]);
 
-  const vehicle = vehicles.find(v => v.rentalId === form.rentalId);
-  const validDates = form.startDate && form.endDate && form.endDate > form.startDate;
+  const other = form.rentalId === OTHER_VEHICLE;
+  const listed = vehicles.find(v => v.rentalId === form.rentalId);
+  // Rates for the price summary: from the listed vehicle or deal, or typed in for an unlisted vehicle
+  const vehicle = other
+    ? (Number(form.offRate) > 0 ? { dailyRate: Number(form.offRate), deposit: Number(form.offDeposit) || 0 } : undefined)
+    : listed;
+  // Returning the same day is allowed and counts as one day
+  const validDates = form.startDate && form.endDate && form.endDate >= form.startDate;
   const days = validDates ? rentalDays(form.startDate, form.endDate) : 0;
   const rent = vehicle ? days * vehicle.dailyRate : 0;
   const set = (k: keyof typeof EMPTY_FORM, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -107,6 +124,7 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
         endDate: form.endDate,
         customerId: form.customerId || undefined,
         customer: { name: form.name, phone: form.phone, email: form.email, cnic: form.cnic },
+        offList: other ? { title: form.offTitle, plateNumber: form.offPlate || undefined, dailyRate: Number(form.offRate), deposit: form.offDeposit } : undefined,
         notes: form.notes,
         status: form.status,
       }),
@@ -145,10 +163,38 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                   onChange={v => set("rentalId", v)}
                   ariaLabel="Vehicle"
                   placeholder="Choose a rental vehicle"
-                  options={vehicles.map(v => ({ value: v.rentalId, label: `${v.title} · ${pkr(v.dailyRate)}/day` }))}
+                  options={[
+                    ...vehicles.map(v => ({ value: v.rentalId, label: `${v.title} · ${pkr(v.dailyRate)}/day` })),
+                    { value: OTHER_VEHICLE, label: "Other vehicle (not listed on AutoMarket)" },
+                  ]}
                   className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal"
                 />
               </div>
+
+              {other && (
+                <div className="rounded-xl bg-[var(--gh-f6f8fa)] p-4 ring-1 ring-inset ring-[var(--gh-e1e4e8)]">
+                  <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--gh-57606a)]"><Car size={13} /> Unlisted vehicle</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className={label} htmlFor="bk-off-title">Vehicle *</label>
+                      <input id="bk-off-title" required minLength={2} maxLength={100} value={form.offTitle} onChange={e => set("offTitle", e.target.value)} placeholder="Toyota Corolla 2020, white" className={input} />
+                    </div>
+                    <div>
+                      <label className={label} htmlFor="bk-off-plate">Number plate</label>
+                      <input id="bk-off-plate" value={form.offPlate} onChange={e => set("offPlate", e.target.value.toUpperCase())} placeholder="LEA-1234 (optional)" className={`${input} uppercase`} />
+                    </div>
+                    <div>
+                      <label className={label} htmlFor="bk-off-rate">Daily rate (PKR) *</label>
+                      <input id="bk-off-rate" type="number" required min={1} value={form.offRate} onChange={e => set("offRate", e.target.value)} placeholder="5000" className={input} />
+                    </div>
+                    <div>
+                      <label className={label} htmlFor="bk-off-deposit">Deposit (PKR)</label>
+                      <input id="bk-off-deposit" type="number" min={0} value={form.offDeposit} onChange={e => set("offDeposit", e.target.value)} placeholder="0" className={input} />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[11px] text-[var(--gh-8c959f)]">For cars in your fleet that you haven&apos;t listed. With a number plate, the same car can&apos;t be double-booked.</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -344,7 +390,7 @@ export default function BusinessBookingsPage() {
     if (statusFilter && b.status !== statusFilter) return false;
     if (!q) return true;
     const c = customerOf(b);
-    return [bookingNumber(b._id), c.name, c.phone ?? "", b.rentalId?.listingId?.title ?? ""].some(v => v.toLowerCase().includes(q));
+    return [bookingNumber(b._id), c.name, c.phone ?? "", bookedTitle(b), b.dealId ? "deal" : ""].some(v => v.toLowerCase().includes(q));
   });
 
   const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
@@ -362,7 +408,7 @@ export default function BusinessBookingsPage() {
         onOpenChange={o => !o && setPlateFor(null)}
         title={plateFor?.handover ? "Hand over vehicle" : "Handover details"}
         description={plateFor?.handover
-          ? `Record the number plate of the ${plateFor.booking.rentalId?.listingId?.title ?? "vehicle"} and ${customerOf(plateFor.booking).name}'s CNIC. Both are printed on the booking slip.`
+          ? `Record the number plate of the ${bookedTitle(plateFor.booking)} and ${customerOf(plateFor.booking).name}'s CNIC. Both are printed on the booking slip.`
           : "Correct the number plate and CNIC shown on this booking and its slip."}
         confirmLabel={plateFor?.handover ? "Hand over" : "Save details"}
         initialPlate={plateFor ? plateFor.booking.plateNumber ?? plateFor.booking.rentalId?.plateNumber : undefined}
@@ -375,7 +421,7 @@ export default function BusinessBookingsPage() {
         title={`${confirmCancel?.status === "PENDING" ? "Decline" : "Cancel"} booking ${confirmCancel ? bookingNumber(confirmCancel._id) : ""}`}
         description={confirmCancel && (
           <>
-            {customerOf(confirmCancel).name}&apos;s booking for <strong style={{ color: "var(--gh-0d1117)" }}>{confirmCancel.rentalId?.listingId?.title}</strong> ({fmt(confirmCancel.startDate)} → {fmt(confirmCancel.endDate)}) will be cancelled and the dates freed up.
+            {customerOf(confirmCancel).name}&apos;s booking for <strong style={{ color: "var(--gh-0d1117)" }}>{bookedTitle(confirmCancel)}</strong> ({fmt(confirmCancel.startDate)} → {fmt(confirmCancel.endDate)}) will be cancelled and the dates freed up.
             {confirmCancel.source !== "WALK_IN" && " The renter will be notified by email."}
           </>
         )}
@@ -419,8 +465,6 @@ export default function BusinessBookingsPage() {
           {canManage && (
             <button
               onClick={() => setNewOpen(true)}
-              disabled={vehicles.length === 0}
-              title={vehicles.length === 0 ? "List a vehicle for rent first" : undefined}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus size={15} strokeWidth={2.2} /> New booking
@@ -501,14 +545,15 @@ export default function BusinessBookingsPage() {
               <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><CalendarCheck size={30} strokeWidth={1.5} /></div>
               <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}</p>
               <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">
-                {vehicles.length === 0
-                  ? "List a vehicle for rent to start taking bookings."
-                  : bookings.length === 0 && canManage ? "Online requests appear here, or create a walk-in booking." : ""}
+                {bookings.length === 0 && canManage
+                  ? "Online requests appear here. Use New booking for walk-in customers, even for vehicles you haven't listed."
+                  : bookings.length === 0 ? "Online requests appear here." : ""}
               </p>
             </div>
           ) : filtered.map(b => {
             const s = STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING;
             const listing = b.rentalId?.listingId;
+            const photo = b.dealId?.images?.[0] ?? listing?.images?.[0];
             const c = customerOf(b);
             const days = rentalDays(b.startDate, b.endDate);
             const overdue = b.status === "ACTIVE" && new Date(b.endDate).getTime() < now;
@@ -517,8 +562,8 @@ export default function BusinessBookingsPage() {
               <div key={b._id} className={`rounded-2xl border bg-white p-4 sm:p-5 ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
                 <div className="flex flex-wrap items-start gap-4">
                   <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)]">
-                    {listing?.images?.[0]
-                      ? <Image src={listing.images[0]} alt="" fill sizes="80px" className="object-cover" />
+                    {photo
+                      ? <Image src={photo} alt="" fill sizes="80px" className="object-cover" />
                       : <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={18} strokeWidth={1.5} /></div>}
                   </div>
 
@@ -528,9 +573,17 @@ export default function BusinessBookingsPage() {
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${b.source === "WALK_IN" ? "bg-[var(--gh-fbefff)] text-[var(--gh-8250df)]" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"}`}>
                         {b.source === "WALK_IN" ? <><Store size={10} /> WALK-IN</> : "ONLINE"}
                       </span>
+                      {b.dealId && (
+                        <span className="theme-static inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">
+                          <Tag size={10} /> DEAL
+                        </span>
+                      )}
                       {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> OVERDUE</span>}
                     </div>
-                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">{listing?.title || "Vehicle"}</p>
+                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">
+                      {bookedTitle(b)}
+                      {(b.dealId?.vehicleCount ?? 1) > 1 && <span className="ml-1.5 text-xs font-medium text-[var(--gh-57606a)]">· {b.dealId!.vehicleCount} cars</span>}
+                    </p>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--gh-57606a)]">
                       <span className="flex items-center gap-1"><CalendarDays size={12} /> {fmt(b.startDate)} → {fmt(b.endDate)} ({days}d)</span>
                       <span className="flex items-center gap-1"><UserRound size={12} /> {c.name}</span>

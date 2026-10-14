@@ -5,6 +5,12 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
+  Building2,
+  CarFront,
+  Clock3,
+  Flame,
+  KeyRound,
+  Tag,
   CalendarCheck,
   Camera,
   Car,
@@ -17,6 +23,11 @@ import {
   Zap,
 } from "lucide-react";
 import { CountUp, Reveal, trackPointer } from "./effects";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { endsText } from "@/components/deals/DealCard";
+import { daysLeft, dealLabel, dealPrice, isRentDeal } from "@/lib/deals";
+import { formatLakh } from "@/lib/format";
+import type { PublicDeal } from "@/lib/publicDeals";
 
 export type ShowcaseListing = {
   _id: string;
@@ -113,7 +124,61 @@ function ShowcaseCard({ listing, className = "" }: { listing?: ShowcaseListing; 
   );
 }
 
-export default function Landing({ listings, stats }: { listings: ShowcaseListing[]; stats: LandingStats }) {
+/** A running deal on the dark landing page: photo with the discount, deal price over the normal price, time left. */
+function HotDealCard({ deal, now, index = 0 }: { deal: PublicDeal; now: number; index?: number }) {
+  const rent = isRentDeal(deal);
+  const cars = deal.vehicleCount ?? 1;
+  const urgent = daysLeft(deal.endsAt, now) <= 3;
+  return (
+    <Link
+      href={`/deals/${deal._id}`}
+      className="lp-deal-shimmer group relative block overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition duration-300 hover:-translate-y-1 hover:border-rose-400/40 hover:shadow-[0_24px_60px_-24px_rgba(244,63,94,0.55)]"
+      // Each card's shimmer starts a little later, so the light travels along the row
+      style={{ "--lp-shimmer-delay": `${index * 0.9}s` } as React.CSSProperties}
+    >
+      <div className="relative aspect-[16/10] overflow-hidden">
+        {deal.images[0] && <Image src={deal.images[0]} alt={deal.title} fill sizes="(max-width: 640px) 100vw, 380px" className="object-cover transition duration-700 group-hover:scale-105" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/20 to-transparent" />
+        <span className="lp-shine absolute left-3 top-3 overflow-hidden rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-white shadow-lg shadow-rose-600/40">
+          {dealLabel(deal)}
+        </span>
+        <span className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur ${urgent ? "bg-rose-600/90 text-white" : "bg-black/50 text-slate-100"}`}>
+          <Clock3 size={11} /> {endsText(deal.endsAt, now)}
+        </span>
+        <div className="absolute inset-x-4 bottom-4">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ring-1 ring-inset ${rent ? "bg-sky-400/15 text-sky-200 ring-sky-300/30" : "bg-indigo-400/15 text-indigo-200 ring-indigo-300/30"}`}>
+              {rent ? <><KeyRound size={10} /> Rent</> : <><Tag size={10} /> Sale</>}
+            </span>
+            {deal.make} · {deal.year}
+            {cars > 1 && <span className="inline-flex items-center gap-1 normal-case"><CarFront size={11} /> {cars} cars</span>}
+          </p>
+          <p className="mt-1 line-clamp-1 text-lg font-semibold text-white">{deal.title}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+        <p className="min-w-0">
+          <span className="text-lg font-extrabold text-rose-300">PKR {formatLakh(dealPrice(deal.price, deal))}</span>
+          {rent && <span className="text-xs font-semibold text-rose-300/80">/day</span>}
+          <span className="ml-2 text-xs text-slate-500 line-through">{formatLakh(deal.price)}</span>
+        </p>
+        <span className="flex min-w-0 items-center gap-1 text-xs text-slate-400">
+          {deal.business.verified ? <VerifiedBadge variant="icon" size={13} /> : <Building2 size={12} className="flex-shrink-0" />}
+          <span className="truncate">{deal.business.name}</span>
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+export default function Landing({ listings, stats, deals = [], now = 0 }: {
+  listings: ShowcaseListing[];
+  stats: LandingStats;
+  /** Running deals with the biggest discounts; the section is hidden when there are none */
+  deals?: PublicDeal[];
+  /** Render time from the server, so "days left" matches between server and browser */
+  now?: number;
+}) {
   const [front, middle, back] = [listings[0], listings[1], listings[2]];
   const heroWords = ["Buy,", "sell", "&", "rent"];
 
@@ -153,7 +218,7 @@ export default function Landing({ listings, stats }: { listings: ShowcaseListing
                 className="lp-rise lp-gradient-text mt-1 inline-block bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text pb-2 text-transparent"
                 style={{ animationDelay: "520ms" }}
               >
-                vehicles, beautifully.
+                vehicles.
               </span>
             </h1>
 
@@ -451,6 +516,35 @@ export default function Landing({ listings, stats }: { listings: ShowcaseListing
           </ol>
         </div>
       </section>
+
+      {/* ── HOT DEALS ── */}
+      {deals.length > 0 && (
+        <section className="relative mx-auto max-w-[1200px] px-4 pb-24 sm:px-6">
+          <div aria-hidden className="pointer-events-none absolute -top-10 left-1/2 h-64 w-[70%] -translate-x-1/2 rounded-full bg-rose-600/15 blur-[110px]" />
+          <Reveal className="relative mb-8 flex items-end justify-between gap-4">
+            <div>
+              <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-rose-300">
+                <Flame size={14} className="animate-pulse" /> Limited time
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Hot deals from showrooms</h2>
+              <p className="mt-1 text-sm text-slate-400">Special prices on cars for sale and rental packages, while they last.</p>
+            </div>
+            <Link href="/deals" className="group hidden flex-shrink-0 items-center gap-1 text-sm font-semibold text-slate-300 transition hover:text-white sm:inline-flex">
+              All deals <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />
+            </Link>
+          </Reveal>
+          <div className="relative grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {deals.map((d, i) => (
+              <Reveal key={d._id} delay={i * 120}>
+                <HotDealCard deal={d} now={now} index={i} />
+              </Reveal>
+            ))}
+          </div>
+          <Link href="/deals" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-rose-300 sm:hidden">
+            See all deals <ArrowRight size={15} />
+          </Link>
+        </section>
+      )}
 
       {/* ── LIVE LISTINGS STRIP ── */}
       {listings.length > 0 && (

@@ -11,6 +11,8 @@ import { DEAL_STATE_STYLE, dealLabel, dealPrice, dealState, type DealState } fro
 type Deal = {
   _id: string;
   title: string;
+  dealType?: "SALE" | "RENT";
+  vehicleCount?: number;
   make: string;
   model: string;
   year: number;
@@ -161,10 +163,15 @@ export default function BusinessDealsPage() {
                     <span className="absolute right-2 top-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                   </div>
                   <div className="flex flex-1 flex-col p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gh-8c959f)]">{d.make} {d.model} · {d.year}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-[var(--gh-8c959f)]">{d.make} {d.model} · {d.year}</p>
+                      <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${d.dealType === "RENT" ? "bg-sky-50 text-sky-700 ring-sky-200" : "bg-indigo-50 text-indigo-700 ring-indigo-200"}`}>
+                        {d.dealType === "RENT" ? `Rent${(d.vehicleCount ?? 1) > 1 ? ` · ${d.vehicleCount} cars` : ""}` : "Sale"}
+                      </span>
+                    </div>
                     <p className="mt-0.5 line-clamp-2 font-semibold text-[var(--gh-0d1117)]">{d.title}</p>
                     <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(dealPrice(d.price, d))}</span>
+                      <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(dealPrice(d.price, d))}{d.dealType === "RENT" && <span className="text-xs font-semibold">/day</span>}</span>
                       <span className="text-xs text-[var(--gh-8c959f)] line-through">{formatLakh(d.price)}</span>
                     </p>
                     <p className="mt-1.5 flex items-center gap-1 text-xs text-[var(--gh-57606a)]"><MapPin size={12} /> {d.location} · {fmt(d.startsAt)} → {fmt(d.endsAt)}</p>

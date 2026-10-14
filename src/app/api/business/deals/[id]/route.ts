@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
       g.deal.set(parsed.data);
       // Fields left empty in the form are cleared rather than kept
-      for (const key of ["description", "mileage", "fuelType", "transmission", "color"] as const) {
+      for (const key of ["description", "mileage", "fuelType", "transmission", "color", "deposit"] as const) {
         if (parsed.data[key] === undefined) g.deal.set(key, undefined);
       }
       if (typeof body.paused === "boolean") g.deal.paused = body.paused;

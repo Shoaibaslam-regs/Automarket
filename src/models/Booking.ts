@@ -2,7 +2,17 @@ import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
 
 export interface IBooking extends Document {
-  rentalId: mongoose.Types.ObjectId;
+  /** The rental listing booked; absent for deal bookings */
+  rentalId?: mongoose.Types.ObjectId;
+  /** Set when a rent deal (package) was booked instead of a rental listing; shown with a DEAL tag */
+  dealId?: mongoose.Types.ObjectId;
+  /**
+   * A walk-in booking for a vehicle that isn't listed on AutoMarket (typed in by the business).
+   * Such bookings have no rental or deal, so they carry the business in `organizationId`.
+   */
+  offListVehicle?: { title: string; dailyRate: number; deposit: number };
+  /** The business, for bookings that have no rental or deal to link them to it (off-list walk-ins) */
+  organizationId?: mongoose.Types.ObjectId;
   /** The marketplace user who booked; absent for walk-in bookings made by a business */
   renterId?: mongoose.Types.ObjectId;
   source: "ONLINE" | "WALK_IN";
@@ -34,7 +44,23 @@ export interface IBooking extends Document {
 
 const BookingSchema = new Schema<IBooking>(
   {
-    rentalId: { type: Schema.Types.ObjectId, ref: "Rental", required: true },
+    rentalId: {
+      type: Schema.Types.ObjectId,
+      ref: "Rental",
+      required: function (this: { dealId?: unknown; offListVehicle?: unknown }) { return !this.dealId && !this.offListVehicle; },
+    },
+    dealId: { type: Schema.Types.ObjectId, ref: "Deal", index: true },
+    offListVehicle: {
+      type: new Schema(
+        {
+          title: { type: String, required: true, trim: true, maxlength: 100 },
+          dailyRate: { type: Number, required: true, min: 0 },
+          deposit: { type: Number, default: 0, min: 0 },
+        },
+        { _id: false }
+      ),
+    },
+    organizationId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
     renterId: { type: Schema.Types.ObjectId, ref: "User" },
     source: { type: String, enum: ["ONLINE", "WALK_IN"], default: "ONLINE" },
     walkIn: {

@@ -3,6 +3,8 @@ import { Booking } from "@/models/Booking";
 import { Customer } from "@/models/Customer";
 import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
+import { Deal } from "@/models/Deal";
+import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { bookingNumber } from "@/lib/bookings";
 import { checkPlanLimit } from "@/lib/subscription";
@@ -20,18 +22,42 @@ export const normalizePhone = (p?: string | null) => (p ?? "").replace(/\D/g, ""
  */
 export async function ensureBookingCustomer(bookingId: Oid | string): Promise<Oid | null> {
   const booking = await Booking.findById(bookingId)
-    .select("rentalId renterId walkIn customerId source startDate endDate")
+    .select("rentalId dealId organizationId offListVehicle renterId walkIn customerId source startDate endDate")
     .lean<{
-      _id: Oid; rentalId: Oid; renterId?: Oid; customerId?: Oid; source?: string;
+      _id: Oid; rentalId?: Oid; dealId?: Oid; organizationId?: Oid; offListVehicle?: { title: string }; renterId?: Oid; customerId?: Oid; source?: string;
       walkIn?: { name: string; phone: string; email?: string }; startDate: Date; endDate: Date;
     }>();
   if (!booking) return null;
   if (booking.customerId) return booking.customerId;
 
-  const rental = await Rental.findById(booking.rentalId).select("ownerId listingId").lean<{ ownerId: Oid; listingId: Oid }>();
-  if (!rental) return null;
-  const owner = await User.findById(rental.ownerId).select("organizationId").lean<{ organizationId?: Oid }>();
-  const organizationId = owner?.organizationId;
+  // The renting business: from the deal for deal bookings, otherwise from the vehicle owner
+  let organizationId: Oid | undefined;
+  let planOwnerId: string;
+  let listingId: Oid | undefined;
+  let subject = "";
+  if (booking.organizationId && !booking.rentalId && !booking.dealId) {
+    // Walk-in for a vehicle the business hasn't listed
+    const org = await Organization.findById(booking.organizationId).select("ownerId").lean<{ ownerId: Oid }>();
+    if (!org) return null;
+    organizationId = booking.organizationId;
+    planOwnerId = String(org.ownerId);
+    subject = booking.offListVehicle?.title ?? "";
+  } else if (booking.dealId) {
+    const deal = await Deal.findById(booking.dealId).select("organizationId title").lean<{ organizationId: Oid; title: string }>();
+    if (!deal) return null;
+    const org = await Organization.findById(deal.organizationId).select("ownerId").lean<{ ownerId: Oid }>();
+    if (!org) return null;
+    organizationId = deal.organizationId;
+    planOwnerId = String(org.ownerId);
+    subject = `deal "${deal.title}"`;
+  } else {
+    const rental = await Rental.findById(booking.rentalId).select("ownerId listingId").lean<{ ownerId: Oid; listingId: Oid }>();
+    if (!rental) return null;
+    const owner = await User.findById(rental.ownerId).select("organizationId").lean<{ organizationId?: Oid }>();
+    organizationId = owner?.organizationId;
+    planOwnerId = String(rental.ownerId);
+    listingId = rental.listingId;
+  }
   if (!organizationId) return null;
 
   // Who booked: an AutoMarket account, or walk-in details
@@ -65,9 +91,9 @@ export async function ensureBookingCustomer(bookingId: Oid | string): Promise<Oi
 
   if (!customer) {
     // Respect the business's plan: the booking still goes through, the lead just isn't added
-    const ownerId = String(rental.ownerId);
-    if (await checkPlanLimit(ownerId, "customers")) return null;
-    const listing = await Listing.findById(rental.listingId).select("_id title").lean<{ _id: Oid; title: string }>();
+    if (await checkPlanLimit(planOwnerId, "customers")) return null;
+    const listing = listingId ? await Listing.findById(listingId).select("_id title").lean<{ _id: Oid; title: string }>() : null;
+    if (listing) subject = listing.title;
     const range = `${booking.startDate.toLocaleDateString("en-PK")} – ${booking.endDate.toLocaleDateString("en-PK")}`;
     customer = await Customer.create({
       organizationId,
@@ -79,7 +105,7 @@ export async function ensureBookingCustomer(bookingId: Oid | string): Promise<Oi
       source: booking.source === "WALK_IN" ? "WALK_IN" : "ONLINE",
       status: "INTERESTED",
       interestedIn: listing?._id,
-      notes: `Rental booking ${bookingNumber(String(booking._id))}${listing ? ` for ${listing.title}` : ""} (${range})`,
+      notes: `Rental booking ${bookingNumber(String(booking._id))}${subject ? ` for ${subject}` : ""} (${range})`,
     });
   }
 

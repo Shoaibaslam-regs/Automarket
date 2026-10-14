@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
+import { ListingLog } from "@/models/ListingLog";
+import { cleanAddress } from "@/lib/address";
 // Registers the model for the seller → business populate below
 import "@/models/Organization";
 import { auth } from "@/lib/auth";
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
     const {
       title, description, price, type, condition,
       make, model, year, mileage, color, fuelType,
-      transmission, location, images,
+      transmission, location, images, address,
       dailyRate, weeklyRate, monthlyRate, deposit,
       availableFrom, availableTo,
     } = body;
@@ -121,10 +123,13 @@ export async function POST(req: NextRequest) {
       title, description, price, type, condition,
       make, model, year, mileage, color, fuelType,
       transmission, location,
+      address: cleanAddress(address) || undefined,
       images: imageUrls,
       sellerId: session.user.id,
       status: "ACTIVE",
     });
+    // Counts toward the monthly quota for good, even if the listing is deleted later
+    await ListingLog.create({ sellerId: session.user.id, listingId: listing._id });
 
     if ((type === "RENT" || type === "BOTH") && dailyRate) {
       const { Rental } = await import("@/models/Rental");

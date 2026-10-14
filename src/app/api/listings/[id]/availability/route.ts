@@ -5,8 +5,6 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { User } from "@/models/User";
 import { getMembership, isUserBusinessSuspended } from "@/lib/business";
-import { checkPlanLimit } from "@/lib/subscription";
-import { SLOT_STATUSES } from "@/lib/plans";
 import { availabilityOptions, AVAILABILITY_LABEL, type Availability } from "@/lib/availability";
 import { invalidateListingAndSeller } from "@/lib/pageCache";
 
@@ -53,12 +51,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (next === "ACTIVE" && (await isUserBusinessSuspended(sellerId))) {
       return NextResponse.json({ error: "The business is suspended, so listings can't be switched back on." }, { status: 403 });
-    }
-    // Available and rented vehicles take a plan slot; sold ones free it
-    const takesSlot = (s: string) => (SLOT_STATUSES as readonly string[]).includes(s);
-    if (takesSlot(next) && !takesSlot(listing.status)) {
-      const overLimit = await checkPlanLimit(sellerId, "listings");
-      if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     }
 
     await Listing.updateOne({ _id: id }, { $set: { status: next, statusChangedAt: new Date() } });
