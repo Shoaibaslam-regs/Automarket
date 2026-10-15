@@ -283,18 +283,6 @@ body {
   .adm-page { padding: 20px 14px; }
 }
 
-/* ── USER BOOKINGS ── */
-.bk-card { padding: 20px; }
-
-@media (max-width: 600px) {
-  .bk-card { padding: 14px; }
-  .bk-listing { flex-wrap: wrap; }
-  .bk-listing-actions { width: 100%; }
-  .bk-listing-actions > a { flex: 1; text-align: center; }
-  .bk-amounts { gap: 12px !important; padding: 12px !important; justify-content: space-between; }
-  .bk-amounts p:last-child { font-size: 13px !important; }
-}
-
 /* ── LANDING PAGE ANIMATIONS ── */
 @keyframes lp-aurora {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }

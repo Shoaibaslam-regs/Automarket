@@ -90,7 +90,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       booking.dueBackAt = due;
     }
 
-    // Returning records when it came back and charges late days at the double rate (after the grace hour)
+    // Returning records when it came back and charges each late day at the normal daily rent (after the grace hour)
     if (status === "COMPLETED") {
       const back = returnedAt ? new Date(returnedAt) : new Date();
       if (isNaN(back.getTime())) return NextResponse.json({ error: "Enter when the vehicle came back" }, { status: 400 });

@@ -15,6 +15,7 @@ import { conditionLabel } from "@/lib/vehicleOptions";
 import { mapsUrl } from "@/lib/address";
 import { getDealPage, getLiveDeals } from "@/lib/publicDeals";
 import { SITE_URL } from "@/lib/site";
+import BuyRequestButton from "@/components/purchases/BuyRequestButton";
 
 // Same for every visitor, so the page itself is cached too; deal changes clear it straight away
 export const revalidate = 60;
@@ -154,6 +155,10 @@ export default async function DealPage({ params }: Props) {
                     <Link href={`/deals/${deal._id}/book`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/25 transition hover:opacity-90">
                       <CalendarCheck size={16} /> Book this deal
                     </Link>
+                  )}
+                  {!rent && live && (
+                    <BuyRequestButton dealId={String(deal._id)} title={deal.title} price={final} businessName={business.name}
+                      className="!bg-gradient-to-r from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:opacity-90" />
                   )}
                   <Link href={`/messages?with=${business.ownerId}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
                     <MessageSquare size={16} /> Message {business.name}

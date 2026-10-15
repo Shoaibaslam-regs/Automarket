@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Briefcase, Building2, Calendar, Car, CircleCheck, Crown, Flag, Gift, KeyRound, ShieldCheck, Store, Undo2, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Calendar, Car, CircleCheck, Crown, Flag, Gift, MoreHorizontal, ShieldCheck, Store, Undo2, Users, Wallet, type LucideIcon } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate, type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
@@ -42,6 +42,8 @@ type RecentListing = { _id: string; title: string; make: string; model: string; 
 type Organization = {
   _id: string;
   name: string;
+  /** Public shop page: /dealers/<slug> */
+  slug?: string;
   type: string;
   plan: PlanId;
   planExpiresAt?: string | null;
@@ -56,6 +58,79 @@ type Organization = {
   createdAt: string;
   ownerId: { _id: string; name?: string; email: string };
 };
+
+const TYPE_NAME: Record<string, string> = { DEALER: "Dealer", RENTAL: "Rental", BOTH: "Dealer + rental" };
+
+type MenuItem = { label: string; icon: LucideIcon; onClick?: () => void; href?: string; tone?: "danger" | "warn"; dot?: boolean };
+
+/**
+ * A row's less frequent actions behind a ⋯ button. The menu is fixed-positioned so the table panel's
+ * rounded overflow can't clip it; it closes on outside click, Escape, scroll or resize.
+ */
+function RowMenu({ items, label }: { items: MenuItem[]; label: string }) {
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pos) return;
+    const close = (e: Event) => {
+      if (e instanceof MouseEvent && ref.current?.contains(e.target as Node)) return;
+      setPos(null);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPos(null);
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [pos]);
+
+  const dot = items.some(i => i.dot);
+  const toneClass = (t?: MenuItem["tone"]) => (t === "danger" ? "text-rose-600 hover:bg-rose-50" : t === "warn" ? "text-amber-700 hover:bg-amber-50" : "text-slate-700 hover:bg-slate-50");
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={!!pos}
+        onClick={e => {
+          if (pos) { setPos(null); return; }
+          const r = e.currentTarget.getBoundingClientRect();
+          const right = Math.max(8, window.innerWidth - r.right);
+          // Open upwards when the menu wouldn't fit below the button
+          const height = items.length * 38 + 8;
+          setPos(r.bottom + 6 + height > window.innerHeight && r.top > height + 6
+            ? { bottom: window.innerHeight - r.top + 6, right }
+            : { top: r.bottom + 6, right });
+        }}
+        className={`${btn.base} ${btn.secondary} relative w-9 px-0 ${pos ? "bg-slate-50 ring-slate-300" : ""}`}
+      >
+        <MoreHorizontal size={15} />
+        {dot && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-sky-500 ring-2 ring-white" />}
+      </button>
+      {pos && (
+        <div role="menu" style={{ top: pos.top, bottom: pos.bottom, right: pos.right }} className="fixed z-[60] w-56 overflow-hidden rounded-xl bg-white p-1 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+          {items.map(i => {
+            const cls = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition ${toneClass(i.tone)}`;
+            const body = <><i.icon size={14} className="flex-shrink-0" /> <span className="flex-1">{i.label}</span>{i.dot && <span className="h-2 w-2 rounded-full bg-sky-500" />}</>;
+            return i.href ? (
+              <a key={i.label} role="menuitem" href={i.href} target="_blank" rel="noreferrer" onClick={() => setPos(null)} className={cls}>{body}</a>
+            ) : (
+              <button key={i.label} role="menuitem" type="button" onClick={() => { setPos(null); i.onClick?.(); }} className={cls}>{body}</button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatPKR(n: number) {
   if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
@@ -337,14 +412,30 @@ export default function AdminPage() {
               {notice.text}
             </div>
           )}
-          <StatGrid>
-            <StatCard label="Total businesses" value={organizations.length} icon={Building2} tone="neutral" />
-            <StatCard label="Active" value={organizations.filter(o => o.isActive).length} icon={CircleCheck} tone="green" />
-            <StatCard label="Suspended" value={organizations.filter(o => !o.isActive).length} icon={Ban} tone="red" />
-            <StatCard label="Paid plans" value={organizations.filter(o => o.plan !== "FREE").length} icon={Briefcase} tone="amber" />
-            <StatCard label="Dealers" value={organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length} icon={Store} tone="violet" />
-            <StatCard label="Rental co." value={organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length} icon={KeyRound} tone="orange" />
-          </StatGrid>
+          {/* One compact strip instead of six cards; Active and Suspended also filter the list */}
+          <div className="mb-4 grid grid-cols-3 divide-x divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 sm:grid-cols-6 sm:divide-y-0">
+            {[
+              { label: "Businesses", value: organizations.length, filter: "" },
+              { label: "Active", value: organizations.filter(o => o.isActive).length, filter: "Active", color: "text-emerald-600" },
+              { label: "Suspended", value: organizations.filter(o => !o.isActive).length, filter: "Suspended", color: "text-rose-600" },
+              { label: "Paid plans", value: organizations.filter(o => o.plan !== "FREE").length, color: "text-amber-600" },
+              { label: "Dealers", value: organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length },
+              { label: "Rental co.", value: organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length },
+            ].map(m => {
+              const body = (
+                <>
+                  <span className={`block text-xl font-bold tabular-nums ${m.color ?? "text-slate-900"}`}>{m.value}</span>
+                  <span className="block truncate text-[11px] font-medium text-slate-500">{m.label}</span>
+                </>
+              );
+              return m.filter !== undefined ? (
+                <button key={m.label} type="button" onClick={() => setBizStatus(m.filter!)} aria-pressed={bizStatus === m.filter}
+                  className={`px-3 py-3 text-left transition hover:bg-slate-50 ${bizStatus === m.filter && m.filter ? "bg-slate-50" : ""}`}>{body}</button>
+              ) : (
+                <div key={m.label} className="px-3 py-3">{body}</div>
+              );
+            })}
+          </div>
 
           {badgeRequests.length > 0 && bizStatus !== "Badge requests" && (
             <div className="mb-4 flex flex-col gap-3 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-800 ring-1 ring-inset ring-sky-200 sm:flex-row sm:items-center sm:justify-between">
@@ -371,38 +462,46 @@ export default function AdminPage() {
           <DataTable
             rows={shownOrgs}
             rowKey={o => o._id}
-            cols="md:grid-cols-[minmax(0,2fr)_minmax(0,1.7fr)_minmax(0,0.8fr)_minmax(0,1.1fr)_56px_48px_340px]"
+            cols="md:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_150px]"
             empty={organizations.length ? "No businesses match your search" : "No businesses registered yet"}
             columns={[
               {
                 header: "Business",
-                cell: org => (
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 text-sm font-bold text-white">
-                      {org.name[0]}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
-                        {!org.isActive && <Badge tone="red">Suspended</Badge>}
-                        {isVerified(org.verification) && <VerifiedBadge variant="icon" />}
-                        {org.verification?.requestedAt && <Badge tone="blue"><BadgeCheck size={10} /> Badge request</Badge>}
-                        {org.isActive && (org.warnings?.length ?? 0) > 0 && (
-                          <span title={`Last warning: ${org.warnings![org.warnings!.length - 1].reason}`}>
-                            <Badge tone="amber"><AlertTriangle size={10} /> {org.warnings!.length} warning{org.warnings!.length !== 1 ? "s" : ""}</Badge>
-                          </span>
+                cell: org => {
+                  const warnings = org.warnings?.length ?? 0;
+                  // One status chip, most important first
+                  const chip = !org.isActive ? <Badge tone="red">Suspended</Badge>
+                    : org.verification?.requestedAt ? <Badge tone="blue"><BadgeCheck size={10} /> Badge request</Badge>
+                    : warnings > 0 ? <span title={`Last warning: ${org.warnings![warnings - 1].reason}`}><Badge tone="amber"><AlertTriangle size={10} /> {warnings} warning{warnings !== 1 ? "s" : ""}</Badge></span>
+                    : null;
+                  return (
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-sm font-bold text-white">
+                        {org.name[0]}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          {/* Suspended shops are offline (their page is a 404), so only live ones link */}
+                          {org.slug && org.isActive ? (
+                            <a href={`/dealers/${org.slug}`} target="_blank" rel="noreferrer" title={`Open ${org.name}'s shop page`}
+                              className="truncate text-sm font-semibold text-slate-900 hover:text-indigo-600 hover:underline">{org.name}</a>
+                          ) : (
+                            <p className="truncate text-sm font-semibold text-slate-900" title={org.name}>{org.name}</p>
+                          )}
+                          {isVerified(org.verification) && <VerifiedBadge variant="icon" />}
+                          {chip}
+                        </div>
+                        <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                          <CopyId id={org._id} />
+                          <span className="truncate">{org.city}</span>
+                        </div>
+                        {!org.isActive && org.suspension?.reason && (
+                          <p className="mt-0.5 truncate text-xs text-rose-600" title={org.suspension.reason}>Reason: {org.suspension.reason}</p>
                         )}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1.5">
-                        <CopyId id={org._id} />
-                        <span className="truncate text-xs text-slate-500">{org.city}</span>
-                      </div>
-                      {!org.isActive && org.suspension?.reason && (
-                        <p className="mt-0.5 truncate text-xs text-rose-600" title={org.suspension.reason}>Reason: {org.suspension.reason}</p>
-                      )}
                     </div>
-                  </div>
-                ),
+                  );
+                },
               },
               {
                 header: "Owner",
@@ -411,7 +510,6 @@ export default function AdminPage() {
                   <UserCell size={30} name={org.ownerId?.name || "Unknown"} email={org.ownerId?.email} meta={<CopyId id={org.ownerId?._id} />} />
                 ),
               },
-              { header: "Type", cell: org => <Badge tone="neutral">{org.type}</Badge> },
               {
                 header: "Plan",
                 cell: org => {
@@ -423,59 +521,53 @@ export default function AdminPage() {
                         {plan.name}
                         {isFreeGrant(org.planSource) && org.plan !== "FREE" && <Gift size={12} className="text-violet-500" aria-label={org.planSource === "TRIAL" ? "Free trial" : "Gifted by an admin"} />}
                       </p>
-                      {org.plan !== "FREE" && (
-                        <p className="truncate text-xs text-slate-400">{org.planExpiresAt ? `until ${fmtPlanDate(org.planExpiresAt)}` : "no end date"}</p>
-                      )}
+                      <p className="truncate text-xs text-slate-400">
+                        {TYPE_NAME[org.type] ?? org.type}
+                        {org.plan !== "FREE" && ` · ${org.planExpiresAt ? `until ${fmtPlanDate(org.planExpiresAt)}` : "no end date"}`}
+                      </p>
                     </div>
                   );
                 },
               },
-              { header: "Vehicles", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.vehicleCount}</p> },
-              { header: "Staff", align: "right", cell: org => <p className="text-sm font-semibold tabular-nums text-slate-900">{org.staffCount}</p> },
+              {
+                header: "Fleet",
+                cell: org => (
+                  <p className="text-xs text-slate-500">
+                    <span className="font-semibold tabular-nums text-slate-900">{org.vehicleCount}</span> vehicle{org.vehicleCount !== 1 ? "s" : ""}
+                    {" · "}
+                    <span className="font-semibold tabular-nums text-slate-900">{org.staffCount}</span> staff
+                  </p>
+                ),
+              },
               {
                 header: "Actions",
                 full: true,
                 hideLabel: true,
                 align: "right",
-                cell: org =>
-                  !canWrite ? (
-                    <p className="text-xs text-slate-400 md:text-right">View only</p>
-                  ) : !org.ownerId?._id ? (
-                    <p className="text-xs text-slate-400 md:text-right">No owner</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
-                      <button
-                        onClick={() => setBadgeFor(org)}
-                        className={`${btn.base} ${btn.secondary} relative flex-1 md:flex-none`}
-                        title={org.verification?.requestedAt ? "Review badge request" : "Verified badge"}
-                      >
-                        <BadgeCheck size={13} className={isVerified(org.verification) ? "text-sky-600" : ""} /> Badge
-                        {org.verification?.requestedAt && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-sky-500 ring-2 ring-white" />}
-                      </button>
-                      <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
-                        <Gift size={13} /> Plan
-                      </button>
-                      {isFreeGrant(org.planSource) && org.plan !== "FREE" && (
-                        <button onClick={() => setRevokeFor(org)} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
-                          <Undo2 size={13} />
-                        </button>
-                      )}
-                      {org.isActive && (
-                        <button onClick={() => { setWarnReason(""); setWarnFor(org); }} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`} title="Send a warning">
-                          <AlertTriangle size={13} /> Warn
-                        </button>
-                      )}
-                      {org.isActive ? (
-                        <button onClick={() => { setSuspendReason(""); setSuspendFor(org); }} className={`${btn.base} ${btn.danger} flex-1 md:flex-none`} title="Suspend business">
-                          <Ban size={13} /> Suspend
+                cell: org => {
+                  const items: MenuItem[] = [];
+                  if (org.slug && org.isActive) items.push({ label: "Open shop page", icon: Store, href: `/dealers/${org.slug}` });
+                  if (canWrite && org.ownerId?._id) {
+                    items.push({ label: org.verification?.requestedAt ? "Review badge request" : "Verified badge", icon: BadgeCheck, onClick: () => setBadgeFor(org), dot: !!org.verification?.requestedAt });
+                    if (isFreeGrant(org.planSource) && org.plan !== "FREE") items.push({ label: "Revoke gifted plan", icon: Undo2, onClick: () => setRevokeFor(org), tone: "danger" });
+                    if (org.isActive) items.push({ label: "Send a warning", icon: AlertTriangle, onClick: () => { setWarnReason(""); setWarnFor(org); }, tone: "warn" });
+                    items.push(org.isActive
+                      ? { label: "Suspend business", icon: Ban, onClick: () => { setSuspendReason(""); setSuspendFor(org); }, tone: "danger" }
+                      : { label: "Reinstate business", icon: ShieldCheck, onClick: () => setReinstateFor(org), tone: "warn" });
+                  }
+                  return (
+                    <div className="flex items-center gap-1.5 md:justify-end">
+                      {canWrite && org.ownerId?._id ? (
+                        <button onClick={() => setGiftFor(org)} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
+                          <Gift size={13} /> Plan
                         </button>
                       ) : (
-                        <button onClick={() => setReinstateFor(org)} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`} title="Reinstate business">
-                          <ShieldCheck size={13} /> Reinstate
-                        </button>
+                        <p className="flex-1 text-xs text-slate-400 md:flex-none">{!canWrite ? "View only" : "No owner"}</p>
                       )}
+                      {items.length > 0 && <RowMenu items={items} label={`Actions for ${org.name}`} />}
                     </div>
-                  ),
+                  );
+                },
               },
             ]}
           />

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, CheckCircle2, Undo2, X } from "lucide-react";
-import { LATE_GRACE_MINUTES, LATE_RATE_MULTIPLIER, LATE_RULE_TEXT, lateCharge } from "@/lib/bookings";
+import { LATE_GRACE_MINUTES, LATE_RULE_TEXT, lateCharge } from "@/lib/bookings";
 import { fmtDateTime, toDateTimeInput } from "./HandoverDialog";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
@@ -17,7 +17,7 @@ function lateText(minutes: number): string {
 
 /**
  * "Mark returned": records when the vehicle came back and shows the late fee before saving.
- * Up to LATE_GRACE_MINUTES late is free; each later day costs LATE_RATE_MULTIPLIER × the daily rate.
+ * Up to LATE_GRACE_MINUTES late is free; each later day costs one more day of rent.
  */
 export default function ReturnDialog({ open, onOpenChange, vehicle, customer, dueBackAt, dailyRate, onSave }: {
   open: boolean;
@@ -91,7 +91,7 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
               <div className="rounded-xl bg-rose-50 p-3 ring-1 ring-inset ring-rose-200">
                 <p className="flex items-center gap-1.5 text-sm font-bold text-rose-700"><AlertTriangle size={15} /> {lateText(late.lateMinutes)} late</p>
                 <div className="mt-2 flex items-baseline justify-between text-sm text-rose-800">
-                  <span>{late.lateDays} extra day{late.lateDays !== 1 ? "s" : ""} × {pkr(dailyRate)} × {LATE_RATE_MULTIPLIER}</span>
+                  <span>{late.lateDays} extra day{late.lateDays !== 1 ? "s" : ""} × {pkr(dailyRate)}</span>
                   <span className="text-base font-extrabold tabular-nums">{pkr(late.fee)}</span>
                 </div>
                 <p className="mt-1.5 text-[11px] text-rose-700/80">{LATE_RULE_TEXT} The fee is added to the booking and printed on the slip.</p>

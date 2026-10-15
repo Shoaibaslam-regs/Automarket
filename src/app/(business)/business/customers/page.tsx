@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
+import { BadgeCheck, MessageCircle, MoreHorizontal, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
 import { isClosedDeal } from "@/lib/customers";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
@@ -57,6 +57,8 @@ function CustomersContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [starOnly, setStarOnly] = useState(false);
+  // Customer whose "More" tray is open
+  const [openMore, setOpenMore] = useState<string | null>(null);
   // Dashboard "Add customer" quick action links here with ?add=1
   const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1");
   const [saving, setSaving] = useState(false);
@@ -405,72 +407,79 @@ function CustomersContent() {
             </div>
           ) : filtered.map((c, i) => {
             const statusStyle = STATUS_COLORS[c.status] || STATUS_COLORS.LEAD;
+            const moreOpen = openMore === c._id;
+            const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] disabled:cursor-not-allowed disabled:opacity-40";
+            const iconBtn = "inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-white transition hover:bg-[var(--gh-f6f8fa)]";
             return (
-              <div key={c._id} style={{ padding: "14px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--gh-f6f8fa)" : "none", display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", background: c.starred ? "linear-gradient(90deg,var(--gh-fffbeb),var(--gh-ffffff) 60%)" : "var(--gh-ffffff)", boxShadow: c.starred ? "inset 3px 0 0 #eac54f" : "none" }}>
-                <button
-                  onClick={() => permissions.canEdit && toggleStar(c)}
-                  disabled={!permissions.canEdit}
-                  aria-pressed={!!c.starred}
-                  aria-label={c.starred ? `Remove star from ${c.name}` : `Mark ${c.name} as a star customer`}
-                  title={permissions.canEdit ? (c.starred ? "Remove star" : "Mark as star customer") : c.starred ? "Star customer" : undefined}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", borderRadius: "50%", background: "none", border: "none", padding: 0, cursor: permissions.canEdit ? "pointer" : "default", flexShrink: 0, visibility: !permissions.canEdit && !c.starred ? "hidden" : "visible" }}>
-                  <Star size={18} strokeWidth={1.8} fill={c.starred ? "#eac54f" : "none"} color={c.starred ? "#bf8700" : "var(--gh-c4c9d0)"} />
-                </button>
-                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: c.starred ? "linear-gradient(135deg,#f5c542,var(--gh-bf8700))" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, flexShrink: 0, boxShadow: c.starred ? "0 0 0 2px white, 0 0 0 3.5px #eac54f" : "none" }}>
-                  {c.name[0].toUpperCase()}
+              <div key={c._id} className={`px-4 py-3 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[var(--gh-f6f8fa)]" : ""}`}
+                style={{ background: c.starred ? "linear-gradient(90deg,var(--gh-fffbeb),var(--gh-ffffff) 60%)" : "var(--gh-ffffff)", boxShadow: c.starred ? "inset 3px 0 0 #eac54f" : "none" }}>
+                {/* Phones put the status under the name so the name and phone stay readable */}
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white"
+                    style={{ background: c.starred ? "linear-gradient(135deg,#f5c542,var(--gh-bf8700))" : "var(--gh-0d1117)", boxShadow: c.starred ? "0 0 0 2px white, 0 0 0 3.5px #eac54f" : "none" }}>
+                    {c.name[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold text-[var(--gh-0d1117)]">
+                      <span className="truncate">{c.name}</span>
+                      {c.starred && <Star size={12} fill="#eac54f" color="#bf8700" className="flex-shrink-0" aria-label="Star customer" />}
+                      {c.userId && <BadgeCheck size={13} className="flex-shrink-0 text-[var(--gh-0550ae)]" aria-label="Has an AutoMarket account" />}
+                    </p>
+                    <p className="truncate text-[11px] text-[var(--gh-57606a)]">
+                      <a href={`tel:${c.phone}`} className="font-medium text-[var(--gh-0d1117)]">{c.phone}</a>
+                      <span className="text-[var(--gh-8c959f)]"> · {c.source.replace("_", " ").toLowerCase()}</span>
+                      {c.interestedIn && <span> · wants {c.interestedIn.make} {c.interestedIn.model}</span>}
+                    </p>
+                  </div>
+                  <Select value={c.status}
+                    onChange={v => updateStatus(c._id, v)}
+                    disabled={!permissions.canEdit}
+                    ariaLabel={`Status for ${c.name}`}
+                    size="sm"
+                    options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
+                    style={{ borderColor: statusStyle.color, color: statusStyle.color, background: statusStyle.bg }}
+                    className="col-start-2 row-start-2 h-7 w-auto justify-self-start rounded-full px-2.5 text-[11px] font-semibold sm:col-start-auto sm:row-start-auto" />
+                  <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoMarket`}
+                    target="_blank" rel="noreferrer" aria-label={`WhatsApp ${c.name}`} title="WhatsApp"
+                    className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
+                    <MessageCircle size={15} />
+                  </a>
+                  <button type="button" onClick={() => setOpenMore(moreOpen ? null : c._id)} aria-expanded={moreOpen} aria-label={`More for ${c.name}`}
+                    className={`${iconBtn} ${moreOpen ? "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]" : "text-[var(--gh-57606a)]"}`}>
+                    <MoreHorizontal size={15} />
+                  </button>
                 </div>
-                <div style={{ flex: 1, minWidth: "150px" }}>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                    {c.name}
-                    {c.starred && (
-                      <span style={{ fontSize: "9.5px", fontWeight: 800, letterSpacing: "0.06em", color: "var(--gh-7d4e00)", background: "linear-gradient(90deg,var(--gh-fff1b8),var(--gh-ffd666))", padding: "2px 7px", borderRadius: "20px", border: "1px solid #eac54f" }}>
-                        ★ STAR CUSTOMER
-                      </span>
+
+                {moreOpen && (
+                  <div className="mt-2.5 space-y-2 rounded-xl bg-[var(--gh-f6f8fa)] p-3 sm:ml-12">
+                    <p className="text-[11px] text-[var(--gh-57606a)]">
+                      {c.email ? <a href={`mailto:${c.email}`} className="font-medium text-[var(--gh-0d1117)]">{c.email}</a> : "No email"}
+                      {c.userId && <span> · has an AutoMarket account</span>}
+                    </p>
+                    {(permissions.canEdit || permissions.canDelete) && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {permissions.canEdit && (
+                          <button onClick={() => toggleStar(c)} className={trayBtn} aria-pressed={!!c.starred}>
+                            <Star size={13} fill={c.starred ? "#eac54f" : "none"} color={c.starred ? "#bf8700" : "currentColor"} /> {c.starred ? "Remove star" : "Mark as star customer"}
+                          </button>
+                        )}
+                        {permissions.canEdit && (
+                          <button onClick={() => openEdit(c)} className={trayBtn}><Pencil size={13} /> Edit details</button>
+                        )}
+                        {permissions.canDelete && (
+                          <button onClick={() => { setDeleteError(""); setConfirmDelete(c); }}
+                            disabled={!isClosedDeal(c.status) || deleting === c._id}
+                            title={isClosedDeal(c.status) ? "Delete customer" : "Mark the deal as Sold or Lost to delete"}
+                            className={`${trayBtn} border-[var(--gh-ffcdd2)] !text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </p>
-                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                    <a href={`tel:${c.phone}`} style={{ fontSize: "11px", color: "var(--gh-57606a)", textDecoration: "none" }}>{c.phone}</a>
-                    {c.email && <span style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>{c.email}</span>}
-                    <span style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>{c.source.replace("_", " ")}</span>
-                    {c.userId && (
-                      <span title="Has an AutoMarket account" style={{ display: "inline-flex", alignItems: "center", gap: "3px", fontSize: "10px", fontWeight: 700, color: "var(--gh-0550ae)", background: "var(--gh-ddf4ff)", padding: "1px 6px", borderRadius: "20px" }}>
-                        <BadgeCheck size={10} /> APP USER
-                      </span>
+                    {permissions.canDelete && !isClosedDeal(c.status) && (
+                      <p className="text-[11px] text-[var(--gh-8c959f)]">A customer can be deleted once their status is Sold or Lost.</p>
                     )}
                   </div>
-                </div>
-                {c.interestedIn && (
-                  <div style={{ fontSize: "11px", color: "var(--gh-57606a)", background: "var(--gh-f6f8fa)", padding: "4px 10px", borderRadius: "20px" }}>
-                    Interested in: {c.interestedIn.make} {c.interestedIn.model}
-                  </div>
-                )}
-                <Select value={c.status}
-                  onChange={v => updateStatus(c._id, v)}
-                  disabled={!permissions.canEdit}
-                  ariaLabel={`Status for ${c.name}`}
-                  size="sm"
-                  options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
-                  style={{ borderColor: statusStyle.color, color: statusStyle.color, background: statusStyle.bg }}
-                  className="h-7 w-auto flex-shrink-0 rounded-full px-2.5 text-[11px] font-semibold" />
-                <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoMarket`}
-                  target="_blank" rel="noreferrer"
-                  style={{ padding: "5px 10px", background: "var(--gh-2da44e)", color: "var(--gh-ffffff)", borderRadius: "6px", fontSize: "11px", fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>
-                  WhatsApp
-                </a>
-                {permissions.canEdit && (
-                  <button onClick={() => openEdit(c)} aria-label={`Edit ${c.name}`} title="Edit customer"
-                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "6px", color: "var(--gh-57606a)", cursor: "pointer", flexShrink: 0 }}>
-                    <Pencil size={13} />
-                  </button>
-                )}
-                {permissions.canDelete && (
-                  <button onClick={() => { setDeleteError(""); setConfirmDelete(c); }}
-                    disabled={!isClosedDeal(c.status) || deleting === c._id}
-                    aria-label={`Delete ${c.name}`}
-                    title={isClosedDeal(c.status) ? "Delete customer" : "Mark the deal as Sold or Lost to delete"}
-                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "6px", color: "var(--gh-cf222e)", cursor: isClosedDeal(c.status) ? "pointer" : "not-allowed", opacity: isClosedDeal(c.status) ? 1 : 0.4, flexShrink: 0 }}>
-                    <Trash2 size={13} />
-                  </button>
                 )}
               </div>
             );

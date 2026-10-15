@@ -21,8 +21,12 @@ export function amountDue(b: Payable): number {
  * because the tag always compares what was paid with what is owed now.
  */
 export function paymentState(b: Payable): { status: PaymentStatus; paid: number; due: number; balance: number } {
-  const due = amountDue(b);
-  const paid = Math.max(0, b.amountPaid ?? 0);
+  return paymentStateFor(amountDue(b), b.amountPaid);
+}
+
+/** The payment tag for any amount owed and amount paid (bookings and sales share it). */
+export function paymentStateFor(due: number, amountPaid?: number): { status: PaymentStatus; paid: number; due: number; balance: number } {
+  const paid = Math.max(0, amountPaid ?? 0);
   const status: PaymentStatus = paid <= 0 ? "PENDING" : paid >= due ? "PAID" : "PARTIAL";
   return { status, paid, due, balance: Math.max(0, due - paid) };
 }

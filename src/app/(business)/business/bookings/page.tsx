@@ -11,7 +11,7 @@ import {
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
-import { BOOKING_STATUSES, LATE_RATE_MULTIPLIER, bookingDailyRate, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
+import { BOOKING_STATUSES, bookingDailyRate, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import HandoverDialog, { PlateBadge, fmtDateTime } from "@/components/bookings/HandoverDialog";
 import ReturnDialog from "@/components/bookings/ReturnDialog";
@@ -703,13 +703,13 @@ export default function BusinessBookingsPage() {
 
                   {/* Money */}
                   <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0))}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                      <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0))}</p>
                       {b.status !== "CANCELLED" && <PaymentTag booking={b} onClick={canManage ? () => setPayFor(b) : undefined} />}
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">
                       Rent {pkr(b.totalAmount)} · Deposit {pkr(b.deposit)}
-                      {(b.lateFee ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Late {pkr(b.lateFee!)} ({b.lateDays}d × {LATE_RATE_MULTIPLIER})</span>}
+                      {(b.lateFee ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Late {pkr(b.lateFee!)} ({b.lateDays} extra day{b.lateDays !== 1 ? "s" : ""})</span>}
                     </p>
                   </div>
                 </div>

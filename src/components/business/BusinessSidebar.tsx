@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, MessageSquare,
+  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, MessageSquare,
   Settings, Sparkles, Star, Tag, User, Users, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
@@ -34,6 +34,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/inventory", label: "Inventory", icon: Car },
   { href: "/business/customers", label: "Customers", icon: Users },
   { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
+  { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
   { href: "/business/deals", label: "Deals", icon: Tag },
   { href: "/business/reviews", label: "Reviews", icon: Star },
   { href: "/business/staff", label: "Staff", icon: User },
@@ -179,7 +180,7 @@ function SidebarContent({
   const pathname = usePathname();
   const { data: session } = useSession();
   // Bookings is where the business handles incoming rental requests
-  const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : 0);
+  const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : href === "/business/sales" ? counts.sales : 0);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-slate-950 text-white">
@@ -301,7 +302,7 @@ export default function BusinessSidebar() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const counts = useNotificationCounts();
   const { data: sub } = useSubscription();
-  const hasUnread = counts.messages + counts.ownerBookings > 0;
+  const hasUnread = counts.messages + counts.ownerBookings + counts.sales > 0;
 
   useEffect(() => {
     const load = () =>

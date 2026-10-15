@@ -32,7 +32,7 @@ export default function Navbar() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const counts = useNotificationCounts();
-  const hasUnread = !!session?.user && counts.messages + counts.bookings > 0;
+  const hasUnread = !!session?.user && counts.messages + counts.bookings + counts.purchases > 0;
   // Plan label under the name on the account button; fetched once per page load for signed-in users
   const { data: navSub } = useSubscription(!!session?.user);
   const navPlan = navSub ? planInfo(navSub.planId) : null;

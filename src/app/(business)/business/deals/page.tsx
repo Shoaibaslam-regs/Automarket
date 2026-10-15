@@ -163,40 +163,47 @@ export default function BusinessDealsPage() {
                     <span className="absolute right-2 top-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                   </div>
                   <div className="flex flex-1 flex-col p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-[var(--gh-8c959f)]">{d.make} {d.model} · {d.year}</p>
-                      <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${d.dealType === "RENT" ? "bg-sky-50 text-sky-700 ring-sky-200" : "bg-indigo-50 text-indigo-700 ring-indigo-200"}`}>
+                    <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-[var(--gh-8c959f)]">
+                      {d.make} {d.model} · {d.year} ·{" "}
+                      <span className={d.dealType === "RENT" ? "text-sky-700" : "text-indigo-700"}>
                         {d.dealType === "RENT" ? `Rent${(d.vehicleCount ?? 1) > 1 ? ` · ${d.vehicleCount} cars` : ""}` : "Sale"}
                       </span>
-                    </div>
-                    <p className="mt-0.5 line-clamp-2 font-semibold text-[var(--gh-0d1117)]">{d.title}</p>
+                    </p>
+                    <Link href={`/deals/${d._id}`} target="_blank" title="Open the public deal page" className="group mt-0.5 line-clamp-2 font-semibold text-[var(--gh-0d1117)] hover:underline">
+                      {d.title} <ExternalLink size={12} className="inline align-baseline text-[var(--gh-8c959f)]" />
+                    </Link>
                     <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
                       <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(dealPrice(d.price, d))}{d.dealType === "RENT" && <span className="text-xs font-semibold">/day</span>}</span>
                       <span className="text-xs text-[var(--gh-8c959f)] line-through">{formatLakh(d.price)}</span>
                     </p>
-                    <p className="mt-1.5 flex items-center gap-1 text-xs text-[var(--gh-57606a)]"><MapPin size={12} /> {d.location} · {fmt(d.startsAt)} → {fmt(d.endsAt)}</p>
+                    <p className="mt-1.5 flex min-w-0 items-center gap-1 text-xs text-[var(--gh-57606a)]">
+                      <MapPin size={12} className="flex-shrink-0" />
+                      <span className="truncate">{d.location} · {fmt(d.startsAt)} → {fmt(d.endsAt)}{d.createdBy?.name ? ` · by ${d.createdBy.name}` : ""}</span>
+                    </p>
                     {state === "DISABLED" && <p className="mt-2 text-xs font-semibold text-[var(--gh-cf222e)]">An AutoMarket admin switched this deal off. Contact the team if you think that&apos;s a mistake.</p>}
-                    <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-                      <Link href={`/deals/${d._id}`} target="_blank" className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)]">
-                        <ExternalLink size={12} /> View
-                      </Link>
-                      {canManage && (
+                    <div className="mt-auto flex items-center gap-1.5 pt-3">
+                      {canManage ? (
                         <>
-                          <Link href={`/business/deals/${d._id}/edit`} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)]">
-                            <Pencil size={12} /> Edit
+                          <Link href={`/business/deals/${d._id}/edit`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-3 text-xs font-semibold text-white hover:bg-[var(--gh-24292f)]">
+                            <Pencil size={13} /> Edit deal
                           </Link>
                           {!d.disabledByAdmin && state !== "EXPIRED" && (
-                            <button onClick={() => togglePause(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] disabled:opacity-50">
-                              {d.paused ? <><Play size={12} /> Resume</> : <><Pause size={12} /> Pause</>}
+                            <button onClick={() => togglePause(d)} disabled={busy === d._id} aria-label={d.paused ? "Resume deal" : "Pause deal"} title={d.paused ? "Resume" : "Pause"}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50">
+                              {d.paused ? <Play size={14} /> : <Pause size={14} />}
                             </button>
                           )}
-                          <button onClick={() => setConfirmDelete(d)} disabled={busy === d._id} className="inline-flex items-center gap-1 rounded-lg border border-[var(--gh-ffcdd2)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--gh-cf222e)] disabled:opacity-50">
-                            <Trash2 size={12} /> Delete
+                          <button onClick={() => setConfirmDelete(d)} disabled={busy === d._id} aria-label="Delete deal" title="Delete"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)] disabled:opacity-50">
+                            <Trash2 size={14} />
                           </button>
                         </>
+                      ) : (
+                        <Link href={`/deals/${d._id}`} target="_blank" className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white text-xs font-semibold text-[var(--gh-0d1117)]">
+                          <ExternalLink size={13} /> View deal
+                        </Link>
                       )}
                     </div>
-                    {d.createdBy?.name && <p className="mt-2 text-[10px] text-[var(--gh-8c959f)]">Created by {d.createdBy.name}</p>}
                   </div>
                 </div>
               );

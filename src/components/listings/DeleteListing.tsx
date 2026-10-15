@@ -25,9 +25,11 @@ export default function DeleteListing({ id }: { id: string }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        style={{ fontSize: "12px", color: "var(--gh-cf222e)", background: "none", border: "none", cursor: "pointer", padding: "2px 6px", borderRadius: "4px" }}
+        aria-label="Delete listing"
+        title="Delete listing"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--gh-cf222e)] ring-1 ring-inset ring-[var(--gh-ffcdd2)] transition hover:bg-[var(--gh-fff0f0)]"
       >
-        Delete
+        <Trash2 size={14} />
       </button>
 
       {open && (

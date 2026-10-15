@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
   Briefcase, Calendar, ChevronRight, Crown, Heart, LayoutDashboard, LogOut, MessageSquare, Settings, ShieldCheck, Sparkles,
-  type LucideIcon,
+  ShoppingBag, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
@@ -41,7 +41,7 @@ export default function UserMenuDropdown({
   onSignOut,
 }: {
   session: Session;
-  counts: { messages: number; bookings: number };
+  counts: { messages: number; bookings: number; purchases: number };
   onClose: () => void;
   onSignOut: () => void;
 }) {
@@ -55,6 +55,7 @@ export default function UserMenuDropdown({
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/messages", label: "Messages", icon: MessageSquare, count: counts.messages },
     { href: "/bookings", label: "Bookings", icon: Calendar, count: counts.bookings },
+    { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
     { href: "/profile", label: "Profile & settings", icon: Settings },
   ];

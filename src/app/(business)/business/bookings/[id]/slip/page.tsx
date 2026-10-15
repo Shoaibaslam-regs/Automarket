@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
-import { LATE_RATE_MULTIPLIER, LATE_RULE_TEXT, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
+import { LATE_RULE_TEXT, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import { bookingCnic } from "@/lib/plates";
 import { dealLabel } from "@/lib/deals";
 import AutoMarketStamp from "@/components/bookings/AutoMarketStamp";
@@ -230,8 +230,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
                 {(b.lateFee ?? 0) > 0 && (
                   <tr className="bg-rose-50/60">
                     <td className="px-4 py-2 text-rose-700">
-                      Late return · {b.lateDays} day{b.lateDays !== 1 ? "s" : ""} × {pkr(Math.round(b.lateFee! / (b.lateDays! * LATE_RATE_MULTIPLIER)))} × {LATE_RATE_MULTIPLIER}
-                      <span className="text-rose-400"> (double rate)</span>
+                      Late return · {b.lateDays} extra day{b.lateDays !== 1 ? "s" : ""} × {pkr(Math.round(b.lateFee! / b.lateDays!))}
                     </td>
                     <td className="px-4 py-2 text-right font-semibold tabular-nums text-rose-700">{pkr(b.lateFee!)}</td>
                   </tr>

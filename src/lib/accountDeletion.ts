@@ -14,6 +14,7 @@ import { Customer } from "@/models/Customer";
 import { Employee } from "@/models/Employee";
 import { Organization } from "@/models/Organization";
 import { Deal } from "@/models/Deal";
+import { Purchase } from "@/models/Purchase";
 import { invalidateBusinessPage, invalidateListingPage } from "@/lib/pageCache";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
 
@@ -99,6 +100,10 @@ export async function deleteAccount(userId: string): Promise<void> {
     { renterId: id },
     { $set: { walkIn: { name: user.name || "Deleted user", phone: user.phone || "Not provided", email: user.email } }, $unset: { renterId: "" } }
   );
+
+  // Purchase requests: open ones are withdrawn; businesses keep their sale records with the buyer's details, unlinked
+  await Purchase.updateMany({ buyerId: id, status: { $in: ["REQUESTED", "ACCEPTED"] } }, { $set: { status: "CANCELLED", cancelledAt: now } });
+  await Purchase.updateMany({ buyerId: id }, { $unset: { buyerId: "" } });
 
   await Promise.all([
     Inspection.deleteMany({ listingId: { $in: listingIds } }),

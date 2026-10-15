@@ -11,6 +11,7 @@ import { isUploadedImageUrl } from "@/lib/uploadUrls";
 import { invalidateBusinessSlug, invalidateDeal } from "@/lib/pageCache";
 import { Deal } from "@/models/Deal";
 import { BusinessReview } from "@/models/BusinessReview";
+import { Purchase } from "@/models/Purchase";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -136,6 +137,7 @@ export async function DELETE(req: NextRequest) {
     await Employee.deleteMany({ organizationId: org._id });
     // Its deals and reviews belong to the business and go with it
     await Deal.deleteMany({ organizationId: org._id });
+    await Purchase.deleteMany({ organizationId: org._id });
     await BusinessReview.deleteMany({ organizationId: org._id });
     await User.updateMany(
       { organizationId: org._id },

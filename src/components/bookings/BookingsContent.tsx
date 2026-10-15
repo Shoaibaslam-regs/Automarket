@@ -4,11 +4,11 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Trash2, TriangleAlert } from "lucide-react";
+import { CalendarDays, Car, Clock3, FileText, IdCard, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Trash2, TriangleAlert, Undo2, UserRound, Wallet, X } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
-import HandoverDialog, { HandoverDetails } from "@/components/bookings/HandoverDialog";
-import { LATE_RATE_MULTIPLIER, LATE_RULE_TEXT } from "@/lib/bookings";
+import HandoverDialog, { PlateBadge } from "@/components/bookings/HandoverDialog";
+import { LATE_RULE_TEXT, rentalDays } from "@/lib/bookings";
 import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { mapsUrl } from "@/lib/address";
@@ -86,7 +86,7 @@ const escapeHtml = (v: string) => v.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<
 
 function generateSlip(booking: Booking, tab: string) {
   const listing = bookedItem(booking);
-  const days = Math.ceil((new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const days = rentalDays(booking.startDate, booking.endDate);
   // The slip opens in its own window without the theme variables, so use the plain light-theme colours
   const plain = (v: string) => v.replace(/var\(--gh-([0-9a-f]{6})\)/g, "#$1");
   const themed = STATUS_COLORS[booking.status] || STATUS_COLORS.PENDING;
@@ -126,7 +126,7 @@ function generateSlip(booking: Booking, tab: string) {
   <div class="section"><div class="section-title">Payment summary</div>
   <div class="row"><span class="label">Rental × ${days} days</span><span class="value">PKR ${booking.totalAmount.toLocaleString()}</span></div>
   <div class="row"><span class="label">Security deposit</span><span class="value">PKR ${booking.deposit.toLocaleString()}</span></div>
-  ${booking.lateFee ? `<div class="row"><span class="label">Late return × ${booking.lateDays} day${booking.lateDays !== 1 ? "s" : ""} (double rate)</span><span class="value">PKR ${booking.lateFee.toLocaleString()}</span></div>` : ""}
+  ${booking.lateFee ? `<div class="row"><span class="label">Late return × ${booking.lateDays} day${booking.lateDays !== 1 ? "s" : ""}</span><span class="value">PKR ${booking.lateFee.toLocaleString()}</span></div>` : ""}
   <div class="total-row"><span>Total payable</span><span>PKR ${(booking.totalAmount + booking.deposit + (booking.lateFee ?? 0)).toLocaleString()}</span></div>
   ${(() => { const p = paymentState(booking); return `<div class="row"><span class="label">Payment</span><span class="value">${PAYMENT_LABEL[p.status]}</span></div>${p.paid > 0 ? `<div class="row"><span class="label">Paid so far</span><span class="value">PKR ${p.paid.toLocaleString()}</span></div>` : ""}${p.balance > 0 ? `<div class="row"><span class="label">Balance due</span><span class="value">PKR ${p.balance.toLocaleString()}</span></div>` : ""}`; })()}
   ${booking.dueBackAt && !booking.returnedAt ? `<p style="margin-top:10px;font-size:12px;color:#7d4e00">${LATE_RULE_TEXT}</p>` : ""}</div>
@@ -163,35 +163,27 @@ function ConfirmPopup({ title = "Remove this booking?", message, icon = <Trash2 
   );
 }
 
-function StatusBanner({ status, tab }: { status: string; tab: string }) {
-  if (tab === "received" && status === "PENDING") return (
-    <div style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "7px", padding: "8px 12px", fontSize: "12px", color: "var(--gh-7d4e00)", fontWeight: 500, marginBottom: "14px" }}>
-      New booking request — action required
-    </div>
-  );
-  if (tab === "mine") {
-    if (status === "CONFIRMED") return (
-      <div style={{ background: "var(--gh-dafbe1)", border: "1px solid var(--gh-56d364)", borderRadius: "7px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-1a7f37)", fontWeight: 500, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-        <div><p style={{ fontWeight: 600, margin: 0 }}>Booking confirmed!</p><p style={{ fontWeight: 400, fontSize: "12px", margin: "2px 0 0", opacity: 0.8 }}>Contact the owner to arrange pickup.</p></div>
-      </div>
-    );
-    if (status === "PENDING") return (
-      <div style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "7px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-7d4e00)", fontWeight: 500, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-        <div><p style={{ fontWeight: 600, margin: 0 }}>Waiting for owner confirmation</p></div>
-      </div>
-    );
-    if (status === "CANCELLED") return (
-      <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "7px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", fontWeight: 500, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-        <div><p style={{ fontWeight: 600, margin: 0 }}>Booking declined or cancelled</p></div>
-      </div>
-    );
-    if (status === "COMPLETED") return (
-      <div style={{ background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "7px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-57606a)", fontWeight: 500, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-        <p style={{ fontWeight: 600, margin: 0 }}>Rental completed</p>
-      </div>
-    );
+/** Status pill, border and one-line hint for a booking card, worded for the renter ("mine") or the owner ("received"). */
+function cardLook(status: string, received: boolean): { label: string; hint?: string; bg: string; color: string; border: string } {
+  const plain = "border-[var(--gh-e1e4e8)]";
+  switch (status) {
+    case "PENDING":
+      return received
+        ? { label: "New request", hint: "New booking request — action required", bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)", border: "border-[var(--gh-e3b341)]" }
+        : { label: "Waiting", hint: "Waiting for the owner to confirm", bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)", border: plain };
+    case "CONFIRMED":
+      return received
+        ? { label: "Confirmed", bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)", border: plain }
+        : { label: "Confirmed", hint: "Booking confirmed! Contact the owner to arrange pickup.", bg: "var(--gh-dafbe1)", color: "var(--gh-1a7f37)", border: "border-[var(--gh-56d364)]" };
+    case "ACTIVE":
+      return { label: "Out now", bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)", border: plain };
+    case "COMPLETED":
+      return { label: "Completed", bg: "var(--gh-f6f8fa)", color: "var(--gh-57606a)", border: plain };
+    case "CANCELLED":
+      return { label: received ? "Cancelled" : "Declined / cancelled", bg: "var(--gh-fff0f0)", color: "var(--gh-cf222e)", border: plain };
+    default:
+      return { label: status, bg: "var(--gh-f6f8fa)", color: "var(--gh-57606a)", border: plain };
   }
-  return null;
 }
 
 export default function BookingsContent() {
@@ -222,6 +214,8 @@ export default function BookingsContent() {
 
   // The owner records what the renter has paid (pending, partly paid or paid)
   const [payFor, setPayFor] = useState<Booking | null>(null);
+  // Booking whose "More" tray is open
+  const [openMore, setOpenMore] = useState<string | null>(null);
 
   async function savePayment(body: { status: PaymentStatus; amountPaid?: number }): Promise<string | null> {
     if (!payFor) return null;
@@ -367,158 +361,180 @@ export default function BookingsContent() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {bookings.map(booking => {
-              const statusStyle = STATUS_COLORS[booking.status] || STATUS_COLORS.PENDING;
-              const days = Math.ceil((new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24));
+              const days = rentalDays(booking.startDate, booking.endDate);
               const listing = bookedItem(booking);
               const listingId = listing?._id;
               const isDeal = !!booking.dealId;
+              const received = tab === "received";
+              const look = cardLook(booking.status, received);
+              const busy = updating === booking._id;
+              const moreOpen = openMore === booking._id;
+              // Who to contact: the renter for the owner, and the owner once the renter's booking is confirmed
+              const person =
+                received && booking.renterId ? { role: "Renter", name: booking.renterId.name, phone: booking.renterId.phone, email: booking.renterId.email }
+                : !received && booking.owner && ["CONFIRMED", "ACTIVE", "COMPLETED"].includes(booking.status) ? { role: "Owner", name: booking.owner.name, phone: booking.owner.phone, email: booking.owner.email }
+                : null;
+              const primary =
+                received && booking.status === "PENDING" ? { label: busy ? "Confirming…" : "Confirm", onClick: () => updateStatus(booking._id, "CONFIRMED"), cls: "bg-[var(--gh-2da44e)] hover:bg-[var(--gh-2c974b)]" }
+                : received && booking.status === "CONFIRMED" ? { label: "Mark as completed", onClick: () => updateStatus(booking._id, "COMPLETED"), cls: "bg-[var(--gh-0d1117)] hover:bg-[var(--gh-24292f)]" }
+                : null;
+              const canSlip = ["CONFIRMED", "COMPLETED"].includes(booking.status);
+              const canRemove = ["COMPLETED", "CANCELLED"].includes(booking.status) || !booking.rentalId;
+              const canCancel = ["PENDING", "CONFIRMED"].includes(booking.status);
+              const hasHandover = !!(booking.plateNumber || booking.renterCnic);
+              const iconBtn = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 text-xs font-semibold transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
+              const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
+              const total = booking.totalAmount + booking.deposit + (booking.lateFee ?? 0);
               return (
-                <div key={booking._id} className="bk-card" style={{ background: "var(--gh-ffffff)", border: booking.status === "PENDING" && tab === "received" ? "1px solid var(--gh-e3b341)" : booking.status === "CONFIRMED" && tab === "mine" ? "1px solid var(--gh-56d364)" : "1px solid var(--gh-e1e4e8)", borderRadius: "12px" }}>
-                  <StatusBanner status={booking.status} tab={tab} />
-
-                  {listing && (
-                    <div className="bk-listing" style={{ display: "flex", gap: "12px", marginBottom: "16px", padding: "12px", background: "var(--gh-f6f8fa)", borderRadius: "8px", alignItems: "center" }}>
-                      <div style={{ position: "relative", width: "64px", height: "48px", borderRadius: "6px", overflow: "hidden", flexShrink: 0, background: "var(--gh-e1e4e8)" }}>
-                        {listing.images?.[0] ? <Image src={listing.images[0]} alt="" fill sizes="64px" className="object-cover" /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "var(--gh-8c959f)" }}>No img</div>}
+                <div key={booking._id} className={`overflow-hidden rounded-2xl border bg-white ${look.border}`}>
+                  <div className="p-3.5 sm:p-4">
+                    {/* Vehicle */}
+                    <div className="flex gap-3">
+                      <div className="relative h-14 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)] sm:h-16 sm:w-20">
+                        {listing?.images?.[0]
+                          ? <Image src={listing.images[0]} alt="" fill sizes="80px" className="object-cover" />
+                          : <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={18} strokeWidth={1.5} /></div>}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          {listingId ? (
+                            <Link href={isDeal ? `/deals/${listingId}` : `/listings/${listingId}`} className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)] hover:underline">
+                              {listing?.title}
+                            </Link>
+                          ) : (
+                            <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">{listing?.title ?? "Vehicle removed"}</p>
+                          )}
+                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: look.bg, color: look.color }}>{look.label}</span>
+                        </div>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                           {isDeal && (
-                            <span className="theme-static mr-1.5 inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-[7px] py-px align-middle text-[10px] font-extrabold tracking-wide text-white">
+                            <span className="theme-static inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">
                               DEAL{(booking.dealId?.vehicleCount ?? 1) > 1 ? ` · ${booking.dealId!.vehicleCount} CARS` : ""}
                             </span>
                           )}
-                          {listing.title}
+                          {listing && <span className="truncate">{listing.make} {listing.model} · {listing.year} · {listing.location}</span>}
                         </p>
-                        <p style={{ fontSize: "12px", color: "var(--gh-57606a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{listing.make} {listing.model} · {listing.year} · {listing.location}</p>
-                        {listing.address && booking.status !== "CANCELLED" && (
-                          <a href={mapsUrl(listing.address, listing.location)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "3px", fontSize: "12px", color: "var(--gh-0550ae)", textDecoration: "none" }}>
-                            <MapPin size={12} /> Pickup: {listing.address}
-                          </a>
+                        <p className="mt-1 flex items-center gap-1 text-xs text-[var(--gh-0d1117)]">
+                          <CalendarDays size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
+                          {fmt(booking.startDate)} → {fmt(booking.endDate)} <span className="text-[var(--gh-8c959f)]">· {days} day{days !== 1 ? "s" : ""}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* People, pickup, return, handover */}
+                    <div className="mt-3 space-y-1.5 text-xs">
+                      {look.hint && <p className="font-medium" style={{ color: look.color }}>{look.hint}</p>}
+                      {person && (
+                        <p className="flex min-w-0 items-center gap-1.5 text-[var(--gh-57606a)]">
+                          <UserRound size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
+                          <span className="truncate">{person.role}: {person.name || "—"}</span>
+                          {person.phone
+                            ? <a href={`tel:${person.phone}`} className="flex flex-shrink-0 items-center gap-1 font-semibold text-[var(--gh-0d1117)]"><Phone size={11} /> {person.phone}</a>
+                            : received && <span className="text-[var(--gh-8c959f)]">· No phone added</span>}
+                        </p>
+                      )}
+                      {listing?.address && booking.status !== "CANCELLED" && (
+                        <a href={mapsUrl(listing.address, listing.location)} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-1.5 text-[var(--gh-0550ae)]">
+                          <MapPin size={12} className="flex-shrink-0" /> <span className="truncate">Pickup: {listing.address}</span>
+                        </a>
+                      )}
+                      {booking.returnedAt ? (
+                        <p className="flex items-center gap-1.5 text-[var(--gh-57606a)]"><Undo2 size={12} className="text-[var(--gh-8c959f)]" /> Returned {fmtTime(booking.returnedAt)}</p>
+                      ) : booking.dueBackAt && (
+                        <p className="flex items-center gap-1.5 font-semibold text-[var(--gh-0550ae)]"><Clock3 size={12} /> Return by {fmtTime(booking.dueBackAt)}</p>
+                      )}
+                      {booking.status === "ACTIVE" && booking.dueBackAt && <p className="text-[11px] text-[var(--gh-7d4e00)]">{LATE_RULE_TEXT}</p>}
+                      {hasHandover && (
+                        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          {booking.plateNumber && <PlateBadge plate={booking.plateNumber} className="!px-1.5 !py-0 text-[10px]" />}
+                          {booking.renterCnic && <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[var(--gh-0d1117)]"><IdCard size={12} className="text-[var(--gh-8c959f)]" /> {booking.renterCnic}</span>}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Money */}
+                    <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                        <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">PKR {total.toLocaleString()}</p>
+                        {booking.status !== "CANCELLED" && <PaymentTag booking={booking} onClick={received ? () => setPayFor(booking) : undefined} />}
+                      </div>
+                      <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">
+                        Rent PKR {booking.totalAmount.toLocaleString()} · Deposit PKR {booking.deposit.toLocaleString()}
+                        {(booking.lateFee ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Late PKR {booking.lateFee!.toLocaleString()} ({booking.lateDays} extra day{booking.lateDays !== 1 ? "s" : ""})</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5 border-t border-[var(--gh-e1e4e8)] px-3.5 py-2.5 sm:px-4">
+                    {primary && (
+                      <button onClick={primary.onClick} disabled={busy} className={`inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3.5 text-xs font-semibold text-white transition disabled:opacity-50 sm:flex-none ${primary.cls}`}>
+                        {primary.label}
+                      </button>
+                    )}
+                    <div className={`flex items-center gap-1.5 ${primary ? "" : "flex-1"}`}>
+                      {canSlip && (
+                        <button onClick={() => generateSlip(booking, tab)} aria-label="Booking slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
+                          <FileText size={14} /> <span className={primary ? "hidden sm:inline" : ""}>Slip</span>
+                        </button>
+                      )}
+                      {person?.phone && (
+                        <a href={`https://wa.me/${person.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${person.name ?? ""}`)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp the ${person.role.toLowerCase()}`} className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
+                          <MessageCircle size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
+                        </a>
+                      )}
+                    </div>
+                    <button type="button" onClick={() => setOpenMore(moreOpen ? null : booking._id)} aria-expanded={moreOpen} aria-label="More actions"
+                      className={`${iconBtn} ml-auto ${moreOpen ? "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]" : "text-[var(--gh-57606a)]"}`}>
+                      <MoreHorizontal size={15} /> <span className="hidden sm:inline">More</span>
+                    </button>
+                  </div>
+
+                  {/* Less frequent actions and details */}
+                  {moreOpen && (
+                    <div className="space-y-3 border-t border-[var(--gh-e1e4e8)] bg-[var(--gh-fafbfc)] px-3.5 py-3 sm:px-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {received && booking.status !== "CANCELLED" && (
+                          <button onClick={() => setPayFor(booking)} className={trayBtn}><Wallet size={13} /> Update payment</button>
+                        )}
+                        {received && booking.status !== "CANCELLED" && (hasHandover || ["CONFIRMED", "COMPLETED"].includes(booking.status)) && (
+                          <button onClick={() => setPlateFor(booking)} className={trayBtn}><Pencil size={13} /> {hasHandover ? "Edit plate & CNIC" : "Add plate & CNIC"}</button>
+                        )}
+                        {person?.email && (
+                          <a href={`mailto:${person.email}`} className={trayBtn}><Mail size={13} /> Email {person.role.toLowerCase()}</a>
+                        )}
+                        {canCancel && (
+                          <button onClick={() => setCancelTarget({ id: booking._id, action: received && booking.status === "PENDING" ? "decline" : "cancel" })} disabled={busy}
+                            className={`${trayBtn} border-[var(--gh-ffcdd2)] !text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
+                            <X size={13} /> {received && booking.status === "PENDING" ? "Decline request" : "Cancel booking"}
+                          </button>
+                        )}
+                        {canRemove && (
+                          <button onClick={() => setDeleteTarget(booking._id)} className={`${trayBtn} !text-[var(--gh-57606a)] hover:border-[var(--gh-ffcdd2)] hover:!text-[var(--gh-cf222e)]`}>
+                            <Trash2 size={13} /> Remove from list
+                          </button>
                         )}
                       </div>
-                      {tab === "mine" && listingId && (
-                        <Link className="bk-listing-actions" href={isDeal ? `/deals/${listingId}` : `/listings/${listingId}`} style={{ textAlign: "center", padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "6px", fontSize: "12px", fontWeight: 500, color: "var(--gh-0d1117)", textDecoration: "none", flexShrink: 0 }}>{isDeal ? "View deal →" : "View listing →"}</Link>
-                      )}
-                      {tab === "received" && booking.renterId && (
-                        <div className="bk-listing-actions" style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                          {booking.renterId.phone && (
-                            <>
-                              <a href={`tel:${booking.renterId.phone}`} style={{ padding: "6px 12px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Call</a>
-                              <a href={`https://wa.me/${booking.renterId.phone.replace(/\D/g, "")}?text=Hi ${booking.renterId.name}`} target="_blank" rel="noreferrer" style={{ padding: "6px 12px", background: "var(--gh-2da44e)", color: "var(--gh-ffffff)", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>WhatsApp</a>
-                            </>
-                          )}
-                          <a href={`mailto:${booking.renterId.email}`} style={{ padding: "6px 12px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", color: "var(--gh-0d1117)", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}>Email</a>
+                      {received && listing?._id && listing.type && listing.status && booking.status !== "CANCELLED" && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-semibold text-[var(--gh-57606a)]">Vehicle tag</span>
+                          <AvailabilityControl
+                            key={`${listing._id}-${listing.status}`}
+                            id={listing._id}
+                            type={listing.type}
+                            status={listing.status}
+                            allow={["ACTIVE", "RENTED"]}
+                            onChanged={st => setBookings(prev => prev.map(x => (x.rentalId?.listingId?._id === listing._id ? { ...x, rentalId: { ...x.rentalId, listingId: { ...x.rentalId.listingId, status: st } } } : x)))}
+                          />
                         </div>
                       )}
+                      <p className="text-[11px] leading-relaxed text-[var(--gh-8c959f)]">
+                        Requested {fmtTime(booking.createdAt)}
+                        {booking.confirmedAt && <> · Confirmed {fmtTime(booking.confirmedAt)}</>}
+                        {booking.cancelledAt && <> · Cancelled {fmtTime(booking.cancelledAt)}</>}
+                      </p>
                     </div>
                   )}
-
-                  {(booking.plateNumber || booking.renterCnic || (tab === "received" && ["CONFIRMED", "COMPLETED"].includes(booking.status))) && (
-                    <div style={{ marginBottom: "14px" }}>
-                      <HandoverDetails
-                        plate={booking.plateNumber}
-                        cnic={booking.renterCnic}
-                        onEdit={tab === "received" && booking.status !== "CANCELLED" ? () => setPlateFor(booking) : undefined}
-                      />
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", gap: "12px" }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px 10px", marginBottom: "6px", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)" }}>{fmt(booking.startDate)} → {fmt(booking.endDate)}</span>
-                        <span style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>({days} day{days !== 1 ? "s" : ""})</span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "6px" }}>
-                        <span style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>Requested: {fmtTime(booking.createdAt)}</span>
-                        {booking.confirmedAt && <span style={{ fontSize: "11px", color: "var(--gh-1a7f37)" }}>Confirmed: {fmtTime(booking.confirmedAt)}</span>}
-                        {booking.cancelledAt && <span style={{ fontSize: "11px", color: "var(--gh-cf222e)" }}>Cancelled: {fmtTime(booking.cancelledAt)}</span>}
-                        {booking.dueBackAt && (
-                          <span style={{ fontSize: "12px", fontWeight: 700, color: booking.status === "ACTIVE" ? "var(--gh-0550ae)" : "var(--gh-57606a)" }}>
-                            Return by: {fmtTime(booking.dueBackAt)}
-                          </span>
-                        )}
-                        {booking.returnedAt && <span style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>Returned: {fmtTime(booking.returnedAt)}</span>}
-                        {booking.status === "ACTIVE" && booking.dueBackAt && (
-                          <span style={{ fontSize: "11px", color: "var(--gh-7d4e00)" }}>{LATE_RULE_TEXT}</span>
-                        )}
-                      </div>
-                      {tab === "received" && booking.renterId && (
-                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "12px", color: "var(--gh-57606a)" }}>{booking.renterId.name}</span>
-                          <a href={`mailto:${booking.renterId.email}`} style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>{booking.renterId.email}</a>
-                          {booking.renterId.phone ? <a href={`tel:${booking.renterId.phone}`} style={{ fontSize: "12px", color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "none" }}>{booking.renterId.phone}</a> : <span style={{ fontSize: "12px", color: "var(--gh-8c959f)" }}>No phone added</span>}
-                        </div>
-                      )}
-                      {tab === "mine" && booking.status === "CONFIRMED" && booking.owner && (
-                        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "8px", padding: "10px 12px", background: "var(--gh-dafbe1)", borderRadius: "7px", border: "1px solid var(--gh-56d364)" }}>
-                          <span style={{ fontSize: "12px", color: "var(--gh-1a7f37)", fontWeight: 600 }}>Owner:</span>
-                          {booking.owner.name && <span style={{ fontSize: "12px", color: "var(--gh-1a7f37)" }}>{booking.owner.name}</span>}
-                          {booking.owner.phone && <a href={`tel:${booking.owner.phone}`} style={{ fontSize: "12px", color: "var(--gh-1a7f37)", fontWeight: 600, textDecoration: "none" }}>{booking.owner.phone}</a>}
-                          {booking.owner.email && <a href={`mailto:${booking.owner.email}`} style={{ fontSize: "12px", color: "var(--gh-1a7f37)", textDecoration: "none" }}>{booking.owner.email}</a>}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
-                      <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "20px", background: statusStyle.bg, color: statusStyle.color }}>{booking.status}</span>
-                      {booking.status !== "CANCELLED" && (
-                        <PaymentTag booking={booking} onClick={tab === "received" ? () => setPayFor(booking) : undefined} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bk-amounts" style={{ display: "flex", gap: "20px", marginBottom: "14px", padding: "12px 16px", background: "var(--gh-f6f8fa)", borderRadius: "8px" }}>
-                    <div><p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginBottom: "2px" }}>Rental amount</p><p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)" }}>PKR {booking.totalAmount.toLocaleString()}</p></div>
-                    <div style={{ width: "1px", background: "var(--gh-e1e4e8)" }} />
-                    <div><p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginBottom: "2px" }}>Deposit</p><p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)" }}>PKR {booking.deposit.toLocaleString()}</p></div>
-                    {(booking.lateFee ?? 0) > 0 && (
-                      <>
-                        <div style={{ width: "1px", background: "var(--gh-e1e4e8)" }} />
-                        <div><p style={{ fontSize: "11px", color: "var(--gh-cf222e)", marginBottom: "2px" }}>Late fee ({booking.lateDays}d × {LATE_RATE_MULTIPLIER})</p><p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-cf222e)" }}>PKR {booking.lateFee!.toLocaleString()}</p></div>
-                      </>
-                    )}
-                    <div style={{ width: "1px", background: "var(--gh-e1e4e8)" }} />
-                    <div><p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginBottom: "2px" }}>Total</p><p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)" }}>PKR {(booking.totalAmount + booking.deposit + (booking.lateFee ?? 0)).toLocaleString()}</p></div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                    {tab === "received" && booking.status === "PENDING" && (
-                      <>
-                        <button onClick={() => updateStatus(booking._id, "CONFIRMED")} disabled={updating === booking._id} style={{ padding: "8px 18px", background: "var(--gh-2da44e)", color: "var(--gh-ffffff)", border: "none", borderRadius: "7px", fontSize: "13px", fontWeight: 600, cursor: "pointer", opacity: updating === booking._id ? 0.6 : 1 }}>{updating === booking._id ? "..." : "Confirm"}</button>
-                        <button onClick={() => setCancelTarget({ id: booking._id, action: "decline" })} disabled={updating === booking._id} style={{ padding: "8px 18px", background: "var(--gh-ffffff)", color: "var(--gh-cf222e)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "7px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Decline</button>
-                      </>
-                    )}
-                    {tab === "received" && booking.status === "CONFIRMED" && (
-                      <button onClick={() => updateStatus(booking._id, "COMPLETED")} disabled={updating === booking._id} style={{ padding: "8px 18px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "7px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Mark as completed</button>
-                    )}
-                    {tab === "mine" && ["PENDING", "CONFIRMED"].includes(booking.status) && (
-                      <button onClick={() => setCancelTarget({ id: booking._id, action: "cancel" })} disabled={updating === booking._id} style={{ padding: "8px 18px", background: "var(--gh-ffffff)", color: "var(--gh-cf222e)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "7px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Cancel booking</button>
-                    )}
-                    {tab === "received" && listing?._id && listing.type && listing.status && booking.status !== "CANCELLED" && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>Vehicle tag</span>
-                        <AvailabilityControl
-                          key={`${listing._id}-${listing.status}`}
-                          id={listing._id}
-                          type={listing.type}
-                          status={listing.status}
-                          allow={["ACTIVE", "RENTED"]}
-                          onChanged={s => setBookings(prev => prev.map(x => (x.rentalId?.listingId?._id === listing._id ? { ...x, rentalId: { ...x.rentalId, listingId: { ...x.rentalId.listingId, status: s } } } : x)))}
-                        />
-                      </span>
-                    )}
-                    {tab === "received" && booking.status !== "CANCELLED" && (
-                      <button onClick={() => setPayFor(booking)} title="Record what the renter has paid" style={{ padding: "8px 16px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", color: "var(--gh-0d1117)", borderRadius: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Payment</button>
-                    )}
-                    {["CONFIRMED", "COMPLETED"].includes(booking.status) && (
-                      <button onClick={() => generateSlip(booking, tab)} style={{ padding: "8px 16px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", color: "var(--gh-0d1117)", borderRadius: "7px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Generate slip</button>
-                    )}
-                    {/* A booking whose vehicle was deleted can always be cleared away */}
-                    {(["COMPLETED", "CANCELLED"].includes(booking.status) || !booking.rentalId) && (
-                      <button onClick={() => setDeleteTarget(booking._id)} style={{ padding: "8px 14px", background: "var(--gh-ffffff)", color: "var(--gh-8c959f)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "7px", fontSize: "12px", cursor: "pointer", marginLeft: "auto" }}>Remove</button>
-                    )}
-                  </div>
                 </div>
               );
             })}

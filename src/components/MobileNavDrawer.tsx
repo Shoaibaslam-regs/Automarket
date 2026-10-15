@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
   Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare,
-  Search, Settings, ShieldCheck, Sparkles, X, type LucideIcon,
+  Search, Settings, ShieldCheck, ShoppingBag, Sparkles, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
@@ -32,7 +32,7 @@ export default function MobileNavDrawer({
   onClose: () => void;
   onSignOut: () => void;
   session: Session | null;
-  counts: { messages: number; bookings: number };
+  counts: { messages: number; bookings: number; purchases: number };
 }) {
   const pathname = usePathname();
   const user = session?.user;
@@ -69,6 +69,7 @@ export default function MobileNavDrawer({
     { href: "/sell", label: "Sell", icon: Car },
     { href: "/messages", label: "Messages", icon: MessageSquare, count: counts.messages },
     { href: "/bookings", label: "Bookings", icon: Calendar, count: counts.bookings },
+    { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const browse: Item[] = [

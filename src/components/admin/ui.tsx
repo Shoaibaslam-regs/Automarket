@@ -355,11 +355,12 @@ export function DataTable<T>({
             >
               <div className="min-w-0">{primary.cell(row)}</div>
 
-              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-100 md:contents">
+              {/* Phones: short details as "LABEL value" pairs on one wrapping line, wide cells (actions) on their own lines */}
+              <div className="mt-2.5 flex flex-wrap items-start gap-x-5 gap-y-2 md:contents">
                 {rest.map(c => (
-                  <div key={c.header} className={`min-w-0 ${c.full ? "col-span-2 md:col-span-1" : ""} ${alignClass(c)}`}>
+                  <div key={c.header} className={`min-w-0 ${c.full ? "basis-full" : "flex items-baseline gap-1.5 md:block"} ${alignClass(c)}`}>
                     {!c.hideLabel && (
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 md:hidden">{c.header}</p>
+                      <p className={`flex-shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 md:hidden ${c.full ? "mb-1" : ""}`}>{c.header}</p>
                     )}
                     {c.cell(row)}
                   </div>

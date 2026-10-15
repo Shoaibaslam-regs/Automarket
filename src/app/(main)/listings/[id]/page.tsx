@@ -23,6 +23,8 @@ import { Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
+import BuyRequestButton from "@/components/purchases/BuyRequestButton";
+import { getMembership } from "@/lib/business";
 import StarRating from "@/components/reviews/StarRating";
 
 type Props = { params: Promise<{ id: string }> };
@@ -148,6 +150,9 @@ export default async function ListingDetailPage({ params }: Props) {
   const { business, rating } = page;
   // Sold or rented: shown with a tag so visitors move on to vehicles they can still buy or rent
   const closed = closedTag(l.status);
+  // Business vehicles for sale can be bought online, except by the business's own team
+  const viewerOrg = viewerId && business ? (await getMembership(viewerId))?.organizationId.toString() : undefined;
+  const canBuy = !!business && isForSale && !closed && !isOwner && viewerOrg !== business.id;
 
   const specs = [
     { label: "Condition", value: l.condition },
@@ -371,6 +376,14 @@ export default async function ListingDetailPage({ params }: Props) {
                 <p className="text-sm text-gray-400">Seller info unavailable</p>
               )}
             </div>
+
+            {canBuy && business && (
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-gray-700">Buy from {business.name}</h2>
+                <p className="mb-3 mt-1 text-xs text-gray-500">Send a purchase request. The business agrees the price with you, and you get a sale slip when it&apos;s done.</p>
+                <BuyRequestButton listingId={String(l._id)} title={l.title} price={l.price} businessName={business.name} />
+              </div>
+            )}
 
             {/* Rental */}
             {rental && (

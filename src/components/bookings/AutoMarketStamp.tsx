@@ -1,4 +1,4 @@
-export default function AutoMarketStamp({ business, date, className }: { business?: string; date?: string; className?: string }) {
+export default function AutoMarketStamp({ business, date, className, caption = "BOOKING CONFIRMED" }: { business?: string; date?: string; className?: string; /** Bottom line, e.g. "SALE COMPLETED" */ caption?: string }) {
   const ink = "#056aef6c";
   const name = (business || "").trim().toUpperCase();
   const shortName = name.length > 28 ? `${name.slice(0, 27)}…` : name;
@@ -35,7 +35,7 @@ export default function AutoMarketStamp({ business, date, className }: { busines
         </text>
 
         <text x="120" y="84" fontSize="7" fontWeight="700" letterSpacing="1.6">
-          {date ? `BOOKING CONFIRMED · ${date.toUpperCase()}` : "BOOKING CONFIRMED"}
+          {date ? `${caption} · ${date.toUpperCase()}` : caption}
         </text>
       </g>
     </svg>

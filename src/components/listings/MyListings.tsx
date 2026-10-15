@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Car, Eye, ImageOff, LayoutGrid, List, MapPin, Plus, ScanSearch } from "lucide-react";
+import { Car, ImageOff, LayoutGrid, List, MapPin, Plus, ScanSearch } from "lucide-react";
 import DeleteListing from "./DeleteListing";
 import AvailabilityControl from "./AvailabilityControl";
 import { formatLakh } from "@/lib/format";
@@ -43,14 +43,12 @@ function Price({ l, className }: { l: MyListing; className: string }) {
   );
 }
 
+/** Inspect and delete; the photo and title already open the listing. */
 function Actions({ l }: { l: MyListing }) {
   return (
     <div className="flex items-center gap-1.5">
-      <Link href={`/listings/${l.id}`} aria-label="View listing" className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-100">
-        <Eye size={13} /> <span className="hidden min-[400px]:inline">View</span>
-      </Link>
-      <Link href={`/listings/${l.id}/inspect`} aria-label="AI inspection" className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100">
-        <ScanSearch size={13} /> <span className="hidden sm:inline">Inspect</span>
+      <Link href={`/listings/${l.id}/inspect`} aria-label="AI inspection" title="AI inspection" className="inline-flex h-8 items-center gap-1 rounded-lg bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100">
+        <ScanSearch size={13} /> Inspect
       </Link>
       <span className="ml-auto"><DeleteListing id={l.id} /></span>
     </div>
@@ -130,7 +128,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
                 </span>
               </Link>
               <div className="flex flex-1 flex-col p-2.5 sm:p-4">
-                <p className="truncate text-[13px] font-semibold text-slate-900 sm:text-base">{l.title}</p>
+                <Link href={`/listings/${l.id}`} className="truncate text-[13px] font-semibold text-slate-900 hover:underline sm:text-base">{l.title}</Link>
                 <p className="mt-0.5 truncate text-[11px] text-slate-500 sm:text-xs">{l.make} {l.model} · {l.year}</p>
                 <Price l={l} className="mt-1.5 text-base font-extrabold text-slate-900 sm:text-lg" />
                 <div className="mt-auto space-y-2 border-t border-slate-100 pt-2.5 sm:pt-3">
@@ -154,7 +152,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
               </Link>
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 truncate font-semibold text-slate-900">{l.title}</p>
+                  <Link href={`/listings/${l.id}`} className="min-w-0 truncate font-semibold text-slate-900 hover:underline">{l.title}</Link>
                   <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE}`}>{STATUS_TEXT[l.status] ?? l.status}</span>
                 </div>
                 <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-500">

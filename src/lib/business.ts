@@ -35,6 +35,8 @@ export const BUSINESS_PERMISSIONS = {
   deleteCustomers: ["OWNER"],
   /** Create walk-in bookings and move bookings through their statuses */
   manageBookings: ["OWNER", "MANAGER", "SALES"],
+  /** Handle purchase requests and record sales (accept, decline, mark sold, payments) */
+  manageSales: ["OWNER", "MANAGER", "SALES"],
   /** Create, edit, pause and delete deals */
   manageDeals: ["OWNER", "MANAGER"],
   /** Publicly reply to customer reviews */
