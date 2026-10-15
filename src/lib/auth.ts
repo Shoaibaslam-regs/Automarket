@@ -1,9 +1,25 @@
- import NextAuth from "next-auth";
+ import NextAuth, { CredentialsSignin } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
+import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
+
+/**
+ * Too many failed sign-ins for this email or IP. The code carries the seconds left ("rate_limited_840"),
+ * so the login page can lock its button with a countdown.
+ */
+class RateLimitedSignin extends CredentialsSignin {
+  code = "rate_limited";
+  constructor(retryAfterSec: number) {
+    super();
+    this.code = `rate_limited_${retryAfterSec}`;
+  }
+}
+
+/** Compared against when the email has no password account, so unknown emails take as long as wrong passwords. */
+const DUMMY_HASH = "$2b$10$ArUL0ak2bQr.xXObNPvNE.SwachPpTAciiOivbk37fR9LP2Z/R/9K";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -17,26 +33,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password required");
-        }
+      async authorize(credentials, request) {
+        if (!credentials?.email || !credentials?.password) return null;
+        const email = String(credentials.email).trim();
+        const password = String(credentials.password);
+
+        // Only failed attempts count: 5 per email and 30 per IP; reaching the limit locks sign-in for 15 minutes
+        const emailKey = email.toLowerCase();
+        const ip = clientIp(request);
+        const [byEmail, byIp] = await Promise.all([isRateLimited("loginEmail", emailKey), isRateLimited("loginIp", ip)]);
+        if (!byEmail.ok || !byIp.ok) throw new RateLimitedSignin(Math.max(byEmail.ok ? 0 : byEmail.retryAfterSec, byIp.ok ? 0 : byIp.retryAfterSec));
 
         await connectDB();
+        const user = await User.findOne({ email });
 
-        const user = await User.findOne({ email: credentials.email });
-
-        if (!user || !user.password) {
-          throw new Error("No account found with this email");
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
-
-        if (!isValid) {
-          throw new Error("Incorrect password");
+        // The same work and the same answer whether the email is unknown or the password is wrong
+        const isValid = await bcrypt.compare(password, user?.password || DUMMY_HASH);
+        if (!user || !user.password || !isValid) {
+          const [e, i] = await Promise.all([hitRateLimit("loginEmail", emailKey), hitRateLimit("loginIp", ip)]);
+          // The failure that reaches the limit already locks, so the button locks straight away
+          if (e.remaining === 0 || i.remaining === 0) throw new RateLimitedSignin(Math.max(e.remaining === 0 ? e.retryAfterSec : 0, i.remaining === 0 ? i.retryAfterSec : 0));
+          return null;
         }
 
         return {

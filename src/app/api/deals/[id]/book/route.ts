@@ -12,6 +12,7 @@ import { dealPrice, dealState } from "@/lib/deals";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 /**
  * Books a rent deal (a single car or a multi-car package) for the signed-in user. Body: { startDate, endDate }.
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Sign in to book this deal" }, { status: 401 });
+    const limited = await rateLimitResponse("bookings", session.user.id, "booking requests");
+    if (limited) return limited;
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     await connectDB();

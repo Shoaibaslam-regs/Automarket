@@ -6,12 +6,14 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import { TERMS_PATH } from "@/lib/terms";
+import { useRateLock } from "@/hooks/useRateLock";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirm: "",
   });
+  const regLock = useRateLock("register");
   const [error, setError] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,6 +51,7 @@ export default function RegisterPage() {
     });
     const data = await res.json();
     setLoading(false);
+    regLock.check(res, data);
     if (!res.ok) { setError(data.error); return; }
     await signIn("credentials", {
       email: form.email,
@@ -108,9 +111,9 @@ export default function RegisterPage() {
               </span>
             </label>
 
-            <button type="submit" disabled={loading}
-              style={{ padding: "11px", background: loading ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", marginTop: "4px" }}>
-              {loading ? "Creating account..." : "Create account"}
+            <button type="submit" disabled={loading || regLock.locked}
+              style={{ padding: "11px", background: loading || regLock.locked ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading || regLock.locked ? "not-allowed" : "pointer", marginTop: "4px" }}>
+              {regLock.locked ? regLock.text : loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 

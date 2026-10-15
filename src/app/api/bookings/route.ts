@@ -10,6 +10,7 @@ import { ensureBookingCustomer } from "@/lib/customerSync";
 import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
 import { DEAL_BOOKING_FIELDS } from "@/lib/dealBookings";
 import { Organization } from "@/models/Organization";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,9 +77,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const limited = await rateLimitResponse("bookings", session.user.id, "booking requests");
+    if (limited) return limited;
 
     await connectDB();
     const { rentalId, startDate, endDate } = await req.json();

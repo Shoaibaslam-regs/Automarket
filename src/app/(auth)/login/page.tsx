@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { TERMS_PATH } from "@/lib/terms";
+import { useRateLock } from "@/hooks/useRateLock";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Locked per email after too many wrong passwords, matching the server's lock
+  const lock = useRateLock(`login:${email.trim().toLowerCase()}`);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +24,13 @@ export default function LoginPage() {
     const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password");
+      const limited = res.code?.match(/^rate_limited(?:_(\d+))?$/);
+      if (limited) {
+        lock.lock(Number(limited[1]) || 15 * 60);
+        setError("");
+      } else {
+        setError("Invalid email or password");
+      }
     } else {
       router.push("/dashboard");
       router.refresh();
@@ -42,7 +51,12 @@ export default function LoginPage() {
           <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>Welcome back</h1>
           <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "24px" }}>Sign in to your AutoMarket account</p>
 
-          {error && (
+          {lock.locked && (
+            <div role="alert" style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-7d4e00)", marginBottom: "16px" }}>
+              Too many wrong passwords for this email, so sign-in is paused. {lock.text}.
+            </div>
+          )}
+          {error && !lock.locked && (
             <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "16px" }}>
               {error}
             </div>
@@ -61,9 +75,9 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
-            <button type="submit" disabled={loading}
-              style={{ padding: "11px", background: loading ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer" }}>
-              {loading ? "Signing in..." : "Sign in"}
+            <button type="submit" disabled={loading || lock.locked}
+              style={{ padding: "11px", background: loading || lock.locked ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading || lock.locked ? "not-allowed" : "pointer" }}>
+              {lock.locked ? lock.text : loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 

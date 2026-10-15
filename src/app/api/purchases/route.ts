@@ -9,6 +9,7 @@ import { normalizeCnic } from "@/lib/plates";
 import { purchaseNumber } from "@/lib/purchases";
 import { ensurePurchaseCustomer, resolveSaleItem } from "@/lib/saleItems";
 import { sendChatMessage, triggerPusher } from "@/lib/support";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 /** Most purchase requests one buyer may have open at once. */
 const MAX_OPEN_REQUESTS = 10;
@@ -39,6 +40,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Sign in to send a purchase request" }, { status: 401 });
+    const limited = await rateLimitResponse("purchases", session.user.id, "purchase requests");
+    if (limited) return limited;
     await connectDB();
     const body = await req.json().catch(() => ({}));
 

@@ -4,7 +4,18 @@ import { useState } from "react";
 import { Calculator } from "lucide-react";
 import { formatLakh } from "@/lib/format";
 
-const TENURES = [1, 2, 3, 4, 5];
+/** Common installment plans, in months; the slider allows any length in between. */
+const TENURES = [12, 24, 36, 48, 60, 72];
+const MIN_MONTHS = 3;
+const MAX_MONTHS = 84;
+
+/** "18 months (1 yr 6 mo)" */
+function tenureText(months: number) {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  const parts = [y && `${y} yr`, m && `${m} mo`].filter(Boolean).join(" ");
+  return months < 12 ? `${months} months` : `${months} months (${parts})`;
+}
 
 /** Standard reducing-balance car loan installment. */
 function monthlyInstallment(principal: number, annualRatePct: number, months: number) {
@@ -18,13 +29,12 @@ const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString("en-PK")}`;
 
 export default function EmiCalculator({ price }: { price: number }) {
   const [downPct, setDownPct] = useState(30);
-  const [years, setYears] = useState(5);
+  const [months, setMonths] = useState(60);
   const [rate, setRate] = useState("18");
 
   const annualRate = Math.min(60, Math.max(0, Number(rate) || 0));
   const down = (price * downPct) / 100;
   const financed = price - down;
-  const months = years * 12;
   const emi = monthlyInstallment(financed, annualRate, months);
   const totalInterest = emi * months - financed;
 
@@ -38,7 +48,7 @@ export default function EmiCalculator({ price }: { price: number }) {
       <div className="rounded-xl bg-slate-900 p-4 text-white">
         <p className="text-xs text-slate-400">Estimated monthly installment</p>
         <p className="mt-1 text-2xl font-bold tracking-tight">{pkr(emi)}</p>
-        <p className="mt-0.5 text-xs text-slate-400">for {months} months</p>
+        <p className="mt-0.5 text-xs text-slate-400">every month for {tenureText(months)}</p>
       </div>
 
       <div className="mt-4 space-y-4">
@@ -60,19 +70,32 @@ export default function EmiCalculator({ price }: { price: number }) {
         </div>
 
         <div>
-          <p className="mb-1.5 text-xs font-medium text-gray-600">Loan tenure</p>
-          <div className="grid grid-cols-5 gap-1.5">
-            {TENURES.map(y => (
+          <div className="mb-1.5 flex justify-between text-xs">
+            <label htmlFor="emi-months" className="font-medium text-gray-600">Installments</label>
+            <span className="font-semibold text-gray-900">{months} months</span>
+          </div>
+          <input
+            id="emi-months"
+            type="range"
+            min={MIN_MONTHS}
+            max={MAX_MONTHS}
+            step={1}
+            value={months}
+            onChange={e => setMonths(Number(e.target.value))}
+            className="w-full accent-slate-900"
+          />
+          <div className="mt-2 grid grid-cols-6 gap-1">
+            {TENURES.map(m => (
               <button
-                key={y}
+                key={m}
                 type="button"
-                onClick={() => setYears(y)}
-                aria-pressed={years === y}
-                className={`rounded-lg py-1.5 text-xs font-semibold transition ${
-                  years === y ? "bg-slate-900 text-white" : "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-100"
+                onClick={() => setMonths(m)}
+                aria-pressed={months === m}
+                className={`rounded-lg py-1.5 text-[11px] font-semibold transition ${
+                  months === m ? "bg-slate-900 text-white" : "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-100"
                 }`}
               >
-                {y}y
+                {m}m
               </button>
             ))}
           </div>
@@ -99,8 +122,16 @@ export default function EmiCalculator({ price }: { price: number }) {
 
       <dl className="mt-4 space-y-1.5 border-t border-gray-100 pt-4 text-sm">
         <div className="flex justify-between">
+          <dt className="text-gray-500">Down payment</dt>
+          <dd className="font-medium text-gray-900">{pkr(down)}</dd>
+        </div>
+        <div className="flex justify-between">
           <dt className="text-gray-500">Loan amount</dt>
           <dd className="font-medium text-gray-900">{pkr(financed)}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-gray-500">{months} installments of</dt>
+          <dd className="font-medium text-gray-900">{pkr(emi)}</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-gray-500">Total interest</dt>

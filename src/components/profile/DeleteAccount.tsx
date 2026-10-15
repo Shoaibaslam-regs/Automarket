@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { useRateLock } from "@/hooks/useRateLock";
 
 type Check = {
   blockers: string[];
@@ -24,6 +25,7 @@ export default function DeleteAccount() {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const delLock = useRateLock("accountDelete");
   const [error, setError] = useState("");
 
   function openDialog() {
@@ -52,6 +54,7 @@ export default function DeleteAccount() {
       body: JSON.stringify({ confirmEmail, password }),
     });
     const data = await res.json().catch(() => ({}));
+    delLock.check(res, data);
     if (!res.ok) {
       setDeleting(false);
       setError(data.error || "Couldn't delete your account");
@@ -142,9 +145,9 @@ export default function DeleteAccount() {
                     </>
                   )}
                   {error && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
-                  <button type="submit" disabled={!ready || deleting}
+                  <button type="submit" disabled={!ready || deleting || delLock.locked}
                     className="mt-4 w-full rounded-lg bg-rose-600 py-2.5 text-[13px] font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
-                    {deleting ? "Deleting your account…" : "Permanently delete my account"}
+                    {delLock.locked ? delLock.text : deleting ? "Deleting your account…" : "Permanently delete my account"}
                   </button>
                 </form>
               )}

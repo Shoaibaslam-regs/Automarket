@@ -8,6 +8,7 @@ import { AlertTriangle, Clock3, Headset, MessageSquare, Send, ShieldCheck } from
 import Select from "@/components/ui/Select";
 import { SUPPORT_TOPICS, type SupportTopicId } from "@/lib/supportTopics";
 import { SUPPORT_WHATSAPP, whatsappLink } from "@/lib/supportContact";
+import { useRateLock } from "@/hooks/useRateLock";
 
 type Org = { name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
@@ -18,6 +19,7 @@ export default function BusinessSupportPage() {
   const [org, setOrg] = useState<Org | null>(null);
   const [topic, setTopic] = useState<SupportTopicId | "">("");
   const [message, setMessage] = useState("");
+  const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,6 +45,7 @@ export default function BusinessSupportPage() {
       body: JSON.stringify({ topic, message }),
     });
     const data = await res.json().catch(() => ({}));
+    supLock.check(res, data);
     if (!res.ok) { setSending(false); setError(data.error || "Couldn't send your message"); return; }
     router.push(`/messages?with=${data.supportUserId}`);
   }
@@ -105,8 +108,8 @@ export default function BusinessSupportPage() {
 
             {error && <div role="alert" className="mt-2 rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-3 py-2.5 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
 
-            <button type="submit" disabled={sending} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:opacity-50 sm:w-auto sm:px-5">
-              <Send size={14} /> {sending ? "Sending…" : suspended && topic === "APPEAL" ? "Send appeal" : "Send message"}
+            <button type="submit" disabled={sending || supLock.locked} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:opacity-50 sm:w-auto sm:px-5">
+              <Send size={14} /> {supLock.locked ? supLock.text : sending ? "Sending…" : suspended && topic === "APPEAL" ? "Send appeal" : "Send message"}
             </button>
             <p className="mt-3 text-[11px] text-[var(--gh-57606a)]">The conversation opens in Messages, where the team replies and you can follow up.</p>
           </form>

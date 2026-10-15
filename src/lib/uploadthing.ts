@@ -1,5 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { UTApi } from "uploadthing/server";
+import { UTApi, UploadThingError } from "uploadthing/server";
+import { hitRateLimit, waitText } from "@/lib/rateLimit";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { VehicleImage } from "@/models/VehicleImage";
@@ -14,6 +15,14 @@ async function requireUser() {
   return { userId: session.user.id };
 }
 
+/** Vehicle photos are each checked by a paid Gemini call, so they're counted per file: 30 an hour per user. */
+async function requireUserWithinPhotoLimit({ files }: { files: readonly unknown[] }) {
+  const { userId } = await requireUser();
+  const r = await hitRateLimit("vehicleImages", userId!, files.length);
+  if (!r.ok) throw new UploadThingError(`You've uploaded a lot of photos. Please try again in ${waitText(r.retryAfterSec)}.`);
+  return { userId };
+}
+
 /** What the client receives per file once the server has checked it. */
 export type VehicleUploadResult =
   | { ok: true; url: string; vehicleType: string }
@@ -24,7 +33,7 @@ export const ourFileRouter = {
   vehicleImages: f({
     image: { maxFileSize: "4MB", maxFileCount: 8 },
   })
-    .middleware(requireUser)
+    .middleware(requireUserWithinPhotoLimit)
     .onUploadComplete(async ({ file, metadata }): Promise<VehicleUploadResult> => {
       try {
         const check = await checkVehicleImageUrl(file.ufsUrl);

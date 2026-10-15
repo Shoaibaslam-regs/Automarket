@@ -12,6 +12,7 @@ import { formatLakh } from "@/lib/format";
 import {
   CONDITIONS, FUEL_TYPES, TRANSMISSIONS, filtersToSearchParams, hasFilters, parseFilters, type ListingFilters,
 } from "@/lib/listingFilters";
+import { useRateLock } from "@/hooks/useRateLock";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
 const TYPES = [
@@ -108,6 +109,7 @@ export default function ListingsPage({
   // Sold and rented vehicles are shown (tagged) unless the visitor hides them
   const [availableOnly, setAvailableOnly] = useState(initialParams.available === "1");
   const [view, setView] = useState<"grid" | "list">(initialParams.view === "list" ? "list" : "grid");
+  const saveLock = useRateLock("savedSearches");
   const [saveState, setSaveState] = useState<{ query: string; status: "saving" | "saved" | "error"; message?: string } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [closingFilters, setClosingFilters] = useState(false);
@@ -166,6 +168,7 @@ export default function ListingsPage({
         body: JSON.stringify({ filters }),
       });
       const data = await res.json();
+      saveLock.check(res, data);
       if (!res.ok) throw new Error(data.error || "Couldn't save this search");
       setSaveState({ query: filterQuery, status: "saved" });
     } catch (err) {
@@ -506,7 +509,7 @@ export default function ListingsPage({
                   <button
                     type="button"
                     onClick={saveSearch}
-                    disabled={saveStatus?.status === "saving" || saveStatus?.status === "saved"}
+                    disabled={saveStatus?.status === "saving" || saveStatus?.status === "saved" || saveLock.locked}
                     title="Get an email when new vehicles match this search"
                     className={`bl-pop inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                       saveStatus?.status === "saved"
@@ -515,7 +518,7 @@ export default function ListingsPage({
                     }`}
                   >
                     {saveStatus?.status === "saved" ? <BellRing size={13} strokeWidth={2.2} /> : <Bell size={13} strokeWidth={2.2} />}
-                    {saveStatus?.status === "saving" ? "Saving…" : saveStatus?.status === "saved" ? "Alert on" : "Save search"}
+                    {saveLock.locked ? saveLock.text : saveStatus?.status === "saving" ? "Saving…" : saveStatus?.status === "saved" ? "Alert on" : "Save search"}
                   </button>
                 )}
               </div>

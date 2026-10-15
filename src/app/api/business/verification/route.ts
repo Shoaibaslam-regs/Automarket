@@ -7,6 +7,7 @@ import { getMembership } from "@/lib/business";
 import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { badgeRequestText } from "@/lib/supportContact";
 import { VERIFIED_BADGE, badgeState, type BadgeVerification } from "@/lib/plans";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 type OrgBadge = {
   _id: { toString(): string };
@@ -59,6 +60,8 @@ export async function POST() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const limited = await rateLimitResponse("support", session.user.id, "requests");
+    if (limited) return limited;
     await connectDB();
     const member = await getMembership(session.user.id);
     if (!member) return NextResponse.json({ error: "The Verified badge is for businesses. Set up your business first." }, { status: 403 });

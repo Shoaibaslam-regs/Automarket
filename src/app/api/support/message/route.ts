@@ -7,6 +7,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getSupportAdmin, triggerPusher } from "@/lib/support";
 import { supportTopicLabel } from "@/lib/supportTopics";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
@@ -19,6 +20,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Sign in to contact the team" }, { status: 401 });
+    const limited = await rateLimitResponse("support", session.user.id, "messages to the team");
+    if (limited) return limited;
     const { topic, message } = await req.json().catch(() => ({}));
     const topicLabel = supportTopicLabel(topic);
     if (!topicLabel) return NextResponse.json({ error: "Choose a topic" }, { status: 400 });

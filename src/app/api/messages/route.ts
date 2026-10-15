@@ -4,6 +4,7 @@ import { Message } from "@/models/Message";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import { triggerPusher } from "@/lib/support";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -71,9 +72,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const limited = await rateLimitResponse("messages", session.user.id, "messages sent");
+    if (limited) return limited;
 
     await connectDB();
 

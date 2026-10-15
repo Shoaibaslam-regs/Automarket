@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { MessageSquare } from "lucide-react";
 import { PLANS, type Plan } from "@/lib/plans";
 import { upgradeRequestText, whatsappLink } from "@/lib/supportContact";
+import { useRateLock } from "@/hooks/useRateLock";
 
 function WhatsAppIcon({ size = 16 }: { size?: number }) {
   return (
@@ -27,6 +28,7 @@ export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", clas
 }) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const wa = whatsappLink(upgradeRequestText(plan.name, plan.price, { id: session?.user?.id, email: session?.user?.email }));
@@ -41,6 +43,7 @@ export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", clas
       body: JSON.stringify({ plan: plan.id }),
     });
     const data = await res.json().catch(() => ({}));
+    supLock.check(res, data);
     if (!res.ok) {
       setSending(false);
       setError(data.error || "Couldn't send your request. Please try again.");
@@ -57,8 +60,8 @@ export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", clas
     <div className={className}>
       <div className="flex flex-col gap-2 sm:flex-row">
         {status === "authenticated" ? (
-          <button type="button" onClick={messageTeam} disabled={sending} className={primary}>
-            <MessageSquare size={16} /> {sending ? "Sending request…" : "Message the team"}
+          <button type="button" onClick={messageTeam} disabled={sending || supLock.locked} className={primary}>
+            <MessageSquare size={16} /> {supLock.locked ? supLock.text : sending ? "Sending request…" : "Message the team"}
           </button>
         ) : (
           <Link href="/login" className={primary}>

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { formatCnicInput } from "@/lib/plates";
+import { useRateLock } from "@/hooks/useRateLock";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -30,6 +31,7 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
+  const buyLock = useRateLock("purchases");
 
   const btn = `inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 ${className}`;
 
@@ -56,6 +58,7 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
     });
     const data = await res.json().catch(() => ({}));
     setSaving(false);
+    buyLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't send your request"); return; }
     setSent(data.purchase?._id ?? "");
   }
@@ -113,8 +116,8 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
               </div>
               {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
-              <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
-                {saving ? "Sending…" : "Send purchase request"}
+              <button type="submit" disabled={saving || buyLock.locked} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                {buyLock.locked ? buyLock.text : saving ? "Sending…" : "Send purchase request"}
               </button>
               <p className="text-center text-[11px] text-slate-400">No payment now. You pay the business when you collect the vehicle.</p>
             </form>

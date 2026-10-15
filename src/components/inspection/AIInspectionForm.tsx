@@ -5,6 +5,7 @@ import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
 import { splitVehicleUploads } from "@/lib/vehicleUploads";
 import { Bot, Wallet } from "lucide-react";
+import { useRateLock } from "@/hooks/useRateLock";
 
 interface Report {
   make?: string;
@@ -169,6 +170,7 @@ function ReportCard({ report }: { report: Report }) {
 
 export default function AIInspectionForm({ listingId, listingImages, existingReport }: Props) {
   const [images, setImages] = useState<string[]>(listingImages || []);
+  const aiLock = useRateLock("aiInspection");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [report, setReport] = useState<Report | null>(existingReport);
@@ -187,6 +189,7 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
 
     const data = await res.json();
     setLoading(false);
+    aiLock.check(res, data);
 
     if (!res.ok) { setError(data.error); return; }
     setReport({ ...data.report, createdAt: new Date().toISOString() });
@@ -267,13 +270,13 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
 
       <button
         onClick={runInspection}
-        disabled={loading || images.length === 0}
+        disabled={loading || images.length === 0 || aiLock.locked}
         style={{
           width: "100%", padding: "13px",
-          background: loading || images.length === 0 ? "var(--gh-8c959f)" : "var(--gh-0d1117)",
+          background: loading || images.length === 0 || aiLock.locked ? "var(--gh-8c959f)" : "var(--gh-0d1117)",
           color: "var(--gh-ffffff)", border: "none", borderRadius: "8px",
           fontSize: "14px", fontWeight: 600,
-          cursor: loading || images.length === 0 ? "not-allowed" : "pointer",
+          cursor: loading || images.length === 0 || aiLock.locked ? "not-allowed" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
         }}>
         {loading ? (
@@ -281,6 +284,8 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
             <span style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "var(--gh-ffffff)", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
             Analyzing vehicle... this may take 15-30 seconds
           </>
+        ) : aiLock.locked ? (
+          <>{aiLock.text}</>
         ) : (
           <>{report ? "Re-run inspection" : "Run AI inspection"}</>
         )}

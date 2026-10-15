@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models";
+import { clientIp, hitRateLimit, isRateLimited, waitText } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
+    // Stops mass sign-ups (and free-trial farming); only successful sign-ups count, 10 per IP an hour
+    const ip = clientIp(req);
+    const limit = await isRateLimited("register", ip);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: `Too many new accounts from this connection. Please try again in ${waitText(limit.retryAfterSec)}.`, code: "RATE_LIMITED", retryAfter: limit.retryAfterSec },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } }
+      );
+    }
+
     const { name, email, password, phone, acceptTerms } = await req.json();
 
     if (acceptTerms !== true) {
@@ -45,6 +56,7 @@ export async function POST(req: NextRequest) {
       role: "USER",
       termsAcceptedAt: new Date(),
     });
+    await hitRateLimit("register", ip);
 
     return NextResponse.json(
       {

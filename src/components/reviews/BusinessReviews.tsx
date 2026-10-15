@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageSquareText, Star, Store } from "lucide-react";
 import StarRating from "./StarRating";
 import { toReviewView, type ReviewSummary, type ReviewView } from "./types";
+import { useRateLock } from "@/hooks/useRateLock";
 
 /** anon: signed out · member: works at this business · eligible: may review · ineligible: hasn't dealt with it */
 export type ReviewViewer = "anon" | "member" | "eligible" | "ineligible";
@@ -77,6 +78,7 @@ export default function BusinessReviews({
   const [rating, setRating] = useState(myReview?.rating ?? 0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState(myReview?.comment ?? "");
+  const revLock = useRateLock("reviews");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -117,6 +119,7 @@ export default function BusinessReviews({
     });
     const data = await res.json().catch(() => ({}));
     setSubmitting(false);
+    revLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't save your review"); return; }
     const saved = toReviewView(data.review);
     // Keep the star breakdown in step without a reload
@@ -227,8 +230,8 @@ export default function BusinessReviews({
             {mine?.reply && <p className="mt-1 text-xs text-amber-700">Editing your review removes the business&apos;s current reply.</p>}
             {error && <p role="alert" className="mt-2 text-sm text-rose-600">{error}</p>}
             <div className="mt-3 flex gap-2">
-              <button type="submit" disabled={submitting} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
-                {submitting ? "Saving…" : mine ? "Save changes" : "Post review"}
+              <button type="submit" disabled={submitting || revLock.locked} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                {revLock.locked ? revLock.text : submitting ? "Saving…" : mine ? "Save changes" : "Post review"}
               </button>
               {mine && (
                 <button type="button" onClick={() => { setEditing(false); setRating(mine.rating); setComment(mine.comment); setError(""); }} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">

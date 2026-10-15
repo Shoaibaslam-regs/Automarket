@@ -9,6 +9,7 @@ import {
   ShoppingBag, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
+import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import UserIdBadge from "@/components/UserIdBadge";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
@@ -50,6 +51,9 @@ export default function UserMenuDropdown({
   const { data: sub } = useSubscription(true);
   const plan = sub ? planInfo(sub.planId) : null;
   const inBusiness = pathname.startsWith("/business");
+  // Business accounts see their business here instead of a plain "Business console" link
+  const hasBusiness = !!sub?.hasBusiness;
+  const biz = useMyBusiness(hasBusiness);
 
   const items: Item[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -111,6 +115,11 @@ export default function UserMenuDropdown({
               <ShieldCheck size={11} /> Admin
             </span>
           )}
+          {hasBusiness && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/25 px-2 py-0.5 text-[11px] font-semibold text-indigo-100 ring-1 ring-inset ring-indigo-300/30">
+              <Briefcase size={11} /> Business
+            </span>
+          )}
           <UserIdBadge id={user.id} className="!bg-white/10 !text-slate-300 !ring-white/15" />
         </div>
       </div>
@@ -123,7 +132,22 @@ export default function UserMenuDropdown({
       <div className="mx-3 h-px bg-slate-100" />
 
       <div className="space-y-0.5 p-2">
-        {row({ href: inBusiness ? "/home" : "/business", label: inBusiness ? "Back to marketplace" : "Business console", icon: Briefcase })}
+        {hasBusiness && !inBusiness ? (
+          <Link href="/business" onClick={onClose} role="menuitem" className="block rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 p-[1.5px]">
+            <span className="flex items-center gap-3 rounded-[10.5px] bg-white px-2 py-1.5">
+              <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white">
+                {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="32px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={14} />)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-bold text-slate-900">{biz?.name ?? "Your business"}</span>
+                <span className="block truncate text-[11px] text-slate-500">{biz?.role ? `${BUSINESS_ROLE_NAME[biz.role] ?? biz.role} · ` : ""}Open business console</span>
+              </span>
+              <ChevronRight size={14} className="text-indigo-400" />
+            </span>
+          </Link>
+        ) : (
+          row({ href: inBusiness ? "/home" : "/business", label: inBusiness ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console", icon: Briefcase })
+        )}
         {user.role === "ADMIN" && (
           <Link
             href="/admin"

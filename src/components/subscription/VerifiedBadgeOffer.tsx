@@ -7,6 +7,7 @@ import { BadgeCheck, Building2, CalendarClock, Check, Clock3, Gift, MessageSquar
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { VERIFIED_BADGE, type BadgeState, type BadgeVerification } from "@/lib/plans";
 import { badgeRequestText, whatsappLink } from "@/lib/supportContact";
+import { useRateLock } from "@/hooks/useRateLock";
 
 type Status = {
   business: { id: string; name: string; slug: string } | null;
@@ -26,6 +27,7 @@ const fmt = (d: Date | string) => new Date(d).toLocaleDateString("en-PK", { day:
 export default function VerifiedBadgeOffer() {
   const { data: session, status: authStatus } = useSession();
   const [status, setStatus] = useState<Status | null>(null);
+  const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [supportUserId, setSupportUserId] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function VerifiedBadgeOffer() {
     const res = await fetch("/api/business/verification", { method: "POST" });
     const data = await res.json().catch(() => ({}));
     setSending(false);
+    supLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't send your request. Please try again."); return; }
     setSupportUserId(data.supportUserId);
     load();
@@ -109,8 +112,8 @@ export default function VerifiedBadgeOffer() {
                 <MessageSquare size={16} /> Open Messages
               </Link>
             ) : (
-              <button type="button" onClick={request} disabled={sending} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
-                <BadgeCheck size={16} /> {sending ? "Sending request…" : verified ? "Request renewal" : "Request Verified badge"}
+              <button type="button" onClick={request} disabled={sending || supLock.locked} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+                <BadgeCheck size={16} /> {supLock.locked ? supLock.text : sending ? "Sending request…" : verified ? "Request renewal" : "Request Verified badge"}
               </button>
             )}
             {wa && (

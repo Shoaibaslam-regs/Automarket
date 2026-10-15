@@ -7,6 +7,7 @@ import { Organization } from "@/models/Organization";
 import { canReviewBusiness, getBusinessRatings } from "@/lib/reviews";
 import { triggerPusher } from "@/lib/support";
 import { invalidateBusinessSlug } from "@/lib/pageCache";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 const PAGE_SIZE = 10;
 
@@ -44,6 +45,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Sign in to leave a review" }, { status: 401 });
+    const limited = await rateLimitResponse("reviews", session.user.id, "reviews");
+    if (limited) return limited;
     const { slug } = await params;
     const { rating, comment } = await req.json().catch(() => ({}));
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {

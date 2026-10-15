@@ -21,7 +21,7 @@
 13. [Known Limitations](#13-known-limitations)
 14. [Future Improvements](#14-future-improvements)
 15. [Credits & Tools](#15-credits--tools)
-
+16. [Rate Limiting](#16-rate--limiting)
 ---
 
 ## 1. Project Overview
@@ -801,6 +801,74 @@ curl -X POST http://localhost:3000/api/admin/make-admin \
   -H "Content-Type: application/json" \
   -d '{"secret":"YOUR_ADMIN_SECRET","email":"your@email.com"}'
 ```
- 
+
+## RateLimiting
+
+┌────────────────────────────┬────────────────────────────────┬──────────┐
+│           Action           │             Limit              │ Counted  │
+│                            │                                │   per    │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│                            │ 5 failed tries in 15 min       │          │
+│ Sign-in                    │ (successful logins never       │ email    │
+│                            │ count)                         │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Sign-in                    │ 30 failed tries in 15 min      │ IP       │
+│                            │                                │ address  │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Sign-up                    │ 10 new accounts an hour        │ IP       │
+│                            │ (failed attempts don't count)  │ address  │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Deleting account           │ 5 wrong passwords in 15 min    │ user     │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ AI inspection (paid        │ 10 a day                       │ user     │
+│ Gemini)                    │                                │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Vehicle photo uploads      │ 30 photos an hour              │ user     │
+│ (each checked by Gemini)   │                                │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Vehicle photo uploads      │ 30 photos an hour              │ user     │
+│ (each checked by Gemini)   │                                │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Messages                   │ 30 a minute                    │ user     │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Support, upgrade and badge │ 5 an hour                      │ user     │
+│  requests                  │                                │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Reviews                    │ 5 an hour                      │ user     │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Booking and deal-booking   │ 10 an hour                     │ user     │
+│ requests                   │                                │          │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Purchase requests          │ 10 an hour                     │ user     │
+├────────────────────────────┼────────────────────────────────┼──────────┤
+│ Saved searches             │ 20 an hour                     │ user     │
+└────────────────────────────┴────────────────────────────────┴──────────┘
+
+
+
+## Area: Public / marketplace
+Count: 21
+Pages: / (landing), /home, listings, listing detail, inspect, deals, deal
+detail, deal booking, rental booking, dealer page, compare, pricing, terms,
+sell, dashboard, bookings, purchases, purchase slip, messages, saved, profile
+────────────────────────────────────────
+## Area: Business console
+Count: 19
+Pages: dashboard, inventory, customers, bookings, booking slip, sales, sale
+slip, deals, new deal, edit deal, reviews, staff, reports, settings, support,
+ guide, onboarding, rentals (redirect), /business
+────────────────────────────────────────
+## Area: Admin
+Count: 6
+Pages: overview, users, listings, bookings, deals, analytics
+────────────────────────
+## Area: Sign-in
+Count: 2
+Pages: login, register
+
+## Rest of the code**
+About 28,400 of those lines are actual code.
+
+
 
 *Documentation last updated: May 2026* 

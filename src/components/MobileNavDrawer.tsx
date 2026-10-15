@@ -14,8 +14,10 @@ import UserIdBadge from "@/components/UserIdBadge";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string };
+
 
 /**
  * Full-height slide-in menu for small screens. Locks page scroll while open and closes on Escape.
@@ -39,6 +41,10 @@ export default function MobileNavDrawer({
   // Only ask for the plan once the drawer is actually opened by a signed-in user
   const { data: sub } = useSubscription(open && !!user);
   const plan = sub ? planInfo(sub.planId) : null;
+
+  // Business accounts get their business shown in the menu
+  const hasBusiness = !!sub?.hasBusiness;
+  const biz = useMyBusiness(open && hasBusiness);
 
   // The parent passes a new onClose every render; a ref keeps the effect below tied to `open` only,
   // so the saved overflow value is captured once per opening and restored correctly
@@ -69,7 +75,7 @@ export default function MobileNavDrawer({
     { href: "/sell", label: "Sell", icon: Car },
     { href: "/messages", label: "Messages", icon: MessageSquare, count: counts.messages },
     { href: "/bookings", label: "Bookings", icon: Calendar, count: counts.bookings },
-    { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
+    { href: "/purchases", label: "Purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const browse: Item[] = [
@@ -80,7 +86,12 @@ export default function MobileNavDrawer({
   const account: Item[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/profile", label: "Profile & settings", icon: Settings },
-    { href: pathname.startsWith("/business") ? "/home" : "/business", label: pathname.startsWith("/business") ? "Back to marketplace" : "Business console", icon: Briefcase },
+    // Business accounts get a business card instead (below); others can start one
+    ...(hasBusiness && !pathname.startsWith("/business") ? [] : [{
+      href: pathname.startsWith("/business") ? "/home" : "/business",
+      label: pathname.startsWith("/business") ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console",
+      icon: Briefcase,
+    }]),
   ];
 
   const row = (item: Item) => {
@@ -146,7 +157,7 @@ export default function MobileNavDrawer({
 
           {user ? (
             <div className="relative mt-3 flex items-center gap-2.5">
-              <span className="rounded-full bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px]">
+              <span className={`rounded-full p-[2px] ${hasBusiness ? "bg-gradient-to-br from-indigo-400 to-fuchsia-500" : "bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300"}`}>
                 <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold">
                   {user.image ? <Image src={user.image} alt="" fill sizes="36px" className="object-cover" /> : user.name?.[0]?.toUpperCase() || "?"}
                 </span>
@@ -158,6 +169,11 @@ export default function MobileNavDrawer({
                   {plan && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-px text-[10px] font-semibold text-amber-200 ring-1 ring-inset ring-white/15">
                       <Crown size={11} /> {plan.name}
+                    </span>
+                  )}
+                  {hasBusiness && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/25 px-1.5 py-px text-[10px] font-semibold text-indigo-100 ring-1 ring-inset ring-indigo-300/30">
+                      <Briefcase size={10} /> Business
                     </span>
                   )}
                   <UserIdBadge id={user.id} className="!bg-white/10 !px-1.5 !py-px !text-[10px] !text-slate-300 !ring-white/15" />
@@ -183,21 +199,27 @@ export default function MobileNavDrawer({
         {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto overscroll-contain px-2.5 py-3">
           {user && (
-            <div className="grid grid-cols-4 gap-1.5">
-              {quick.map(({ href, label, icon: Icon, count }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={onClose}
-                  className={`relative flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-semibold ring-1 ring-inset transition active:scale-95 ${
-                    isActive(href) ? "bg-slate-900 text-white ring-slate-900" : "bg-slate-50 text-slate-700 ring-slate-200/80 hover:bg-slate-100"
-                  }`}
-                >
-                  <Icon size={15} strokeWidth={1.9} />
-                  {label}
-                  <CountBadge count={count ?? 0} className="absolute right-1 top-1 h-4 min-w-4 text-[9px]" />
-                </Link>
-              ))}
+            // One plain row of shortcuts: icon over label, no boxes; the current page gets a dot
+            <div className="grid grid-cols-5 border-b border-slate-100 pb-2.5">
+              {quick.map(({ href, label, icon: Icon, count }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onClose}
+                    aria-current={active ? "page" : undefined}
+                    className={`relative flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition active:scale-95 ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-900"}`}
+                  >
+                    <span className="relative">
+                      <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                      <CountBadge count={count ?? 0} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 text-[9px]" />
+                    </span>
+                    <span className={active ? "font-semibold" : ""}>{label}</span>
+                    <span className={`h-1 w-1 rounded-full ${active ? "bg-slate-900" : "bg-transparent"}`} />
+                  </Link>
+                );
+              })}
             </div>
           )}
 
@@ -229,6 +251,27 @@ export default function MobileNavDrawer({
             <div className="space-y-0.5">{browse.map(row)}</div>
           </div>
           {user && section("Account", account)}
+
+          {user && hasBusiness && !pathname.startsWith("/business") && (
+            <Link
+              href="/business"
+              onClick={onClose}
+              className="block rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 p-[1.5px]"
+            >
+              <span className="flex items-center gap-2.5 rounded-[10.5px] bg-white px-2.5 py-2">
+                <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white">
+                  {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="36px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={15} />)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-bold text-slate-900">{biz?.name ?? "Your business"}</span>
+                  <span className="block truncate text-[11px] text-slate-500">
+                    {biz?.role ? `${BUSINESS_ROLE_NAME[biz.role] ?? biz.role} · ` : ""}Open business console
+                  </span>
+                </span>
+                <ChevronRight size={14} className="text-indigo-400" />
+              </span>
+            </Link>
+          )}
 
           {user?.role === "ADMIN" && (
             <Link

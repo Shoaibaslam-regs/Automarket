@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { hitRateLimit, isRateLimited, waitText } from "@/lib/rateLimit";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
@@ -39,7 +40,18 @@ export async function DELETE(req: NextRequest) {
     if (typeof confirmEmail !== "string" || confirmEmail.trim().toLowerCase() !== user.email.toLowerCase()) {
       return NextResponse.json({ error: "Type your email address exactly to confirm" }, { status: 400 });
     }
+    if (user.password) {
+      // Wrong passwords here could be used to guess the password, so they're limited like sign-in
+      const limit = await isRateLimited("accountDelete", session.user.id);
+      if (!limit.ok) {
+        return NextResponse.json({ error: `Too many wrong passwords. Please try again in ${waitText(limit.retryAfterSec)}.`, code: "RATE_LIMITED", retryAfter: limit.retryAfterSec }, { status: 429 });
+      }
+    }
     if (user.password && (typeof password !== "string" || !(await bcrypt.compare(password, user.password)))) {
+      const hit = await hitRateLimit("accountDelete", session.user.id);
+      if (hit.remaining === 0) {
+        return NextResponse.json({ error: `Too many wrong passwords. Please try again in ${waitText(hit.retryAfterSec)}.`, code: "RATE_LIMITED", retryAfter: hit.retryAfterSec }, { status: 429 });
+      }
       return NextResponse.json({ error: "Your password is incorrect" }, { status: 400 });
     }
     if (isPlatformOwner(user.email)) return NextResponse.json({ error: "The platform owner account can't be deleted." }, { status: 403 });

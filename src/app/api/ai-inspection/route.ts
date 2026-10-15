@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { Inspection } from "@/models/Inspection";
 import { Listing } from "@/models/Listing";
 import { invalidateListingPage } from "@/lib/pageCache";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 type GeminiReport = {
   make: string;
@@ -250,6 +251,9 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+    // Each inspection is a paid Gemini call
+    const limited = await rateLimitResponse("aiInspection", session.user.id, "AI inspections today");
+    if (limited) return limited;
 
     await connectDB();
 

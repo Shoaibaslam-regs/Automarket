@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { SavedSearch } from "@/models/SavedSearch";
 import { auth } from "@/lib/auth";
 import { describeFilters, filtersToSearchParams, hasFilters, parseFilters } from "@/lib/listingFilters";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 const MAX_SAVED_SEARCHES = 10;
 
@@ -22,7 +23,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const limited = await rateLimitResponse("savedSearches", session.user.id, "saved searches");
+    if (limited) return limited;
 
     const body = await req.json();
     const filters = parseFilters(body?.filters ?? {});

@@ -8,6 +8,7 @@ import { getPusherClient } from "@/lib/pusher-client";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import Image from "next/image";
 import { Hand, MessageSquare, Trash2 } from "lucide-react";
+import { useRateLock } from "@/hooks/useRateLock";
 
 type User = {
   _id: string;
@@ -41,6 +42,7 @@ export default function MessagesContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeUser, setActiveUser] = useState<User | null>(null);
   const [content, setContent] = useState("");
+  const msgLock = useRateLock("messages");
   const [sending, setSending] = useState(false);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
@@ -155,6 +157,7 @@ export default function MessagesContent() {
         body: JSON.stringify({ receiverId: activeUser._id, content, listingId: listingId || undefined }),
       });
       const data = await res.json();
+      msgLock.check(res, data);
       if (res.ok) {
         setContent("");
         setMessages(prev => prev.find(m => m._id === data.message._id) ? prev : [...prev, data.message]);
@@ -404,14 +407,19 @@ export default function MessagesContent() {
                 <input ref={inputRef} value={content} onChange={e => setContent(e.target.value)}
                   placeholder="Type a message..."
                   style={{ flex: 1, padding: "10px 14px", border: "1px solid var(--gh-d0d7de)", borderRadius: "24px", fontSize: "14px", outline: "none", background: "var(--gh-f6f8fa)", minWidth: 0 }} />
-                <button type="submit" disabled={!content.trim() || sending}
-                  style={{ width: "40px", height: "40px", borderRadius: "50%", background: !content.trim() || sending ? "var(--gh-e1e4e8)" : "var(--gh-0d1117)", border: "none", cursor: !content.trim() || sending ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <button type="submit" disabled={!content.trim() || sending || msgLock.locked} title={msgLock.locked ? msgLock.text : "Send"}
+                  style={{ width: "40px", height: "40px", borderRadius: "50%", background: !content.trim() || sending || msgLock.locked ? "var(--gh-e1e4e8)" : "var(--gh-0d1117)", border: "none", cursor: !content.trim() || sending || msgLock.locked ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 2L11 13" stroke={!content.trim() || sending ? "#8c959f" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={!content.trim() || sending ? "#8c959f" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M22 2L11 13" stroke={!content.trim() || sending || msgLock.locked ? "#8c959f" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke={!content.trim() || sending || msgLock.locked ? "#8c959f" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
               </form>
+              {msgLock.locked && (
+                <p role="status" style={{ padding: "6px 16px 10px", background: "var(--gh-ffffff)", fontSize: "12px", color: "var(--gh-7d4e00)", flexShrink: 0 }}>
+                  You&apos;re sending messages too fast. {msgLock.text}.
+                </p>
+              )}
             </div>
           )}
         </div>

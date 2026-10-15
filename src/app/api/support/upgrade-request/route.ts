@@ -6,6 +6,7 @@ import { User } from "@/models/User";
 import { getSupportAdmin, triggerPusher } from "@/lib/support";
 import { isPlanId, PLANS } from "@/lib/plans";
 import { upgradeRequestText } from "@/lib/supportContact";
+import { rateLimitResponse } from "@/lib/rateLimit";
 
 /** Don't post the same request twice if the user clicks again within this window. */
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
@@ -19,6 +20,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const limited = await rateLimitResponse("support", session.user.id, "requests");
+    if (limited) return limited;
     const { plan } = await req.json().catch(() => ({}));
     if (!isPlanId(plan) || plan === "FREE") return NextResponse.json({ error: "Choose a paid plan" }, { status: 400 });
 

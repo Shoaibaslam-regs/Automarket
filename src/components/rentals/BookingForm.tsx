@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, Info } from "lucide-react";
 import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
+import { useRateLock } from "@/hooks/useRateLock";
 
 interface Props {
   /** Book a rental listing... */
@@ -34,6 +35,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
   const router = useRouter();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const bookLock = useRateLock("bookings");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,12 +64,13 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
 
     const data = await res.json();
     setLoading(false);
+    bookLock.check(res, data);
 
     if (!res.ok) { setError(data.error); return; }
     router.push("/bookings?success=true");
   }
 
-  const disabled = loading || days <= 0;
+  const disabled = loading || days <= 0 || bookLock.locked;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -184,6 +187,8 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               Sending request...
             </>
+          ) : bookLock.locked ? (
+            bookLock.text
           ) : (
             "Request booking"
           )}
