@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, Info } from "lucide-react";
-import { rentalDays, validBookingDates } from "@/lib/bookings";
+import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
 
 interface Props {
   /** Book a rental listing... */
@@ -168,7 +168,10 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
 
         <div className="flex gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
           <Info size={15} strokeWidth={1.75} className="mt-px flex-shrink-0 text-amber-600" />
-          <span>Your booking request will be sent to the owner for confirmation. Payment is made in person upon pickup.</span>
+          <span>
+            Your booking request will be sent to the owner for confirmation. Payment is made in person upon pickup.
+            <span className="mt-1 block font-semibold">At pickup you&apos;ll be given an exact return time. {LATE_RULE_TEXT}</span>
+          </span>
         </div>
 
         <button

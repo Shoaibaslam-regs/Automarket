@@ -32,6 +32,8 @@ export async function GET() {
 
     const memberIds = await getOrgUserIds(orgId);
     // Bookings finished before completedAt existed fall back to their last update as the completion time
+    // Rent plus any late-return fee
+    const rentIncome = { $add: ["$totalAmount", { $ifNull: ["$lateFee", 0] }] };
     const completedOn = { $ifNull: ["$completedAt", "$updatedAt"] };
     const sixMonthsAgo = new Date(thisMonth);
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
@@ -72,11 +74,11 @@ export async function GET() {
         { $match: { ...bookingScope, status: "COMPLETED" } },
         { $addFields: { doneAt: completedOn } },
         { $match: { doneAt: { $gte: sixMonthsAgo } } },
-        { $group: { _id: { y: { $year: "$doneAt" }, m: { $month: "$doneAt" } }, total: { $sum: "$totalAmount" } } },
+        { $group: { _id: { y: { $year: "$doneAt" }, m: { $month: "$doneAt" } }, total: { $sum: rentIncome } } },
       ]),
       Booking.aggregate<{ total: number }>([
         { $match: { ...bookingScope, status: "COMPLETED" } },
-        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+        { $group: { _id: null, total: { $sum: rentIncome } } },
       ]),
       // Deposits currently held for vehicles that are out
       Booking.aggregate<{ total: number }>([

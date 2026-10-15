@@ -29,6 +29,16 @@ export interface IBooking extends Document {
   renterCnic?: string;
   startDate: Date;
   endDate: Date;
+  /** Exact return time the owner gave the renter at handover; late fees count from here (see lateCharge) */
+  dueBackAt?: Date;
+  /** When the vehicle actually came back (recorded with "Mark returned") */
+  returnedAt?: Date;
+  /** Extra days charged for a late return, and their fee (at the double daily rate) */
+  lateDays?: number;
+  lateFee?: number;
+  /** How much the renter has paid so far, recorded by the owner; the payment tag comes from it (src/lib/payments.ts) */
+  amountPaid?: number;
+  paymentUpdatedAt?: Date;
   totalAmount: number;
   deposit: number;
   status: "PENDING" | "CONFIRMED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
@@ -73,6 +83,12 @@ const BookingSchema = new Schema<IBooking>(
     renterCnic: { type: String, trim: true, maxlength: 15 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    dueBackAt: { type: Date },
+    returnedAt: { type: Date },
+    lateDays: { type: Number, min: 0 },
+    lateFee: { type: Number, min: 0 },
+    amountPaid: { type: Number, min: 0 },
+    paymentUpdatedAt: { type: Date },
     totalAmount: { type: Number, required: true },
     deposit: { type: Number, required: true },
     status: {

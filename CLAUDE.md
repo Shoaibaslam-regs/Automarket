@@ -80,7 +80,8 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
 - A `Booking` belongs to a `Rental`, which belongs to a listing. It has no organization field, so business bookings are the ones on `getBusinessRentals(userId)`, meaning rentals owned by any member.
 - `source: "WALK_IN"` bookings have no `renterId`. They store customer details in `walkIn` instead, so treat `renterId` as optional. The personal `/api/bookings?role=owner` list excludes them.
 - The business console (`/business/bookings`, `/api/business/bookings`) creates walk-ins and enforces the status flow in `src/lib/bookings.ts`: PENDING → CONFIRMED → ACTIVE (handed over) → COMPLETED, with cancellation before handover.
-- `/business/bookings/[id]/slip` is the printable slip. `/business/rentals` redirects to `/business/bookings`.
+- Business booking cards are compact: the next step (Confirm, Hand over or Mark returned) plus Slip, WhatsApp and a More tray (payment, handover details, cancel or remove, vehicle tag). The list is two columns on `xl` screens.
+- `/business/bookings/[id]/slip` is the printable slip. It is a fixed A4-width sheet (`SHEET_WIDTH` = 703px, the printable width with 12 mm margins) that prints on one page; narrower screens show the same sheet scaled down with CSS `zoom`, so phones see the whole page without scrolling. Its business signature carries a horizontal "AutoMarket-Pak" ink stamp (`components/bookings/AutoMarketStamp.tsx`, an SVG with a fixed ink colour) showing the business name and the confirmed date. `/business/rentals` redirects to `/business/bookings`.
 - **Walk-ins for unlisted vehicles.** The New booking dialog has an "Other vehicle (not listed on AutoMarket)" option (picker value `other`). The business types in the vehicle, daily rate, deposit and an optional plate.
   - Such a booking has no `rentalId` or `dealId`. It stores `offListVehicle` and carries the business in `Booking.organizationId`, which `businessBookingQuery`, stats, counts, `ensureBookingCustomer`, the handover route and review eligibility all check.
   - Clashes are only checked when a plate is given, using `samePlatePattern` (spaces and dashes are ignored).
@@ -94,6 +95,16 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - In the business console, "Hand over" opens `HandoverDialog` (`components/bookings/`) and sends `{ status: "ACTIVE", plateNumber, cnic }`. The business route requires both for that move.
   - Personal owners add or correct both with `PATCH /api/bookings/[id]/handover`. Business members with `manageBookings` can use that route for business vehicles too.
   - `normalizePlate`, `normalizeCnic` and `formatCnicInput` are in `src/lib/plates.ts`. Cards show both values with `HandoverDetails`, and both slips print them.
+- **Return time and late fees** (`src/lib/bookings.ts`).
+  - At handover the business must set `Booking.dueBackAt`, the exact return time. `HandoverDialog` (`askReturnTime`) prefills it as the booked days counted as 24-hour periods from now. While the vehicle is out it can be corrected through `PATCH /api/bookings/[id]/handover` (`dueBackAt`).
+  - "Mark returned" opens `ReturnDialog`, which sends `{ status: "COMPLETED", returnedAt }`. The route stores `returnedAt`, `lateDays` and `lateFee` from `lateCharge`.
+  - The rule: up to `LATE_GRACE_MINUTES` (60) late is free; after that every started 24 hours (each with the same grace) is one extra day at `LATE_RATE_MULTIPLIER` (2) × `bookingDailyRate` (rent ÷ days booked). `LATE_RULE_TEXT` is the wording shown to owners and renters.
+  - Bookings handed over before this existed have no `dueBackAt` and are never charged. Overdue uses `dueBackAt`, falling back to `endDate`.
+  - The late fee shows on business and renter cards, both slips, and counts toward business rental revenue (`stats`).
+- **Payment tag.** The owner records what the renter has paid with the Payment button or the tag (`PaymentDialog`/`PaymentTag` in `components/bookings/PaymentTag.tsx`), which calls `PATCH /api/bookings/[id]/payment` with `{ status: "PENDING" | "PARTIAL" | "PAID", amountPaid? }`.
+  - Only `Booking.amountPaid` is stored. The tag comes from `paymentState` in `src/lib/payments.ts`, which compares it with `amountDue` (rent + deposit + late fee), so a paid booking shows "Partly paid" again if a late fee is added afterwards.
+  - The route and the handover route share the permission check `loadOwnedBooking` (`src/lib/bookingAccess.ts`): the rental's owner, or business members with `manageBookings`.
+  - Business cards and the personal "received" tab can change it; renters see it read-only. Both slips print the tag, the amount paid and the balance.
 - Every booking is linked to a CRM `Customer` of the renting business through `ensureBookingCustomer` (`src/lib/customerSync.ts`). It matches by `Customer.userId`, then by phone digits, then by email. It creates the customer only within the plan's customer limit.
 - The customer link is set when an online or walk-in booking is created. `GET /api/business/customers` back-fills older bookings via `syncBookingCustomers`.
 

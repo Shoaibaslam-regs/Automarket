@@ -2,8 +2,21 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { IdCard, KeyRound, Pencil, X } from "lucide-react";
+import { Clock3, IdCard, KeyRound, Pencil, X } from "lucide-react";
 import { formatCnicInput, normalizeCnic, normalizePlate } from "@/lib/plates";
+import { LATE_RULE_TEXT } from "@/lib/bookings";
+
+/** A Date as the value of a datetime-local input, in the viewer's own time zone. */
+export function toDateTimeInput(d: Date | string): string {
+  const x = new Date(d);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}T${pad(x.getHours())}:${pad(x.getMinutes())}`;
+}
+
+/** "Thu 15 Oct, 4:30 pm" */
+export function fmtDateTime(d: Date | string): string {
+  return new Date(d).toLocaleString("en-PK", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
+}
 
 /** A number plate styled like a Pakistani registration plate. */
 export function PlateBadge({ plate, className = "" }: { plate: string; className?: string }) {
@@ -58,7 +71,7 @@ export function HandoverDetails({ plate, cnic, onEdit, addLabel = "Add plate & C
  * Asks for the vehicle's number plate and the renter's CNIC at handover (or corrects them later).
  * `onSave` returns an error message, or null when it worked.
  */
-export default function HandoverDialog({ open, onOpenChange, title, description, confirmLabel, initialPlate, initialCnic, onSave }: {
+export default function HandoverDialog({ open, onOpenChange, title, description, confirmLabel, initialPlate, initialCnic, askReturnTime, initialDueBackAt, onSave }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -66,20 +79,25 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
   confirmLabel: string;
   initialPlate?: string;
   initialCnic?: string;
-  onSave: (details: { plateNumber: string; cnic: string }) => Promise<string | null>;
+  /** Also ask for the exact time the renter must bring the vehicle back */
+  askReturnTime?: boolean;
+  initialDueBackAt?: string;
+  onSave: (details: { plateNumber: string; cnic: string; dueBackAt?: string }) => Promise<string | null>;
 }) {
   const [plateValue, setPlateValue] = useState("");
   const [cnicValue, setCnicValue] = useState("");
+  const [dueValue, setDueValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [openedWith, setOpenedWith] = useState<string | null>(null);
 
   // Reset the fields each time the dialog opens, prefilled with what's already known
-  const key = open ? `${initialPlate ?? ""}|${initialCnic ?? ""}` : null;
+  const key = open ? `${initialPlate ?? ""}|${initialCnic ?? ""}|${initialDueBackAt ?? ""}` : null;
   if (key !== openedWith) {
     setOpenedWith(key);
     setPlateValue(initialPlate ?? "");
     setCnicValue(initialCnic ? formatCnicInput(initialCnic) : "");
+    setDueValue(initialDueBackAt ? toDateTimeInput(initialDueBackAt) : "");
     setError("");
   }
 
@@ -90,9 +108,11 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
     e.preventDefault();
     if (!plate) { setError("Enter the number plate, e.g. LEA-1234"); return; }
     if (!cnic) { setError("Enter the renter's 13-digit CNIC, e.g. 35202-1234567-1"); return; }
+    const due = dueValue ? new Date(dueValue) : null;
+    if (askReturnTime && (!due || isNaN(due.getTime()))) { setError("Set the exact date and time the vehicle must come back"); return; }
     setSaving(true);
     setError("");
-    const err = await onSave({ plateNumber: plate, cnic });
+    const err = await onSave({ plateNumber: plate, cnic, ...(askReturnTime && due ? { dueBackAt: due.toISOString() } : {}) });
     setSaving(false);
     if (err) setError(err);
   }
@@ -131,6 +151,18 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
                 placeholder="35202-1234567-1" autoComplete="off" className={field} />
               <p className="mt-1.5 text-[11px] text-slate-400">Check it against the renter&apos;s original CNIC card.</p>
             </div>
+            {askReturnTime && (
+              <div>
+                <label htmlFor="handover-due" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                  <Clock3 size={13} /> Return by (exact time)
+                </label>
+                <input id="handover-due" type="datetime-local" value={dueValue} onChange={e => setDueValue(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+                <p className="mt-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800 ring-1 ring-inset ring-amber-200">
+                  Tell the renter this time. {LATE_RULE_TEXT}
+                </p>
+              </div>
+            )}
 
             {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
             <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">

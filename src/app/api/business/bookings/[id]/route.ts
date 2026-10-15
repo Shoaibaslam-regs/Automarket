@@ -7,7 +7,7 @@ import { Listing } from "@/models/Listing";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
-import { canTransition } from "@/lib/bookings";
+import { bookingDailyRate, canTransition, lateCharge } from "@/lib/bookings";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
 import { Rental } from "@/models/Rental";
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Your role can't manage bookings" }, { status: 403 });
     }
 
-    const { status, plateNumber, cnic } = await req.json().catch(() => ({}));
+    const { status, plateNumber, cnic, dueBackAt, returnedAt } = await req.json().catch(() => ({}));
     const booking = await loadBusinessBooking(session.user.id, id);
     if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     if (!canTransition(booking.status, status)) {
@@ -83,6 +83,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!renterCnic) return NextResponse.json({ error: "Enter the renter's 13-digit CNIC, e.g. 35202-1234567-1" }, { status: 400 });
       booking.plateNumber = plate;
       booking.renterCnic = renterCnic;
+      // The exact time the renter must bring it back; late fees count from here
+      const due = new Date(dueBackAt);
+      if (!dueBackAt || isNaN(due.getTime())) return NextResponse.json({ error: "Set the exact date and time the vehicle must be returned" }, { status: 400 });
+      if (due.getTime() <= Date.now()) return NextResponse.json({ error: "The return time must be later than now" }, { status: 400 });
+      booking.dueBackAt = due;
+    }
+
+    // Returning records when it came back and charges late days at the double rate (after the grace hour)
+    if (status === "COMPLETED") {
+      const back = returnedAt ? new Date(returnedAt) : new Date();
+      if (isNaN(back.getTime())) return NextResponse.json({ error: "Enter when the vehicle came back" }, { status: 400 });
+      if (back.getTime() > Date.now() + 5 * 60 * 1000) return NextResponse.json({ error: "The return time can't be in the future" }, { status: 400 });
+      if (booking.startedAt && back < booking.startedAt) return NextResponse.json({ error: "The return time is before the handover" }, { status: 400 });
+      const late = lateCharge(booking.dueBackAt, back, bookingDailyRate(booking));
+      booking.returnedAt = back;
+      booking.lateDays = late.lateDays;
+      booking.lateFee = late.fee;
     }
 
     booking.status = status;

@@ -5,15 +5,18 @@ import Image from "next/image";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  AlertTriangle, CalendarCheck, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
-  Store, Trash2, Undo2, UserRound, X,
+  AlertTriangle, CalendarCheck, IdCard, MessageCircle, MoreHorizontal, Pencil, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
+  Store, Trash2, Undo2, UserRound, Wallet, X,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
-import { BOOKING_STATUSES, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
+import { BOOKING_STATUSES, LATE_RATE_MULTIPLIER, bookingDailyRate, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
-import HandoverDialog, { HandoverDetails } from "@/components/bookings/HandoverDialog";
+import HandoverDialog, { PlateBadge, fmtDateTime } from "@/components/bookings/HandoverDialog";
+import ReturnDialog from "@/components/bookings/ReturnDialog";
+import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
+import type { PaymentStatus } from "@/lib/payments";
 import { bookingCnic } from "@/lib/plates";
 
 type Booking = {
@@ -28,6 +31,13 @@ type Booking = {
   notes?: string;
   plateNumber?: string;
   renterCnic?: string;
+  /** Exact return time set at handover */
+  dueBackAt?: string;
+  returnedAt?: string;
+  lateDays?: number;
+  lateFee?: number;
+  /** What the renter has paid so far; drives the payment tag */
+  amountPaid?: number;
   createdAt: string;
   renterId?: { name?: string; email: string; phone?: string } | null;
   createdBy?: { name?: string } | null;
@@ -36,6 +46,11 @@ type Booking = {
   dealId?: { _id: string; title: string; images: string[]; vehicleCount?: number } | null;
   rentalId?: { dailyRate: number; plateNumber?: string; listingId?: { _id: string; title: string; make: string; model: string; images: string[]; type: string; status: string } | null } | null;
 };
+
+/** Out past its return time: the exact time given at handover, or the end date for older bookings. */
+function isOverdue(b: Booking, now: number): boolean {
+  return b.status === "ACTIVE" && now > 0 && new Date(b.dueBackAt ?? b.endDate).getTime() < now;
+}
 
 type Vehicle = { rentalId: string; title: string; image: string | null; dailyRate: number; deposit: number };
 type CustomerOption = { _id: string; name: string; phone: string; email?: string };
@@ -300,7 +315,12 @@ export default function BusinessBookingsPage() {
   const [confirmRemove, setConfirmRemove] = useState<Booking | null>(null);
   const [removeError, setRemoveError] = useState("");
   // Handing over asks for the number plate and renter's CNIC; both can be corrected later
-  const [plateFor, setPlateFor] = useState<{ booking: Booking; handover: boolean } | null>(null);
+  // `due` prefills the return time at handover: the booked days counted as 24-hour periods from now
+  const [plateFor, setPlateFor] = useState<{ booking: Booking; handover: boolean; due?: string } | null>(null);
+  const [returnFor, setReturnFor] = useState<Booking | null>(null);
+  const [payFor, setPayFor] = useState<Booking | null>(null);
+  // Booking whose "More" tray is open
+  const [openMore, setOpenMore] = useState<string | null>(null);
   // "Now" for overdue checks, captured when bookings load so rendering stays pure
   const [now, setNow] = useState(0);
 
@@ -346,7 +366,42 @@ export default function BusinessBookingsPage() {
     refreshNotificationCounts();
   }
 
-  async function saveHandover(details: { plateNumber: string; cnic: string }): Promise<string | null> {
+  async function savePayment(body: { status: PaymentStatus; amountPaid?: number }): Promise<string | null> {
+    if (!payFor) return null;
+    const res = await fetch(`/api/bookings/${payFor._id}/payment`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return data.error || "Couldn't save the payment";
+    const id = payFor._id;
+    setBookings(prev => prev.map(x => (x._id === id ? { ...x, amountPaid: data.amountPaid } : x)));
+    setPayFor(null);
+    return null;
+  }
+
+  async function saveReturn(returnedAt: string): Promise<string | null> {
+    if (!returnFor) return null;
+    const res = await fetch(`/api/business/bookings/${returnFor._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "COMPLETED", returnedAt }),
+    });
+    if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't mark the booking returned";
+    setReturnFor(null);
+    fetchBookings();
+    return null;
+  }
+
+  function openHandover(b: Booking) {
+    // `now` is refreshed on every load, so it's the moment of handover to within a few minutes; the owner can adjust
+    const due = new Date(now + rentalDays(b.startDate, b.endDate) * 24 * 60 * 60 * 1000);
+    due.setSeconds(0, 0);
+    setPlateFor({ booking: b, handover: true, due: due.toISOString() });
+  }
+
+  async function saveHandover(details: { plateNumber: string; cnic: string; dueBackAt?: string }): Promise<string | null> {
     if (!plateFor) return null;
     const { booking: b, handover } = plateFor;
     const res = handover
@@ -375,12 +430,12 @@ export default function BusinessBookingsPage() {
   }
 
   const stats = useMemo(() => {
-    const revenue = bookings.filter(b => b.status === "COMPLETED").reduce((s, b) => s + b.totalAmount, 0);
+    const revenue = bookings.filter(b => b.status === "COMPLETED").reduce((s, b) => s + b.totalAmount + (b.lateFee ?? 0), 0);
     return {
       pending: bookings.filter(b => b.status === "PENDING").length,
       upcoming: bookings.filter(b => b.status === "CONFIRMED").length,
       out: bookings.filter(b => b.status === "ACTIVE").length,
-      overdue: bookings.filter(b => b.status === "ACTIVE" && new Date(b.endDate).getTime() < now).length,
+      overdue: bookings.filter(b => isOverdue(b, now)).length,
       revenue,
     };
   }, [bookings, now]);
@@ -393,7 +448,6 @@ export default function BusinessBookingsPage() {
     return [bookingNumber(b._id), c.name, c.phone ?? "", bookedTitle(b), b.dealId ? "deal" : ""].some(v => v.toLowerCase().includes(q));
   });
 
-  const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
 
   return (
     <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
@@ -413,7 +467,25 @@ export default function BusinessBookingsPage() {
         confirmLabel={plateFor?.handover ? "Hand over" : "Save details"}
         initialPlate={plateFor ? plateFor.booking.plateNumber ?? plateFor.booking.rentalId?.plateNumber : undefined}
         initialCnic={plateFor ? bookingCnic(plateFor.booking) : undefined}
+        askReturnTime={!!plateFor && (plateFor.handover || plateFor.booking.status === "ACTIVE")}
+        initialDueBackAt={plateFor ? plateFor.due ?? plateFor.booking.dueBackAt : undefined}
         onSave={saveHandover}
+      />
+      <PaymentDialog
+        open={payFor !== null}
+        onOpenChange={o => !o && setPayFor(null)}
+        booking={payFor}
+        customer={payFor ? customerOf(payFor).name : undefined}
+        onSave={savePayment}
+      />
+      <ReturnDialog
+        open={returnFor !== null}
+        onOpenChange={o => !o && setReturnFor(null)}
+        vehicle={returnFor ? bookedTitle(returnFor) : ""}
+        customer={returnFor ? customerOf(returnFor).name : ""}
+        dueBackAt={returnFor?.dueBackAt}
+        dailyRate={returnFor ? bookingDailyRate(returnFor) : 0}
+        onSave={saveReturn}
       />
       <ConfirmDialog
         open={confirmCancel !== null}
@@ -534,14 +606,14 @@ export default function BusinessBookingsPage() {
           </div>
         </div>
 
-        {/* List */}
-        <div className="flex flex-col gap-3">
+        {/* List: one column, two on wide screens */}
+        <div className="grid items-start gap-3 xl:grid-cols-2">
           {loading ? (
             [1, 2, 3].map(i => <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-white" />)
           ) : loadError ? (
-            <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)]">{loadError}</div>
+            <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)] xl:col-span-2">{loadError}</div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
+            <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center xl:col-span-2">
               <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><CalendarCheck size={30} strokeWidth={1.5} /></div>
               <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{bookings.length === 0 ? "No bookings yet" : "No bookings match your filters"}</p>
               <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">
@@ -556,104 +628,158 @@ export default function BusinessBookingsPage() {
             const photo = b.dealId?.images?.[0] ?? listing?.images?.[0];
             const c = customerOf(b);
             const days = rentalDays(b.startDate, b.endDate);
-            const overdue = b.status === "ACTIVE" && new Date(b.endDate).getTime() < now;
+            const overdue = isOverdue(b, now);
             const busy = updating === b._id;
+            const moreOpen = openMore === b._id;
+            const showHandover = !!(b.plateNumber || bookingCnic(b));
+            const canEditHandover = canManage && (b.status === "ACTIVE" || b.status === "COMPLETED");
+            const primary =
+              !canManage ? null
+              : b.status === "PENDING" ? { label: "Confirm", icon: CheckCircle2, onClick: () => updateStatus(b, "CONFIRMED"), cls: "bg-[var(--gh-2da44e)] hover:bg-[var(--gh-2c974b)]" }
+              : b.status === "CONFIRMED" ? { label: "Hand over", icon: KeyRound, onClick: () => openHandover(b), cls: "bg-[var(--gh-0d1117)] hover:bg-[var(--gh-24292f)]" }
+              : b.status === "ACTIVE" ? { label: "Mark returned", icon: Undo2, onClick: () => setReturnFor(b), cls: "bg-[var(--gh-0d1117)] hover:bg-[var(--gh-24292f)]" }
+              : null;
+            const iconBtn = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 text-xs font-semibold transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
+            const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
             return (
-              <div key={b._id} className={`rounded-2xl border bg-white p-4 sm:p-5 ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
-                <div className="flex flex-wrap items-start gap-4">
-                  <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)]">
-                    {photo
-                      ? <Image src={photo} alt="" fill sizes="80px" className="object-cover" />
-                      : <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={18} strokeWidth={1.5} /></div>}
+              <div key={b._id} className={`overflow-hidden rounded-2xl border bg-white ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
+                <div className="p-3.5 sm:p-4">
+                  {/* Vehicle, reference and dates */}
+                  <div className="flex gap-3">
+                    <div className="relative h-14 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)] sm:h-16 sm:w-20">
+                      {photo
+                        ? <Image src={photo} alt="" fill sizes="80px" className="object-cover" />
+                        : <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={18} strokeWidth={1.5} /></div>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">
+                          {bookedTitle(b)}
+                          {(b.dealId?.vehicleCount ?? 1) > 1 && <span className="ml-1 text-xs font-medium text-[var(--gh-57606a)]">· {b.dealId!.vehicleCount} cars</span>}
+                        </p>
+                        {overdue ? (
+                          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> Overdue</span>
+                        ) : (
+                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                        )}
+                      </div>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
+                        <span className="font-mono font-bold">{bookingNumber(b._id)}</span>
+                        <span aria-hidden>·</span>
+                        {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in</span> : <span>Online</span>}
+                        {b.dealId && (
+                          <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white"><Tag size={9} /> DEAL</span>
+                        )}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-[var(--gh-0d1117)]">
+                        <CalendarDays size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
+                        {fmt(b.startDate)} → {fmt(b.endDate)} <span className="text-[var(--gh-8c959f)]">· {days} day{days !== 1 ? "s" : ""}</span>
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="min-w-[200px] flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[11px] font-bold text-[var(--gh-57606a)]">{bookingNumber(b._id)}</span>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${b.source === "WALK_IN" ? "bg-[var(--gh-fbefff)] text-[var(--gh-8250df)]" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"}`}>
-                        {b.source === "WALK_IN" ? <><Store size={10} /> WALK-IN</> : "ONLINE"}
-                      </span>
-                      {b.dealId && (
-                        <span className="theme-static inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">
-                          <Tag size={10} /> DEAL
-                        </span>
-                      )}
-                      {overdue && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> OVERDUE</span>}
-                    </div>
-                    <p className="mt-1 truncate text-sm font-bold text-[var(--gh-0d1117)]">
-                      {bookedTitle(b)}
-                      {(b.dealId?.vehicleCount ?? 1) > 1 && <span className="ml-1.5 text-xs font-medium text-[var(--gh-57606a)]">· {b.dealId!.vehicleCount} cars</span>}
+                  {/* Customer, return time, handover */}
+                  <div className="mt-3 space-y-1.5 text-xs">
+                    <p className="flex min-w-0 items-center gap-1.5 text-[var(--gh-57606a)]">
+                      <UserRound size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
+                      <span className="truncate">{c.name}</span>
+                      {c.phone && <a href={`tel:${c.phone}`} className="flex flex-shrink-0 items-center gap-1 font-semibold text-[var(--gh-0d1117)]"><Phone size={11} /> {c.phone}</a>}
                     </p>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--gh-57606a)]">
-                      <span className="flex items-center gap-1"><CalendarDays size={12} /> {fmt(b.startDate)} → {fmt(b.endDate)} ({days}d)</span>
-                      <span className="flex items-center gap-1"><UserRound size={12} /> {c.name}</span>
-                      {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-1 font-semibold text-[var(--gh-0d1117)]"><Phone size={12} /> {c.phone}</a>}
+                    {b.returnedAt ? (
+                      <p className="flex items-center gap-1.5 text-[var(--gh-57606a)]"><Undo2 size={12} className="text-[var(--gh-8c959f)]" /> Returned {fmtDateTime(b.returnedAt)}</p>
+                    ) : b.dueBackAt && (
+                      <p className={`flex items-center gap-1.5 font-semibold ${overdue ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-0d1117)]"}`}>
+                        <Clock3 size={12} /> Return by {fmtDateTime(b.dueBackAt)}
+                      </p>
+                    )}
+                    {showHandover && (
+                      <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {b.plateNumber && <PlateBadge plate={b.plateNumber} className="!px-1.5 !py-0 text-[10px]" />}
+                        {bookingCnic(b) && <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[var(--gh-0d1117)]"><IdCard size={12} className="text-[var(--gh-8c959f)]" /> {bookingCnic(b)}</span>}
+                      </p>
+                    )}
+                    {b.notes && <p className="truncate italic text-[var(--gh-8c959f)]">“{b.notes}”</p>}
+                  </div>
+
+                  {/* Money */}
+                  <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0))}</p>
+                      {b.status !== "CANCELLED" && <PaymentTag booking={b} onClick={canManage ? () => setPayFor(b) : undefined} />}
                     </div>
-                    {b.notes && <p className="mt-1.5 truncate text-xs italic text-[var(--gh-8c959f)]">“{b.notes}”</p>}
-                    {(b.plateNumber || bookingCnic(b) || (canManage && (b.status === "ACTIVE" || b.status === "COMPLETED"))) && (
-                      <div className="mt-2.5 max-w-[460px]">
-                        <HandoverDetails
-                          plate={b.plateNumber}
-                          cnic={bookingCnic(b)}
-                          onEdit={canManage && b.status !== "CANCELLED" ? () => setPlateFor({ booking: b, handover: false }) : undefined}
-                        />
+                    <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">
+                      Rent {pkr(b.totalAmount)} · Deposit {pkr(b.deposit)}
+                      {(b.lateFee ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Late {pkr(b.lateFee!)} ({b.lateDays}d × {LATE_RATE_MULTIPLIER})</span>}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions: the next step, slip, WhatsApp, and More */}
+                <div className="flex items-center gap-1.5 border-t border-[var(--gh-e1e4e8)] px-3.5 py-2.5 sm:px-4">
+                  {primary && (
+                    <button onClick={primary.onClick} disabled={busy} className={`inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3.5 text-xs font-semibold text-white transition disabled:opacity-50 sm:flex-none ${primary.cls}`}>
+                      <primary.icon size={14} /> {primary.label}
+                    </button>
+                  )}
+                  <div className={`flex items-center gap-1.5 ${primary ? "" : "flex-1"}`}>
+                    {b.status !== "CANCELLED" && (
+                      <Link href={`/business/bookings/${b._id}/slip`} target="_blank" aria-label="Booking slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
+                        <FileText size={14} /> <span className={primary ? "hidden sm:inline" : ""}>Slip</span>
+                      </Link>
+                    )}
+                    {c.phone && (
+                      <a
+                        href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${c.name}, regarding your booking ${bookingNumber(b._id)}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="WhatsApp the customer"
+                        className={`${iconBtn} text-[var(--gh-1a7f37)]`}
+                      >
+                        <MessageCircle size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenMore(moreOpen ? null : b._id)}
+                    aria-expanded={moreOpen}
+                    aria-label="More actions"
+                    className={`${iconBtn} ml-auto ${moreOpen ? "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]" : "text-[var(--gh-57606a)]"}`}
+                  >
+                    <MoreHorizontal size={15} /> <span className="hidden sm:inline">More</span>
+                  </button>
+                </div>
+
+                {/* Less frequent actions */}
+                {moreOpen && (
+                  <div className="space-y-3 border-t border-[var(--gh-e1e4e8)] bg-[var(--gh-fafbfc)] px-3.5 py-3 sm:px-4">
+                    {canManage && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {b.status !== "CANCELLED" && (
+                          <button onClick={() => setPayFor(b)} disabled={busy} className={`${trayBtn} text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]`}>
+                            <Wallet size={13} /> Update payment
+                          </button>
+                        )}
+                        {(canEditHandover || (showHandover && b.status !== "CANCELLED")) && (
+                          <button onClick={() => setPlateFor({ booking: b, handover: false })} disabled={busy} className={`${trayBtn} text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]`}>
+                            <Pencil size={13} /> {showHandover ? "Edit plate, CNIC" : "Add plate & CNIC"}{b.status === "ACTIVE" ? " & return time" : ""}
+                          </button>
+                        )}
+                        {(b.status === "PENDING" || b.status === "CONFIRMED") && (
+                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${trayBtn} border-[var(--gh-ffcdd2)] text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
+                            <X size={13} /> {b.status === "PENDING" ? "Decline request" : "Cancel booking"}
+                          </button>
+                        )}
+                        {(b.status === "COMPLETED" || b.status === "CANCELLED") && (
+                          <button onClick={() => { setRemoveError(""); setConfirmRemove(b); }} disabled={busy} className={`${trayBtn} text-[var(--gh-57606a)] hover:border-[var(--gh-ffcdd2)] hover:text-[var(--gh-cf222e)]`}>
+                            <Trash2 size={13} /> Remove from list
+                          </button>
+                        )}
                       </div>
                     )}
-                    <div className="mt-3 flex flex-wrap gap-5">
-                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Rental</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount)}</p></div>
-                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Deposit</p><p className="text-sm font-bold tabular-nums text-[var(--gh-0d1117)]">{pkr(b.deposit)}</p></div>
-                      <div><p className="text-[11px] text-[var(--gh-8c959f)]">Total</p><p className="text-sm font-bold tabular-nums text-[var(--gh-1a7f37)]">{pkr(b.totalAmount + b.deposit)}</p></div>
-                    </div>
-                  </div>
-
-                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-                    <span className="self-start rounded-full px-2.5 py-1 text-[11px] font-bold sm:self-end" style={{ background: s.bg, color: s.color }}>{s.label}</span>
-                    <div className="flex flex-wrap gap-1.5 sm:justify-end">
-                      {canManage && b.status === "PENDING" && (
-                        <>
-                          <button onClick={() => updateStatus(b, "CONFIRMED")} disabled={busy} className={`${btn} bg-[var(--gh-2da44e)] text-white hover:bg-[var(--gh-2c974b)]`}>
-                            <CheckCircle2 size={13} /> Confirm
-                          </button>
-                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>Decline</button>
-                        </>
-                      )}
-                      {canManage && b.status === "CONFIRMED" && (
-                        <>
-                          <button onClick={() => setPlateFor({ booking: b, handover: true })} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The customer has collected the vehicle">
-                            <KeyRound size={13} /> Hand over
-                          </button>
-                          <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${btn} border border-[var(--gh-ffcdd2)] bg-white text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>Cancel</button>
-                        </>
-                      )}
-                      {canManage && b.status === "ACTIVE" && (
-                        <button onClick={() => updateStatus(b, "COMPLETED")} disabled={busy} className={`${btn} bg-[var(--gh-0d1117)] text-white hover:bg-[var(--gh-24292f)]`} title="The vehicle is back">
-                          <Undo2 size={13} /> Mark returned
-                        </button>
-                      )}
-                      {canManage && (b.status === "COMPLETED" || b.status === "CANCELLED") && (
-                        <button onClick={() => { setRemoveError(""); setConfirmRemove(b); }} disabled={busy} className={`${btn} border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-57606a)] hover:border-[var(--gh-ffcdd2)] hover:text-[var(--gh-cf222e)]`} title="Remove from your list">
-                          <Trash2 size={13} /> Remove
-                        </button>
-                      )}
-                      {b.status !== "CANCELLED" && (
-                        <Link href={`/business/bookings/${b._id}/slip`} target="_blank" className={`${btn} border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)] hover:bg-[var(--gh-eef1f4)]`}>
-                          <FileText size={13} /> Slip
-                        </Link>
-                      )}
-                      {c.phone && (
-                        <a
-                          href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${c.name}, regarding your booking ${bookingNumber(b._id)}`)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={`${btn} border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-1a7f37)] hover:bg-[var(--gh-dafbe1)]`}
-                        >
-                          WhatsApp
-                        </a>
-                      )}
-                    </div>
                     {canManage && listing?._id && b.status !== "CANCELLED" && (
-                      <div className="flex items-center gap-2 sm:justify-end">
-                        <span className="text-[11px] text-[var(--gh-8c959f)]">Vehicle tag</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] font-semibold text-[var(--gh-57606a)]">Vehicle tag</span>
                         <AvailabilityControl
                           key={`${listing._id}-${listing.status}`}
                           id={listing._id}
@@ -664,9 +790,11 @@ export default function BusinessBookingsPage() {
                         />
                       </div>
                     )}
-                    {b.createdBy?.name && <p className="text-[10px] text-[var(--gh-8c959f)]">Booked by {b.createdBy.name}</p>}
+                    <p className="text-[11px] text-[var(--gh-8c959f)]">
+                      Created {fmt(b.createdAt)}{b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
