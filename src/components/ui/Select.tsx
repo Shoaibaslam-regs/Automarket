@@ -99,7 +99,7 @@ export default function Select({
                 key={o.value}
                 value={toInternal(o.value)}
                 className={twMerge(
-                  "relative flex min-h-10 cursor-pointer select-none items-center rounded-lg py-2 pl-3 pr-9 text-sm text-slate-700 outline-none sm:min-h-9",
+                  "relative flex min-h-10 cursor-pointer select-none items-center rounded-lg py-2 pl-3 pr-9 text-sm text-slate-700 outline-none focus-visible:outline-none sm:min-h-9",
                   "data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900",
                   "data-[state=checked]:font-semibold data-[state=checked]:text-slate-900",
                   "data-[disabled]:pointer-events-none data-[disabled]:opacity-40"

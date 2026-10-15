@@ -520,8 +520,9 @@ export default function ListingsPage({
                 )}
               </div>
 
-              <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none">
-                <label className="inline-flex h-10 flex-shrink-0 cursor-pointer select-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm">
+              {/* Phones: [Hide sold & rented | view] then [Filters | sort]; wider screens keep one row */}
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                <label className="order-1 inline-flex h-10 flex-auto cursor-pointer whitespace-nowrap select-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm sm:order-none sm:flex-none">
                   <input
                     type="checkbox"
                     checked={availableOnly}
@@ -533,7 +534,7 @@ export default function ListingsPage({
                 <button
                   type="button"
                   onClick={() => setShowFilters(true)}
-                  className="inline-flex h-10 flex-shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 shadow-sm lg:hidden"
+                  className="order-3 inline-flex h-10 flex-shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 shadow-sm sm:order-none lg:hidden"
                 >
                   <SlidersHorizontal size={15} strokeWidth={2} />
                   Filters
@@ -542,7 +543,7 @@ export default function ListingsPage({
                   )}
                 </button>
 
-                <div className="flex h-10 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="order-2 flex h-10 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   {(["grid", "list"] as const).map(v => (
                     <button
                       key={v}
@@ -557,7 +558,7 @@ export default function ListingsPage({
                   ))}
                 </div>
 
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+                <div className="order-4 flex min-w-0 flex-1 basis-0 items-center gap-2 sm:order-none sm:flex-none sm:basis-auto">
                   <ArrowUpDown size={14} strokeWidth={2} className="hidden flex-shrink-0 text-slate-400 sm:block" />
                   <div className="min-w-0 flex-1 sm:w-[190px] sm:flex-none">
                     <Select

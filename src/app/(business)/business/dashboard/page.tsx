@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ModeToggle from "@/components/ModeToggle";
 import Image from "next/image";
-import { BarChart3, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
+import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 import { planInfo } from "@/lib/plans";
 import UserIdBadge from "@/components/UserIdBadge";
 
@@ -346,6 +346,14 @@ export default function BusinessDashboard() {
             </div>
 
             <div className="flex flex-shrink-0 items-center gap-2">
+              <Link
+                href="/business/guide"
+                title="How to use Customers and Staff, in English and Urdu"
+                aria-label="Guide"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] sm:h-9 sm:px-3 sm:text-[13px]"
+              >
+                <BookOpen size={14} /> <span className="hidden sm:inline">Guide</span>
+              </Link>
               {org?.slug && (
                 <a
                   href={`/dealers/${org.slug}`}
