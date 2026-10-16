@@ -33,7 +33,7 @@ export async function GET() {
     const memberIds = await getOrgUserIds(orgId);
     // Bookings finished before completedAt existed fall back to their last update as the completion time
     // Rent plus any late-return fee
-    const rentIncome = { $add: ["$totalAmount", { $ifNull: ["$lateFee", 0] }] };
+    const rentIncome = { $add: ["$totalAmount", { $ifNull: ["$lateFee", 0] }, { $ifNull: ["$extraCharges", 0] }] };
     const completedOn = { $ifNull: ["$completedAt", "$updatedAt"] };
     const sixMonthsAgo = new Date(thisMonth);
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);

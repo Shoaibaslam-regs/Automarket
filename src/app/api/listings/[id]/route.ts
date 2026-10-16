@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { isUserBusinessSuspended } from "@/lib/business";
 import { invalidateListingAndSeller } from "@/lib/pageCache";
 import { cleanAddress } from "@/lib/address";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export async function GET(
   req: NextRequest,
@@ -89,6 +90,7 @@ export async function PATCH(
     }
 
     await invalidateListingAndSeller(id, session.user.id);
+    if (updated) await logBusinessAction({ userId: session.user.id }, "listing.update", { type: "LISTING", id: updated._id, label: updated.title });
     return NextResponse.json({ listing: updated });
   } catch (error) {
     return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
@@ -124,6 +126,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     await invalidateListingAndSeller(id, session.user.id);
+    await logBusinessAction({ userId: session.user.id }, "listing.delete", { type: "LISTING", id: deleted._id, label: deleted.title });
     return NextResponse.json({ message: "Listing deleted" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete listing" }, { status: 500 });

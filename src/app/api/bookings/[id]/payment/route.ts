@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { loadOwnedBooking } from "@/lib/bookingAccess";
 import { amountDue, paymentState } from "@/lib/payments";
+import { logBusinessAction } from "@/lib/businessLog";
+import { bookingNumber } from "@/lib/bookings";
+import { recordPaymentChange } from "@/lib/ledger";
 
 /**
  * Records what the renter has paid. Body: { status: "PENDING" | "PARTIAL" | "PAID", amountPaid? }.
@@ -34,9 +37,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Choose pending, partly paid or paid" }, { status: 400 });
     }
 
+    const before = booking.amountPaid ?? 0;
     booking.amountPaid = paid;
     booking.paymentUpdatedAt = new Date();
     await booking.save();
+    await recordPaymentChange(session.user.id, paid - before, "BOOKING_PAYMENT", { bookingId: booking._id }, bookingNumber(String(booking._id)));
+    await logBusinessAction({ userId: session.user.id }, "booking.payment",
+      { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) },
+      { details: `PKR ${before.toLocaleString()} → PKR ${paid.toLocaleString()} of ${due.toLocaleString()}`, amount: paid - before });
     return NextResponse.json({ amountPaid: paid, payment: paymentState(booking) });
   } catch (error) {
     console.error("Booking payment error:", error);

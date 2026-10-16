@@ -6,7 +6,7 @@ import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   AlertTriangle, CalendarCheck, IdCard, MessageCircle, MoreHorizontal, Pencil, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
-  Store, Trash2, Undo2, UserRound, Wallet, X,
+  CalendarRange, Gauge, List as ListIcon, ShieldCheck, Store, Trash2, Undo2, UserRound, Wallet, X,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
@@ -18,6 +18,10 @@ import ReturnDialog from "@/components/bookings/ReturnDialog";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import type { PaymentStatus } from "@/lib/payments";
 import { bookingCnic } from "@/lib/plates";
+import { kmDriven, type Check } from "@/lib/checklist";
+import { conditionText } from "@/components/bookings/ConditionFields";
+import DepositDialog, { DepositTag } from "@/components/bookings/DepositDialog";
+import BookingCalendar from "@/components/bookings/BookingCalendar";
 
 type Booking = {
   _id: string;
@@ -36,6 +40,14 @@ type Booking = {
   returnedAt?: string;
   lateDays?: number;
   lateFee?: number;
+  /** Condition at handover and return, extra charges at return, and the deposit settlement */
+  checkOut?: Check | null;
+  checkIn?: Check | null;
+  extraCharges?: number;
+  extraChargesNote?: string;
+  depositRefunded?: number;
+  depositNote?: string;
+  depositSettledAt?: string | null;
   /** What the renter has paid so far; drives the payment tag */
   amountPaid?: number;
   createdAt: string;
@@ -44,8 +56,33 @@ type Booking = {
   offListVehicle?: { title: string; dailyRate: number; deposit: number } | null;
   /** Set for bookings of a rent deal (package) instead of a listed vehicle */
   dealId?: { _id: string; title: string; images: string[]; vehicleCount?: number } | null;
-  rentalId?: { dailyRate: number; plateNumber?: string; listingId?: { _id: string; title: string; make: string; model: string; images: string[]; type: string; status: string } | null } | null;
+  rentalId?: { _id?: string; dailyRate: number; plateNumber?: string; listingId?: { _id: string; title: string; make: string; model: string; images: string[]; type: string; status: string } | null } | null;
 };
+
+/** Handover and return condition side by side, with photos, for the card's More tray. */
+function ConditionSummary({ b }: { b: Booking }) {
+  const rows = [["Out", b.checkOut], ["Back", b.checkIn]] as const;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {rows.map(([label, c]) => c && (
+        <div key={label} className="rounded-lg border border-[var(--gh-e1e4e8)] bg-white p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--gh-8c959f)]">{label}</p>
+          <p className="text-[11px] font-semibold text-[var(--gh-0d1117)]">{conditionText(c) || "—"}</p>
+          {c.notes && <p className="text-[11px] text-[var(--gh-57606a)]">{c.notes}</p>}
+          {!!c.photos?.length && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {c.photos.map(url => (
+                <a key={url} href={url} target="_blank" rel="noreferrer" className="relative h-10 w-10 overflow-hidden rounded-md ring-1 ring-[var(--gh-e1e4e8)]">
+                  <Image src={url} alt={`${label} photo`} fill sizes="40px" className="object-cover" />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Out past its return time: the exact time given at handover, or the end date for older bookings. */
 function isOverdue(b: Booking, now: number): boolean {
@@ -307,6 +344,7 @@ export default function BusinessBookingsPage() {
   const [loadError, setLoadError] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"list" | "calendar">("list");
   const [updating, setUpdating] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [newOpen, setNewOpen] = useState(false);
@@ -319,6 +357,7 @@ export default function BusinessBookingsPage() {
   const [plateFor, setPlateFor] = useState<{ booking: Booking; handover: boolean; due?: string } | null>(null);
   const [returnFor, setReturnFor] = useState<Booking | null>(null);
   const [payFor, setPayFor] = useState<Booking | null>(null);
+  const [depositFor, setDepositFor] = useState<Booking | null>(null);
   // Booking whose "More" tray is open
   const [openMore, setOpenMore] = useState<string | null>(null);
   // "Now" for overdue checks, captured when bookings load so rendering stays pure
@@ -381,12 +420,12 @@ export default function BusinessBookingsPage() {
     return null;
   }
 
-  async function saveReturn(returnedAt: string): Promise<string | null> {
+  async function saveReturn(details: { returnedAt: string }): Promise<string | null> {
     if (!returnFor) return null;
     const res = await fetch(`/api/business/bookings/${returnFor._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "COMPLETED", returnedAt }),
+      body: JSON.stringify({ status: "COMPLETED", ...details }),
     });
     if (!res.ok) return (await res.json().catch(() => ({}))).error || "Couldn't mark the booking returned";
     setReturnFor(null);
@@ -401,7 +440,18 @@ export default function BusinessBookingsPage() {
     setPlateFor({ booking: b, handover: true, due: due.toISOString() });
   }
 
-  async function saveHandover(details: { plateNumber: string; cnic: string; dueBackAt?: string }): Promise<string | null> {
+  async function saveDeposit(body: { refunded: number; note: string }): Promise<string | null> {
+    if (!depositFor) return null;
+    const res = await fetch(`/api/bookings/${depositFor._id}/deposit`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return data.error || "Couldn't save the deposit";
+    const id = depositFor._id;
+    setBookings(prev => prev.map(x => (x._id === id ? { ...x, depositRefunded: data.depositRefunded, depositNote: data.depositNote ?? undefined, depositSettledAt: data.depositSettledAt } : x)));
+    setDepositFor(null);
+    return null;
+  }
+
+  async function saveHandover(details: { plateNumber: string; cnic: string; dueBackAt?: string; checkOut?: Check }): Promise<string | null> {
     if (!plateFor) return null;
     const { booking: b, handover } = plateFor;
     const res = handover
@@ -430,7 +480,7 @@ export default function BusinessBookingsPage() {
   }
 
   const stats = useMemo(() => {
-    const revenue = bookings.filter(b => b.status === "COMPLETED").reduce((s, b) => s + b.totalAmount + (b.lateFee ?? 0), 0);
+    const revenue = bookings.filter(b => b.status === "COMPLETED").reduce((s, b) => s + b.totalAmount + (b.lateFee ?? 0) + (b.extraCharges ?? 0), 0);
     return {
       pending: bookings.filter(b => b.status === "PENDING").length,
       upcoming: bookings.filter(b => b.status === "CONFIRMED").length,
@@ -469,6 +519,7 @@ export default function BusinessBookingsPage() {
         initialCnic={plateFor ? bookingCnic(plateFor.booking) : undefined}
         askReturnTime={!!plateFor && (plateFor.handover || plateFor.booking.status === "ACTIVE")}
         initialDueBackAt={plateFor ? plateFor.due ?? plateFor.booking.dueBackAt : undefined}
+        askCondition={!!plateFor?.handover}
         onSave={saveHandover}
       />
       <PaymentDialog
@@ -485,7 +536,15 @@ export default function BusinessBookingsPage() {
         customer={returnFor ? customerOf(returnFor).name : ""}
         dueBackAt={returnFor?.dueBackAt}
         dailyRate={returnFor ? bookingDailyRate(returnFor) : 0}
+        checkOutKm={returnFor?.checkOut?.odometer}
         onSave={saveReturn}
+      />
+      <DepositDialog
+        open={depositFor !== null}
+        onOpenChange={o => !o && setDepositFor(null)}
+        booking={depositFor}
+        customer={depositFor ? customerOf(depositFor).name : undefined}
+        onSave={saveDeposit}
       />
       <ConfirmDialog
         open={confirmCancel !== null}
@@ -578,6 +637,20 @@ export default function BusinessBookingsPage() {
           ))}
         </div>
 
+        {/* List or calendar */}
+        <div role="tablist" aria-label="View" className="mb-4 inline-flex rounded-lg border border-[var(--gh-e1e4e8)] bg-white p-0.5">
+          {([["list", "List", ListIcon], ["calendar", "Calendar", CalendarRange]] as const).map(([id, label, Icon]) => (
+            <button key={id} role="tab" aria-selected={view === id} onClick={() => setView(id)}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${view === id ? "bg-[var(--gh-0d1117)] text-white" : "text-[var(--gh-57606a)]"}`}>
+              <Icon size={13} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {view === "calendar" ? (
+          <BookingCalendar bookings={bookings} vehicles={vehicles}
+            onOpen={b => { setView("list"); setStatusFilter(""); setSearch(bookingNumber(b._id)); }} />
+        ) : (<>
         {/* Filters */}
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-1.5">
@@ -698,19 +771,31 @@ export default function BusinessBookingsPage() {
                         {bookingCnic(b) && <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[var(--gh-0d1117)]"><IdCard size={12} className="text-[var(--gh-8c959f)]" /> {bookingCnic(b)}</span>}
                       </p>
                     )}
+                    {(b.checkOut || b.checkIn) && (
+                      <p className="flex items-center gap-1.5 text-[var(--gh-57606a)]">
+                        <Gauge size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
+                        <span className="truncate">
+                          {kmDriven(b) != null ? <><strong className="text-[var(--gh-0d1117)]">{kmDriven(b)!.toLocaleString()} km</strong> driven</> : conditionText(b.checkIn ?? b.checkOut)}
+                        </span>
+                      </p>
+                    )}
                     {b.notes && <p className="truncate italic text-[var(--gh-8c959f)]">“{b.notes}”</p>}
                   </div>
 
                   {/* Money */}
                   <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                      <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0))}</p>
+                      <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</p>
                       {b.status !== "CANCELLED" && <PaymentTag booking={b} onClick={canManage ? () => setPayFor(b) : undefined} />}
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">
                       Rent {pkr(b.totalAmount)} · Deposit {pkr(b.deposit)}
                       {(b.lateFee ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Late {pkr(b.lateFee!)} ({b.lateDays} extra day{b.lateDays !== 1 ? "s" : ""})</span>}
+                      {(b.extraCharges ?? 0) > 0 && <span className="text-[var(--gh-cf222e)]"> · Extra {pkr(b.extraCharges!)}{b.extraChargesNote ? ` (${b.extraChargesNote})` : ""}</span>}
                     </p>
+                    {b.deposit > 0 && (b.status === "COMPLETED" || (b.status === "CANCELLED" && b.depositSettledAt)) && (
+                      <div className="mt-1.5"><DepositTag booking={b} onClick={canManage ? () => setDepositFor(b) : undefined} /></div>
+                    )}
                   </div>
                 </div>
 
@@ -765,6 +850,11 @@ export default function BusinessBookingsPage() {
                             <Pencil size={13} /> {showHandover ? "Edit plate, CNIC" : "Add plate & CNIC"}{b.status === "ACTIVE" ? " & return time" : ""}
                           </button>
                         )}
+                        {b.deposit > 0 && (b.status === "COMPLETED" || b.status === "CANCELLED") && (
+                          <button onClick={() => setDepositFor(b)} disabled={busy} className={`${trayBtn} text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]`}>
+                            <ShieldCheck size={13} /> {b.depositSettledAt ? "Edit deposit refund" : "Settle deposit"}
+                          </button>
+                        )}
                         {(b.status === "PENDING" || b.status === "CONFIRMED") && (
                           <button onClick={() => setConfirmCancel(b)} disabled={busy} className={`${trayBtn} border-[var(--gh-ffcdd2)] text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
                             <X size={13} /> {b.status === "PENDING" ? "Decline request" : "Cancel booking"}
@@ -790,6 +880,7 @@ export default function BusinessBookingsPage() {
                         />
                       </div>
                     )}
+                    {(b.checkOut || b.checkIn) && <ConditionSummary b={b} />}
                     <p className="text-[11px] text-[var(--gh-8c959f)]">
                       Created {fmt(b.createdAt)}{b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
                     </p>
@@ -799,6 +890,7 @@ export default function BusinessBookingsPage() {
             );
           })}
         </div>
+        </>)}
       </div>
     </div>
   );

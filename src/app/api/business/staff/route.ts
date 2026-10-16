@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { checkPlanLimit } from "@/lib/subscription";
 import { can, getMembership } from "@/lib/business";
+import { logBusinessAction } from "@/lib/businessLog";
 
 /** Roles that can be given from the staff page; there is only ever one OWNER. */
 const ASSIGNABLE_ROLES = ["MANAGER", "SALES", "STAFF"];
@@ -21,7 +22,12 @@ export async function GET() {
       .lean();
     return NextResponse.json({
       staff,
-      permissions: { role: member.role, canManage: can(member.role, "manageTeam") },
+      permissions: {
+        role: member.role,
+        canManage: can(member.role, "manageTeam"),
+        canViewActivity: can(member.role, "viewActivity"),
+        canViewPerformance: can(member.role, "viewPerformance"),
+      },
     });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }
@@ -53,6 +59,8 @@ export async function POST(req: NextRequest) {
 
     const employee = await Employee.create({ organizationId: member.organizationId, userId: targetUser._id, role });
     await User.findByIdAndUpdate(targetUser._id, { organizationId: member.organizationId, organizationRole: role });
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "staff.add",
+      { type: "STAFF", id: targetUser._id, label: targetUser.name || targetUser.email }, { details: role });
     return NextResponse.json({ employee }, { status: 201 });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }

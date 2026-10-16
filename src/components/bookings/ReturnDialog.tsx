@@ -5,6 +5,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, CheckCircle2, Undo2, X } from "lucide-react";
 import { LATE_GRACE_MINUTES, LATE_RULE_TEXT, lateCharge } from "@/lib/bookings";
 import { fmtDateTime, toDateTimeInput } from "./HandoverDialog";
+import type { Check } from "@/lib/checklist";
+import ConditionFields, { EMPTY_CHECK, checkBody, type CheckForm } from "./ConditionFields";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -19,7 +21,7 @@ function lateText(minutes: number): string {
  * "Mark returned": records when the vehicle came back and shows the late fee before saving.
  * Up to LATE_GRACE_MINUTES late is free; each later day costs one more day of rent.
  */
-export default function ReturnDialog({ open, onOpenChange, vehicle, customer, dueBackAt, dailyRate, onSave }: {
+export default function ReturnDialog({ open, onOpenChange, vehicle, customer, dueBackAt, dailyRate, checkOutKm, onSave }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vehicle: string;
@@ -27,9 +29,14 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
   /** Return time given at handover; older bookings have none and are never charged */
   dueBackAt?: string;
   dailyRate: number;
-  onSave: (returnedAt: string) => Promise<string | null>;
+  /** Odometer at handover, to show the km driven */
+  checkOutKm?: number;
+  onSave: (details: { returnedAt: string; checkIn?: Check; extraCharges?: number; extraChargesNote?: string }) => Promise<string | null>;
 }) {
   const [value, setValue] = useState("");
+  const [cond, setCond] = useState<CheckForm>(EMPTY_CHECK);
+  const [extra, setExtra] = useState("");
+  const [extraNote, setExtraNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [openedFor, setOpenedFor] = useState<string | null>(null);
@@ -39,6 +46,9 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
   if (key !== openedFor) {
     setOpenedFor(key);
     setValue(toDateTimeInput(new Date()));
+    setCond(EMPTY_CHECK);
+    setExtra("");
+    setExtraNote("");
     setError("");
   }
 
@@ -46,13 +56,16 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
   const valid = !!back && !isNaN(back.getTime());
   const late = valid ? lateCharge(dueBackAt, back!, dailyRate) : null;
   const inGrace = !!late && late.lateMinutes > 0 && late.lateDays === 0;
+  const extraAmount = Math.max(0, Math.round(Number(extra) || 0));
+  const totalExtra = (late?.fee ?? 0) + extraAmount;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) { setError("Enter when the vehicle came back"); return; }
+    if (extraAmount > 0 && !extraNote.trim()) { setError("Say what the extra charges are for"); return; }
     setSaving(true);
     setError("");
-    const err = await onSave(back!.toISOString());
+    const err = await onSave({ returnedAt: back!.toISOString(), checkIn: checkBody(cond), ...(extraAmount > 0 ? { extraCharges: extraAmount, extraChargesNote: extraNote.trim() } : {}) });
     setSaving(false);
     if (err) setError(err);
   }
@@ -103,13 +116,25 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
               </p>
             )}
 
+            <ConditionFields value={cond} onChange={setCond} minKm={checkOutKm} idPrefix="in" />
+
+            <div>
+              <label htmlFor="extra-charges" className="mb-1.5 block text-xs font-semibold text-slate-900">Extra charges (optional)</label>
+              <div className="grid grid-cols-[110px_1fr] gap-2">
+                <input id="extra-charges" type="number" min={0} inputMode="numeric" value={extra} onChange={e => setExtra(e.target.value)} placeholder="PKR"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+                <input value={extraNote} onChange={e => setExtraNote(e.target.value)} maxLength={200} aria-label="What the extra charges are for" placeholder="For, e.g. fuel, damage, extra km"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+              </div>
+            </div>
+
             {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
             <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
               <Dialog.Close asChild>
                 <button type="button" disabled={saving} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
               </Dialog.Close>
               <button type="submit" disabled={saving || !valid} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
-                {saving ? "Saving…" : late && late.fee > 0 ? `Mark returned · ${pkr(late.fee)} late fee` : "Mark returned"}
+                {saving ? "Saving…" : totalExtra > 0 ? `Mark returned · ${pkr(totalExtra)} extra` : "Mark returned"}
               </button>
             </div>
           </form>

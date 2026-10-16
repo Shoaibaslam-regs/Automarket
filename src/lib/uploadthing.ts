@@ -54,6 +54,18 @@ export const ourFileRouter = {
       }
     }),
 
+  // Handover and return condition photos (scratches, fuel gauge, odometer): no vehicle check, counted per file.
+  checkPhotos: f({
+    image: { maxFileSize: "4MB", maxFileCount: 6 },
+  })
+    .middleware(async ({ files }) => {
+      const { userId } = await requireUser();
+      const r = await hitRateLimit("checkPhotos", userId!, files.length);
+      if (!r.ok) throw new UploadThingError(`You've uploaded a lot of photos. Please try again in ${waitText(r.retryAfterSec)}.`);
+      return { userId };
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
+
   // Profile avatars: no vehicle check.
   profileImage: f({
     image: { maxFileSize: "4MB", maxFileCount: 1 },

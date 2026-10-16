@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FollowUp } from "@/models/FollowUp";
+import { LedgerEntry } from "@/models/LedgerEntry";
+import { BusinessLog } from "@/models/BusinessLog";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
@@ -12,6 +15,7 @@ import { invalidateBusinessSlug, invalidateDeal } from "@/lib/pageCache";
 import { Deal } from "@/models/Deal";
 import { BusinessReview } from "@/models/BusinessReview";
 import { Purchase } from "@/models/Purchase";
+import { logBusinessAction } from "@/lib/businessLog";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -106,7 +110,12 @@ export async function PATCH(req: NextRequest) {
       removeLogo ? { $set: update, $unset: { logo: "" } } : { $set: update },
       { new: true }
     );
-    if (org) invalidateBusinessSlug(org.slug);
+    if (org) {
+      invalidateBusinessSlug(org.slug);
+      const changed = [...Object.keys(update), ...(removeLogo ? ["logo removed"] : [])];
+      await logBusinessAction({ userId: session.user.id, organizationId: org._id }, "business.settings",
+        { type: "BUSINESS", id: org._id, label: org.name }, { details: changed.join(", ") || undefined });
+    }
     return NextResponse.json({ organization: org });
   } catch (error) {
     console.error("Update org error:", error);
@@ -139,6 +148,7 @@ export async function DELETE(req: NextRequest) {
     await Deal.deleteMany({ organizationId: org._id });
     await Purchase.deleteMany({ organizationId: org._id });
     await BusinessReview.deleteMany({ organizationId: org._id });
+    await Promise.all([FollowUp, LedgerEntry, BusinessLog].map(M => (M as typeof FollowUp).deleteMany({ organizationId: org._id })));
     await User.updateMany(
       { organizationId: org._id },
       { $unset: { organizationId: "", organizationRole: "" } }

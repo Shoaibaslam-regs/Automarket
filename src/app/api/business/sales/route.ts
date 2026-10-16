@@ -9,8 +9,10 @@ import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { normalizeCnic, normalizePlate } from "@/lib/plates";
 import { quotaMonthStart } from "@/lib/plans";
 import { dealPrice } from "@/lib/deals";
-import { salePrice } from "@/lib/purchases";
+import { purchaseNumber, salePrice } from "@/lib/purchases";
 import { ensurePurchaseCustomer, finishSale, resolveSaleItem } from "@/lib/saleItems";
+import { logBusinessAction } from "@/lib/businessLog";
+import { recordPaymentChange } from "@/lib/ledger";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -137,6 +139,9 @@ export async function POST(req: NextRequest) {
     if (sold) await finishSale(purchase);
     try { await ensurePurchaseCustomer(purchase); } catch (e) { console.error("Sale customer sync failed:", e); }
 
+    if (amountPaid > 0) await recordPaymentChange(session.user.id, amountPaid, "SALE_PAYMENT", { purchaseId: purchase._id, listingId: purchase.listingId, vehicleLabel: vehicle.title }, `${purchaseNumber(String(purchase._id))} · ${buyerName}`);
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, sold ? "sale.complete" : "sale.create",
+      { type: "SALE", id: purchase._id, label: vehicle.title }, { details: `Walk-in · ${buyerName}`, amount: price });
     return NextResponse.json({ sale: purchase }, { status: 201 });
   } catch (error) {
     console.error("Business sales POST error:", error);

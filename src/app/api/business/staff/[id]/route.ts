@@ -5,6 +5,7 @@ import { Employee } from "@/models/Employee";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { can, getMembership } from "@/lib/business";
+import { logBusinessAction } from "@/lib/businessLog";
 
 const ASSIGNABLE_ROLES = ["MANAGER", "SALES", "STAFF"];
 
@@ -38,9 +39,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!ASSIGNABLE_ROLES.includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     const found = await loadManageable(session.user.id, id);
     if (found.error) return found.error;
+    const before = found.employee.role;
     found.employee.role = role;
     await found.employee.save();
-    await User.findByIdAndUpdate(found.employee.userId, { organizationRole: role });
+    const person = await User.findByIdAndUpdate(found.employee.userId, { organizationRole: role }).select("name email").lean<{ name?: string; email: string }>();
+    await logBusinessAction({ userId: session.user.id, organizationId: found.employee.organizationId }, "staff.role",
+      { type: "STAFF", id: found.employee.userId, label: person?.name || person?.email }, { details: `${before} → ${role}` });
     return NextResponse.json({ employee: found.employee });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }
@@ -53,7 +57,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const found = await loadManageable(session.user.id, id);
     if (found.error) return found.error;
     await found.employee.deleteOne();
-    await User.findByIdAndUpdate(found.employee.userId, { $unset: { organizationId: "", organizationRole: "" } });
+    const person = await User.findByIdAndUpdate(found.employee.userId, { $unset: { organizationId: "", organizationRole: "" } }).select("name email").lean<{ name?: string; email: string }>();
+    await logBusinessAction({ userId: session.user.id, organizationId: found.employee.organizationId }, "staff.remove",
+      { type: "STAFF", id: found.employee.userId, label: person?.name || person?.email }, { details: found.employee.role });
     return NextResponse.json({ ok: true });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }

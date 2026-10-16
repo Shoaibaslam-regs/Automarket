@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  BadgeDollarSign, Car, CheckCircle2, Clock3, Download, FileText, Handshake, MessageCircle, MoreHorizontal, Phone, Plus, Search,
+  BadgeDollarSign, CalendarClock, Car, CheckCircle2, Clock3, Download, FileText, Handshake, MessageCircle, MoreHorizontal, Phone, Plus, Search,
   Store, UserRound, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
@@ -18,6 +18,8 @@ import {
   OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, PURCHASE_STATUSES, PURCHASE_STYLE, asPayable, purchaseNumber, purchasePayment, salePrice,
   type PurchaseStatus,
 } from "@/lib/purchases";
+import type { InstallmentPlan } from "@/lib/installments";
+import { InstallmentLine, InstallmentScheduleDialog, InstallmentSetupDialog } from "@/components/sales/Installments";
 
 type Sale = {
   _id: string;
@@ -32,6 +34,7 @@ type Sale = {
   agreedPrice?: number;
   amountPaid?: number;
   plateNumber?: string;
+  installmentPlan?: InstallmentPlan | null;
   message?: string;
   notes?: string;
   declineReason?: string;
@@ -299,6 +302,9 @@ export default function BusinessSalesPage() {
   const [created, setCreated] = useState<string | null>(null);
   const [actionFor, setActionFor] = useState<{ kind: ActionKind; sale: Sale } | null>(null);
   const [payFor, setPayFor] = useState<Sale | null>(null);
+  const [planFor, setPlanFor] = useState<Sale | null>(null);
+  const [scheduleId, setScheduleId] = useState<string | null>(null);
+  const scheduleSale = scheduleId ? sales.find(x => x._id === scheduleId) ?? null : null;
 
   function load() {
     return fetch("/api/business/sales")
@@ -342,6 +348,11 @@ export default function BusinessSalesPage() {
         onSave={async body => { const err = await patch(actionFor!.sale._id, body); if (!err) setActionFor(null); return err; }} />
       <PaymentDialog open={payFor !== null} onOpenChange={o => !o && setPayFor(null)} booking={payFor ? asPayable(payFor) : null} customer={payFor?.buyer.name}
         onSave={async (body: { status: PaymentStatus; amountPaid?: number }) => { const err = await patch(payFor!._id, { action: "payment", ...body }); if (!err) setPayFor(null); return err; }} />
+      <InstallmentSetupDialog open={planFor !== null} onOpenChange={o => !o && setPlanFor(null)} price={planFor ? salePrice(planFor) : 0} paid={planFor?.amountPaid ?? 0} buyer={planFor?.buyer.name ?? ""}
+        onSave={async body => { const id = planFor!._id; const err = await patch(id, { action: "installments", ...body }); if (!err) { setPlanFor(null); setScheduleId(id); } return err; }} />
+      <InstallmentScheduleDialog open={scheduleSale !== null} onOpenChange={o => !o && setScheduleId(null)} saleId={scheduleSale?._id ?? ""} plan={scheduleSale?.installmentPlan ?? null}
+        buyer={scheduleSale?.buyer.name ?? ""} canManage={canManage}
+        onAction={async body => { const err = await patch(scheduleSale!._id, body); if (!err && body.action === "removeInstallments") setScheduleId(null); return err; }} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <div className="min-w-0">
@@ -480,6 +491,7 @@ export default function BusinessSalesPage() {
                       {s.agreedPrice !== undefined && s.offerPrice !== undefined && ` · offered ${pkr(s.offerPrice)}`}
                       {s.plateNumber && ` · ${s.plateNumber}`}
                     </p>
+                    {s.installmentPlan && <div className="mt-1"><InstallmentLine plan={s.installmentPlan} onClick={() => setScheduleId(s._id)} /></div>}
                   </div>
                 </div>
 
@@ -515,6 +527,11 @@ export default function BusinessSalesPage() {
                         )}
                         {!closedNoSale && (
                           <button onClick={() => setPayFor(s)} className={trayBtn}><Wallet size={13} /> Update payment</button>
+                        )}
+                        {(s.status === "ACCEPTED" || s.status === "COMPLETED") && (
+                          s.installmentPlan
+                            ? <button onClick={() => setScheduleId(s._id)} className={trayBtn}><CalendarClock size={13} /> Installments</button>
+                            : purchasePayment(s).balance > 0 && <button onClick={() => setPlanFor(s)} className={trayBtn}><CalendarClock size={13} /> Set up installments</button>
                         )}
                         {open && (
                           <button onClick={() => setActionFor({ kind: "decline", sale: s })} className={`${trayBtn} border-[var(--gh-ffcdd2)] !text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>

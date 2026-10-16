@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
+import StaffPerformance from "@/components/business/StaffPerformance";
+import StaffActivity from "@/components/business/StaffActivity";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 
@@ -33,6 +35,10 @@ export default function StaffPage() {
   const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string; planLimit?: boolean } | null>(null);
 
   const [canManage, setCanManage] = useState(false);
+  // Performance (owner, managers) and Activity (owner) tabs
+  const [tab, setTab] = useState<"team" | "performance" | "activity">("team");
+  const [canViewActivity, setCanViewActivity] = useState(false);
+  const [canViewPerformance, setCanViewPerformance] = useState(false);
   const [pageError, setPageError] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<StaffMember | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -46,6 +52,8 @@ export default function StaffPage() {
       .then(data => {
         setStaff(data.staff || []);
         setCanManage(!!data.permissions?.canManage);
+        setCanViewActivity(!!data.permissions?.canViewActivity);
+        setCanViewPerformance(!!data.permissions?.canViewPerformance);
       })
       .catch(() => setPageError("Couldn't load your team."))
       .finally(() => setLoading(false));
@@ -190,7 +198,25 @@ export default function StaffPage() {
         ))}
       </div>
 
-      <div style={{ padding: "20px 24px", maxWidth: "800px" }}>
+      {(canViewPerformance || canViewActivity) && (
+        <div className="flex gap-1 border-b border-[var(--gh-e1e4e8)] bg-white px-4 sm:px-6">
+          {([["team", "Team"], ...(canViewPerformance ? [["performance", "Performance"]] : []), ...(canViewActivity ? [["activity", "Activity"]] : [])] as [typeof tab, string][]).map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)} aria-current={tab === id ? "page" : undefined}
+              className={`-mb-px border-b-2 px-3 py-2.5 text-[13px] font-semibold transition ${tab === id ? "border-[var(--gh-0d1117)] text-[var(--gh-0d1117)]" : "border-transparent text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "performance" && <div className="px-4 py-5 sm:px-6"><StaffPerformance /></div>}
+      {tab === "activity" && (
+        <div className="max-w-3xl px-4 py-5 sm:px-6">
+          <StaffActivity members={staff.map(m => ({ userId: m.userId?._id, name: m.userId?.name || m.userId?.email })).filter(m => m.userId)} />
+        </div>
+      )}
+
+      {tab === "team" && <div style={{ padding: "20px 24px", maxWidth: "800px" }}>
         {pageError && (
           <div role="alert" style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "14px" }}>
             {pageError}
@@ -264,7 +290,7 @@ export default function StaffPage() {
             );
           })}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

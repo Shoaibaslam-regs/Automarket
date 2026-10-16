@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, MessageCircle, MoreHorizontal, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
+import { BadgeCheck, BellRing, MessageCircle, MoreHorizontal, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
+import { FollowUpDialog, FollowUpList, followUpWhen, type FollowUpItem } from "@/components/business/FollowUps";
 import { isClosedDeal } from "@/lib/customers";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
@@ -91,6 +92,21 @@ function CustomersContent() {
       .finally(() => setLoading(false));
 
   useEffect(() => { fetchCustomers(); }, []);
+
+  // Open follow-up reminders for the team
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
+  const [followFor, setFollowFor] = useState<{ _id: string; name: string } | null>(null);
+  const [showLater, setShowLater] = useState(false);
+  const fetchFollowUps = () =>
+    fetch("/api/business/followups").then(r => r.json()).then(d => setFollowUps(d.followUps || [])).catch(() => {});
+  useEffect(() => { fetchFollowUps(); }, []);
+  async function markFollowUpDone(f: FollowUpItem) {
+    setFollowUps(prev => prev.filter(x => x._id !== f._id));
+    await fetch(`/api/business/followups/${f._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: true }) }).catch(() => {});
+  }
+  const dueFollowUps = followUps.filter(f => followUpWhen(f) !== "later");
+  const nextFollowUp = new Map<string, FollowUpItem>();
+  followUps.forEach(f => { if (!nextFollowUp.has(f.customerId)) nextFollowUp.set(f.customerId, f); });
 
   function closeModal() {
     setShowAdd(false);
@@ -317,6 +333,7 @@ function CustomersContent() {
         </div>
       )}
 
+      <FollowUpDialog customer={followFor} onClose={() => setFollowFor(null)} onSaved={() => { setFollowFor(null); fetchFollowUps(); }} />
       <ConfirmDialog
         open={confirmDelete !== null}
         onOpenChange={o => !o && setConfirmDelete(null)}
@@ -365,6 +382,26 @@ function CustomersContent() {
             {pageError}
           </div>
         )}
+        {/* Follow-ups due today or overdue; later ones behind a toggle */}
+        {followUps.length > 0 && (
+          <div className="mb-4 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--gh-f6f8fa)] px-4 py-2.5">
+              <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]">
+                <BellRing size={14} /> Follow-ups
+                {dueFollowUps.length > 0 && <span className="rounded-full bg-[var(--gh-fff8c5)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-7d4e00)]">{dueFollowUps.length} due</span>}
+              </p>
+              {followUps.length > dueFollowUps.length && (
+                <button onClick={() => setShowLater(v => !v)} className="text-xs font-semibold text-[var(--gh-0550ae)]">
+                  {showLater ? "Hide upcoming" : `Upcoming (${followUps.length - dueFollowUps.length})`}
+                </button>
+              )}
+            </div>
+            {dueFollowUps.length === 0 && !showLater
+              ? <p className="px-4 py-3 text-xs text-[var(--gh-57606a)]">Nothing due today.</p>
+              : <FollowUpList items={showLater ? followUps : dueFollowUps} canEdit={permissions.canEdit} onDone={markFollowUpDone} />}
+          </div>
+        )}
+
         {/* Pipeline summary */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "10px", marginBottom: "16px" }}>
           <button onClick={() => setStarOnly(v => !v)} aria-pressed={starOnly}
@@ -430,6 +467,16 @@ function CustomersContent() {
                       <span className="text-[var(--gh-8c959f)]"> · {c.source.replace("_", " ").toLowerCase()}</span>
                       {c.interestedIn && <span> · wants {c.interestedIn.make} {c.interestedIn.model}</span>}
                     </p>
+                    {nextFollowUp.has(c._id) && (() => {
+                      const f = nextFollowUp.get(c._id)!;
+                      const w = followUpWhen(f);
+                      return (
+                        <p className={`flex items-center gap-1 truncate text-[11px] font-semibold ${w === "overdue" ? "text-[var(--gh-cf222e)]" : w === "today" ? "text-[var(--gh-9a6700)]" : "text-[var(--gh-57606a)]"}`}>
+                          <BellRing size={10} className="flex-shrink-0" />
+                          <span className="truncate">{w === "overdue" ? "Follow-up overdue" : w === "today" ? "Follow up today" : `Follow up ${new Date(f.dueAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}`}: {f.note}</span>
+                        </p>
+                      );
+                    })()}
                   </div>
                   <Select value={c.status}
                     onChange={v => updateStatus(c._id, v)}
@@ -462,6 +509,9 @@ function CustomersContent() {
                           <button onClick={() => toggleStar(c)} className={trayBtn} aria-pressed={!!c.starred}>
                             <Star size={13} fill={c.starred ? "#eac54f" : "none"} color={c.starred ? "#bf8700" : "currentColor"} /> {c.starred ? "Remove star" : "Mark as star customer"}
                           </button>
+                        )}
+                        {permissions.canEdit && (
+                          <button onClick={() => setFollowFor({ _id: c._id, name: c.name })} className={trayBtn}><BellRing size={13} /> Add follow-up</button>
                         )}
                         {permissions.canEdit && (
                           <button onClick={() => openEdit(c)} className={trayBtn}><Pencil size={13} /> Edit details</button>

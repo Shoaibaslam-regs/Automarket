@@ -6,12 +6,13 @@ import { Booking } from "@/models/Booking";
 import { Listing } from "@/models/Listing";
 import { Customer } from "@/models/Customer";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
-import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
+import { bookingClashQuery, rentalDays, validBookingDates, bookingNumber } from "@/lib/bookings";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { normalizeCnic, normalizePlate, samePlatePattern } from "@/lib/plates";
 import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
 import { Deal } from "@/models/Deal";
 import { dealPrice } from "@/lib/deals";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export const dynamic = "force-dynamic";
 
@@ -195,6 +196,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "booking.create",
+      { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) },
+      { details: `${walkIn?.name ?? "Walk-in"} · ${days} day${days !== 1 ? "s" : ""}`, amount: booking.totalAmount });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
     console.error("Business booking POST error:", error);

@@ -7,6 +7,7 @@ import { User } from "@/models/User";
 import { getMembership, isUserBusinessSuspended } from "@/lib/business";
 import { availabilityOptions, AVAILABILITY_LABEL, type Availability } from "@/lib/availability";
 import { invalidateListingAndSeller } from "@/lib/pageCache";
+import { logBusinessAction } from "@/lib/businessLog";
 
 /** Business roles that may mark a teammate's vehicle sold, rented or available. */
 const TEAM_ROLES = ["OWNER", "MANAGER", "SALES"];
@@ -24,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     await connectDB();
 
-    const listing = await Listing.findById(id).select("sellerId status type").lean<{ sellerId: mongoose.Types.ObjectId; status: string; type: string }>();
+    const listing = await Listing.findById(id).select("sellerId status type title").lean<{ sellerId: mongoose.Types.ObjectId; status: string; type: string; title: string }>();
     if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
     const sellerId = String(listing.sellerId);
@@ -54,6 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     await Listing.updateOne({ _id: id }, { $set: { status: next, statusChangedAt: new Date() } });
+    await logBusinessAction({ userId: session.user.id }, "listing.status", { type: "LISTING", id, label: listing.title }, { details: `${listing.status} → ${next}` });
     await invalidateListingAndSeller(id, sellerId);
     return NextResponse.json({ ok: true, status: next });
   } catch (error) {

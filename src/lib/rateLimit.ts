@@ -29,6 +29,8 @@ export const RATE_LIMITS = {
   /** AI calls cost money per request */
   aiInspection: { limit: 10, windowSec: 24 * 60 * 60 },
   vehicleImages: { limit: 30, windowSec: 60 * 60 },
+  /** Handover and return condition photos (no AI check), per file */
+  checkPhotos: { limit: 60, windowSec: 60 * 60 },
   messages: { limit: 30, windowSec: 60 },
   support: { limit: 5, windowSec: 60 * 60 },
   reviews: { limit: 5, windowSec: 60 * 60 },

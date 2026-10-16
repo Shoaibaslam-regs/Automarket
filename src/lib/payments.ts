@@ -9,11 +9,11 @@ export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
   PAID: "Paid",
 };
 
-type Payable = { totalAmount: number; deposit: number; lateFee?: number; amountPaid?: number };
+type Payable = { totalAmount: number; deposit: number; lateFee?: number; extraCharges?: number; amountPaid?: number };
 
-/** Everything the renter owes: rent, deposit and any late-return fee. */
+/** Everything the renter owes: rent, deposit, any late-return fee and extra charges added at return. */
 export function amountDue(b: Payable): number {
-  return b.totalAmount + b.deposit + (b.lateFee ?? 0);
+  return b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0);
 }
 
 /**

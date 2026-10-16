@@ -10,6 +10,7 @@ import Image from "next/image";
 import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 import { planInfo } from "@/lib/plans";
 import UserIdBadge from "@/components/UserIdBadge";
+import { DueFollowUpsCard } from "@/components/business/FollowUps";
 
 type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
@@ -465,6 +466,8 @@ export default function BusinessDashboard() {
                 </div>
               ))}
             </div>
+
+            <DueFollowUpsCard />
 
             {/* Two col */}
             <div className="dashboard-two-col">

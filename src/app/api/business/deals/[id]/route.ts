@@ -6,6 +6,7 @@ import { Deal } from "@/models/Deal";
 import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
 import { invalidateDeal } from "@/lib/pageCache";
+import { logBusinessAction } from "@/lib/businessLog";
 
 /** Finds a deal of the caller's business. `manage` also requires the manageDeals permission. */
 async function gate(id: string, manage: boolean) {
@@ -18,7 +19,7 @@ async function gate(id: string, manage: boolean) {
   if (manage && !can(member.role, "manageDeals")) return { error: NextResponse.json({ error: "Only the owner or a manager can manage deals" }, { status: 403 }) };
   const deal = await Deal.findOne({ _id: id, organizationId: member.organizationId });
   if (!deal) return { error: NextResponse.json({ error: "Deal not found" }, { status: 404 }) };
-  return { deal, member };
+  return { deal, member, userId: session.user.id };
 }
 
 /** One deal, for the edit form. */
@@ -57,6 +58,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     await g.deal.save();
     await invalidateDeal(g.deal._id, g.deal.organizationId);
+    const pauseOnly = Object.keys(body).length === 1 && typeof body.paused === "boolean";
+    await logBusinessAction({ userId: g.userId, organizationId: g.member.organizationId }, "deal.update",
+      { type: "DEAL", id: g.deal._id, label: g.deal.title }, { details: pauseOnly ? (body.paused ? "Paused" : "Resumed") : "Edited details" });
     return NextResponse.json({ deal: g.deal });
   } catch (error) {
     console.error("Deal PATCH error:", error);
@@ -70,6 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (g.error) return g.error;
     await g.deal.deleteOne();
     await invalidateDeal(g.deal._id, g.deal.organizationId);
+    await logBusinessAction({ userId: g.userId, organizationId: g.member.organizationId }, "deal.delete", { type: "DEAL", id: g.deal._id, label: g.deal.title });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Deal DELETE error:", error);

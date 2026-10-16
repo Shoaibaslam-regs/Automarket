@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Car, FileText, MessageSquare, MoreHorizontal, Phone, ShoppingBag, Store, X } from "lucide-react";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { PaymentTag } from "@/components/bookings/PaymentTag";
+import { InstallmentLine } from "@/components/sales/Installments";
+import type { InstallmentPlan } from "@/lib/installments";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, PURCHASE_STYLE, asPayable, purchaseNumber, salePrice, type PurchaseStatus } from "@/lib/purchases";
 
@@ -19,6 +21,7 @@ type MyPurchase = {
   offerPrice?: number;
   agreedPrice?: number;
   amountPaid?: number;
+  installmentPlan?: InstallmentPlan | null;
   message?: string;
   declineReason?: string;
   seenByBuyer: boolean;
@@ -148,6 +151,7 @@ export default function PurchasesPage() {
                         {p.agreedPrice !== undefined ? "Agreed price" : p.offerPrice !== undefined ? "Your offer" : "Asking price"}
                         {p.agreedPrice === undefined && p.offerPrice !== undefined && ` · asking ${pkr(p.askingPrice)}`}
                       </p>
+                      {p.installmentPlan && <div className="mt-1"><InstallmentLine plan={p.installmentPlan} /></div>}
                     </div>
                   </div>
 

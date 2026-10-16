@@ -13,7 +13,7 @@ const TAG_STYLE: Record<PaymentStatus, { cls: string; icon: LucideIcon }> = {
   PAID: { cls: "bg-emerald-50 text-emerald-700 ring-emerald-200", icon: CheckCircle2 },
 };
 
-type Payable = { totalAmount: number; deposit: number; lateFee?: number; amountPaid?: number };
+type Payable = { totalAmount: number; deposit: number; lateFee?: number; extraCharges?: number; amountPaid?: number };
 
 /**
  * The booking's payment tag: Payment pending, Partly paid (with what's left) or Paid.

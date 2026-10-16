@@ -36,6 +36,16 @@ export interface IBooking extends Document {
   /** Extra days charged for a late return, and their fee (at the double daily rate) */
   lateDays?: number;
   lateFee?: number;
+  /** Condition when handed over and when returned (odometer, fuel, notes, photos); see src/lib/checklist.ts */
+  checkOut?: { odometer?: number; fuel?: string; notes?: string; photos?: string[] };
+  checkIn?: { odometer?: number; fuel?: string; notes?: string; photos?: string[] };
+  /** Extra charges added at return (fuel, damage, extra km); part of the amount due */
+  extraCharges?: number;
+  extraChargesNote?: string;
+  /** Security deposit settled after the return: how much went back to the renter (the rest was kept) */
+  depositRefunded?: number;
+  depositNote?: string;
+  depositSettledAt?: Date;
   /** How much the renter has paid so far, recorded by the owner; the payment tag comes from it (src/lib/payments.ts) */
   amountPaid?: number;
   paymentUpdatedAt?: Date;
@@ -87,6 +97,13 @@ const BookingSchema = new Schema<IBooking>(
     returnedAt: { type: Date },
     lateDays: { type: Number, min: 0 },
     lateFee: { type: Number, min: 0 },
+    checkOut: { type: new Schema({ odometer: Number, fuel: String, notes: String, photos: [String] }, { _id: false }) },
+    checkIn: { type: new Schema({ odometer: Number, fuel: String, notes: String, photos: [String] }, { _id: false }) },
+    extraCharges: { type: Number, min: 0 },
+    extraChargesNote: { type: String, maxlength: 200 },
+    depositRefunded: { type: Number, min: 0 },
+    depositNote: { type: String, maxlength: 300 },
+    depositSettledAt: { type: Date },
     amountPaid: { type: Number, min: 0 },
     paymentUpdatedAt: { type: Date },
     totalAmount: { type: Number, required: true },

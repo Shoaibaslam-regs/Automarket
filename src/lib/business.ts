@@ -37,6 +37,12 @@ export const BUSINESS_PERMISSIONS = {
   manageBookings: ["OWNER", "MANAGER", "SALES"],
   /** Handle purchase requests and record sales (accept, decline, mark sold, payments) */
   manageSales: ["OWNER", "MANAGER", "SALES"],
+  /** See every team member's actions (Staff → Activity) */
+  viewActivity: ["OWNER"],
+  /** See per-member numbers (Staff → Performance) */
+  viewPerformance: ["OWNER", "MANAGER"],
+  /** Expenses, profit per vehicle and the cash book (Money) */
+  manageMoney: ["OWNER", "MANAGER"],
   /** Create, edit, pause and delete deals */
   manageDeals: ["OWNER", "MANAGER"],
   /** Publicly reply to customer reviews */

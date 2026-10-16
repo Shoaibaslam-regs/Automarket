@@ -7,6 +7,7 @@ import { parseDealInput } from "@/lib/dealInput";
 import { invalidateDeal } from "@/lib/pageCache";
 import { checkPlanLimit } from "@/lib/subscription";
 import { ListingLog } from "@/models/ListingLog";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,8 @@ export async function POST(req: NextRequest) {
     // Counts toward the quota for good, even if the deal is deleted later
     await ListingLog.create({ sellerId: session.user.id, dealId: deal._id });
     await invalidateDeal(deal._id, member.organizationId);
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "deal.create",
+      { type: "DEAL", id: deal._id, label: deal.title });
     return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {
     console.error("Deals POST error:", error);

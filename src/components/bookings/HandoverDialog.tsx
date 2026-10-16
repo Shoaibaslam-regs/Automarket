@@ -5,6 +5,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Clock3, IdCard, KeyRound, Pencil, X } from "lucide-react";
 import { formatCnicInput, normalizeCnic, normalizePlate } from "@/lib/plates";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
+import type { Check } from "@/lib/checklist";
+import ConditionFields, { EMPTY_CHECK, checkBody, type CheckForm } from "./ConditionFields";
 
 /** A Date as the value of a datetime-local input, in the viewer's own time zone. */
 export function toDateTimeInput(d: Date | string): string {
@@ -71,7 +73,7 @@ export function HandoverDetails({ plate, cnic, onEdit, addLabel = "Add plate & C
  * Asks for the vehicle's number plate and the renter's CNIC at handover (or corrects them later).
  * `onSave` returns an error message, or null when it worked.
  */
-export default function HandoverDialog({ open, onOpenChange, title, description, confirmLabel, initialPlate, initialCnic, askReturnTime, initialDueBackAt, onSave }: {
+export default function HandoverDialog({ open, onOpenChange, title, description, confirmLabel, initialPlate, initialCnic, askReturnTime, initialDueBackAt, askCondition, onSave }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -82,11 +84,14 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
   /** Also ask for the exact time the renter must bring the vehicle back */
   askReturnTime?: boolean;
   initialDueBackAt?: string;
-  onSave: (details: { plateNumber: string; cnic: string; dueBackAt?: string }) => Promise<string | null>;
+  /** Also record the condition as it goes out (odometer, fuel, notes, photos) */
+  askCondition?: boolean;
+  onSave: (details: { plateNumber: string; cnic: string; dueBackAt?: string; checkOut?: Check }) => Promise<string | null>;
 }) {
   const [plateValue, setPlateValue] = useState("");
   const [cnicValue, setCnicValue] = useState("");
   const [dueValue, setDueValue] = useState("");
+  const [cond, setCond] = useState<CheckForm>(EMPTY_CHECK);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [openedWith, setOpenedWith] = useState<string | null>(null);
@@ -98,6 +103,7 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
     setPlateValue(initialPlate ?? "");
     setCnicValue(initialCnic ? formatCnicInput(initialCnic) : "");
     setDueValue(initialDueBackAt ? toDateTimeInput(initialDueBackAt) : "");
+    setCond(EMPTY_CHECK);
     setError("");
   }
 
@@ -112,7 +118,7 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
     if (askReturnTime && (!due || isNaN(due.getTime()))) { setError("Set the exact date and time the vehicle must come back"); return; }
     setSaving(true);
     setError("");
-    const err = await onSave({ plateNumber: plate, cnic, ...(askReturnTime && due ? { dueBackAt: due.toISOString() } : {}) });
+    const err = await onSave({ plateNumber: plate, cnic, ...(askReturnTime && due ? { dueBackAt: due.toISOString() } : {}), ...(askCondition ? { checkOut: checkBody(cond) } : {}) });
     setSaving(false);
     if (err) setError(err);
   }
@@ -163,6 +169,8 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
                 </p>
               </div>
             )}
+
+            {askCondition && <ConditionFields value={cond} onChange={setCond} idPrefix="out" />}
 
             {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
             <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">

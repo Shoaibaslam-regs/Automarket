@@ -9,6 +9,7 @@ import { normalizePhone } from "@/lib/customerSync";
 import { User } from "@/models/User";
 import mongoose from "mongoose";
 import { syncBookingCustomers } from "@/lib/customerSync";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export async function GET() {
   try {
@@ -76,6 +77,8 @@ export async function POST(req: NextRequest) {
     const overLimit = await checkPlanLimit(session.user.id, "customers");
     if (overLimit) return NextResponse.json(overLimit, { status: 403 });
     const customer = await Customer.create({ ...fields, userId, organizationId: member.organizationId });
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "customer.create",
+      { type: "CUSTOMER", id: customer._id, label: customer.name }, { details: customer.status });
     return NextResponse.json({ customer }, { status: 201 });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }

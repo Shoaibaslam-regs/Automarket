@@ -7,6 +7,7 @@ import { Organization } from "@/models/Organization";
 import { can, getMembership } from "@/lib/business";
 import { getBusinessRatings } from "@/lib/reviews";
 import { invalidateBusinessPage } from "@/lib/pageCache";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,8 @@ export async function PATCH(req: NextRequest) {
     );
     if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 });
     await invalidateBusinessPage(member.organizationId);
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "review.reply",
+      { type: "REVIEW", id: review._id, label: `${review.rating}★ review` }, { details: reply ? reply.slice(0, 120) : "Removed reply" });
     return NextResponse.json({ review });
   } catch (error) {
     console.error("Business review reply error:", error);

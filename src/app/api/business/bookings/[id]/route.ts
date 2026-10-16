@@ -7,13 +7,15 @@ import { Listing } from "@/models/Listing";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
-import { bookingDailyRate, canTransition, lateCharge } from "@/lib/bookings";
+import { bookingDailyRate, canTransition, lateCharge, bookingNumber } from "@/lib/bookings";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { triggerPusher } from "@/lib/support";
 import { Rental } from "@/models/Rental";
 import { normalizeCnic, normalizePlate } from "@/lib/plates";
 import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
 import { Deal } from "@/models/Deal";
+import { logBusinessAction } from "@/lib/businessLog";
+import { parseCheck } from "@/lib/checklist";
 
 /** Finds a booking that belongs to one of the caller's business rental vehicles. */
 async function loadBusinessBooking(userId: string, id: string) {
@@ -67,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Your role can't manage bookings" }, { status: 403 });
     }
 
-    const { status, plateNumber, cnic, dueBackAt, returnedAt } = await req.json().catch(() => ({}));
+    const { status, plateNumber, cnic, dueBackAt, returnedAt, checkOut, checkIn, extraCharges, extraChargesNote } = await req.json().catch(() => ({}));
     const booking = await loadBusinessBooking(session.user.id, id);
     if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     if (!canTransition(booking.status, status)) {
@@ -88,6 +90,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!dueBackAt || isNaN(due.getTime())) return NextResponse.json({ error: "Set the exact date and time the vehicle must be returned" }, { status: 400 });
       if (due.getTime() <= Date.now()) return NextResponse.json({ error: "The return time must be later than now" }, { status: 400 });
       booking.dueBackAt = due;
+      // Condition when it went out (odometer, fuel, notes, photos), all optional
+      const out = parseCheck(checkOut);
+      if (out.error) return NextResponse.json({ error: out.error }, { status: 400 });
+      if (out.check) booking.checkOut = out.check;
     }
 
     // Returning records when it came back and charges each late day at the normal daily rent (after the grace hour)
@@ -100,6 +106,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       booking.returnedAt = back;
       booking.lateDays = late.lateDays;
       booking.lateFee = late.fee;
+      // Condition when it came back, and any extra charges (fuel, damage, extra km)
+      const back_ = parseCheck(checkIn);
+      if (back_.error) return NextResponse.json({ error: back_.error }, { status: 400 });
+      const outKm = booking.checkOut?.odometer;
+      if (back_.check?.odometer != null && outKm != null && back_.check.odometer < outKm) {
+        return NextResponse.json({ error: `The odometer can't be lower than at handover (${outKm.toLocaleString()} km)` }, { status: 400 });
+      }
+      if (back_.check) booking.checkIn = back_.check;
+      const extra = extraCharges ? Math.round(Number(extraCharges)) : 0;
+      if (!Number.isFinite(extra) || extra < 0 || extra > 10_000_000) return NextResponse.json({ error: "Enter the extra charges in PKR" }, { status: 400 });
+      if (extra > 0 && !String(extraChargesNote ?? "").trim()) return NextResponse.json({ error: "Say what the extra charges are for" }, { status: 400 });
+      booking.extraCharges = extra || undefined;
+      booking.extraChargesNote = extra ? String(extraChargesNote).trim().slice(0, 200) : undefined;
     }
 
     booking.status = status;
@@ -114,6 +133,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (notifyRenter) booking.seenByRenter = false;
     await booking.save();
     if (plate && booking.rentalId) await Rental.updateOne({ _id: booking.rentalId }, { $set: { plateNumber: plate } });
+    {
+      const act = { CONFIRMED: "booking.confirm", CANCELLED: "booking.cancel", ACTIVE: "booking.handover", COMPLETED: "booking.return" }[status as string];
+      if (act) {
+        await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, act,
+          { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) },
+          { details: [booking.walkIn?.name, plate && `plate ${plate}`, status === "COMPLETED" && (booking.lateFee ?? 0) > 0 && `late fee PKR ${booking.lateFee!.toLocaleString()}`, status === "COMPLETED" && (booking.extraCharges ?? 0) > 0 && `extra PKR ${booking.extraCharges!.toLocaleString()}`].filter(Boolean).join(" · ") || undefined });
+      }
+    }
 
     if (notifyRenter) {
       try {
@@ -176,6 +203,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       booking.deletedByOwner = true;
       await booking.save();
     }
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "booking.remove",
+      { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Business booking DELETE error:", error);

@@ -11,6 +11,7 @@ import { notifySavedSearches } from "@/lib/savedSearchAlerts";
 import { checkPlanLimit } from "@/lib/subscription";
 import { isUserBusinessSuspended } from "@/lib/business";
 import { PUBLIC_CACHE_SECONDS, invalidateListingAndSeller } from "@/lib/pageCache";
+import { logBusinessAction } from "@/lib/businessLog";
 
 export async function GET(req: NextRequest) {
   try {
@@ -150,6 +151,7 @@ export async function POST(req: NextRequest) {
 
     // A business member's new listing should appear on the business page straight away
     await invalidateListingAndSeller(listing._id, session.user.id);
+    await logBusinessAction({ userId: session.user.id }, "listing.create", { type: "LISTING", id: listing._id, label: listing.title }, { amount: listing.price });
     return NextResponse.json({ listing }, { status: 201 });
   } catch (error) {
     console.error("Create listing error:", error);

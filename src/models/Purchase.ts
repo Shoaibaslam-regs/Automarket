@@ -26,6 +26,8 @@ export interface IPurchase extends Document {
   agreedPrice?: number;
   /** What the buyer has paid so far (the payment tag comes from it) */
   amountPaid?: number;
+  /** Installment (qist) plan: a down payment, then monthly payments; paying one adds to amountPaid */
+  installmentPlan?: { downPayment: number; months: number; items: { dueDate: Date; amount: number; paidAt?: Date }[]; createdAt: Date };
   /** Registration number of the vehicle handed over, printed on the slip */
   plateNumber?: string;
   /** Buyer's note with the request */
@@ -85,6 +87,17 @@ const PurchaseSchema = new Schema<IPurchase>(
     offerPrice: { type: Number, min: 0 },
     agreedPrice: { type: Number, min: 0 },
     amountPaid: { type: Number, min: 0 },
+    installmentPlan: {
+      type: new Schema(
+        {
+          downPayment: { type: Number, min: 0, required: true },
+          months: { type: Number, min: 1, max: 60, required: true },
+          items: [new Schema({ dueDate: { type: Date, required: true }, amount: { type: Number, min: 0, required: true }, paidAt: Date }, { _id: false })],
+          createdAt: { type: Date, default: Date.now },
+        },
+        { _id: false }
+      ),
+    },
     plateNumber: { type: String, trim: true, maxlength: 20 },
     message: { type: String, trim: true, maxlength: 1000 },
     notes: { type: String, trim: true, maxlength: 1000 },

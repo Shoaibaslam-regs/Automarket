@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import { DEPOSIT_LABEL, FUEL_LABEL, depositState, kmDriven, type Check } from "@/lib/checklist";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { LATE_RULE_TEXT, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
@@ -28,6 +29,13 @@ type SlipData = {
     returnedAt?: string;
     lateDays?: number;
     lateFee?: number;
+    checkOut?: Check | null;
+    checkIn?: Check | null;
+    extraCharges?: number;
+    extraChargesNote?: string;
+    depositRefunded?: number;
+    depositNote?: string;
+    depositSettledAt?: string | null;
     amountPaid?: number;
     offListVehicle?: { title: string; dailyRate: number; deposit: number } | null;
     createdAt: string;
@@ -57,6 +65,8 @@ const pkr = (n: number) => `PKR ${n.toLocaleString()}`;
 
 /** The printable width of an A4 page with 12 mm margins (186 mm at 96 dpi). The slip is laid out at this width and scaled to fit smaller screens. */
 const SHEET_WIDTH = 703;
+/** The printable height of that page (273 mm); a taller sheet is shrunk to fit when printing. */
+const SHEET_HEIGHT = 1020;
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (!value) return null;
@@ -76,11 +86,19 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
   // Phones and narrow windows show the same one-page sheet, scaled down to fit the width
   const frameRef = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState(1);
+  const cardRef = useRef<HTMLElement>(null);
+  const [printZoom, setPrintZoom] = useState(1);
 
   useEffect(() => {
     const el = frameRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setFit(Math.min(1, entry.contentRect.width / SHEET_WIDTH)));
+    const ro = new ResizeObserver(([entry]) => {
+      const f = Math.min(1, entry.contentRect.width / SHEET_WIDTH);
+      setFit(f);
+      // A slip with every section filled in can run past one page; printing shrinks it to fit
+      const card = cardRef.current;
+      if (card) setPrintZoom(Math.min(1, SHEET_HEIGHT / (card.getBoundingClientRect().height / f)));
+    });
     ro.observe(el);
     return () => ro.disconnect();
   }, [data]);
@@ -118,6 +136,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
     : { name: b.renterId?.name, phone: b.renterId?.phone, email: b.renterId?.email, cnic: bookingCnic(b) };
   const status = STATUS_LABEL[b.status] ?? STATUS_LABEL.PENDING;
   const pay = paymentState(b);
+  const dep = depositState(b);
   // Where the customer collects the vehicle: the deal's or listing's address, else the business address
   const pickup = deal?.address || b.rentalId?.listingId?.address || org?.address;
   const pickupCity = deal?.location || b.rentalId?.listingId?.location || org?.city;
@@ -132,7 +151,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           html, body, .biz-root, .slip-root { background: white !important; }
           .slip-root { padding: 0 !important; min-height: 0 !important; }
           .slip-frame { max-width: none !important; }
-          .slip-card { box-shadow: none !important; border: none !important; border-radius: 0 !important; width: 100% !important; zoom: 1 !important; break-inside: avoid; }
+          .slip-card { box-shadow: none !important; border: none !important; border-radius: 0 !important; width: 100% !important; zoom: var(--print-zoom, 1) !important; break-inside: avoid; }
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
@@ -148,7 +167,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div ref={frameRef} className="slip-frame mx-auto max-w-[703px]">
-      <article style={{ width: SHEET_WIDTH, zoom: fit }} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
+      <article ref={cardRef} style={{ width: SHEET_WIDTH, zoom: fit, "--print-zoom": printZoom } as React.CSSProperties} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
         {/* Letterhead */}
         <header className="flex items-start justify-between gap-6 bg-slate-950 px-6 py-5 text-white">
           <div className="flex items-start gap-4">
@@ -235,11 +254,17 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
                     <td className="px-4 py-2 text-right font-semibold tabular-nums text-rose-700">{pkr(b.lateFee!)}</td>
                   </tr>
                 )}
+                {(b.extraCharges ?? 0) > 0 && (
+                  <tr className="bg-rose-50/60">
+                    <td className="px-4 py-2 text-rose-700">Extra charges{b.extraChargesNote ? ` · ${b.extraChargesNote}` : ""}</td>
+                    <td className="px-4 py-2 text-right font-semibold tabular-nums text-rose-700">{pkr(b.extraCharges!)}</td>
+                  </tr>
+                )}
               </tbody>
               <tfoot>
                 <tr className="bg-slate-950 text-white">
                   <td className="px-4 py-2.5 font-bold">Total</td>
-                  <td className="px-4 py-2.5 text-right text-base font-extrabold tabular-nums">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0))}</td>
+                  <td className="px-4 py-2.5 text-right text-base font-extrabold tabular-nums">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</td>
                 </tr>
                 {b.status !== "CANCELLED" && (
                   <tr className="border-t border-[var(--gh-e1e4e8)]">
@@ -254,6 +279,16 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
                     </td>
                   </tr>
                 )}
+                {dep.status !== "NONE" && dep.status !== "HELD" && (
+                  <tr className="border-t border-[var(--gh-e1e4e8)]">
+                    <td className="px-4 py-2 text-slate-700">
+                      {DEPOSIT_LABEL[dep.status]}{dep.kept > 0 && b.depositNote ? <span className="text-slate-400"> · kept for: {b.depositNote}</span> : ""}
+                    </td>
+                    <td className="px-4 py-2 text-right font-semibold tabular-nums text-slate-900">
+                      {pkr(dep.refunded)} returned{dep.kept > 0 ? ` · ${pkr(dep.kept)} kept` : ""}
+                    </td>
+                  </tr>
+                )}
               </tfoot>
             </table>
           </section>
@@ -263,14 +298,43 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             </p>
           )}
 
+          {(b.checkOut || b.checkIn) && (
+            <section className="mt-4 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)]">
+              <table className="w-full text-[12px]">
+                <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-400">
+                  <tr>
+                    <th className="px-4 py-1.5 font-bold">Condition</th>
+                    <th className="px-4 py-1.5 font-bold">Odometer{kmDriven(b) != null && <span className="ml-1 normal-case tracking-normal text-slate-900">· {kmDriven(b)!.toLocaleString()} km driven</span>}</th>
+                    <th className="px-4 py-1.5 font-bold">Fuel</th>
+                    <th className="px-4 py-1.5 font-bold">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--gh-e1e4e8)]">
+                  {([["Handed over", b.checkOut], ["Returned", b.checkIn]] as const).map(([label, c]) => c && (
+                    <tr key={label}>
+                      <td className="px-4 py-1.5 font-semibold text-slate-700">{label}</td>
+                      <td className="px-4 py-1.5 tabular-nums text-slate-900">{c.odometer != null ? `${c.odometer.toLocaleString()} km` : "—"}</td>
+                      <td className="px-4 py-1.5 text-slate-900">{c.fuel ? FUEL_LABEL[c.fuel] : "—"}</td>
+                      <td className="max-w-[260px] truncate px-4 py-1.5 text-slate-600">{c.notes || (c.photos?.length ? `${c.photos.length} photo${c.photos.length !== 1 ? "s" : ""} on record` : "—")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+
           {(b.confirmedAt || b.startedAt || b.completedAt || b.notes) && (
             <section className="mt-4 grid grid-cols-2 gap-4">
               {(b.confirmedAt || b.startedAt || b.completedAt) && (
                 <div>
                   <h2 className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">History</h2>
-                  <Row label="Confirmed" value={b.confirmedAt && dateTime(b.confirmedAt)} />
-                  <Row label="Handed over" value={b.startedAt && dateTime(b.startedAt)} />
-                  <Row label="Returned" value={(b.returnedAt || b.completedAt) && dateTime((b.returnedAt || b.completedAt)!)} />
+                  <p className="text-[11px] leading-relaxed text-slate-700">
+                    {[
+                      b.confirmedAt && `Confirmed ${dateTime(b.confirmedAt)}`,
+                      b.startedAt && `Handed over ${dateTime(b.startedAt)}`,
+                      (b.returnedAt || b.completedAt) && `Returned ${dateTime((b.returnedAt || b.completedAt)!)}`,
+                    ].filter(Boolean).join(" · ")}
+                  </p>
                 </div>
               )}
               {b.notes && (
@@ -283,7 +347,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           )}
 
           {/* Signatures */}
-          <section className="mt-16 grid grid-cols-2 gap-10">
+          <section className="mt-12 grid grid-cols-2 gap-10">
             {["Customer signature", `For ${org?.name || "the business"}`].map((label, i) => (
               <div key={label} className="relative">
                 <div className="h-10 border-b border-dashed border-slate-300" />
