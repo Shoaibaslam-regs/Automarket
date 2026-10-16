@@ -16,6 +16,14 @@ export const RATE_LIMITS = {
   loginIp: { limit: 30, windowSec: 15 * 60, lockout: true },
   /** Accounts created per IP (only successful sign-ups count) */
   register: { limit: 10, windowSec: 60 * 60 },
+  /** Forgot-password emails, per email and per IP */
+  passwordResetEmail: { limit: 3, windowSec: 60 * 60 },
+  passwordResetIp: { limit: 10, windowSec: 60 * 60 },
+  /** Phone verification codes: sends per user and per number, and wrong codes per user */
+  phoneOtpUser: { limit: 3, windowSec: 15 * 60, lockout: true },
+  phoneOtpNumber: { limit: 5, windowSec: 24 * 60 * 60 },
+  /** Reports of listings, deals and businesses, per user */
+  reports: { limit: 10, windowSec: 24 * 60 * 60 },
   /** Wrong passwords when deleting an account */
   accountDelete: { limit: 5, windowSec: 15 * 60, lockout: true },
   /** AI calls cost money per request */

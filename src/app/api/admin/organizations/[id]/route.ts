@@ -8,6 +8,7 @@ import { getOrgUserIds } from "@/lib/business";
 import { triggerPusher } from "@/lib/support";
 import { isVerified } from "@/lib/plans";
 import { invalidateBusinessSlug, invalidateListingPage } from "@/lib/pageCache";
+import { logAdminAction } from "@/lib/adminLog";
 
 const BADGE_MONTHS = [1, 3, 6, 12];
 const fmtDate = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -56,6 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         `Warning ${count > 1 ? `#${count} ` : ""}for your business "${org.name}" on AutoMarket: ${why}. ` +
         `Please fix this to avoid a suspension. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.warn", { type: "BUSINESS", id: org._id, label: org.name }, why);
       return NextResponse.json({ ok: true, warnings: count });
     }
 
@@ -75,6 +77,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         `Your business "${org.name}" has been suspended on AutoMarket. Reason: ${why}. ` +
         `Its ${live.length} live listing${live.length !== 1 ? "s are" : " is"} hidden and its public page is offline. Reply here if you'd like to appeal.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.suspend", { type: "BUSINESS", id: org._id, label: org.name }, `${why} (${live.length} listing${live.length !== 1 ? "s" : ""} hidden)`);
       return NextResponse.json({ ok: true, hiddenListings: live.length });
     }
 
@@ -91,6 +94,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `Good news: your business "${org.name}" has been reinstated on AutoMarket. Your public page is back and ${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s are" : " is"} live again.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.reinstate", { type: "BUSINESS", id: org._id, label: org.name }, `${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s" : ""} restored`);
       return NextResponse.json({ ok: true, restoredListings: restored.modifiedCount });
     }
 
@@ -117,6 +121,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         `Your business "${org.name}" is now Verified on AutoMarket${source === "ADMIN_GRANT" ? " (complimentary)" : ""}. ` +
         `The Verified badge shows on your business page and listings${expiresAt ? ` until ${fmtDate(expiresAt)}` : ""}.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.verify", { type: "BUSINESS", id: org._id, label: org.name }, `${source === "PAID" ? "Paid" : "Gift"}${expiresAt ? `, until ${fmtDate(expiresAt)}` : ""}`);
       return NextResponse.json({ ok: true, expiresAt: expiresAt ?? null });
     }
 
@@ -132,6 +137,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `Your Verified badge request for "${org.name}" wasn't approved. Reason: ${why}. You can request it again once that's sorted. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.rejectVerification", { type: "BUSINESS", id: org._id, label: org.name }, why);
       return NextResponse.json({ ok: true });
     }
 
@@ -146,6 +152,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await notifyOwner(gate.admin._id, org.ownerId,
         `The Verified badge has been removed from your business "${org.name}" on AutoMarket${why ? `. Reason: ${why}` : ""}. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
+      await logAdminAction(gate.admin, "business.unverify", { type: "BUSINESS", id: org._id, label: org.name }, why || undefined);
       return NextResponse.json({ ok: true });
     }
 

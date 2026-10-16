@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, Car, Eye, LayoutDashboard, ShieldCheck, Tag, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 
 const NAV = [
@@ -11,7 +12,9 @@ const NAV = [
   { href: "/admin/listings", label: "Listings", icon: Car },
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/admin/deals", label: "Deals", icon: Tag },
+  { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/activity", label: "Activity", icon: History },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -54,6 +57,15 @@ function ViewOnlyBanner() {
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+  // Open reports waiting for review, refreshed on each admin page change
+  const [openReports, setOpenReports] = useState(0);
+  useEffect(() => {
+    fetch("/api/admin/reports?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenReports(d?.open ?? 0)).catch(() => {});
+  }, [pathname]);
+  const badge = (href: string) =>
+    href === "/admin/reports" && openReports > 0 ? (
+      <span className="ml-auto rounded-full bg-rose-600 px-1.5 py-px text-[10px] font-bold leading-4 text-white" aria-label={`${openReports} open`}>{openReports}</span>
+    ) : null;
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
@@ -84,6 +96,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-300" : "text-slate-500 group-hover:text-slate-300"} />
                 {label}
+                {badge(href)}
               </Link>
             );
           })}
@@ -108,6 +121,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon size={15} strokeWidth={1.9} />
                 {label}
+                {badge(href)}
               </Link>
             );
           })}

@@ -19,13 +19,14 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { closedTag } from "@/lib/availability";
 import { mapsUrl } from "@/lib/address";
-import { Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
 import { getMembership } from "@/lib/business";
 import StarRating from "@/components/reviews/StarRating";
+import ReportButton from "@/components/reports/ReportButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -37,7 +38,7 @@ const loadListingPage = (id: string) =>
   unstable_cache(
     async () => {
       await connectDB();
-      const listing = await Listing.findById(id).populate("sellerId", "name image phone createdAt").lean<{
+      const listing = await Listing.findById(id).populate("sellerId", "name image phone createdAt phoneVerifiedAt").lean<{
         price: number; type: string; sellerId?: { _id?: mongoose.Types.ObjectId } | null;
       }>();
       if (!listing) return null;
@@ -119,6 +120,7 @@ export default async function ListingDetailPage({ params }: Props) {
       _id?: mongoose.Types.ObjectId;
       name?: string;
       phone?: string;
+      phoneVerifiedAt?: string;
       createdAt?: Date;
     } | null;
   };
@@ -345,6 +347,11 @@ export default async function ListingDetailPage({ params }: Props) {
                       </div>
                     </div>
                   )}
+                  {l.sellerId.phoneVerifiedAt && (
+                    <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200" title="This seller confirmed their mobile number by SMS">
+                      <BadgeCheck size={12} /> Phone verified
+                    </p>
+                  )}
                   {business && (
                     <p className="mt-3 text-xs text-gray-500">
                       Listed by {l.sellerId.name?.split(" ")[0] ?? "a team member"} at {business.name}.{" "}
@@ -371,6 +378,9 @@ export default async function ListingDetailPage({ params }: Props) {
     Message seller
   </Link>
 )}
+                  <div className="mt-3 text-center">
+                    <ReportButton targetType="LISTING" targetId={String(l._id)} label={l.title} hidden={isOwner || (!!business && viewerOrg === business.id)} />
+                  </div>
                 </>
               ) : (
                 <p className="text-sm text-gray-400">Seller info unavailable</p>

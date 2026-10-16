@@ -18,6 +18,8 @@ npx tsc --noEmit     # type check; CI runs this before lint and build
 npm run make-admin   # tsx src/scripts/make-admin.ts: promotes ADMIN_EMAIL to role ADMIN
 ```
 
+`tsconfig.json` excludes `.next/dev`: the Next 16 dev server sometimes writes its generated route types over themselves, which broke `npx tsc` while `npm run dev` was running. `next build` still type-checks its own `.next/types`.
+
 There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `tsc --noEmit`, lint and build, then deploys to Vercel: previews for PRs and production on pushes to `main`. All env vars are required at build time. See the CI file for the full list (`DATABASE_URL`, `NEXTAUTH_SECRET`, Google OAuth, `UPLOADTHING_TOKEN`, `GEMINI_API_KEY`, the Pusher server and `NEXT_PUBLIC_` keys, the email credentials, `ADMIN_SECRET` and `ADMIN_EMAIL`). `src/lib/mongodb.ts` throws at import time if `DATABASE_URL` is missing. `NEXT_PUBLIC_SUPPORT_WHATSAPP` is optional. When it is unset, the WhatsApp contact buttons are hidden.
 
 `npm run lint` currently reports 4 known errors (in `business/onboarding`, `BookingsContent` and `MessagesContent`). Compare against that baseline instead of expecting a clean run. The React compiler lint rules are strict:
@@ -74,7 +76,7 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
     - Re-activating or re-tagging an existing listing doesn't use quota. `/api/subscription` returns `listingsResetAt`.
   - Staff counts include the owner.
 - Clients read `/api/subscription` through `useSubscription()` (`components/subscription/`).
-- There is no payment integration. Admins activate plans through `PATCH /api/admin/users/[id]/plan` (`PlanGiftDialog`), and users ask for one through `POST /api/support/upgrade-request`.
+- There is no payment integration (the unused Stripe packages and `Payment` model were removed; Stripe doesn't serve Pakistani merchants). Admins activate plans through `PATCH /api/admin/users/[id]/plan` (`PlanGiftDialog`), and users ask for one through `POST /api/support/upgrade-request`.
 - **Every paid plan ends.** Plans run in 30-day periods (`PLAN_PERIOD_DAYS`, `addPlanPeriods` in `plans.ts`), and there is no "no end date".
   - `source: "PAID"` gives one period. If the same plan is still running (paid, gifted or a trial), the new 30 days are added to the time left.
   - Gifts (`ADMIN_GRANT`) last 1, 3, 6 or 12 periods. The trial lasts `TRIAL_MONTHS` periods.
@@ -172,6 +174,21 @@ There is no test framework or test suite. CI (`.github/workflows/ci.yml`) runs `
   - CRM customers keep their records but lose the `userId` link.
 - The admin user delete (`DELETE /api/admin/users/[id]`) uses the same cleanup, with `byAdmin` relaxing the admin and booking checks.
 - Deleting a business (`DELETE /api/business/organizations`) also removes its deals and reviews.
+
+**Security headers.** `next.config.ts` sends a Content-Security-Policy plus X-Frame-Options DENY, nosniff, HSTS, Referrer-Policy and Permissions-Policy on every route. The CSP allows only this site, UploadThing (`utfs.io`, `*.ufs.sh`, `*.uploadthing.com`), Pusher (`*.pusher.com`) and Google profile pictures; inline scripts are allowed (Next.js and the theme script), `unsafe-eval` only in development. When the browser starts using a new outside service, add its host to the CSP or it will be blocked.
+
+**Forgot password.** `/forgot-password` calls `POST /api/auth/forgot-password`, which always gives the same answer (no account enumeration) and emails a one-time link (`sendPasswordResetEmail`). Only a SHA-256 hash of the token is stored on `User.resetTokenHash`, with `resetTokenExpires` one hour out. `/reset-password?token=` calls `POST /api/auth/reset-password` (min 6 characters, like sign-up), which clears the token and the email's sign-in lock, then the page signs the user in. Both are rate-limited (`passwordResetEmail`, `passwordResetIp`). The login page links to it.
+
+**Reports.** Users report a listing, deal or business with `ReportButton` (`components/reports/`, on the listing page seller box, the deal page and the dealer page header; hidden for the item's own seller or team). It calls `POST /api/reports` (reasons in client-safe `src/lib/reports.ts`; one open report per user per item, own items refused, rate-limited `reports`). `Report` (`src/models/Report.ts`) keeps a `targetLabel` snapshot.
+- Admins review them at `/admin/reports` (sidebar badge from `GET /api/admin/reports?count=1`) and close them with `PATCH /api/admin/reports/[id]` (`resolve` needs a note, `dismiss`; `alsoSimilar` closes the other open reports on the same item). Acting on the item itself (removing a listing, switching off a deal, warning or suspending a business) uses the existing admin pages.
+
+**Admin activity log.** Every admin change calls `logAdminAction(gate.admin, action, target, details)` (`src/lib/adminLog.ts`), which writes an `AdminLog` (admin, action, target type/id/label snapshot, details) and never throws. Action names and their labels are in client-safe `src/lib/adminActions.ts`. `/admin/activity` (`GET /api/admin/activity`, filter by type, search, 50 per page) shows them. New admin mutations must log.
+- The admin listing PATCH only accepts `status` and `featured` (it used to pass the request body straight to the database).
+
+**Phone verification.** Profile & settings has `PhoneVerification` (`components/profile/`): `POST /api/profile/phone/send` texts a 6-digit code to a Pakistani mobile (`normalizePkMobile` in client-safe `src/lib/phone.ts`), and `POST /api/profile/phone/verify` checks it (10 minutes, 5 tries; `PhoneOtp` stores only a hash). Success sets `User.verifiedPhone` (E.164) and `phoneVerifiedAt`; a number can be verified on only one account, and editing the profile phone clears it.
+- SMS goes through Twilio's REST API (`src/lib/sms.ts`) when the optional `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM` are set. Without them, development prints the code in the server log and production refuses with "isn't available yet".
+- The free trial needs a verified phone, and each phone gets one trial ever: `TrialClaim` (unique `phone`) is written when the trial starts and survives account deletion. Listing pages show a "Phone verified" tick for verified sellers.
+- Rate limits: `phoneOtpUser` (3 per 15 min, lockout) and `phoneOtpNumber` (5 a day).
 
 **Terms.** `/terms` is a static page. `src/lib/terms.ts` holds `TERMS_UPDATED`, which must be bumped when the text changes. Registration requires `acceptTerms: true` and stores `User.termsAcceptedAt`. Google sign-ups get it on first sign-in, because the sign-in page says continuing means agreeing.
 

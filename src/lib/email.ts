@@ -252,3 +252,35 @@ export async function sendSavedSearchAlertEmail({
     `,
   });
 }
+
+/** Forgot-password email with a one-time link (valid for an hour). */
+export async function sendPasswordResetEmail({ to, name, link }: { to: string; name?: string; link: string }) {
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject: "Reset your AutoMarket password",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
+        <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
+          <div style="background: #0d1117; padding: 24px; text-align: center;">
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">Password reset</p>
+          </div>
+          <div style="padding: 28px;">
+            <p style="font-size: 15px; color: #0d1117; font-weight: 600; margin-bottom: 4px;">Hi ${name ? escapeHtml(name) : "there"},</p>
+            <p style="font-size: 14px; color: #57606a; margin-bottom: 24px; line-height: 1.6;">
+              Someone asked to reset the password for your AutoMarket account. Click the button to choose a new one.
+              The link works once and expires in 1 hour.
+            </p>
+            <a href="${link}" style="display: block; text-align: center; padding: 12px; background: #0d1117; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
+              Choose a new password
+            </a>
+            <p style="font-size: 12px; color: #8c959f; margin-top: 20px; line-height: 1.6;">
+              If you didn't ask for this, ignore this email. Your password stays the same.
+            </p>
+          </div>
+        </div>
+      </div>
+    `,
+  });
+}

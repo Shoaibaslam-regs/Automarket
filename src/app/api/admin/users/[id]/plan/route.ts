@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { requireAdminApi } from "@/lib/adminAuth";
+import { TrialClaim } from "@/models/TrialClaim";
 import { PLANS, TRIAL_MONTHS, addPlanPeriods, effectivePlanId, isFreeGrant, isPlanId } from "@/lib/plans";
+import { logAdminAction } from "@/lib/adminLog";
 
 /** Gift lengths, in 30-day plan periods */
 const DURATIONS = [1, 3, 6, 12];
@@ -32,15 +34,38 @@ export async function PATCH(
 
     if (trial === true) {
       if (plan === "FREE") return NextResponse.json({ error: "Choose a paid plan for the trial" }, { status: 400 });
+      // One trial per phone number too: new accounts can't farm trials with the same verified phone
+      const target = await User.findById(id).select("email verifiedPhone trialUsedAt").lean<{ email: string; verifiedPhone?: string; trialUsedAt?: Date }>();
+      if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
+      if (!target.trialUsedAt) {
+        if (!target.verifiedPhone) {
+          return NextResponse.json({ error: "This user hasn't verified their phone yet. Ask them to verify it in Profile & settings, then start the trial.", code: "PHONE_NOT_VERIFIED" }, { status: 409 });
+        }
+        // Claim the number first; the unique index makes this hold even if two admins act at once,
+        // and the claim outlives the account, so a deleted-and-recreated account can't trial again
+        try {
+          await TrialClaim.create({ phone: target.verifiedPhone, userId: id, email: target.email });
+        } catch (e) {
+          if ((e as { code?: number }).code !== 11000) throw e;
+          const prior = await TrialClaim.findOne({ phone: target.verifiedPhone }).select("email claimedAt").lean<{ email: string; claimedAt: Date }>();
+          return NextResponse.json(
+            { error: `This phone number already had a free trial${prior ? ` (${prior.email}, ${new Date(prior.claimedAt).toLocaleDateString("en-PK")})` : ""}. You can still gift a plan.`, code: "TRIAL_USED" },
+            { status: 409 }
+          );
+        }
+      }
       const now = new Date();
       const expiresAt = addPlanPeriods(now, TRIAL_MONTHS);
       // The trialUsedAt condition makes "only once" hold even if two admins click at the same time
       const user = await User.findOneAndUpdate(
         { _id: id, trialUsedAt: { $exists: false } },
-        { $set: { plan, planSource: "TRIAL", planExpiresAt: expiresAt, planGrantedBy: gate.admin._id, trialUsedAt: now, trialPlan: plan } },
+        { $set: { plan, planSource: "TRIAL", planExpiresAt: expiresAt, planGrantedBy: gate.admin._id, trialUsedAt: now, trialPlan: plan, trialPhone: target.verifiedPhone } },
         { new: true }
       ).select("name email plan planExpiresAt planSource trialUsedAt trialPlan");
-      if (user) return NextResponse.json({ user });
+      if (user) {
+        await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email }, `Started ${PLANS[plan].name} free trial until ${expiresAt.toLocaleDateString("en-PK")}`);
+        return NextResponse.json({ user });
+      }
       const existing = await User.findById(id).select("trialUsedAt trialPlan").lean<{ trialUsedAt?: Date; trialPlan?: string }>();
       if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 });
       const when = existing.trialUsedAt ? new Date(existing.trialUsedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }) : "";
@@ -73,6 +98,9 @@ export async function PATCH(
 
     const user = await User.findByIdAndUpdate(id, update, { new: true }).select("name email plan planExpiresAt planSource");
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const until = user.planExpiresAt ? ` until ${new Date(user.planExpiresAt).toLocaleDateString("en-PK")}` : "";
+    await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email },
+      plan === "FREE" ? "Set to Free" : `${source === "PAID" ? "Activated paid" : `Gifted (${months} × 30 days)`} ${PLANS[plan].name}${until}`);
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ error: "Failed to update plan" }, { status: 500 });
@@ -108,6 +136,7 @@ export async function DELETE(
       { $set: { plan: "FREE" }, $unset: { planExpiresAt: "", planSource: "", planGrantedBy: "" } },
       { new: true }
     ).select("name email plan");
+    await logAdminAction(gate.admin, "user.planRevoke", { type: "USER", id, label: updated?.name || updated?.email }, `Revoked ${user.planSource === "TRIAL" ? "free trial" : "gifted plan"}`);
     return NextResponse.json({ user: updated });
   } catch {
     return NextResponse.json({ error: "Failed to revoke plan" }, { status: 500 });

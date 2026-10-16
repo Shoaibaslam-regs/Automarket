@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { isPlatformOwner, requireAdminApi } from "@/lib/adminAuth";
 import { checkAccountDeletion, deleteAccount } from "@/lib/accountDeletion";
+import { logAdminAction } from "@/lib/adminLog";
 
 const ROLES = ["USER", "SELLER", "ADMIN"] as const;
 const ACCESS_LEVELS = ["FULL", "READ_ONLY"] as const;
@@ -30,17 +31,20 @@ export async function PATCH(
       return NextResponse.json({ error: "You can't change your own admin access" }, { status: 400 });
     }
 
-    const target = await User.findById(id).select("email");
+    const target = await User.findById(id).select("email name role adminAccess");
     if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
     if (isPlatformOwner(target.email)) {
       return NextResponse.json({ error: "The platform owner's access can't be changed" }, { status: 403 });
     }
+    const before = target.role === "ADMIN" ? `ADMIN (${target.adminAccess ?? "FULL"})` : target.role;
 
     const user = await User.findByIdAndUpdate(
       id,
       role === "ADMIN" ? { $set: { role, adminAccess } } : { $set: { role }, $unset: { adminAccess: "" } },
       { new: true }
     ).select("name email role adminAccess");
+    await logAdminAction(gate.admin, "user.role", { type: "USER", id, label: target.name || target.email },
+      `${before} → ${role === "ADMIN" ? `ADMIN (${adminAccess})` : role}`);
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
@@ -59,7 +63,7 @@ export async function DELETE(
     if (gate.admin._id.equals(id)) {
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
     }
-    const target = await User.findById(id).select("email");
+    const target = await User.findById(id).select("email name");
     if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
     if (isPlatformOwner(target.email)) {
       return NextResponse.json({ error: "The platform owner can't be deleted" }, { status: 403 });
@@ -68,6 +72,7 @@ export async function DELETE(
     const check = await checkAccountDeletion(id, { byAdmin: true });
     if (check.blockers.length) return NextResponse.json({ error: check.blockers[0] }, { status: 409 });
     await deleteAccount(id);
+    await logAdminAction(gate.admin, "user.delete", { type: "USER", id, label: target.name || target.email }, target.email);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });

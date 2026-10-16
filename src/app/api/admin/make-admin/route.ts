@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
+import { logAdminAction } from "@/lib/adminLog";
 
 // Shorter secrets are treated as unset, so a blank or placeholder ADMIN_SECRET can never open this route
 const MIN_SECRET_LENGTH = 16;
@@ -29,5 +30,6 @@ export async function POST(req: NextRequest) {
   await connectDB();
   const user = await User.findOneAndUpdate({ email: email.trim() }, { role: "ADMIN", adminAccess: "FULL" }, { new: true });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  await logAdminAction({ _id: user._id, email: `${user.email} (via ADMIN_SECRET)` }, "user.makeAdmin", { type: "USER", id: user._id, label: user.name || user.email });
   return NextResponse.json({ message: `${user.email} is now ADMIN` });
 }

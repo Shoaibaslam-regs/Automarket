@@ -6,6 +6,7 @@ import { UploadButton } from "@/lib/uploadthing-client";
 import Image from "next/image";
 import UserIdBadge from "@/components/UserIdBadge";
 import DeleteAccount from "@/components/profile/DeleteAccount";
+import PhoneVerification from "@/components/profile/PhoneVerification";
 
 type UserProfile = {
   name?: string;
@@ -14,6 +15,8 @@ type UserProfile = {
   image?: string;
   role: string;
   createdAt: string;
+  verifiedPhone?: string;
+  phoneVerifiedAt?: string;
 };
 
 export default function ProfilePage() {
@@ -54,6 +57,8 @@ export default function ProfilePage() {
     setSaving(false);
 
     if (!res.ok) { setError(data.error); return; }
+    // Re-read the profile: changing the phone number removes its verified status
+    fetch("/api/profile").then(r => r.json()).then(d => d.user && setProfile(d.user)).catch(() => {});
     setProfile(prev => prev ? { ...prev, ...data.user } : prev);
     setSuccess("Profile updated successfully!");
     await update({ name: data.user.name, image: data.user.image });
@@ -205,6 +210,22 @@ export default function ProfilePage() {
                 {saving ? "Saving..." : "Save changes"}
               </button>
             </form>
+          </div>
+        )}
+
+        {activeTab === "profile" && profile && (
+          <div style={{ marginTop: "16px" }}>
+            <PhoneVerification
+              key={`${profile.verifiedPhone ?? ""}|${profile.phone ?? ""}`}
+              verifiedPhone={profile.verifiedPhone}
+              phoneVerifiedAt={profile.phoneVerifiedAt}
+              currentPhone={profile.phone}
+              onVerified={phone => {
+                setProfile(prev => prev ? { ...prev, phone } : prev);
+                setForm(f => ({ ...f, phone }));
+                fetch("/api/profile").then(r => r.json()).then(d => d.user && setProfile(d.user)).catch(() => {});
+              }}
+            />
           </div>
         )}
 

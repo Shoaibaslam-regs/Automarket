@@ -23,6 +23,7 @@ import DealerVehicles from "@/components/listings/DealerVehicles";
 import StarRating from "@/components/reviews/StarRating";
 import BusinessReviews, { type ReviewViewer } from "@/components/reviews/BusinessReviews";
 import { toReviewView } from "@/components/reviews/types";
+import ReportButton from "@/components/reports/ReportButton";
 
 type Props = { params: Promise<{ slug: string }> };
 type Org = {
@@ -155,6 +156,9 @@ export default async function DealerPage({ params }: Props) {
                 <span className="font-semibold">{count ? average.toFixed(1) : "New"}</span>
                 <span className="text-slate-400">{count} review{count !== 1 ? "s" : ""}</span>
               </a>
+              <div className="mt-3">
+                <ReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} hidden={isMember} tone="dark" />
+              </div>
             </div>
           </div>
 

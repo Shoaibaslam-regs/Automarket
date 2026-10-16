@@ -16,6 +16,7 @@ import { mapsUrl } from "@/lib/address";
 import { getDealPage, getLiveDeals } from "@/lib/publicDeals";
 import { SITE_URL } from "@/lib/site";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
+import ReportButton from "@/components/reports/ReportButton";
 
 // Same for every visitor, so the page itself is cached too; deal changes clear it straight away
 export const revalidate = 60;
@@ -168,6 +169,9 @@ export default async function DealPage({ params }: Props) {
                       <Phone size={16} /> {business.phone}
                     </a>
                   )}
+                </div>
+                <div className="pt-1 text-center">
+                  <ReportButton targetType="DEAL" targetId={String(deal._id)} label={deal.title} />
                 </div>
               </div>
             </div>

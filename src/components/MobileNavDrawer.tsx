@@ -133,10 +133,6 @@ export default function MobileNavDrawer({
       <style>{`
         @keyframes mnFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes mnSlide { from { transform: translateX(100%) } to { transform: translateX(0) } }
-        @keyframes mnGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45), 0 8px 22px -12px rgba(244, 63, 94, 0.45) }
-          50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0), 0 12px 28px -10px rgba(244, 63, 94, 0.6) }
-        }
         @keyframes mnFlame { 0%, 100% { transform: scale(1) rotate(-4deg) } 50% { transform: scale(1.18) rotate(5deg) } }
         @keyframes mnShine { from { transform: translateX(-120%) skewX(-20deg) } to { transform: translateX(320%) skewX(-20deg) } }
         @media (prefers-reduced-motion: reduce) { .mn-hot, .mn-hot * { animation: none !important } }
@@ -199,26 +195,31 @@ export default function MobileNavDrawer({
         {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto overscroll-contain px-2.5 py-3">
           {user && (
-            // One plain row of shortcuts: icon over label, no boxes; the current page gets a dot
-            <div className="grid grid-cols-5 border-b border-slate-100 pb-2.5">
-              {quick.map(({ href, label, icon: Icon, count }) => {
+            // One plain row of shortcuts: icon over label, no boxes; the current page gets a dot.
+            // Items are only as wide as their label and justify-between spreads items and dividers,
+            // so every gap between a label and a divider is the same.
+            <div className="flex items-center justify-between border-b border-slate-100 px-1 pb-2.5">
+              {quick.map(({ href, label, icon: Icon, count }, i) => {
                 const active = isActive(href);
-                return (
+                return [
+                  i > 0 && <span key={`${href}-divider`} aria-hidden className="h-5 w-px flex-shrink-0 bg-slate-200" />,
                   <Link
                     key={href}
                     href={href}
                     onClick={onClose}
                     aria-current={active ? "page" : undefined}
+                    // Screen readers hear "Messages, 3 unread"; the badge itself stays silent
+                    aria-label={count ? `${label}, ${count} ${href === "/messages" ? "unread" : "new"}` : label}
                     className={`relative flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition active:scale-95 ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-900"}`}
                   >
                     <span className="relative">
                       <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                      <CountBadge count={count ?? 0} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 text-[9px]" />
+                      <CountBadge count={count ?? 0} max={9} hidden className="absolute -right-2.5 -top-1.5 h-4 min-w-4 text-[9px]" />
                     </span>
                     <span className={active ? "font-semibold" : ""}>{label}</span>
                     <span className={`h-1 w-1 rounded-full ${active ? "bg-slate-900" : "bg-transparent"}`} />
-                  </Link>
-                );
+                  </Link>,
+                ];
               })}
             </div>
           )}
@@ -230,9 +231,9 @@ export default function MobileNavDrawer({
               href="/deals"
               onClick={onClose}
               aria-current={isActive("/deals") ? "page" : undefined}
-              className="mn-hot mb-1 block animate-[mnGlow_2.2s_ease-in-out_infinite] rounded-lg bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 p-[1.5px]"
+              className="mn-hot mb-1 block rounded-lg"
             >
-              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-[6.5px] bg-white px-2 py-1.5">
+              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
                 <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-[mnShine_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" />
                 <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-sm shadow-rose-500/30">
                   <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />

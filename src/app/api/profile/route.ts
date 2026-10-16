@@ -3,13 +3,15 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { normalizePkMobile } from "@/lib/phone";
 
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
-    const user = await User.findById(session.user.id).select("-password").lean();
+    // Never send secrets back, even hashed ones
+    const user = await User.findById(session.user.id).select("-password -resetTokenHash -resetTokenExpires").lean();
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
@@ -37,7 +39,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (name) user.name = name;
-    if (phone !== undefined) user.phone = phone;
+    if (phone !== undefined && phone !== user.phone) {
+      user.phone = phone;
+      // A verified tick belongs to a number; editing the number means verifying again
+      if (normalizePkMobile(phone) !== user.verifiedPhone) {
+        user.verifiedPhone = undefined;
+        user.phoneVerifiedAt = undefined;
+      }
+    }
     if (image !== undefined) user.image = image;
 
     await user.save();

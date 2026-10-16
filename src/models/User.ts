@@ -20,6 +20,14 @@ export interface IUser extends Document {
   planSource?: PlanSource;
   /** When the account's one free trial was started; set once and never cleared, so it can't be given again */
   trialUsedAt?: Date;
+  /** Forgot-password link: only a SHA-256 hash of the token is stored, and it expires (see /api/auth/forgot-password) */
+  /** Mobile number confirmed by SMS code (E.164, +92…), and when; cleared if the profile phone changes */
+  verifiedPhone?: string;
+  phoneVerifiedAt?: Date;
+  /** The verified phone the free trial was given to, so the same number can't get another trial on a new account */
+  trialPhone?: string;
+  resetTokenHash?: string;
+  resetTokenExpires?: Date;
   trialPlan?: PlanId;
   planGrantedBy?: mongoose.Types.ObjectId;
   /** When the user agreed to the Terms & Conditions (at sign-up; Google sign-ups agree by continuing) */
@@ -44,6 +52,11 @@ const UserSchema = new Schema<IUser>(
     planExpiresAt: { type: Date },
     planSource: { type: String, enum: ["PAID", "ADMIN_GRANT", "TRIAL"] },
     trialUsedAt: { type: Date },
+    verifiedPhone: { type: String, index: true, sparse: true },
+    phoneVerifiedAt: { type: Date },
+    trialPhone: { type: String, index: true, sparse: true },
+    resetTokenHash: { type: String, index: true, sparse: true },
+    resetTokenExpires: { type: Date },
     trialPlan: { type: String, enum: PLAN_IDS },
     planGrantedBy: { type: Schema.Types.ObjectId, ref: "User" },
     termsAcceptedAt: { type: Date },

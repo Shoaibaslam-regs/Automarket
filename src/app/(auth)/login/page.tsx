@@ -70,7 +70,10 @@ export default function LoginPage() {
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Password</label>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "6px" }}>
+                <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)" }}>Password</label>
+                <Link href="/forgot-password" style={{ fontSize: "12px", color: "var(--gh-0550ae)", textDecoration: "none" }}>Forgot password?</Link>
+              </div>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
                 placeholder="••••••••"
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
