@@ -20,4 +20,7 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "deal.delete": "Deleted deal",
   "report.resolve": "Resolved report",
   "report.dismiss": "Dismissed report",
+  "announcement.create": "Posted announcement",
+  "announcement.update": "Edited announcement",
+  "announcement.delete": "Deleted announcement",
 };

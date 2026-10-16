@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, ShieldCheck, Tag, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, Megaphone, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 
 const NAV = [
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/admin/deals", label: "Deals", icon: Tag },
   { href: "/admin/reports", label: "Reports", icon: Flag },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/activity", label: "Activity", icon: History },
 ];

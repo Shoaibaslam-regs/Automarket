@@ -16,6 +16,9 @@ export interface IOrganization extends Document {
   planExpiresAt?: Date;
   /** false while suspended by an admin */
   isActive: boolean;
+  /** Follows the AutoMarket Official channel (announcements, updates, offers in Business → Updates) */
+  followsOfficial?: boolean;
+  followedOfficialAt?: Date;
   suspension?: {
     reason: string;
     at: Date;
@@ -68,6 +71,8 @@ const OrganizationSchema = new Schema<IOrganization>(
     plan: { type: String, enum: ["FREE", "PRO", "BUSINESS"], default: "FREE" },
     planExpiresAt: { type: Date },
     isActive: { type: Boolean, default: true },
+    followsOfficial: { type: Boolean, default: false, index: true },
+    followedOfficialAt: { type: Date },
     suspension: {
       type: new Schema(
         {

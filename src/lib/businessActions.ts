@@ -36,6 +36,8 @@ export const BUSINESS_ACTION_LABEL: Record<string, string> = {
   "money.delete": "Deleted a money entry",
   "business.settings": "Changed business settings",
   "business.clearActivity": "Deleted activity history",
+  "business.followOfficial": "Followed AutoMarket Official",
+  "business.unfollowOfficial": "Unfollowed AutoMarket Official",
   "review.reply": "Replied to a review",
 };
 

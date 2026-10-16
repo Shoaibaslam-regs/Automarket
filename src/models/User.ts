@@ -26,6 +26,8 @@ export interface IUser extends Document {
   phoneVerifiedAt?: Date;
   /** The verified phone the free trial was given to, so the same number can't get another trial on a new account */
   trialPhone?: string;
+  /** Last time this user opened Business → Updates; newer official posts count as unread */
+  officialSeenAt?: Date;
   resetTokenHash?: string;
   resetTokenExpires?: Date;
   trialPlan?: PlanId;
@@ -55,6 +57,7 @@ const UserSchema = new Schema<IUser>(
     verifiedPhone: { type: String, index: true, sparse: true },
     phoneVerifiedAt: { type: Date },
     trialPhone: { type: String, index: true, sparse: true },
+    officialSeenAt: { type: Date },
     resetTokenHash: { type: String, index: true, sparse: true },
     resetTokenExpires: { type: Date },
     trialPlan: { type: String, enum: PLAN_IDS },

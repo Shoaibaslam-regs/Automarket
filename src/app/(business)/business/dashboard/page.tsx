@@ -11,6 +11,7 @@ import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboa
 import { planInfo } from "@/lib/plans";
 import UserIdBadge from "@/components/UserIdBadge";
 import { DueFollowUpsCard } from "@/components/business/FollowUps";
+import { OfficialDashboardCard } from "@/components/business/Official";
 
 type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
@@ -467,6 +468,7 @@ export default function BusinessDashboard() {
               ))}
             </div>
 
+            <OfficialDashboardCard />
             <DueFollowUpsCard />
 
             {/* Two col */}

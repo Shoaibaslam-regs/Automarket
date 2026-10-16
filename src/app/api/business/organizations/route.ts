@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
 
-    const { name, type, phone, email, city, address, description } = await req.json();
+    const { name, type, phone, email, city, address, description, followOfficial } = await req.json();
     if (!name || !type || !city) return NextResponse.json({ error: "Name, type and city are required" }, { status: 400 });
 
     const existing = await User.findById(session.user.id);
@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
       slug: generateSlug(name),
       ownerId: session.user.id,
       isActive: true,
+      // Chosen at registration: follow AutoMarket Official for announcements, updates and offers
+      ...(followOfficial === true ? { followsOfficial: true, followedOfficialAt: new Date() } : {}),
     });
 
     await Employee.create({

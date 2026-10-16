@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
 
-export type AdminLogTarget = "USER" | "BUSINESS" | "LISTING" | "DEAL" | "REPORT";
+export type AdminLogTarget = "USER" | "BUSINESS" | "LISTING" | "DEAL" | "REPORT" | "ANNOUNCEMENT";
 
 /**
  * One admin action: who did what to which account, business, listing, deal or report, and when.
@@ -29,7 +29,7 @@ const AdminLogSchema = new Schema<IAdminLog>(
     adminEmail: { type: String, required: true },
     adminName: String,
     action: { type: String, required: true, index: true },
-    targetType: { type: String, enum: ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT"], required: true },
+    targetType: { type: String, enum: ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT", "ANNOUNCEMENT"], required: true },
     targetId: { type: Schema.Types.ObjectId, index: true },
     targetLabel: { type: String, maxlength: 200 },
     details: { type: String, maxlength: 500 },

@@ -19,9 +19,11 @@ type Counts = {
   purchases: number;
   /** New purchase requests waiting for the user's business (for members who handle sales). */
   sales: number;
+  /** AutoMarket Official posts the user's (following) business hasn't seen (from /api/business/official/count). */
+  updates: number;
 };
 
-const useCountsStore = create<Counts>(() => ({ messages: 0, ownerBookings: 0, renterBookings: 0, bookings: 0, purchases: 0, sales: 0 }));
+const useCountsStore = create<Counts>(() => ({ messages: 0, ownerBookings: 0, renterBookings: 0, bookings: 0, purchases: 0, sales: 0, updates: 0 }));
 
 const POLL_MS = 20000;
 let subscribers = 0;
@@ -36,10 +38,11 @@ export function refreshNotificationCounts(): Promise<void> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
-      const [m, b, p] = await Promise.all([
+      const [m, b, p, o] = await Promise.all([
         fetch("/api/messages/unread").then(r => r.json()).catch(() => ({})),
         fetch("/api/bookings/count").then(r => r.json()).catch(() => ({})),
         fetch("/api/purchases/count").then(r => r.json()).catch(() => ({})),
+        fetch("/api/business/official/count").then(r => r.json()).catch(() => ({})),
       ]);
       useCountsStore.setState({
         messages: m.count || 0,
@@ -48,6 +51,7 @@ export function refreshNotificationCounts(): Promise<void> {
         bookings: b.total || 0,
         purchases: p.purchases || 0,
         sales: p.sales || 0,
+        updates: o.count || 0,
       });
     } finally {
       inFlight = null;

@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, MessageSquare, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
+  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -33,14 +33,15 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/inventory", label: "Inventory", icon: Car },
   { href: "/business/customers", label: "Customers", icon: Users },
   { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
-  { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
-  { href: "/business/money", label: "Money", icon: Wallet },
-  { href: "/business/deals", label: "Deals", icon: Tag },
-  { href: "/business/reviews", label: "Reviews", icon: Star },
   { href: "/business/staff", label: "Staff", icon: User },
+  { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
+  { href: "/business/deals", label: "Deals", icon: Tag },
+  { href: "/business/money", label: "Money", icon: Wallet },
+  { href: "/business/reviews", label: "Reviews", icon: Star },
   { href: "/business/reports", label: "Reports", icon: BarChart3 },
-  { href: "/business/settings", label: "Settings", icon: Settings },
   { href: "/business/guide", label: "Guide · رہنمائی", icon: BookOpen },
+  { href: "/business/updates", label: "Updates", icon: Megaphone },
+  { href: "/business/settings", label: "Settings", icon: Settings },
   { href: "/business/support", label: "Help & support", icon: Headset },
 ];
 
@@ -180,7 +181,7 @@ function SidebarContent({
   const pathname = usePathname();
   const { data: session } = useSession();
   // Bookings is where the business handles incoming rental requests
-  const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : href === "/business/sales" ? counts.sales : 0);
+  const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : href === "/business/sales" ? counts.sales : href === "/business/updates" ? counts.updates : 0);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-slate-950 text-white">
@@ -302,7 +303,7 @@ export default function BusinessSidebar() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const counts = useNotificationCounts();
   const { data: sub } = useSubscription();
-  const hasUnread = counts.messages + counts.ownerBookings + counts.sales > 0;
+  const hasUnread = counts.messages + counts.ownerBookings + counts.sales + counts.updates > 0;
 
   useEffect(() => {
     const load = () =>

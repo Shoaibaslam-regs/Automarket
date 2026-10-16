@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { OfficialAvatar, OfficialName } from "@/components/business/Official";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -26,10 +27,16 @@ export default function OnboardingPage() {
     city: "",
     address: "",
     description: "",
+    // Follow AutoMarket Official for announcements, updates and offers (on by default; can be changed in Updates)
+    followOfficial: true,
   });
   // A business runs on its owner's plan, so this is the plan the new business will start on
   const { data: sub } = useSubscription(!!session?.user);
   const currentPlan = planInfo(sub?.planId);
+  // The plan picked on the "Choose plan" step; a paid plan other than the current one is requested from the team on launch
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const chosenPlan = planInfo(selectedPlan ?? currentPlan.id);
+  const requestsPlan = chosenPlan.price > 0 && chosenPlan.price > currentPlan.price;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     setForm(p => ({ ...p, [e.target.name]: e.target.value }));
@@ -50,6 +57,10 @@ export default function OnboardingPage() {
     setLoading(false);
 
     if (!res.ok) { setError(data.error); return; }
+    // No online payments: a paid plan picked here goes to the AutoMarket team as a request in Messages
+    if (requestsPlan) {
+      await fetch("/api/support/upgrade-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: chosenPlan.id }) }).catch(() => {});
+    }
     router.push("/business/dashboard");
   }
 
@@ -169,42 +180,53 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3 — Plan overview */}
+        {/* Step 3 — Choose plan */}
         {step === 3 && (
           <div>
-            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "var(--gh-0d1117)", marginBottom: "8px" }}>Your plan</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "var(--gh-0d1117)", marginBottom: "8px" }}>Choose your plan</h1>
             <p style={{ fontSize: "14px", color: "var(--gh-57606a)", marginBottom: "28px" }}>
-              Your business starts on your current <strong style={{ color: currentPlan.accent }}>{currentPlan.name}</strong> plan and your whole team shares it.
-              You can upgrade anytime from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.
+              Your whole team shares one plan. You&apos;re on <strong style={{ color: currentPlan.accent }}>{currentPlan.name}</strong> now; pick another to ask for it.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div role="radiogroup" aria-label="Plan" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {PLAN_LIST.map(plan => {
                 const current = plan.id === currentPlan.id;
+                const selected = plan.id === chosenPlan.id;
                 return (
-                  <div key={plan.id}
-                    style={{ padding: "18px 20px", background: current ? "var(--gh-0d1117)" : "var(--gh-ffffff)", color: current ? "var(--gh-ffffff)" : "var(--gh-0d1117)", border: `1px solid ${current ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", position: "relative" }}>
+                  <button key={plan.id} type="button" role="radio" aria-checked={selected} onClick={() => setSelectedPlan(plan.id)}
+                    style={{ textAlign: "left", fontFamily: "inherit", cursor: "pointer", padding: "18px 20px", background: selected ? "var(--gh-0d1117)" : "var(--gh-ffffff)", color: selected ? "var(--gh-ffffff)" : "var(--gh-0d1117)", border: `${selected ? 2 : 1}px solid ${selected ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", position: "relative" }}>
                     {current && (
                       <span style={{ position: "absolute", top: "-10px", left: "20px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "var(--gh-0d1117)", fontSize: "10px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px" }}>
                         YOUR PLAN
                       </span>
                     )}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
-                      <div>
-                        <p style={{ fontSize: "16px", fontWeight: 700, marginBottom: "2px" }}>{plan.name}</p>
-                        <p style={{ fontSize: "12px", color: current ? "var(--gh-9ca3af)" : "var(--gh-8c959f)" }}>{plan.tagline}</p>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                        {/* Radio dot */}
+                        <span aria-hidden style={{ width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0, marginTop: "2px", border: selected ? "5px solid #fcd34d" : "2px solid var(--gh-d0d7de)", background: selected ? "var(--gh-0d1117)" : "transparent" }} />
+                        <div>
+                          <p style={{ fontSize: "16px", fontWeight: 700, marginBottom: "2px" }}>{plan.name}</p>
+                          <p style={{ fontSize: "12px", color: selected ? "var(--gh-9ca3af)" : "var(--gh-8c959f)" }}>{plan.tagline}</p>
+                        </div>
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <span style={{ fontSize: "20px", fontWeight: 800, color: current ? "#fcd34d" : plan.accent }}>{formatPlanPrice(plan.price)}</span>
+                        <span style={{ fontSize: "20px", fontWeight: 800, color: selected ? "#fcd34d" : plan.accent }}>{formatPlanPrice(plan.price)}</span>
                         <span style={{ fontSize: "12px", color: "var(--gh-8c959f)" }}>{plan.price ? "/month" : ""}</span>
                       </div>
                     </div>
-                    <p style={{ fontSize: "12px", color: current ? "var(--gh-d1d5db)" : "var(--gh-57606a)" }}>
+                    <p style={{ fontSize: "12px", color: selected ? "var(--gh-d1d5db)" : "var(--gh-57606a)", paddingLeft: "30px" }}>
                       {formatLimit(plan.limits.listings)} listings · {formatLimit(plan.limits.staff)} team members · {formatLimit(plan.limits.customers)} customers
                     </p>
-                  </div>
+                  </button>
                 );
               })}
             </div>
+            <p style={{ marginTop: "16px", padding: "12px 14px", borderRadius: "10px", fontSize: "12px", lineHeight: 1.6, background: requestsPlan ? "var(--gh-fff8c5)" : "var(--gh-f6f8fa)", color: requestsPlan ? "var(--gh-7d4e00)" : "var(--gh-57606a)", border: `1px solid ${requestsPlan ? "var(--gh-e3b341)" : "var(--gh-e1e4e8)"}` }}>
+              {requestsPlan
+                ? <>When you launch, we&apos;ll send your request for <strong>{chosenPlan.name}</strong> ({formatPlanPrice(chosenPlan.price)}/month) to the AutoMarket team. They&apos;ll reply in Messages to arrange payment and switch it on. Your business starts on {currentPlan.name} until then.</>
+                : chosenPlan.id === currentPlan.id
+                  ? <>Your business starts on {currentPlan.name}. You can upgrade anytime from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>
+                  : <>You already have {currentPlan.name}, so your business keeps it. Plans can be changed later from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>}
+            </p>
           </div>
         )}
 
@@ -217,7 +239,7 @@ export default function OnboardingPage() {
               You&apos;re setting up <strong style={{ color: "var(--gh-0d1117)" }}>{form.name}</strong>
             </p>
             <p style={{ fontSize: "13px", color: "var(--gh-8c959f)", marginBottom: "32px" }}>
-              {form.type === "DEALER" ? "Car dealer" : form.type === "RENTAL" ? "Rental company" : "Dealer + Rental"} · {form.city} · {currentPlan.name} plan
+              {form.type === "DEALER" ? "Car dealer" : form.type === "RENTAL" ? "Rental company" : "Dealer + Rental"} · {form.city} · {currentPlan.name} plan{requestsPlan ? ` · ${chosenPlan.name} requested` : ""}
             </p>
             <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "20px", textAlign: "left", marginBottom: "28px" }}>
               <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "12px" }}>What happens next:</p>
@@ -233,6 +255,21 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
+
+            {/* Follow the AutoMarket Official channel */}
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", textAlign: "left", background: "var(--gh-ffffff)", border: `1px solid ${form.followOfficial ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", padding: "14px 16px", marginBottom: "28px", cursor: "pointer" }}>
+              <input type="checkbox" checked={form.followOfficial} onChange={e => setForm(p => ({ ...p, followOfficial: e.target.checked }))}
+                style={{ width: "18px", height: "18px", marginTop: "2px", accentColor: "var(--gh-0d1117)", flexShrink: 0 }} />
+              <span style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <OfficialAvatar size={36} />
+                <span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 700, color: "var(--gh-0d1117)" }}>Follow <OfficialName /></span>
+                  <span style={{ display: "block", fontSize: "12px", color: "var(--gh-57606a)", marginTop: "2px", lineHeight: 1.5 }}>
+                    Get important announcements, new features and offers for businesses as notifications in your console. You can unfollow any time from Updates.
+                  </span>
+                </span>
+              </span>
+            </label>
           </div>
         )}
 
