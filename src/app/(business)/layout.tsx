@@ -8,6 +8,7 @@ import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { can, type BusinessRole } from "@/lib/business";
+import QuickNew from "@/components/business/QuickNew";
 
 type WarningRow = { reason: string; at: Date; acknowledgedAt?: Date };
 
@@ -65,7 +66,10 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           flex: 1;
           overflow-y: auto;
           min-width: 0;
+          /* Room so the floating "+ New" button never covers the last row */
+          padding-bottom: 84px;
         }
+        @media print { .biz-content { padding-bottom: 0; } }
         @media (max-width: 768px) {
           .biz-content {
             padding-top: 48px;
@@ -77,6 +81,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
         <div className="biz-content">
           <SuspensionGate suspension={suspension} warning={warning}>{children}</SuspensionGate>
         </div>
+        {!suspension && <QuickNew />}
       </div>
     </>
   );

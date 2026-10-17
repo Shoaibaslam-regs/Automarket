@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CalendarDays, Info } from "lucide-react";
+import { ArrowRight, CalendarDays, Info, Phone, UserRound } from "lucide-react";
+import { normalizePkMobile } from "@/lib/phone";
 import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
 import { useRateLock } from "@/hooks/useRateLock";
 
@@ -28,6 +30,15 @@ function fmtDay(value: string) {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+/** "YYYY-MM-DD" `n` days after another, without time-zone drift. */
+function addDays(day: string, n: number) {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const QUICK_DAYS = [1, 2, 3, 7];
+
 const dateInputClass =
   "block h-12 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-base text-slate-900 outline-none transition hover:border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:text-sm";
 
@@ -38,6 +49,24 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
   const bookLock = useRateLock("bookings");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // The renter's name and phone come from their profile, so the owner can call them; a missing phone is asked for here
+  const [me, setMe] = useState<{ name?: string; phone?: string } | null>(null);
+  const [phone, setPhone] = useState("");
+  useEffect(() => {
+    fetch("/api/profile").then(r => (r.ok ? r.json() : null)).then(d => d?.user && setMe({ name: d.user.name, phone: d.user.phone })).catch(() => {});
+  }, []);
+  const needsPhone = !!me && !me.phone?.trim();
+
+  function pickStart(v: string) {
+    setStartDate(v);
+    // Fill in a one-day return, or move it if it's now before the pickup
+    if (v && (!endDate || endDate < v)) setEndDate(addDays(v, 1));
+  }
+  function pickDays(n: number) {
+    const start = startDate || minDate;
+    setStartDate(start);
+    setEndDate(addDays(start, n));
+  }
 
   const today = new Date().toISOString().split("T")[0];
   const minDate = availableFrom > today ? availableFrom.split("T")[0] : today;
@@ -52,9 +81,15 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     e.preventDefault();
     if (!startDate || !endDate) { setError("Please select both dates"); return; }
     if (days <= 0) { setError("The return date can't be before the pickup date"); return; }
+    if (needsPhone && !normalizePkMobile(phone)) { setError("Enter your mobile number so the owner can call you, e.g. 0300 1234567"); return; }
 
     setLoading(true);
     setError("");
+    if (needsPhone) {
+      const saved = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: phone.trim() }) });
+      if (!saved.ok) { setLoading(false); setError("Couldn't save your phone number. Please try again."); return; }
+      setMe(m => ({ ...m, phone: phone.trim() }));
+    }
 
     const res = await fetch(dealId ? `/api/deals/${dealId}/book` : "/api/bookings", {
       method: "POST",
@@ -102,7 +137,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
                 type="date"
                 value={startDate}
                 min={minDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => pickStart(e.target.value)}
                 required
                 className={dateInputClass}
               />
@@ -125,6 +160,20 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
               />
             </div>
           </div>
+        </div>
+
+        {/* One tap for the usual lengths */}
+        <div className="-mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500">Quick pick:</span>
+          {QUICK_DAYS.map(n => {
+            const active = !!startDate && endDate === addDays(startDate, n);
+            return (
+              <button key={n} type="button" onClick={() => pickDays(n)} aria-pressed={active}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${active ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200 hover:ring-slate-300"}`}>
+                {n === 7 ? "1 week" : `${n} day${n > 1 ? "s" : ""}`}
+              </button>
+            );
+          })}
         </div>
 
         <p className="-mt-2 text-xs text-slate-500">Returning the same day? Choose the same date for both. One day is charged either way, and the vehicle is free again for others from your return date.</p>
@@ -169,6 +218,27 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
           )}
         </div>
 
+        {/* Who's booking: from the profile, so there's nothing to type */}
+        {me && (
+          <div className="rounded-xl border border-slate-200/80 px-3.5 py-3 text-[13px]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Your details</p>
+              <Link href="/profile" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Edit</Link>
+            </div>
+            <p className="mt-1.5 flex items-center gap-1.5 text-slate-900"><UserRound size={14} className="text-slate-400" /> {me.name || "Your name"}</p>
+            {needsPhone ? (
+              <div className="mt-2">
+                <label htmlFor="booking-phone" className="mb-1 block text-xs font-semibold text-slate-700">Mobile number (so the owner can call you)</label>
+                <input id="booking-phone" type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0300 1234567"
+                  className="block h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:text-sm" />
+                <p className="mt-1 text-[11px] text-slate-400">Saved to your profile for next time.</p>
+              </div>
+            ) : (
+              <p className="mt-1 flex items-center gap-1.5 text-slate-900"><Phone size={14} className="text-slate-400" /> {me.phone}</p>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
           <Info size={15} strokeWidth={1.75} className="mt-px flex-shrink-0 text-amber-600" />
           <span>
@@ -190,7 +260,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
           ) : bookLock.locked ? (
             bookLock.text
           ) : (
-            "Request booking"
+            days > 0 ? `Request booking · PKR ${totalPayable.toLocaleString()}` : "Request booking"
           )}
         </button>
 

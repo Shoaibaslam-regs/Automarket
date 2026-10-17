@@ -7,6 +7,7 @@ import { LATE_GRACE_MINUTES, LATE_RULE_TEXT, lateCharge } from "@/lib/bookings";
 import { fmtDateTime, toDateTimeInput } from "./HandoverDialog";
 import type { Check } from "@/lib/checklist";
 import ConditionFields, { EMPTY_CHECK, checkBody, type CheckForm } from "./ConditionFields";
+import Tip from "@/components/ui/Tip";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -119,7 +120,7 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
             <ConditionFields value={cond} onChange={setCond} minKm={checkOutKm} idPrefix="in" />
 
             <div>
-              <label htmlFor="extra-charges" className="mb-1.5 block text-xs font-semibold text-slate-900">Extra charges (optional)</label>
+              <label htmlFor="extra-charges" className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-900">Extra charges (optional) <Tip id="extraCharges" /></label>
               <div className="grid grid-cols-[110px_1fr] gap-2">
                 <input id="extra-charges" type="number" min={0} inputMode="numeric" value={extra} onChange={e => setExtra(e.target.value)} placeholder="PKR"
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BellRing, Check, MessageCircle, Phone, X } from "lucide-react";
+import Tip from "@/components/ui/Tip";
 
 export type FollowUpItem = {
   _id: string; customerId: string; customerName: string; customerPhone?: string; dueAt: string; note: string; doneAt?: string;
@@ -188,7 +189,7 @@ export function DueFollowUpsCard() {
   return (
     <div className="mb-5 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-[var(--gh-f6f8fa)] px-4 py-3">
-        <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]"><BellRing size={14} /> Follow-ups due</p>
+        <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]"><BellRing size={14} /> Follow-ups due <Tip id="followUp" /></p>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${overdue ? "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]" : "bg-[var(--gh-fff8c5)] text-[var(--gh-7d4e00)]"}`}>
           {overdue ? `${overdue} overdue` : `${items.length} today`}
         </span>

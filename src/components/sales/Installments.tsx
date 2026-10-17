@@ -5,6 +5,7 @@ import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, CalendarClock, Check, Printer, Undo2, X } from "lucide-react";
 import { MAX_INSTALLMENT_MONTHS, buildSchedule, installmentSummary, type InstallmentPlan } from "@/lib/installments";
+import Tip from "@/components/ui/Tip";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 const day = (d: Date | string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -18,7 +19,7 @@ function nextMonthInput(): string {
 }
 
 function Shell({ open, onOpenChange, busy, title, description, children }: {
-  open: boolean; onOpenChange: (o: boolean) => void; busy: boolean; title: string; description: React.ReactNode; children: React.ReactNode;
+  open: boolean; onOpenChange: (o: boolean) => void; busy: boolean; title: React.ReactNode; description: React.ReactNode; children: React.ReactNode;
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={o => !busy && onOpenChange(o)}>
@@ -28,7 +29,7 @@ function Shell({ open, onOpenChange, busy, title, description, children }: {
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><CalendarClock size={18} /></span>
             <div className="min-w-0 flex-1">
-              <Dialog.Title className="text-base font-semibold text-slate-900">{title}</Dialog.Title>
+              <Dialog.Title className="flex items-center gap-1.5 text-base font-semibold text-slate-900">{title} <Tip id="installments" /></Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">{description}</Dialog.Description>
             </div>
             <Dialog.Close aria-label="Close" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>

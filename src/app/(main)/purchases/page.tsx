@@ -99,6 +99,7 @@ export default function PurchasesPage() {
             <ShoppingBag size={30} strokeWidth={1.5} className="mx-auto mb-3 text-[var(--gh-8c959f)]" />
             <p className="text-sm font-semibold text-[var(--gh-0d1117)]">No purchases yet</p>
             <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Open a vehicle sold by a business and tap &quot;Buy this vehicle&quot;.</p>
+            <Link href="/listings?type=SALE" className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white">Browse cars for sale</Link>
           </div>
         ) : (
           <div className="grid items-start gap-3 lg:grid-cols-2">

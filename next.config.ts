@@ -45,7 +45,15 @@ const nextConfig: NextConfig = {
       { source: "/biz/:slug", destination: "/dealers/:slug", permanent: true },
     ];
   },
+  // Pages visited in the last 30 seconds come back instantly on back/forward and repeat taps
+  experimental: {
+    staleTimes: { dynamic: 30 },
+  },
   images: {
+    // AVIF is noticeably smaller than WebP on slow mobile data; browsers without it get WebP
+    formats: ["image/avif", "image/webp"],
+    // UploadThing gives every upload a new URL, so an optimised image never changes and can be cached for a month
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       { protocol: "https", hostname: "utfs.io" },
       { protocol: "https", hostname: "*.ufs.sh" },

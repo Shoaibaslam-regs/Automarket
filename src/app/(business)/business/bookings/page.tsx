@@ -22,6 +22,8 @@ import { kmDriven, type Check } from "@/lib/checklist";
 import { conditionText } from "@/components/bookings/ConditionFields";
 import DepositDialog, { DepositTag } from "@/components/bookings/DepositDialog";
 import BookingCalendar from "@/components/bookings/BookingCalendar";
+import Tip from "@/components/ui/Tip";
+import { useQuickNew } from "@/components/business/QuickNew";
 
 type Booking = {
   _id: string;
@@ -344,10 +346,16 @@ export default function BusinessBookingsPage() {
   const [loadError, setLoadError] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
   const [search, setSearch] = useState("");
+  // Links from the dashboard's Today list open with ?q=<booking or sale number> already searched
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) queueMicrotask(() => setSearch(q));
+  }, []);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [updating, setUpdating] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [newOpen, setNewOpen] = useState(false);
+  useQuickNew("booking", () => setNewOpen(true));
   const [created, setCreated] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<Booking | null>(null);
@@ -692,8 +700,13 @@ export default function BusinessBookingsPage() {
               <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">
                 {bookings.length === 0 && canManage
                   ? "Online requests appear here. Use New booking for walk-in customers, even for vehicles you haven't listed."
-                  : bookings.length === 0 ? "Online requests appear here." : ""}
+                  : bookings.length === 0 ? "Online requests appear here." : "Try another status, or clear the search."}
               </p>
+              {bookings.length === 0 ? (
+                canManage && <button onClick={() => setNewOpen(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white"><Plus size={15} /> Make your first booking</button>
+              ) : (
+                <button onClick={() => { setStatusFilter(""); setSearch(""); }} className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-4 py-2.5 text-[13px] font-semibold text-[var(--gh-0d1117)]">Clear filters</button>
+              )}
             </div>
           ) : filtered.map(b => {
             const s = STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING;
@@ -739,7 +752,7 @@ export default function BusinessBookingsPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                         <span className="font-mono font-bold">{bookingNumber(b._id)}</span>
                         <span aria-hidden>·</span>
-                        {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in</span> : <span>Online</span>}
+                        {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online</span>}
                         {b.dealId && (
                           <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white"><Tag size={9} /> DEAL</span>
                         )}

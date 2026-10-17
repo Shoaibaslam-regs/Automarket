@@ -15,6 +15,7 @@ import { useNotificationCounts } from "@/hooks/useNotificationCounts";
 import { useSubscription, type SubscriptionInfo } from "@/components/subscription/useSubscription";
 import { formatLimit, planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import Tip from "@/components/ui/Tip";
 
 /** Fired after the business picture changes so the sidebar reloads it. */
 export const ORG_UPDATED_EVENT = "business-org-updated";
@@ -155,7 +156,7 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="relative mt-1.5 text-[10px] text-slate-500">Listings & deals this month{sub.listingsResetAt && limit !== null ? ` · resets ${new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}` : ""}</p>
+      <p className="relative mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-500"><Tip id="listingQuota" size={11} />Listings & deals this month{sub.listingsResetAt && limit !== null ? ` · resets ${new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}` : ""}</p>
       {sub.planId !== "UNLIMITED" && (
         <Link
           href="/pricing"

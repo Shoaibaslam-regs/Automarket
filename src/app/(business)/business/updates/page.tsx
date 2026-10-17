@@ -7,6 +7,7 @@ import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { OFFICIAL_NAME } from "@/lib/announcements";
 import { OfficialAvatar, OfficialName, OfficialPostCard, setFollowOfficial, type OfficialPost } from "@/components/business/Official";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
+import Tip from "@/components/ui/Tip";
 
 type Feed = { following: boolean; followers: number; canChange: boolean; announcements: OfficialPost[] };
 
@@ -59,7 +60,7 @@ export default function UpdatesPage() {
                 <OfficialAvatar size={56} />
                 <div className="min-w-[calc(100%-72px)] flex-1 sm:min-w-0">
                   <OfficialName tone="dark" className="text-base" />
-                  <p className="text-xs text-slate-400">The AutoMarket team · {feed.followers.toLocaleString()} business{feed.followers !== 1 ? "es" : ""} following</p>
+                  <p className="text-xs text-slate-400">The AutoMarket team · {feed.followers.toLocaleString()} business{feed.followers !== 1 ? "es" : ""} following <Tip id="official" size={12} /></p>
                 </div>
                 {feed.following ? (
                   feed.canChange ? (

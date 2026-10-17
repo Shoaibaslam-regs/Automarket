@@ -23,4 +23,5 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "announcement.create": "Posted announcement",
   "announcement.update": "Edited announcement",
   "announcement.delete": "Deleted announcement",
+  "activity.clear": "Deleted activity history",
 };

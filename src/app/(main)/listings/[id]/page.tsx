@@ -27,6 +27,11 @@ import BuyRequestButton from "@/components/purchases/BuyRequestButton";
 import { getMembership } from "@/lib/business";
 import StarRating from "@/components/reviews/StarRating";
 import ReportButton from "@/components/reports/ReportButton";
+import ListingCard from "@/components/listings/ListingCard";
+import RecentlyViewed, { TrackListingView } from "@/components/listings/RecentlyViewed";
+import type { IListing } from "@/models/Listing";
+// Registers the model for the seller → business populate in loadSimilar
+import "@/models/Organization";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -54,6 +59,29 @@ const loadListingPage = (id: string) =>
       return JSON.parse(JSON.stringify({ listing, rental, inspection, business, rating }));
     },
     ["listing-page", id],
+    { revalidate: PUBLIC_CACHE_SECONDS, tags: [listingTag(id)] }
+  )();
+
+/**
+ * Up to 4 other live vehicles a visitor may also like: the same make and type first, then the same type at a
+ * similar price. Cached like the rest of the page (plain JSON).
+ */
+const loadSimilar = (id: string, make: string, type: string, price: number) =>
+  unstable_cache(
+    async () => {
+      await connectDB();
+      const types = type === "BOTH" ? ["SALE", "RENT", "BOTH"] : [type, "BOTH"];
+      const base = { _id: { $ne: new mongoose.Types.ObjectId(id) }, status: "ACTIVE", type: { $in: types } };
+      const seller = { path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" } };
+      const sameMake = await Listing.find({ ...base, make: new RegExp(`^${make.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") })
+        .sort({ createdAt: -1 }).limit(4).populate(seller).lean();
+      const more = sameMake.length < 4
+        ? await Listing.find({ ...base, _id: { $nin: [new mongoose.Types.ObjectId(id), ...sameMake.map(x => x._id)] }, price: { $gte: price * 0.6, $lte: price * 1.4 } })
+          .sort({ createdAt: -1 }).limit(4 - sameMake.length).populate(seller).lean()
+        : [];
+      return JSON.parse(JSON.stringify([...sameMake, ...more]));
+    },
+    ["listing-similar", id],
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [listingTag(id)] }
   )();
 
@@ -126,6 +154,7 @@ export default async function ListingDetailPage({ params }: Props) {
   };
 
   const page = (await getListingPage(id))!;
+  const similar = (await loadSimilar(id, l.make, l.type, l.price)) as Array<IListing & { _id: string }>;
   const rental = page.rental as {
     _id: mongoose.Types.ObjectId;
     dailyRate: number;
@@ -481,6 +510,21 @@ export default async function ListingDetailPage({ params }: Props) {
             )}
           </div>
         </div>
+
+        {/* More to look at */}
+        {similar.length > 0 && (
+          <section className="mt-10" aria-label="Similar vehicles">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-lg font-bold text-slate-900">Similar vehicles</h2>
+              <Link href={`/listings?make=${encodeURIComponent(l.make.trim())}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">See all {l.make.trim()}</Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {similar.map(s => <ListingCard key={s._id} listing={s} />)}
+            </div>
+          </section>
+        )}
+        <RecentlyViewed excludeId={id} className="mt-10" />
+        <TrackListingView listing={{ id, title: l.title, price: l.price, type: l.type, image: l.images?.[0], location: l.location, year: l.year }} />
       </div>
     </div>
   );

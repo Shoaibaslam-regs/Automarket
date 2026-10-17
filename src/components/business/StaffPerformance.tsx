@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatLakh } from "@/lib/format";
+import Tip from "@/components/ui/Tip";
 
 type Person = {
   userId: string; name: string; role: string;
@@ -38,7 +39,7 @@ export default function StaffPerformance() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13px] text-[var(--gh-57606a)]">Counted from what each person did in the console. The top number in each row is highlighted.</p>
+        <p className="text-[13px] text-[var(--gh-57606a)]">Counted from what each person did in the console. The top number in each row is highlighted. <Tip id="performance" /></p>
         <div className="inline-flex rounded-lg bg-[var(--gh-f6f8fa)] p-1 ring-1 ring-inset ring-[var(--gh-e1e4e8)]">
           {(["this", "last"] as const).map(m => (
             <button key={m} onClick={() => { setPeople(null); setMonth(m); }}

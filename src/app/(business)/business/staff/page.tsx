@@ -9,6 +9,7 @@ import StaffPerformance from "@/components/business/StaffPerformance";
 import StaffActivity from "@/components/business/StaffActivity";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
+import Tip from "@/components/ui/Tip";
 
 type StaffMember = {
   _id: string;
@@ -225,7 +226,7 @@ export default function StaffPage() {
 
         {/* Role guide */}
         <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px" }}>
-          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "12px" }}>Role permissions</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>Role permissions <Tip id="roles" /></p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "10px" }}>
             {[
               { role: "OWNER", perms: "Full access + billing" },

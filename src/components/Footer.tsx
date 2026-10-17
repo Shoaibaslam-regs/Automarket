@@ -3,18 +3,19 @@ import { TERMS_PATH } from "@/lib/terms";
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200 mt-10 px-6 py-8">
+    <footer className="bg-white border-t border-gray-200 mt-10 px-4 py-8 sm:px-6">
       <div className="max-w-6xl mx-auto">
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+        {/* Phones: brand on top, then the three link columns side by side, all centred */}
+        <div className="mb-6 grid grid-cols-3 gap-x-3 gap-y-6 text-center md:grid-cols-4 md:gap-6 md:text-left">
 
           {/* Brand */}
-          <div>
+          <div className="col-span-3 md:col-span-1">
             <p className="text-sm font-bold text-gray-900 mb-2">
               AutoMarket
             </p>
 
-            <p className="text-xs text-gray-600 leading-6">
+            <p className="mx-auto max-w-xs text-xs text-gray-600 leading-6 md:mx-0">
               Pakistan&apos;s trusted platform to buy,
               sell and rent cars & bikes.
             </p>
@@ -46,7 +47,7 @@ export default function Footer() {
               ],
             },
           ].map((col) => (
-            <div key={col.title}>
+            <div key={col.title} className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-900 mb-3">
                 {col.title}
               </p>
@@ -55,7 +56,7 @@ export default function Footer() {
                 <Link
                   key={label}
                   href={href}
-                  className="block text-sm text-gray-600 hover:text-black transition mb-2"
+                  className="mb-2 block text-[13px] text-gray-600 transition hover:text-black sm:text-sm"
                 >
                   {label}
                 </Link>
@@ -69,7 +70,7 @@ export default function Footer() {
             © {new Date().getFullYear()} AutoMarket Pakistan.
             All rights reserved.
           </p>
-          <div className="flex gap-4 text-xs">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
             <Link href={TERMS_PATH} className="text-gray-500 transition hover:text-black">Terms &amp; Conditions</Link>
             <Link href="/pricing" className="text-gray-500 transition hover:text-black">Pricing</Link>
           </div>

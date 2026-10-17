@@ -13,6 +13,7 @@ import {
   CONDITIONS, FUEL_TYPES, TRANSMISSIONS, filtersToSearchParams, hasFilters, parseFilters, type ListingFilters,
 } from "@/lib/listingFilters";
 import { useRateLock } from "@/hooks/useRateLock";
+import RecentlyViewed from "@/components/listings/RecentlyViewed";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
 const TYPES = [
@@ -499,6 +500,7 @@ export default function ListingsPage({
 
           {/* Results */}
           <div className="min-w-0">
+            <RecentlyViewed className="mb-5" />
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-4">
               <div className="flex items-center gap-3">
                 <p className="text-sm text-slate-500">

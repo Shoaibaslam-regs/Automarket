@@ -52,6 +52,21 @@ const INITIAL_FORM: FormState = {
   deposit: "", availableFrom: "",
 };
 
+type Draft = { form: FormState; step: number; savedAt: number };
+
+/** Anything worth keeping in a draft (the prefilled shop address alone isn't). */
+function hasContent(f: FormState) {
+  return !!(f.title || f.make || f.model || f.year || f.price || f.description || f.dailyRate || f.images.length);
+}
+
+const ago = (ms: number) => {
+  const min = Math.round((Date.now() - ms) / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  return h < 24 ? `${h} hour${h !== 1 ? "s" : ""} ago` : new Date(ms).toLocaleDateString("en-PK", { day: "numeric", month: "short" });
+};
+
 const inputClass =
   "block h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-base text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:text-sm";
 const selectClass = "h-11 text-base font-normal text-slate-900 sm:text-sm";
@@ -116,6 +131,50 @@ export default function SellPage() {
       .catch(() => {});
   }, []);
   const [published, setPublished] = useState<{ id: string; type: string; price: number } | null>(null);
+
+  // Drafts: the form is saved in this browser as you type, so a closed tab or a dropped connection loses nothing
+  const draftKey = session?.user?.id ? `sell-draft:${session.user.id}` : null;
+  const [draftOffer, setDraftOffer] = useState<Draft | null>(null);
+  const [draftChecked, setDraftChecked] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (!draftKey) return;
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem(draftKey);
+        const d = raw ? (JSON.parse(raw) as Draft) : null;
+        if (d?.form && hasContent(d.form)) setDraftOffer(d);
+      } catch {}
+      setDraftChecked(true);
+    });
+  }, [draftKey]);
+  useEffect(() => {
+    // Wait until the user has answered "continue your draft?", and never save after publishing
+    if (!draftKey || !draftChecked || draftOffer || published || !hasContent(form)) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ form, step, savedAt: Date.now() } satisfies Draft));
+        setSavedAt(Date.now());
+      } catch {}
+    }, 700);
+    return () => clearTimeout(t);
+  }, [form, step, draftKey, draftChecked, draftOffer, published]);
+  function clearDraft() {
+    try { if (draftKey) localStorage.removeItem(draftKey); } catch {}
+    setSavedAt(null);
+  }
+  function resumeDraft() {
+    if (!draftOffer) return;
+    // Keep the shop address prefilled from Business settings when the draft has none
+    setForm(prev => ({ ...INITIAL_FORM, ...draftOffer.form, address: draftOffer.form.address || prev.address, location: draftOffer.form.location || prev.location }));
+    setStep(Math.min(3, Math.max(1, draftOffer.step || 1)));
+    setSavedAt(draftOffer.savedAt);
+    setDraftOffer(null);
+  }
+  function discardDraft() {
+    clearDraft();
+    setDraftOffer(null);
+  }
   const [copied, setCopied] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -179,6 +238,7 @@ export default function SellPage() {
       return;
     }
     refreshSub();
+    clearDraft();
     // Show the success screen instead of jumping straight to the listing
     setPublished({ id: data.listing._id, type: data.listing.type, price: data.listing.price });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -387,6 +447,20 @@ export default function SellPage() {
         )}
         <div className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] ${listingsFull ? "hidden" : ""}`}>
           <form ref={formRef} onSubmit={handleSubmit} className="min-w-0">
+            {draftOffer && (
+              <div role="status" className="mb-4 flex flex-col gap-3 rounded-2xl bg-indigo-50 p-4 ring-1 ring-inset ring-indigo-200 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-indigo-900">You have an unfinished listing</p>
+                  <p className="truncate text-xs text-indigo-700">
+                    {[draftOffer.form.title || [draftOffer.form.make, draftOffer.form.model, draftOffer.form.year].filter(Boolean).join(" ") || "Untitled", `saved ${ago(draftOffer.savedAt)}`].join(" · ")}
+                  </p>
+                </div>
+                <div className="flex flex-shrink-0 gap-2">
+                  <button type="button" onClick={discardDraft} className="rounded-xl px-3.5 py-2 text-sm font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-white">Start fresh</button>
+                  <button type="button" onClick={resumeDraft} className="rounded-xl bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-800">Continue draft</button>
+                </div>
+              </div>
+            )}
             <div className="rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
@@ -396,6 +470,11 @@ export default function SellPage() {
                   <h2 className="text-base font-semibold text-slate-900">{STEPS[step - 1].label}</h2>
                   <p className="text-xs text-slate-500">Step {step} of 3 · {STEPS[step - 1].hint}</p>
                 </div>
+                {savedAt && (
+                  <span className="ml-auto inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600" title="Saved in this browser; you can close the page and continue later">
+                    <Check size={12} strokeWidth={3} /> Draft saved
+                  </span>
+                )}
               </div>
 
               <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">

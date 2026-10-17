@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Camera, Fuel, Gauge, X } from "lucide-react";
 import { UploadButton } from "@/lib/uploadthing-client";
 import { FUEL_LABEL, FUEL_LEVELS, MAX_CHECK_PHOTOS, type Check, type FuelLevel } from "@/lib/checklist";
+import Tip from "@/components/ui/Tip";
 
 export type CheckForm = { odometer: string; fuel: FuelLevel | ""; notes: string; photos: string[] };
 export const EMPTY_CHECK: CheckForm = { odometer: "", fuel: "", notes: "", photos: [] };
@@ -38,7 +39,7 @@ export default function ConditionFields({ value, onChange, minKm, idPrefix }: {
 
   return (
     <div className="space-y-3 rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/70">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vehicle condition (optional)</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vehicle condition (optional) <Tip id="condition" size={12} /></p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label htmlFor={`${idPrefix}-km`} className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-900"><Gauge size={12} /> Odometer (km)</label>

@@ -20,6 +20,8 @@ import {
 } from "@/lib/purchases";
 import type { InstallmentPlan } from "@/lib/installments";
 import { InstallmentLine, InstallmentScheduleDialog, InstallmentSetupDialog } from "@/components/sales/Installments";
+import Tip from "@/components/ui/Tip";
+import { useQuickNew } from "@/components/business/QuickNew";
 
 type Sale = {
   _id: string;
@@ -297,8 +299,14 @@ export default function BusinessSalesPage() {
   const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState<"" | PurchaseStatus>("");
   const [search, setSearch] = useState("");
+  // Links from the dashboard's Today list open with ?q=<booking or sale number> already searched
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) queueMicrotask(() => setSearch(q));
+  }, []);
   const [openMore, setOpenMore] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  useQuickNew("sale", () => setNewOpen(true));
   const [created, setCreated] = useState<string | null>(null);
   const [actionFor, setActionFor] = useState<{ kind: ActionKind; sale: Sale } | null>(null);
   const [payFor, setPayFor] = useState<Sale | null>(null);
@@ -433,8 +441,13 @@ export default function BusinessSalesPage() {
               <BadgeDollarSign size={30} strokeWidth={1.5} className="mx-auto mb-3 text-[var(--gh-8c959f)]" />
               <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{sales.length === 0 ? "No sales yet" : "No sales match your filters"}</p>
               <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">
-                {sales.length === 0 ? "Buyers' purchase requests for your vehicles appear here. Record shop sales with New sale." : ""}
+                {sales.length === 0 ? "Buyers' purchase requests for your vehicles appear here. Record shop sales with New sale." : "Try another status, or clear the search."}
               </p>
+              {sales.length === 0 ? (
+                canManage && <button onClick={() => setNewOpen(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white"><Plus size={15} /> Record a sale</button>
+              ) : (
+                <button onClick={() => { setFilter(""); setSearch(""); }} className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-4 py-2.5 text-[13px] font-semibold text-[var(--gh-0d1117)]">Clear filters</button>
+              )}
             </div>
           ) : shown.map(s => {
             const st = PURCHASE_STYLE[s.status];
@@ -465,7 +478,7 @@ export default function BusinessSalesPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[var(--gh-57606a)]">
                         <span className="font-mono font-bold">{purchaseNumber(s._id)}</span>
                         <span aria-hidden>·</span>
-                        {s.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in</span> : <span>Online request</span>}
+                        {s.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online request</span>}
                         <span aria-hidden>·</span>
                         <span>{fmt(s.createdAt)}</span>
                       </p>

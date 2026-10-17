@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -32,6 +32,15 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
   const buyLock = useRateLock("purchases");
+  // Start with the phone on the buyer's profile, so most people only press Send
+  const [profilePhone, setProfilePhone] = useState("");
+  useEffect(() => {
+    if (!open || status !== "authenticated") return;
+    fetch("/api/profile").then(r => (r.ok ? r.json() : null)).then(d => {
+      const p = d?.user?.phone?.trim();
+      if (p) { setProfilePhone(p); setPhone(prev => prev || p); }
+    }).catch(() => {});
+  }, [open, status]);
 
   const btn = `inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 ${className}`;
 
@@ -99,7 +108,7 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
               <div>
                 <label htmlFor="buy-phone" className="mb-1.5 block text-xs font-semibold text-slate-900">Phone number</label>
                 <input id="buy-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0300 1234567" className={field} />
-                <p className="mt-1 text-[11px] text-slate-400">Leave empty to use the phone on your profile.</p>
+                <p className="mt-1 text-[11px] text-slate-400">{profilePhone && phone === profilePhone ? "From your profile. Change it if the business should call another number." : "Leave empty to use the phone on your profile."}</p>
               </div>
               <div>
                 <label htmlFor="buy-offer" className="mb-1.5 block text-xs font-semibold text-slate-900">Your offer (optional)</label>

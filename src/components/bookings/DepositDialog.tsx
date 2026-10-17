@@ -4,6 +4,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ShieldCheck, X } from "lucide-react";
 import { DEPOSIT_LABEL, depositState, type DepositStatus } from "@/lib/checklist";
+import Tip from "@/components/ui/Tip";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -74,7 +75,7 @@ export default function DepositDialog({ open, onOpenChange, booking, customer, o
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><ShieldCheck size={18} /></span>
             <div className="min-w-0 flex-1">
-              <Dialog.Title className="text-base font-semibold text-slate-900">Settle security deposit</Dialog.Title>
+              <Dialog.Title className="flex items-center gap-1.5 text-base font-semibold text-slate-900">Settle security deposit <Tip id="deposit" /></Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">{customer ? `${customer} paid` : "Deposit"} {pkr(booking.deposit)}. How much did you give back?</Dialog.Description>
             </div>
             <Dialog.Close aria-label="Close" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>

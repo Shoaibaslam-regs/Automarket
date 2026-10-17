@@ -213,7 +213,7 @@ export default function InventoryPage() {
           <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-16 text-center">
             <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><Car size={32} strokeWidth={1.5} /></div>
             <p className="mb-2 text-[15px] font-semibold text-[var(--gh-0d1117)]">No vehicles found</p>
-            <Link href="/sell" className="text-[13px] font-semibold text-[var(--gh-0d1117)]">Add your first vehicle →</Link>
+            <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white">Add a vehicle</Link>
           </div>
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">

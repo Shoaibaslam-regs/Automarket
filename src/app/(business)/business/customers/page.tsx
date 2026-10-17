@@ -10,6 +10,8 @@ import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
+import Tip from "@/components/ui/Tip";
+import { useQuickNew } from "@/components/business/QuickNew";
 
 type Customer = {
   _id: string;
@@ -61,7 +63,8 @@ function CustomersContent() {
   // Customer whose "More" tray is open
   const [openMore, setOpenMore] = useState<string | null>(null);
   // Dashboard "Add customer" quick action links here with ?add=1
-  const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1");
+  const [showAdd, setShowAdd] = useState(() => searchParams.get("add") === "1" || searchParams.get("new") === "customer");
+  useQuickNew("customer", () => setShowAdd(true));
   const [saving, setSaving] = useState(false);
   const [addError, setAddError] = useState<{ message: string; planLimit: boolean } | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -387,7 +390,7 @@ function CustomersContent() {
           <div className="mb-4 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--gh-f6f8fa)] px-4 py-2.5">
               <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]">
-                <BellRing size={14} /> Follow-ups
+                <BellRing size={14} /> Follow-ups <Tip id="followUp" />
                 {dueFollowUps.length > 0 && <span className="rounded-full bg-[var(--gh-fff8c5)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-7d4e00)]">{dueFollowUps.length} due</span>}
               </p>
               {followUps.length > dueFollowUps.length && (
@@ -409,7 +412,7 @@ function CustomersContent() {
             <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--gh-9a6700)", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
               <Star size={15} fill="#eac54f" color="#bf8700" /> {starCount}
             </p>
-            <p style={{ fontSize: "10px", color: "var(--gh-9a6700)", fontWeight: 600 }}>STAR CUSTOMERS</p>
+            <p style={{ fontSize: "10px", color: "var(--gh-9a6700)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}>STAR CUSTOMERS <Tip id="starCustomer" size={11} /></p>
           </button>
           {STATUSES.map(s => {
             const count = customers.filter(c => c.status === s).length;

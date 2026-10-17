@@ -7,6 +7,7 @@ import { formatCnicInput, normalizeCnic, normalizePlate } from "@/lib/plates";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
 import type { Check } from "@/lib/checklist";
 import ConditionFields, { EMPTY_CHECK, checkBody, type CheckForm } from "./ConditionFields";
+import Tip from "@/components/ui/Tip";
 
 /** A Date as the value of a datetime-local input, in the viewer's own time zone. */
 export function toDateTimeInput(d: Date | string): string {
@@ -133,7 +134,7 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><KeyRound size={18} /></span>
             <div className="min-w-0 flex-1">
-              <Dialog.Title className="text-base font-semibold text-slate-900">{title}</Dialog.Title>
+              <Dialog.Title className="flex items-center gap-1.5 text-base font-semibold text-slate-900">{title} <Tip id="handover" /></Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">{description}</Dialog.Description>
             </div>
             <Dialog.Close aria-label="Close" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>
@@ -160,7 +161,7 @@ export default function HandoverDialog({ open, onOpenChange, title, description,
             {askReturnTime && (
               <div>
                 <label htmlFor="handover-due" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-900">
-                  <Clock3 size={13} /> Return by (exact time)
+                  <Clock3 size={13} /> Return by (exact time) <Tip id="returnTime" />
                 </label>
                 <input id="handover-due" type="datetime-local" value={dueValue} onChange={e => setDueValue(e.target.value)}
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />

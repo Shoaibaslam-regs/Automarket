@@ -9,6 +9,8 @@ import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { MANUAL_IN, MANUAL_OUT, MONEY_LABEL, MONEY_OUT, pkDay } from "@/lib/money";
 import { formatLakh } from "@/lib/format";
+import Tip from "@/components/ui/Tip";
+import { useQuickNew } from "@/components/business/QuickNew";
 
 type Entry = {
   _id: string; type: "IN" | "OUT"; category: string; amount: number; date: string; note?: string;
@@ -134,7 +136,7 @@ function EntryRow({ e, onDelete }: { e: Entry; onDelete?: (e: Entry) => void }) 
           {e.note && <>{e.note} · </>}
           {new Date(e.date).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
           {e.createdByName && <> · {e.createdByName}</>}
-          {e.source === "AUTO" && <> · automatic</>}
+          {e.source === "AUTO" && <> · automatic <Tip id="autoEntry" size={11} /></>}
         </p>
       </div>
       <span className={`flex-shrink-0 text-[13px] font-bold tabular-nums ${out ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-1a7f37)]"}`}>{out ? "−" : "+"}{pkr(e.amount)}</span>
@@ -156,6 +158,8 @@ export default function MoneyPage() {
   const [error, setError] = useState("");
   const [forbidden, setForbidden] = useState(false);
   const [adding, setAdding] = useState<"IN" | "OUT" | null>(null);
+  useQuickNew("expense", () => setAdding("OUT"));
+  useQuickNew("income", () => setAdding("IN"));
   const [deleting, setDeleting] = useState<Entry | null>(null);
   const [delBusy, setDelBusy] = useState(false);
   const [reload, setReload] = useState(0);
@@ -251,7 +255,7 @@ export default function MoneyPage() {
                   { label: "Closing balance", v: data.totals.closing, c: data.totals.closing < 0 ? "var(--gh-cf222e)" : "var(--gh-0d1117)" },
                 ].map(s => (
                   <div key={s.label} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-3">
-                    <p className="text-[11px] text-[var(--gh-8c959f)]">{s.label}</p>
+                    <p className="flex items-center gap-1 text-[11px] text-[var(--gh-8c959f)]">{s.label} {s.label === "Opening balance" && <Tip id="openingBalance" size={11} />}</p>
                     <p className="mt-1 text-[15px] font-extrabold tabular-nums" style={{ color: s.c }}>{pkr(s.v)}</p>
                   </div>
                 ))}
@@ -293,6 +297,10 @@ export default function MoneyPage() {
                   <Wallet size={26} strokeWidth={1.5} className="mx-auto mb-2 text-[var(--gh-8c959f)]" />
                   <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{tab === "cash" ? "Nothing on this day" : "No expenses this month"}</p>
                   <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">{tab === "cash" ? "Payments you record on bookings and sales appear here by themselves." : "Add repairs, fuel, token tax and other costs with Expense."}</p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {tab === "cash" && <button onClick={() => setAdding("IN")} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-4 py-2.5 text-[13px] font-semibold text-[var(--gh-0d1117)]"><Plus size={14} /> Money in</button>}
+                    <button onClick={() => setAdding("OUT")} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white"><Plus size={14} /> Add expense</button>
+                  </div>
                 </div>
               ) : (
                 <ul className="divide-y divide-[var(--gh-f6f8fa)] overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
@@ -342,7 +350,7 @@ export default function MoneyPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[11px] text-[var(--gh-8c959f)]">Profit = sale price + completed rental income − expenses linked to the vehicle. A vehicle still in stock shows a loss until it earns.</p>
+              <p className="mt-3 text-[11px] text-[var(--gh-8c959f)]"><Tip id="profitPerVehicle" size={11} className="mr-1" />Profit = sale price + completed rental income − expenses linked to the vehicle. A vehicle still in stock shows a loss until it earns.</p>
             </>
           )
         )}

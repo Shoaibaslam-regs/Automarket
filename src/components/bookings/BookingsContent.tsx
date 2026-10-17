@@ -363,7 +363,9 @@ export default function BookingsContent() {
           <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "48px", textAlign: "center" }}>
             <p style={{ fontSize: "15px", color: "var(--gh-0d1117)", fontWeight: 500, marginBottom: "8px" }}>No bookings yet</p>
             <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "20px" }}>{tab === "mine" ? "Browse available rentals and make your first booking." : "When someone books your vehicle, it will appear here."}</p>
-            <Link href="/listings?type=RENT" style={{ fontSize: "13px", color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Browse rentals →</Link>
+            {tab === "mine"
+              ? <Link href="/listings?type=RENT" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white">Browse cars for rent</Link>
+              : <Link href="/sell" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white">List a vehicle for rent</Link>}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
