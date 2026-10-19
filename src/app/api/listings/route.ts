@@ -12,6 +12,7 @@ import { checkPlanLimit } from "@/lib/subscription";
 import { isUserBusinessSuspended } from "@/lib/business";
 import { PUBLIC_CACHE_SECONDS, invalidateListingAndSeller } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
+import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
     const listings = await Listing.find(query)
       // Public feed: only what a card shows. Contact details stay on the listing page.
       // The seller's business (if any) lets cards show "listed by a business" vs a private seller
-      .populate({ path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" } })
+      .populate(CARD_SELLER_POPULATE)
       // "ACTIVE" sorts before "RENTED" and "SOLD", so available vehicles always come first
       .sort({ status: 1, featured: -1, ...sortOrder })
       .skip(skip)

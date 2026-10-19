@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, MessageSquare, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
+  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -16,6 +16,7 @@ import { useSubscription, type SubscriptionInfo } from "@/components/subscriptio
 import { formatLimit, planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import Tip from "@/components/ui/Tip";
+import NotificationBell from "@/components/NotificationBell";
 
 /** Fired after the business picture changes so the sidebar reloads it. */
 export const ORG_UPDATED_EVENT = "business-org-updated";
@@ -44,6 +45,14 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/updates", label: "Updates", icon: Megaphone },
   { href: "/business/settings", label: "Settings", icon: Settings },
   { href: "/business/support", label: "Help & support", icon: Headset },
+];
+
+/** The phone bottom bar's shortcuts, with the badge each one shows. */
+const BOTTOM_ITEMS: { href: string; label: string; icon: LucideIcon; badge?: (c: ReturnType<typeof useNotificationCounts>) => number }[] = [
+  { href: "/business/dashboard", label: "Today", icon: LayoutDashboard },
+  { href: "/business/bookings", label: "Bookings", icon: CalendarCheck, badge: c => c.ownerBookings },
+  { href: "/business/sales", label: "Sales", icon: BadgeDollarSign, badge: c => c.sales },
+  { href: "/business/customers", label: "Customers", icon: Users },
 ];
 
 const TYPE_LABELS: Record<string, string> = { DEALER: "Dealer", RENTAL: "Rental", BOTH: "Dealer + Rental" };
@@ -101,7 +110,7 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
             { label: "Business settings", href: "/business/settings", icon: Settings },
             { label: "Messages", href: "/messages", icon: MessageSquare },
             { label: "My dashboard", href: "/dashboard", icon: User },
-            { label: "Marketplace", href: "/home", icon: House },
+            { label: "Marketplace", href: "/", icon: House },
           ].map(item => (
             <Link
               key={item.href}
@@ -192,7 +201,7 @@ function SidebarContent({
       {/* Logo + org */}
       <div className="relative space-y-4 px-4 pb-4 pt-5">
         <div className="flex items-center justify-between">
-          <Link href="/home" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image src="/logo-1771205663069.png" alt="AutoMarket" width={110} height={28} className="h-6 w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
             <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-300 ring-1 ring-inset ring-white/10">
               Business
@@ -273,7 +282,7 @@ function SidebarContent({
             <UserIdBadge id={session?.user?.id} className="mt-0.5 !bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
           </div>
           <Link
-            href="/home"
+            href="/"
             title="Back to marketplace"
             aria-label="Back to marketplace"
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 hover:text-white"
@@ -344,7 +353,9 @@ export default function BusinessSidebar() {
         @media (max-width: 768px) {
           .biz-desktop-sidebar { display: none !important; }
           .biz-mobile-topbar { display: flex !important; }
+          .biz-mobile-bottombar { display: grid !important; }
         }
+        @media print { .biz-mobile-bottombar { display: none !important; } }
       `}</style>
 
       {/* Desktop sidebar */}
@@ -354,12 +365,13 @@ export default function BusinessSidebar() {
 
       {/* Mobile top bar: the dark counterpart of the marketplace navbar */}
       <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl">
-        <Link href="/home" className="flex flex-shrink-0 items-center gap-2">
+        <Link href="/" className="flex flex-shrink-0 items-center gap-2">
           <Image src="/logo-1771205663069.png" alt="AutoMarket" width={100} height={26} className="h-[18px] w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
           <span className="rounded bg-white/10 px-1 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-slate-300">Business</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2">
           <span className="hidden truncate text-[11px] font-medium text-slate-400 min-[380px]:block">{org?.name}</span>
+          <NotificationBell tone="dark" className="!h-9 !w-9" />
           <button
             onClick={() => setMobileOpenOn(pathname)}
             aria-label="Open menu"
@@ -374,9 +386,36 @@ export default function BusinessSidebar() {
         </div>
       </div>
 
+      {/* Phone bottom bar: the pages used every day, one tap away; More opens the full menu */}
+      <nav aria-label="Business shortcuts" className="biz-mobile-bottombar fixed inset-x-0 bottom-0 z-[800] hidden grid-cols-5 border-t border-white/10 bg-slate-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+        {BOTTOM_ITEMS.map(({ href, label, icon: Icon, badge }) => {
+          const active = pathname === href || (href !== "/business/dashboard" && pathname.startsWith(href));
+          const count = badge ? badge(counts) : 0;
+          return (
+            <Link key={href} href={href} aria-current={active ? "page" : undefined}
+              className={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold transition ${active ? "text-white" : "text-slate-400"}`}>
+              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-amber-300" />}
+              <span className="relative">
+                <Icon size={19} strokeWidth={active ? 2.3 : 1.9} />
+                <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[9px] ring-2 ring-slate-950" />
+              </span>
+              {label}
+            </Link>
+          );
+        })}
+        <button onClick={() => setMobileOpenOn(pathname)} aria-label="More: open the full menu" aria-expanded={mobileOpen}
+          className="relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold text-slate-400">
+          <span className="relative">
+            <Menu size={19} />
+            <NotificationDot show={counts.messages + counts.updates > 0} className="-right-1 -top-1 ring-slate-950" />
+          </span>
+          More
+        </button>
+      </nav>
+
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Business menu">
+        <div className="fixed inset-0 z-[950]" role="dialog" aria-modal="true" aria-label="Business menu">
           <div onClick={() => setMobileOpenOn(null)} className="absolute inset-0 animate-[bsBackdrop_0.2s_ease] bg-slate-950/60 backdrop-blur-sm" />
           <div className="absolute inset-y-0 left-0 w-[min(86vw,300px)] animate-[bsSlide_0.28s_cubic-bezier(0.22,1,0.36,1)] shadow-2xl shadow-black/60">
             {content(() => setMobileOpenOn(null))}

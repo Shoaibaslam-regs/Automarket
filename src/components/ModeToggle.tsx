@@ -12,7 +12,7 @@ export default function ModeToggle() {
 
   function toggle() {
     if (isBusiness) {
-      router.push("/home");
+      router.push("/");
     } else {
       if (!session?.user) {
         router.push("/login");

@@ -1,4 +1,4 @@
- import type { Metadata } from "next";
+ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 // UploadThing ships its own Tailwind utilities (e.g. `.hidden`); import it before globals.css
 // so our responsive variants like `lg:block` aren't overridden by it.
@@ -9,11 +9,20 @@ import "./theme.css";
 import { Providers } from "@/components/providers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { themeInitScript } from "@/lib/theme";
+import PwaRegister from "@/components/pwa/PwaRegister";
 
 const geist = Geist({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+  // Colours the phone's status bar and the installed app's title bar
+  themeColor: "#0f172a",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  applicationName: "AutoMarket",
+  // iPhone: open full screen from the home screen, under the name "AutoMarket"
+  appleWebApp: { capable: true, title: "AutoMarket", statusBarStyle: "default" },
   title: {
     default: "AutoMarket — Buy, Sell & Rent Vehicles",
     template: "%s — AutoMarket",
@@ -21,6 +30,8 @@ export const metadata: Metadata = {
   description: "Pakistan's premier automobile marketplace",
   icons: {
     icon: "/3+Lines+02.webp",
+    // iPhone home-screen icon (installed app)
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
     siteName: SITE_NAME,
@@ -43,6 +54,7 @@ export default function RootLayout({
       </head>
       <body className={geist.className}>
         <Providers>{children}</Providers>
+        <PwaRegister />
       </body>
     </html>
   );

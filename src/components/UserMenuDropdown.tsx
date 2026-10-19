@@ -146,7 +146,7 @@ export default function UserMenuDropdown({
             </span>
           </Link>
         ) : (
-          row({ href: inBusiness ? "/home" : "/business", label: inBusiness ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console", icon: Briefcase })
+          row({ href: inBusiness ? "/" : "/business", label: inBusiness ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console", icon: Briefcase })
         )}
         {user.role === "ADMIN" && (
           <Link

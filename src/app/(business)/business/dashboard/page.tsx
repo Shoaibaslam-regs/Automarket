@@ -351,7 +351,7 @@ export default function BusinessDashboard() {
             <div className="flex flex-shrink-0 items-center gap-2">
               <Link
                 href="/business/guide"
-                title="How to use Customers and Staff, in English and Urdu"
+                title="How to use every page, in English and Urdu"
                 aria-label="Guide"
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] sm:h-9 sm:px-3 sm:text-[13px]"
               >

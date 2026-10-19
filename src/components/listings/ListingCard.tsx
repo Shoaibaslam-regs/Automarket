@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2 } from "lucide-react";
+import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2, PhoneCall } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { closedTag } from "@/lib/availability";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
@@ -23,7 +23,16 @@ const TYPE_BADGE: Record<IListing["type"], { label: string; className: string }>
   BOTH: { label: "Sale & Rent", className: "bg-indigo-500/90 text-white" },
 };
 
-type CardSeller = { name?: string; image?: string; organizationId?: { name?: string; verification?: BadgeVerification } | null };
+type CardSeller = { name?: string; image?: string; phoneVerifiedAt?: string | Date | null; organizationId?: { name?: string; verification?: BadgeVerification } | null };
+
+/** Small green tick for sellers who verified their phone number by SMS. */
+function PhoneTick() {
+  return (
+    <span title="Phone verified" aria-label="Phone verified" role="img" className="inline-flex flex-shrink-0 text-emerald-600">
+      <PhoneCall size={12} strokeWidth={2.4} />
+    </span>
+  );
+}
 
 // sellerId is populated ({ name, image, organizationId }) on the browse feed and a bare ObjectId elsewhere
 function sellerOf(listing: Props["listing"]): CardSeller | null {
@@ -41,6 +50,7 @@ function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean 
       <span className="flex min-w-0 items-center gap-1 font-medium text-indigo-700" title={`Listed by ${business} (${verified ? "verified business" : "business account"})`}>
         {verified ? <VerifiedBadge variant="icon" size={14} /> : <Building2 size={13} className="flex-shrink-0" />}
         <span className="truncate">{business}</span>
+        {seller.phoneVerifiedAt && <PhoneTick />}
       </span>
     );
   }
@@ -51,6 +61,7 @@ function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean 
         {seller.name[0]?.toUpperCase()}
       </span>
       <span className="truncate">{compact ? seller.name.split(" ")[0] : seller.name}</span>
+      {seller.phoneVerifiedAt && <PhoneTick />}
     </span>
   );
 }

@@ -69,6 +69,8 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           /* Room so the floating "+ New" button never covers the last row */
           padding-bottom: 84px;
         }
+        /* Phones and tablets: room for the bottom bar plus the "+ New" button above it */
+        @media (max-width: 768px) { .biz-content { padding-bottom: calc(128px + env(safe-area-inset-bottom)); } }
         @media print { .biz-content { padding-bottom: 0; } }
         @media (max-width: 768px) {
           .biz-content {

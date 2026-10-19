@@ -15,6 +15,7 @@ import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
+import { InstallAppRow } from "@/components/pwa/InstallBanner";
 
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string };
 
@@ -88,7 +89,7 @@ export default function MobileNavDrawer({
     { href: "/profile", label: "Profile & settings", icon: Settings },
     // Business accounts get a business card instead (below); others can start one
     ...(hasBusiness && !pathname.startsWith("/business") ? [] : [{
-      href: pathname.startsWith("/business") ? "/home" : "/business",
+      href: pathname.startsWith("/business") ? "/" : "/business",
       label: pathname.startsWith("/business") ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console",
       icon: Briefcase,
     }]),
@@ -304,6 +305,7 @@ export default function MobileNavDrawer({
 
         {/* Footer */}
         <div className="space-y-2 border-t border-slate-100 p-2.5">
+          <InstallAppRow onDone={onClose} />
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="text-[11px] font-semibold text-slate-500">Theme</span>
             <ThemeToggle />

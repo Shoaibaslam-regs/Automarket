@@ -50,7 +50,8 @@ const toBusiness = (o: OrgRow): DealBusiness => ({
 });
 
 /** Running right now: started, not ended, not paused or switched off by an admin. */
-const liveQuery = (now: Date) => ({ paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } });
+/** Deals that are running now (not paused, not switched off by an admin, between their start and end). */
+export const liveQuery = (now: Date) => ({ paused: false, disabledByAdmin: false, startsAt: { $lte: now }, endsAt: { $gte: now } });
 
 export type DealFilters = { make?: string; city?: string; orgId?: string; type?: "SALE" | "RENT" | ""; sort?: "ending" | "newest" | "discount"; limit?: number };
 

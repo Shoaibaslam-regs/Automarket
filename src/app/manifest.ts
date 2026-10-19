@@ -1,0 +1,32 @@
+import type { MetadataRoute } from "next";
+
+/**
+ * Web app manifest (served at /manifest.webmanifest): lets phones install AutoMarket to the home screen and
+ * open it full screen. Icons are in public/icons (made from the red slash mark of the logo).
+ */
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    id: "/",
+    name: "AutoMarket: Buy, Sell & Rent Vehicles",
+    short_name: "AutoMarket",
+    description: "Pakistan's marketplace to buy, sell and rent cars and bikes.",
+    start_url: "/?source=pwa",
+    scope: "/",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#ffffff",
+    theme_color: "#0f172a",
+    categories: ["shopping", "lifestyle"],
+    icons: [
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    // Long-press shortcuts on the home screen icon
+    shortcuts: [
+      { name: "Browse vehicles", url: "/listings", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Sell a vehicle", url: "/sell", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Messages", url: "/messages", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+    ],
+  };
+}

@@ -12,6 +12,7 @@ import MobileNavDrawer from "@/components/MobileNavDrawer";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
 import { NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
+import NotificationBell from "@/components/NotificationBell";
 import { ChevronDown, Crown } from "lucide-react";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
@@ -53,44 +54,11 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Landing page: minimal dark bar with just the logo, Sign in and Get started.
-  // Rendered by this same component (not by the page) so navigating away never shows two navbars.
-  if (pathname === "/") {
-    return (
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="flex flex-shrink-0 items-center">
-            <Image
-              src="/logo-1771205663069.png"
-              alt="AutoMarket"
-              width={130}
-              height={36}
-              priority
-              className="h-7 w-auto sm:h-8"
-              style={{ filter: "brightness(0.5) invert(1)" }}
-            />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white sm:px-4">
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-white/10 transition hover:bg-slate-200 sm:px-4"
-            >
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
   return (
     <>
       <style>{`
         .nav-desktop { display: flex; }
-        /* The logo artwork is dark; lighten it on the dark theme, as the landing page's dark bar does */
+        /* The logo artwork is dark; lighten it on the dark theme */
         .dark .nav-logo { filter: brightness(0.5) invert(1); }
         .nav-mobile-btn { display: none; }
         @media (max-width: 768px) {
@@ -133,7 +101,7 @@ export default function Navbar() {
         }}>
 
           {/* ── LOGO ── */}
-          <Link href="/home" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+          <Link href="/" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
             <Image
               src="/logo-1771205663069.png"
               alt="AutoMarket"
@@ -163,6 +131,7 @@ export default function Navbar() {
 
           {/* ── DESKTOP RIGHT ── */}
           <div className="nav-desktop nav-desktop-right" style={{ alignItems: "center", gap: "10px", flexShrink: 0 }}>
+            {session?.user && <NotificationBell />}
             {session?.user ? (
               <div ref={dropdownRef} className="relative">
                 <button
@@ -217,7 +186,7 @@ export default function Navbar() {
 
           {/* ── MOBILE RIGHT: badges + hamburger ── */}
           <div className="nav-mobile-btn" style={{ alignItems: "center", gap: "8px" }}>
-            
+            {session?.user && <NotificationBell />}
             <button
               aria-label="Open menu"
               aria-expanded={mobileOpen}

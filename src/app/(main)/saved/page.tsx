@@ -10,6 +10,7 @@ import { filtersToSearchParams, parseFilters } from "@/lib/listingFilters";
 import ListingCard from "@/components/listings/ListingCard";
 import SavedSearchList, { type SavedSearchView } from "@/components/listings/SavedSearchList";
 import type { IListing } from "@/models/Listing";
+import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
 export const metadata: Metadata = { title: "Saved", robots: { index: false } };
 
@@ -28,7 +29,7 @@ export default async function SavedPage() {
 
   // Keep the order the user saved them in; listings deleted since are dropped
   const ids = favorites.map(f => String(f.listingId));
-  const docs = await Listing.find({ _id: { $in: ids } }).lean();
+  const docs = await Listing.find({ _id: { $in: ids } }).populate(CARD_SELLER_POPULATE).lean();
   const byId = new Map(docs.map(d => [String(d._id), d]));
   const listings = ids.map(id => byId.get(id)).filter(Boolean) as unknown as ListingWithId[];
 

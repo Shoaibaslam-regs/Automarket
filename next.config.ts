@@ -37,12 +37,18 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The service worker must always be re-checked so a new version reaches installed apps
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Service-Worker-Allowed", value: "/" }] },
+    ];
   },
   async redirects() {
     return [
       // Business settings used to show /biz/<slug> as the public page address; the page lives at /dealers/<slug>
       { source: "/biz/:slug", destination: "/dealers/:slug", permanent: true },
+      // The separate landing page was removed; "/" is the one home page now
+      { source: "/home", destination: "/", permanent: true },
     ];
   },
   // Pages visited in the last 30 seconds come back instantly on back/forward and repeat taps

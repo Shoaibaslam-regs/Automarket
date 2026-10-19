@@ -14,6 +14,7 @@ import {
 } from "@/lib/listingFilters";
 import { useRateLock } from "@/hooks/useRateLock";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
+import SearchSuggest from "@/components/SearchSuggest";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
 const TYPES = [
@@ -421,7 +422,7 @@ export default function ListingsPage({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero + search */}
-      <section className="relative overflow-hidden bg-slate-950">
+      <section className="relative z-20 bg-slate-950">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.35),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.18),transparent_50%)]" />
         <div className="relative mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 sm:pb-12 sm:pt-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">Marketplace</p>
@@ -431,16 +432,22 @@ export default function ListingsPage({
           </p>
 
           <div className="relative mt-6 max-w-2xl">
-            <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
+            <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400" />
+            <SearchSuggest
               placeholder="Search by make, model, location..."
               value={search}
-              onChange={e => {
-                setSearch(e.target.value);
+              onChange={v => {
+                setSearch(v);
                 setPage(1);
               }}
-              className="w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-11 text-[15px] text-slate-900 shadow-xl shadow-black/20 outline-none ring-1 ring-white/10 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
+              // A suggestion becomes filters here (make + model, or a city); a vehicle opens its page
+              onPick={sg => {
+                setPage(1);
+                if (sg.kind === "model") { setMake(sg.make); setSearch(sg.search); }
+                else if (sg.kind === "city") { setLocation(sg.location); setSearch(""); }
+                else router.push(sg.href);
+              }}
+              inputClassName="w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-11 text-[15px] text-slate-900 shadow-xl shadow-black/20 outline-none ring-1 ring-white/10 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
             />
             {search && (
               <button

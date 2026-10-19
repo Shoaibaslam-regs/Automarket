@@ -9,5 +9,5 @@ export default function Error({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
-  return <ErrorState error={error} retry={unstable_retry} homeHref="/home" />;
+  return <ErrorState error={error} retry={unstable_retry} homeHref="/" />;
 }

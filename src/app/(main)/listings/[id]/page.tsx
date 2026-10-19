@@ -32,6 +32,7 @@ import RecentlyViewed, { TrackListingView } from "@/components/listings/Recently
 import type { IListing } from "@/models/Listing";
 // Registers the model for the seller → business populate in loadSimilar
 import "@/models/Organization";
+import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -72,7 +73,7 @@ const loadSimilar = (id: string, make: string, type: string, price: number) =>
       await connectDB();
       const types = type === "BOTH" ? ["SALE", "RENT", "BOTH"] : [type, "BOTH"];
       const base = { _id: { $ne: new mongoose.Types.ObjectId(id) }, status: "ACTIVE", type: { $in: types } };
-      const seller = { path: "sellerId", select: "name image organizationId", populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" } };
+      const seller = CARD_SELLER_POPULATE;
       const sameMake = await Listing.find({ ...base, make: new RegExp(`^${make.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") })
         .sort({ createdAt: -1 }).limit(4).populate(seller).lean();
       const more = sameMake.length < 4

@@ -8,7 +8,7 @@ import { AlertTriangle, RotateCcw } from "lucide-react";
 export default function ErrorState({
   error,
   retry,
-  homeHref = "/home",
+  homeHref = "/",
 }: {
   error: Error & { digest?: string };
   retry: () => void;

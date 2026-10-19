@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextAuthRequest } from "next-auth";
 
-const protectedRoutes = ["/dashboard", "/sell", "/bookings", "/purchases", "/messages", "/profile", "/business", "/saved"];
+const protectedRoutes = ["/dashboard", "/sell", "/bookings", "/purchases", "/messages", "/profile", "/business", "/saved", "/notifications"];
 const authRoutes = ["/login", "/register"];
 const adminRoutes = ["/admin"];
 

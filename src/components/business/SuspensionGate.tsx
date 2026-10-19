@@ -94,7 +94,7 @@ export default function SuspensionGate({
           <Link href="/business/support" className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[var(--gh-24292f)]">
             <Headset size={15} /> Contact support to appeal
           </Link>
-          <Link href="/home" className="mt-3 block text-xs font-semibold text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">Back to the marketplace</Link>
+          <Link href="/" className="mt-3 block text-xs font-semibold text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">Back to the marketplace</Link>
         </div>
       </div>
     </div>
