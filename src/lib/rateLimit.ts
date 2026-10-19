@@ -37,8 +37,6 @@ export const RATE_LIMITS = {
   bookings: { limit: 10, windowSec: 60 * 60 },
   purchases: { limit: 10, windowSec: 60 * 60 },
   savedSearches: { limit: 20, windowSec: 60 * 60 },
-  /** "Send test notification" on the Notifications page */
-  pushTest: { limit: 5, windowSec: 15 * 60 },
 } as const satisfies Record<string, { limit: number; windowSec: number; lockout?: boolean }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

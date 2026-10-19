@@ -81,19 +81,5 @@ export function usePushNotifications() {
     setStatus("off");
   }
 
-  /** Asks the server to send a notification to this account's phones. Returns a message to show. */
-  async function test() {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch("/api/push/test", { method: "POST" });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(d.error || "Couldn't send a test"); return ""; }
-      return `Sent to ${d.devices} device${d.devices !== 1 ? "s" : ""}. It should arrive within a few seconds, even with the screen off.`;
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return { status, busy, error, enable, disable, test };
+  return { status, busy, error, enable, disable };
 }

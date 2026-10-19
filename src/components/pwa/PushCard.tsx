@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BellOff, BellRing, Send, Smartphone, X } from "lucide-react";
+import { BellOff, BellRing, Smartphone, Volume2, VolumeX, X } from "lucide-react";
 import { usePushNotifications } from "./usePushNotifications";
+import { chimeEnabled, playChime, setChimeEnabled } from "@/lib/notifySound";
 
 /**
  * "Phone notifications" card: turns Web Push on or off for this device, sends a test, and explains why when it
@@ -11,8 +12,9 @@ import { usePushNotifications } from "./usePushNotifications";
  * a browser without push). `compact` is the one-line version for menus.
  */
 export default function PushCard({ compact = false }: { compact?: boolean }) {
-  const { status, busy, error, enable, disable, test } = usePushNotifications();
-  const [sent, setSent] = useState("");
+  const { status, busy, error, enable, disable } = usePushNotifications();
+  const [sound, setSound] = useState(true);
+  useEffect(() => { queueMicrotask(() => setSound(chimeEnabled())); }, []);
   if (status === "loading") return null;
 
   if (compact) {
@@ -39,14 +41,13 @@ export default function PushCard({ compact = false }: { compact?: boolean }) {
             {status === "not-configured" && <>Phone notifications aren&apos;t switched on for this website yet. The site owner needs to add the push keys (NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY) and redeploy.</>}
             {status === "unsupported" && <>This browser can&apos;t show notifications. Open AutoMarket in Chrome (Android) or install it to your home screen.</>}
             {status === "off" && <>Booking requests, buyers, messages and offers pop up on your phone, even when AutoMarket is closed and the screen is off.</>}
-            {on && <>You&apos;ll get alerts for messages, bookings, sales and updates on this device.</>}
+            {on && <>You&apos;ll get alerts for messages, bookings, sales and updates on this device, with the AutoMarket chime while the app is open.</>}
           </p>
           {on && (
             <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
               <strong>Android tip:</strong> if alerts are late or missing when the phone is idle, open Settings → Apps → Chrome → Battery and choose <strong>Unrestricted</strong> (on Xiaomi, Oppo, Vivo and Infinix also allow <strong>Autostart</strong>).
             </p>
           )}
-          {sent && <p role="status" className="mt-2 text-xs font-semibold text-emerald-700">{sent}</p>}
           {error && <p role="alert" className="mt-2 text-xs text-rose-600">{error}</p>}
         </div>
       </div>
@@ -54,10 +55,12 @@ export default function PushCard({ compact = false }: { compact?: boolean }) {
         <div className="mt-3 flex flex-wrap justify-end gap-2">
           {on ? (
             <>
-              <button onClick={disable} disabled={busy} className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-white disabled:opacity-60">Turn off</button>
-              <button onClick={async () => setSent(await test())} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-60">
-                <Send size={12} /> {busy ? "Sending…" : "Send test notification"}
+              {/* The chime plays while the app is open; tapping On also plays it so people hear what it sounds like */}
+              <button onClick={() => { const next = !sound; setSound(next); setChimeEnabled(next); if (next) playChime(true); }}
+                aria-pressed={sound} className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-white">
+                {sound ? <Volume2 size={13} /> : <VolumeX size={13} />} Sound {sound ? "on" : "off"}
               </button>
+              <button onClick={disable} disabled={busy} className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-white disabled:opacity-60">Turn off</button>
             </>
           ) : (
             <button onClick={enable} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60">

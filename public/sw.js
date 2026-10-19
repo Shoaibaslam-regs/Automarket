@@ -10,11 +10,11 @@
  * It also shows push notifications (sent by src/lib/push.ts) and opens the right page when one is tapped.
  * Bump VERSION when this file changes to clear the old caches.
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `am-static-${VERSION}`;
 const IMAGES = `am-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
-const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
+const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png", "/sounds/notify.wav"];
 const MAX_IMAGES = 120;
 
 self.addEventListener("install", event => {
@@ -87,7 +87,12 @@ self.addEventListener("push", event => {
     tag: data.tag,
     renotify: !!data.tag,
     data: { url: data.url || "/notifications" },
-    vibrate: [80, 40, 80],
+    // A recognisable "da-da-daaa" rhythm; the sound itself is the phone's (web apps can't set it)
+    vibrate: [90, 50, 90, 50, 220],
+  }).then(async () => {
+    // Open AutoMarket pages play the AutoMarket chime (components/pwa/PwaRegister.tsx)
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    wins.forEach(w => w.postMessage({ type: "push", title }));
   }));
 });
 
