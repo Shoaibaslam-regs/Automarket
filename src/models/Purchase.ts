@@ -43,6 +43,9 @@ export interface IPurchase extends Document {
   handledBy?: mongoose.Types.ObjectId;
   /** False while the buyer has an update (accepted, declined, sold) they haven't opened */
   seenByBuyer: boolean;
+  /** Removed from the business's Sales list or the buyer's My purchases; the other side keeps its copy */
+  deletedByBusiness: boolean;
+  deletedByBuyer: boolean;
   acceptedAt?: Date;
   completedAt?: Date;
   declinedAt?: Date;
@@ -107,6 +110,8 @@ const PurchaseSchema = new Schema<IPurchase>(
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     handledBy: { type: Schema.Types.ObjectId, ref: "User" },
     seenByBuyer: { type: Boolean, default: true },
+    deletedByBusiness: { type: Boolean, default: false },
+    deletedByBuyer: { type: Boolean, default: false },
     acceptedAt: Date,
     completedAt: Date,
     declinedAt: Date,

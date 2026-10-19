@@ -52,7 +52,7 @@ export async function GET() {
         .lean<BookingRow[]>(),
       Purchase.find({ organizationId: member.organizationId, status: "REQUESTED" }).select("vehicle buyer createdAt").limit(50)
         .lean<Array<{ _id: unknown; vehicle: { title: string }; buyer: { name: string }; createdAt: Date }>>(),
-      Purchase.find({ organizationId: member.organizationId, "installmentPlan.items": { $elemMatch: { paidAt: { $exists: false }, dueDate: { $lt: todayEnd } } } })
+      Purchase.find({ organizationId: member.organizationId, deletedByBusiness: { $ne: true }, "installmentPlan.items": { $elemMatch: { paidAt: { $exists: false }, dueDate: { $lt: todayEnd } } } })
         .select("vehicle buyer installmentPlan").limit(50)
         .lean<Array<{ _id: unknown; vehicle: { title: string }; buyer: { name: string }; installmentPlan: { items: { dueDate: Date; amount: number; paidAt?: Date }[] } }>>(),
       FollowUp.find({ organizationId: member.organizationId, doneAt: { $exists: false }, dueAt: { $lt: todayEnd } }).sort({ dueAt: 1 }).limit(50)

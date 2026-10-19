@@ -7,7 +7,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { can, getMembership } from "@/lib/business";
 import { normalizePlate } from "@/lib/plates";
-import { purchaseNumber, salePrice } from "@/lib/purchases";
+import { REMOVABLE_PURCHASE_STATUSES, purchaseNumber, purchasePayment, salePrice } from "@/lib/purchases";
 import { ensurePurchaseCustomer, finishSale } from "@/lib/saleItems";
 import { sendChatMessage, triggerPusher } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
@@ -22,7 +22,7 @@ async function loadSale(userId: string, id: string): Promise<{ sale: SaleDoc; me
   if (!mongoose.Types.ObjectId.isValid(id)) return { error: "Sale not found", status: 404 };
   const member = await getMembership(userId);
   if (!member) return { error: "No organization", status: 404 };
-  const sale = await Purchase.findOne({ _id: id, organizationId: member.organizationId });
+  const sale = await Purchase.findOne({ _id: id, organizationId: member.organizationId, deletedByBusiness: { $ne: true } });
   if (!sale) return { error: "Sale not found", status: 404 };
   return { sale, member };
 }
@@ -198,5 +198,50 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } catch (error) {
     console.error("Business sale PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the sale" }, { status: 500 });
+  }
+}
+
+/**
+ * Removes a finished sale record from the business's Sales list.
+ * Online buyers keep their copy until they remove it too. A sold vehicle's record is only hidden, never deleted,
+ * because its payments stay in the cash book and its price in profit per vehicle; so removing one needs manageMoney
+ * and nothing left to collect.
+ */
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
+    await connectDB();
+    const found = await loadSale(session.user.id, id);
+    if (!("sale" in found)) return NextResponse.json({ error: found.error }, { status: found.status });
+    const { sale, member } = found;
+    if (!can(member.role, "manageSales")) {
+      return NextResponse.json({ error: "Your role can't remove sales" }, { status: 403 });
+    }
+    if (!REMOVABLE_PURCHASE_STATUSES.includes(sale.status)) {
+      return NextResponse.json({ error: "Decline the request first. Only sold, declined or cancelled records can be removed" }, { status: 400 });
+    }
+    if (sale.status === "COMPLETED") {
+      if (!can(member.role, "manageMoney")) {
+        return NextResponse.json({ error: "Only the owner or a manager can remove a sold vehicle's record" }, { status: 403 });
+      }
+      if (purchasePayment(sale).balance > 0) {
+        return NextResponse.json({ error: "The buyer still owes money on this sale. Record the payment before removing it" }, { status: 400 });
+      }
+    }
+
+    if (sale.status !== "COMPLETED" && (sale.source === "WALK_IN" || !sale.buyerId || sale.deletedByBuyer)) {
+      await sale.deleteOne();
+    } else {
+      sale.deletedByBusiness = true;
+      await sale.save();
+    }
+    await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "sale.remove",
+      { type: "SALE", id: sale._id, label: `${purchaseNumber(String(sale._id))} · ${sale.vehicle.title}` });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Business sale DELETE error:", error);
+    return NextResponse.json({ error: "Failed to remove the sale" }, { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ export async function GET() {
     const orgId = member.organizationId;
 
     const [sales, memberIds] = await Promise.all([
-      Purchase.find({ organizationId: orgId }).sort({ createdAt: -1 }).limit(1000)
+      Purchase.find({ organizationId: orgId, deletedByBusiness: { $ne: true } }).sort({ createdAt: -1 }).limit(1000)
         .populate("createdBy", "name").populate("handledBy", "name")
         .lean<Array<{ status: string; completedAt?: Date; askingPrice: number; offerPrice?: number; agreedPrice?: number; amountPaid?: number }>>(),
       getOrgUserIds(orgId),
@@ -60,7 +60,7 @@ export async function GET() {
       ...deals.map(d => ({ value: `deal:${d._id}`, title: `${d.title} (deal)`, price: dealPrice(d.price, d) })),
     ];
 
-    return NextResponse.json({ sales, stats, vehicles, canManage: can(member.role, "manageSales") });
+    return NextResponse.json({ sales, stats, vehicles, canManage: can(member.role, "manageSales"), canManageMoney: can(member.role, "manageMoney") });
   } catch (error) {
     console.error("Business sales GET error:", error);
     return NextResponse.json({ error: "Failed to load sales" }, { status: 500 });

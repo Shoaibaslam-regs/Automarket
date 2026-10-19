@@ -15,7 +15,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ purchases: 0, sales: 0 });
     await connectDB();
-    const purchases = await Purchase.countDocuments({ buyerId: session.user.id, seenByBuyer: false });
+    const purchases = await Purchase.countDocuments({ buyerId: session.user.id, seenByBuyer: false, deletedByBuyer: { $ne: true } });
     const member = await getMembership(session.user.id);
     const sales = member && can(member.role, "manageSales")
       ? await Purchase.countDocuments({ organizationId: member.organizationId, status: "REQUESTED" })

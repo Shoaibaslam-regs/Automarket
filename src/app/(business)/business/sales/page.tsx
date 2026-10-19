@@ -6,16 +6,17 @@ import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   BadgeDollarSign, CalendarClock, Car, CheckCircle2, Clock3, Download, FileText, Handshake, MessageCircle, MoreHorizontal, Phone, Plus, Search,
-  Store, UserRound, Wallet, X, type LucideIcon,
+  Store, Trash2, UserRound, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
+import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { formatCnicInput } from "@/lib/plates";
 import { formatLakh } from "@/lib/format";
 import type { PaymentStatus } from "@/lib/payments";
 import {
-  OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, PURCHASE_STATUSES, PURCHASE_STYLE, asPayable, purchaseNumber, purchasePayment, salePrice,
+  OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, PURCHASE_STATUSES, PURCHASE_STYLE, REMOVABLE_PURCHASE_STATUSES, asPayable, purchaseNumber, purchasePayment, salePrice,
   type PurchaseStatus,
 } from "@/lib/purchases";
 import type { InstallmentPlan } from "@/lib/installments";
@@ -295,6 +296,7 @@ export default function BusinessSalesPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [canManage, setCanManage] = useState(false);
+  const [canManageMoney, setCanManageMoney] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState<"" | PurchaseStatus>("");
@@ -312,6 +314,9 @@ export default function BusinessSalesPage() {
   const [payFor, setPayFor] = useState<Sale | null>(null);
   const [planFor, setPlanFor] = useState<Sale | null>(null);
   const [scheduleId, setScheduleId] = useState<string | null>(null);
+  const [removeFor, setRemoveFor] = useState<Sale | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const scheduleSale = scheduleId ? sales.find(x => x._id === scheduleId) ?? null : null;
 
   function load() {
@@ -323,6 +328,7 @@ export default function BusinessSalesPage() {
         setStats(d.stats);
         setVehicles(d.vehicles);
         setCanManage(d.canManage);
+        setCanManageMoney(d.canManageMoney);
         setLoadError("");
       })
       .catch(e => setLoadError(e.message))
@@ -339,6 +345,23 @@ export default function BusinessSalesPage() {
     return null;
   }
 
+  async function remove() {
+    if (!removeFor) return;
+    setRemoving(true);
+    setRemoveError("");
+    const res = await fetch(`/api/business/sales/${removeFor._id}`, { method: "DELETE" });
+    const d = await res.json().catch(() => ({}));
+    setRemoving(false);
+    if (!res.ok) { setRemoveError(d.error || "Couldn't remove the sale"); return; }
+    setRemoveFor(null);
+    setOpenMore(null);
+    load();
+  }
+
+  /** Finished records can go; a sold one only for the owner or a manager, once it's fully paid. */
+  const canRemove = (s: Sale) => canManage && REMOVABLE_PURCHASE_STATUSES.includes(s.status)
+    && (s.status !== "COMPLETED" || (canManageMoney && purchasePayment(s).balance <= 0));
+
   const q = search.trim().toLowerCase();
   const shown = useMemo(() => sales.filter(s => {
     if (filter && s.status !== filter) return false;
@@ -351,6 +374,19 @@ export default function BusinessSalesPage() {
 
   return (
     <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
+      <ConfirmDialog
+        open={removeFor !== null}
+        onOpenChange={o => !o && setRemoveFor(null)}
+        title="Remove this sale record?"
+        description={removeFor?.status === "COMPLETED"
+          ? <><strong>{removeFor.vehicle.title}</strong> ({purchaseNumber(removeFor._id)}) leaves your Sales list and its totals. Its payments stay in the cash book and profit per vehicle.</>
+          : <><strong>{removeFor?.vehicle.title}</strong> ({removeFor ? purchaseNumber(removeFor._id) : ""}) leaves your Sales list.{removeFor?.source === "ONLINE" ? " The buyer keeps their own copy." : ""}</>}
+        confirmLabel="Remove"
+        loadingLabel="Removing..."
+        loading={removing}
+        error={removeError}
+        onConfirm={remove}
+      />
       <NewSaleDialog open={newOpen} onOpenChange={setNewOpen} vehicles={vehicles} onCreated={id => { setNewOpen(false); setCreated(id); load(); }} />
       <ActionDialog action={actionFor?.kind ?? null} sale={actionFor?.sale ?? null} onClose={() => setActionFor(null)}
         onSave={async body => { const err = await patch(actionFor!.sale._id, body); if (!err) setActionFor(null); return err; }} />
@@ -549,6 +585,11 @@ export default function BusinessSalesPage() {
                         {open && (
                           <button onClick={() => setActionFor({ kind: "decline", sale: s })} className={`${trayBtn} border-[var(--gh-ffcdd2)] !text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
                             <X size={13} /> Decline
+                          </button>
+                        )}
+                        {canRemove(s) && (
+                          <button onClick={() => { setRemoveError(""); setRemoveFor(s); }} className={`${trayBtn} border-[var(--gh-ffcdd2)] !text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]`}>
+                            <Trash2 size={13} /> Remove
                           </button>
                         )}
                       </div>

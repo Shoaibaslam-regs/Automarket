@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Car, FileText, MessageSquare, MoreHorizontal, Phone, ShoppingBag, Store, X } from "lucide-react";
+import { Car, FileText, MessageSquare, MoreHorizontal, Phone, ShoppingBag, Store, Trash2, X } from "lucide-react";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { PaymentTag } from "@/components/bookings/PaymentTag";
 import { InstallmentLine } from "@/components/sales/Installments";
 import type { InstallmentPlan } from "@/lib/installments";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
-import { OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, PURCHASE_STYLE, asPayable, purchaseNumber, salePrice, type PurchaseStatus } from "@/lib/purchases";
+import { OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, REMOVABLE_PURCHASE_STATUSES, PURCHASE_STYLE, asPayable, purchaseNumber, salePrice, type PurchaseStatus } from "@/lib/purchases";
 
 type MyPurchase = {
   _id: string;
@@ -40,6 +40,9 @@ export default function PurchasesPage() {
   const [cancelFor, setCancelFor] = useState<MyPurchase | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [removeFor, setRemoveFor] = useState<MyPurchase | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState("");
 
   useEffect(() => {
     fetch("/api/purchases")
@@ -66,6 +69,20 @@ export default function PurchasesPage() {
     setCancelFor(null);
   }
 
+  async function remove() {
+    if (!removeFor) return;
+    setRemoving(true);
+    setRemoveError("");
+    const res = await fetch(`/api/purchases/${removeFor._id}`, { method: "DELETE" });
+    const d = await res.json().catch(() => ({}));
+    setRemoving(false);
+    if (!res.ok) { setRemoveError(d.error || "Couldn't remove it"); return; }
+    const id = removeFor._id;
+    setPurchases(prev => prev?.filter(p => p._id !== id) ?? null);
+    setRemoveFor(null);
+    refreshNotificationCounts();
+  }
+
   const iconBtn = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 text-xs font-semibold transition hover:bg-[var(--gh-f6f8fa)]";
 
   return (
@@ -80,6 +97,17 @@ export default function PurchasesPage() {
         loading={cancelling}
         error={cancelError}
         onConfirm={cancel}
+      />
+      <ConfirmDialog
+        open={removeFor !== null}
+        onOpenChange={o => !o && setRemoveFor(null)}
+        title="Remove from My purchases?"
+        description={<><strong>{removeFor?.vehicle.title}</strong> ({removeFor ? purchaseNumber(removeFor._id) : ""}) leaves your list. The business keeps its own record{removeFor?.status === "COMPLETED" ? ", so ask them if you need the sale slip again" : ""}.</>}
+        confirmLabel="Remove"
+        loadingLabel="Removing..."
+        loading={removing}
+        error={removeError}
+        onConfirm={remove}
       />
       <div className="mx-auto max-w-[900px]">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -107,6 +135,7 @@ export default function PurchasesPage() {
               const st = PURCHASE_STYLE[p.status];
               const open = OPEN_PURCHASE_STATUSES.includes(p.status);
               const moreOpen = openMore === p._id;
+              const removable = REMOVABLE_PURCHASE_STATUSES.includes(p.status);
               const itemHref = p.listingId ? `/listings/${p.listingId}` : p.dealId ? `/deals/${p.dealId}` : null;
               const showPayment = p.status === "ACCEPTED" || p.status === "COMPLETED";
               return (
@@ -165,19 +194,26 @@ export default function PurchasesPage() {
                         <a href={`tel:${p.business.phone}`} aria-label="Call the business" className={`${iconBtn} text-[var(--gh-0d1117)]`}><Phone size={14} /> Call</a>
                       )}
                     </div>
-                    {open && (
+                    {(open || removable) && (
                       <button type="button" onClick={() => setOpenMore(moreOpen ? null : p._id)} aria-expanded={moreOpen} aria-label="More actions"
                         className={`${iconBtn} ${moreOpen ? "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]" : "text-[var(--gh-57606a)]"}`}>
                         <MoreHorizontal size={15} />
                       </button>
                     )}
                   </div>
-                  {moreOpen && open && (
+                  {moreOpen && (open || removable) && (
                     <div className="flex flex-wrap gap-1.5 border-t border-[var(--gh-e1e4e8)] bg-[var(--gh-fafbfc)] px-3.5 py-3 sm:px-4">
                       <Link href="/messages" className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)]"><MessageSquare size={13} /> Messages</Link>
-                      <button onClick={() => { setCancelError(""); setCancelFor(p); }} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-ffcdd2)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]">
-                        <X size={13} /> Cancel request
-                      </button>
+                      {open && (
+                        <button onClick={() => { setCancelError(""); setCancelFor(p); }} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-ffcdd2)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]">
+                          <X size={13} /> Cancel request
+                        </button>
+                      )}
+                      {removable && (
+                        <button onClick={() => { setRemoveError(""); setRemoveFor(p); }} className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-ffcdd2)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-cf222e)] hover:bg-[var(--gh-fff0f0)]">
+                          <Trash2 size={13} /> Remove
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

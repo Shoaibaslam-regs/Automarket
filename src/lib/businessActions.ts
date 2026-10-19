@@ -16,6 +16,7 @@ export const BUSINESS_ACTION_LABEL: Record<string, string> = {
   "sale.payment": "Recorded a sale payment",
   "sale.installments": "Set up installments",
   "sale.installmentPaid": "Received an installment",
+  "sale.remove": "Removed a sale record",
   "customer.create": "Added a customer",
   "customer.update": "Updated a customer",
   "customer.delete": "Deleted a customer",

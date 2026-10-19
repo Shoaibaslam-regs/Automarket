@@ -82,7 +82,7 @@ export async function GET() {
     }
 
     // Updates on my purchase requests
-    const purchases = await Purchase.find({ buyerId: me, seenByBuyer: false }).sort({ updatedAt: -1 }).limit(10).select("status vehicle updatedAt")
+    const purchases = await Purchase.find({ buyerId: me, seenByBuyer: false, deletedByBuyer: { $ne: true } }).sort({ updatedAt: -1 }).limit(10).select("status vehicle updatedAt")
       .lean<Array<{ _id: Oid; status: PurchaseStatus; vehicle: { title: string }; updatedAt: Date }>>();
     for (const p of purchases) {
       items.push({

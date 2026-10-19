@@ -7,6 +7,8 @@ export type PurchaseStatus = (typeof PURCHASE_STATUSES)[number];
 
 /** Requests still in progress: the buyer can cancel and the business can act on them. */
 export const OPEN_PURCHASE_STATUSES: PurchaseStatus[] = ["REQUESTED", "ACCEPTED"];
+/** Finished purchases can be removed from the Sales list or My purchases; open ones are declined or cancelled first. */
+export const REMOVABLE_PURCHASE_STATUSES: PurchaseStatus[] = ["COMPLETED", "DECLINED", "CANCELLED"];
 
 export const PURCHASE_LABEL: Record<PurchaseStatus, string> = {
   REQUESTED: "Requested",

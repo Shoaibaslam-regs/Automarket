@@ -21,7 +21,7 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
-    const purchases = await Purchase.find({ buyerId: session.user.id }).sort({ createdAt: -1 }).limit(200).lean<Array<{ organizationId: unknown }>>();
+    const purchases = await Purchase.find({ buyerId: session.user.id, deletedByBuyer: { $ne: true } }).sort({ createdAt: -1 }).limit(200).lean<Array<{ organizationId: unknown }>>();
     const orgs = await Organization.find({ _id: { $in: purchases.map(p => p.organizationId) } }).select("name slug phone address city").lean<Array<{ _id: unknown }>>();
     const byId = new Map(orgs.map(o => [String(o._id), o]));
     // Opening the list counts as seeing the updates; the response still flags them so the page can highlight them
