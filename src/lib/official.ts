@@ -55,9 +55,12 @@ export async function followerUserIds(): Promise<Oid[]> {
 /** Tells followers' open pages about a new post so their Updates badge appears straight away. Never throws. */
 export async function notifyFollowers(payload: { title: string; kind: string }) {
   try {
-    if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
     const ids = await followerUserIds();
     if (!ids.length) return;
+    // Phones of followers who turned alerts on
+    const { sendPush } = await import("@/lib/push");
+    await sendPush(ids, { title: "AutoMarket Official", body: payload.title, url: "/business/updates", tag: "official" });
+    if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
     const { pusherServer } = await import("@/lib/pusher");
     const channels = ids.map(id => `user-${id}`);
     // Pusher accepts up to 100 channels per trigger

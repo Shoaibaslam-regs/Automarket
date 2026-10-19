@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BadgeDollarSign, Bell, CalendarCheck, CalendarPlus, ChevronRight, Megaphone, MessageCircle, ShoppingBag, type LucideIcon } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
+import PushCard from "@/components/pwa/PushCard";
 
 const ICON: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   message: { icon: MessageCircle, tone: "bg-indigo-50 text-indigo-600" },
@@ -40,6 +41,8 @@ export default function NotificationsPage() {
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Notifications</h1>
         <p className="mt-1 text-sm text-slate-500">Everything waiting for you. Open one to deal with it; it leaves this list once it&apos;s handled or read.</p>
+
+        <div className="mt-5"><PushCard /></div>
 
         <div className="mt-6">
           {error ? (

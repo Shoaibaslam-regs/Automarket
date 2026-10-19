@@ -16,6 +16,7 @@ import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import { InstallAppRow } from "@/components/pwa/InstallBanner";
+import PushCard from "@/components/pwa/PushCard";
 
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string };
 
@@ -306,6 +307,7 @@ export default function MobileNavDrawer({
         {/* Footer */}
         <div className="space-y-2 border-t border-slate-100 p-2.5">
           <InstallAppRow onDone={onClose} />
+          {user && <PushCard compact />}
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="text-[11px] font-semibold text-slate-500">Theme</span>
             <ThemeToggle />

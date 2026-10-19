@@ -17,6 +17,7 @@ import { Deal } from "@/models/Deal";
 import { Purchase } from "@/models/Purchase";
 import { invalidateBusinessPage, invalidateListingPage } from "@/lib/pageCache";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
+import { PushSubscription } from "@/models/PushSubscription";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -110,6 +111,7 @@ export async function deleteAccount(userId: string): Promise<void> {
     Favorite.deleteMany({ $or: [{ userId: id }, { listingId: { $in: listingIds } }] }),
     Rental.deleteMany({ _id: { $in: rentalIds } }),
     SavedSearch.deleteMany({ userId: id }),
+    PushSubscription.deleteMany({ userId: id }),
     Message.deleteMany({ $or: [{ senderId: id }, { receiverId: id }] }),
     Customer.updateMany({ userId: id }, { $unset: { userId: "" } }),
     Customer.updateMany({ assignedTo: id }, { $unset: { assignedTo: "" } }),

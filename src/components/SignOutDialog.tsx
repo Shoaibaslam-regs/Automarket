@@ -3,6 +3,7 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { signOut } from "next-auth/react";
+import { unsubscribeThisDevice } from "@/components/pwa/usePushNotifications";
 
 export default function SignOutDialog({
   open,
@@ -15,6 +16,8 @@ export default function SignOutDialog({
 
   async function handleConfirm() {
     setLoading(true);
+    // This phone stops getting the signed-out person's notifications
+    await unsubscribeThisDevice();
     await signOut({ callbackUrl: "/" });
   }
 

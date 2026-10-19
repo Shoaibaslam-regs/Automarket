@@ -11,6 +11,7 @@ import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings
 import { DEAL_BOOKING_FIELDS } from "@/lib/dealBookings";
 import { Organization } from "@/models/Organization";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { triggerPusher } from "@/lib/support";
 
 export async function GET(req: NextRequest) {
   try {
@@ -166,6 +167,8 @@ export async function POST(req: NextRequest) {
       console.error("Email send failed:", emailError);
     }
 
+    // Owner's badge updates live, and their phone gets an alert if they turned alerts on
+    await triggerPusher(`user-${rental.ownerId}`, "new-notification", { type: "booking", status: "PENDING" });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
     console.error("Create booking error:", error);
