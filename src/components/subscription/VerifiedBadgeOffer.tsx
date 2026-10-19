@@ -133,7 +133,7 @@ export default function VerifiedBadgeOffer() {
       <div className="grid lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600 ring-1 ring-inset ring-indigo-200">Add-on for businesses</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600">Add-on for businesses</span>
             <VerifiedBadge />
           </div>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">{VERIFIED_BADGE.name}</h2>

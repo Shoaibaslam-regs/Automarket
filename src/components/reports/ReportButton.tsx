@@ -65,7 +65,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><Flag size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-rose-600"><Flag size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-slate-900">{sent ? "Thanks for telling us" : `Report this ${noun}`}</Dialog.Title>
               <Dialog.Description className="mt-1 truncate text-sm text-slate-500">{label}</Dialog.Description>

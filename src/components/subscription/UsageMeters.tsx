@@ -26,7 +26,7 @@ export default function UsageMeters({ sub, compact = false }: { sub: Subscriptio
               <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
                 <Icon size={14} strokeWidth={1.9} /> {label}
               </span>
-              {full && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 ring-1 ring-inset ring-rose-200">LIMIT REACHED</span>}
+              {full && <span className="text-[10px] font-bold text-rose-600">LIMIT REACHED</span>}
             </div>
             <p className="mt-2 text-lg font-bold tabular-nums text-slate-900">
               {used.toLocaleString()} <span className="text-sm font-medium text-slate-400">/ {formatLimit(limit)}</span>

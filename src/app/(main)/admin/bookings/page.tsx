@@ -83,7 +83,7 @@ export default function AdminBookingsPage() {
             full: true,
             cell: b => (
               <div className="flex min-w-0 items-center gap-2">
-                <span className="hidden h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 md:flex">
+                <span className="hidden flex-shrink-0 items-center justify-center text-slate-500 md:flex">
                   <Car size={14} />
                 </span>
                 <p className="truncate text-sm font-medium text-slate-700">{b.rentalId?.listingId?.title || "Unknown vehicle"}</p>

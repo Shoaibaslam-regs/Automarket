@@ -53,8 +53,8 @@ export default function TodayCard() {
         </div>
         {items && items.length > 0 && (
           <div className="flex gap-1.5">
-            {overdue > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[11px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={11} /> {overdue} overdue</span>}
-            <span className="rounded-full bg-[var(--gh-f6f8fa)] px-2 py-0.5 text-[11px] font-bold text-[var(--gh-57606a)]">{items.length} to do</span>
+            {overdue > 0 && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={11} /> {overdue} overdue</span>}
+            <span className="text-[12px] font-semibold text-[var(--gh-57606a)]">{items.length} to do</span>
           </div>
         )}
       </div>
@@ -72,7 +72,7 @@ export default function TodayCard() {
               const Icon = ICON[i.kind];
               return (
                 <li key={`${i.kind}-${i.id}`} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${i.overdue ? "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"}`}><Icon size={15} /></span>
+                  <span className={`flex flex-shrink-0 items-center justify-center ${i.overdue ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-57606a)]"}`}><Icon size={15} /></span>
                   <div className="min-w-0 flex-1">
                     <p className={`text-[13px] font-semibold ${i.overdue ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-0d1117)]"}`}>
                       {i.title} <span className="font-normal text-[var(--gh-8c959f)]">· {when(i.at, i.kind)}</span>

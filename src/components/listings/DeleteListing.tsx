@@ -43,7 +43,7 @@ export default function DeleteListing({ id }: { id: string }) {
           >
             {/* Header */}
             <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <div style={{ width: "40px", height: "40px", background: "var(--gh-fff0f0)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
                 <Trash2 size={20} strokeWidth={1.75} color="#cf222e" />
               </div>
               <button

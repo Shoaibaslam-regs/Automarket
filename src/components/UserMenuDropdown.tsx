@@ -155,7 +155,7 @@ export default function UserMenuDropdown({
             role="menuitem"
             className="group flex items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] font-semibold text-amber-800 transition hover:bg-amber-50"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><ShieldCheck size={15} /></span>
+            <span className="flex items-center justify-center text-amber-700"><ShieldCheck size={15} /></span>
             <span className="flex-1">Admin panel</span>
             <ChevronRight size={14} className="text-amber-400" />
           </Link>
@@ -169,7 +169,7 @@ export default function UserMenuDropdown({
           className="relative mx-2 mb-2 flex items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 p-3 text-white"
         >
           <div aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-amber-400/30 blur-2xl" />
-          <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950">
+          <span className="relative flex flex-shrink-0 items-center justify-center text-amber-500">
             <Sparkles size={15} />
           </span>
           <span className="relative min-w-0 flex-1">
@@ -191,7 +191,7 @@ export default function UserMenuDropdown({
           role="menuitem"
           className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] font-medium text-rose-600 transition hover:bg-rose-50"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-500"><LogOut size={15} /></span>
+          <span className="flex items-center justify-center text-rose-500"><LogOut size={15} /></span>
           Sign out
         </button>
       </div>

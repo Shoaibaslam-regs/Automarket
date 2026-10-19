@@ -70,7 +70,7 @@ function AddEntryDialog({ open, type, vehicles, onClose, onSaved }: { open: bool
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${type === "OUT" ? "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]" : "bg-[var(--gh-dafbe1)] text-[var(--gh-1a7f37)]"}`}>
+            <span className={`flex flex-shrink-0 items-center justify-center ${type === "OUT" ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-1a7f37)]"}`}>
               {type === "OUT" ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
             </span>
             <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ function EntryRow({ e, onDelete }: { e: Entry; onDelete?: (e: Entry) => void }) 
   const out = e.type === "OUT";
   return (
     <li className="flex items-center gap-3 px-4 py-3">
-      <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${out ? "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]" : "bg-[var(--gh-dafbe1)] text-[var(--gh-1a7f37)]"}`}>
+      <span className={`flex flex-shrink-0 items-center justify-center ${out ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-1a7f37)]"}`}>
         {out ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}
       </span>
       <div className="min-w-0 flex-1">
@@ -285,9 +285,9 @@ export default function MoneyPage() {
                 <div className="mb-3 rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-3">
                   <p className="text-[11px] text-[var(--gh-8c959f)]">Spent in {monthLabel(month)}</p>
                   <p className="text-lg font-extrabold tabular-nums text-[var(--gh-cf222e)]">{pkr(data.totals.out)}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                     {byCategory.map(([c, v]) => (
-                      <span key={c} className="rounded-full bg-[var(--gh-f6f8fa)] px-2 py-0.5 text-[11px] text-[var(--gh-57606a)]">{MONEY_LABEL[c] ?? c} · <strong className="text-[var(--gh-0d1117)]">PKR {formatLakh(v)}</strong></span>
+                      <span key={c} className="text-[11px] text-[var(--gh-57606a)]">{MONEY_LABEL[c] ?? c} · <strong className="text-[var(--gh-0d1117)]">PKR {formatLakh(v)}</strong></span>
                     ))}
                   </div>
                 </div>

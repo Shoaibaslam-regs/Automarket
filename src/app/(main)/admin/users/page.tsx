@@ -80,7 +80,7 @@ function AccessDialog({ user, onClose, onSave }: {
       {user && (
         <>
           <div className="flex gap-4">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+            <span className="flex flex-shrink-0 items-center justify-center text-violet-700">
               <UserCog size={20} />
             </span>
             <div className="min-w-0">

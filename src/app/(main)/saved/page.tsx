@@ -59,7 +59,7 @@ export default async function SavedPage() {
           </h2>
           {listings.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-400">
+              <div className="mx-auto mb-3 flex items-center justify-center text-rose-400">
                 <Heart size={22} strokeWidth={1.75} />
               </div>
               <p className="text-sm font-semibold text-slate-900">No saved vehicles yet</p>

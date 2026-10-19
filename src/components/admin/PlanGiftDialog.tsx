@@ -56,7 +56,7 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
           {target && (
             <>
               <div className="flex gap-4">
-                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950">
+                <span className="flex flex-shrink-0 items-center justify-center text-amber-500">
                   <Crown size={20} />
                 </span>
                 <div className="min-w-0">

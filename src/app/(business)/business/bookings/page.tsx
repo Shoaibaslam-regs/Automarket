@@ -24,6 +24,7 @@ import DepositDialog, { DepositTag } from "@/components/bookings/DepositDialog";
 import BookingCalendar from "@/components/bookings/BookingCalendar";
 import Tip from "@/components/ui/Tip";
 import { useQuickNew } from "@/components/business/QuickNew";
+import StatusText from "@/components/ui/StatusText";
 
 type Booking = {
   _id: string;
@@ -201,7 +202,7 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] flex max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
           <div className="flex items-center justify-between border-b border-[var(--gh-e1e4e8)] px-5 py-4">
             <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-[var(--gh-0d1117)]">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gh-0d1117)] text-white"><CalendarCheck size={15} /></span>
+              <span className="flex items-center justify-center text-[var(--gh-0d1117)]"><CalendarCheck size={15} /></span>
               New walk-in booking
             </Dialog.Title>
             <Dialog.Close aria-label="Close" disabled={saving} className="rounded-full p-1 text-[var(--gh-8c959f)] hover:bg-[var(--gh-f6f8fa)] hover:text-[var(--gh-0d1117)]"><X size={18} /></Dialog.Close>
@@ -617,7 +618,7 @@ export default function BusinessBookingsPage() {
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--gh-56d364)] bg-[var(--gh-dafbe1)] px-4 py-3 text-[13px] text-[var(--gh-1a7f37)]">
             <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Booking {bookingNumber(created)} created.</span>
             <span className="flex gap-2">
-              <Link href={`/business/bookings/${created}/slip`} target="_blank" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-1a7f37)] px-3 py-1.5 text-xs font-semibold text-white">
+              <Link href={`/business/bookings/${created}/slip`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-1a7f37)] px-3 py-1.5 text-xs font-semibold text-white">
                 <FileText size={13} /> Print slip
               </Link>
               <button onClick={() => setCreated(null)} aria-label="Dismiss" className="rounded-lg px-2 text-[var(--gh-1a7f37)] hover:bg-white/50"><X size={14} /></button>
@@ -629,15 +630,15 @@ export default function BusinessBookingsPage() {
         {/* Stats */}
         <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
-            { label: "Pending requests", value: stats.pending, icon: Clock3, color: "var(--gh-7d4e00)", bg: "var(--gh-fff8c5)" },
-            { label: "Upcoming pickups", value: stats.upcoming, icon: CalendarDays, color: "var(--gh-0550ae)", bg: "var(--gh-ddf4ff)" },
-            { label: "Out now", value: stats.out, icon: Car, color: "var(--gh-1a7f37)", bg: "var(--gh-dafbe1)", hint: stats.overdue ? `${stats.overdue} overdue` : undefined },
-            { label: "Completed revenue", value: pkr(stats.revenue), icon: CheckCircle2, color: "var(--gh-0d1117)", bg: "var(--gh-f6f8fa)" },
+            { label: "Pending requests", value: stats.pending, icon: Clock3, color: "var(--gh-7d4e00)" },
+            { label: "Upcoming pickups", value: stats.upcoming, icon: CalendarDays, color: "var(--gh-0550ae)" },
+            { label: "Out now", value: stats.out, icon: Car, color: "var(--gh-1a7f37)", hint: stats.overdue ? `${stats.overdue} overdue` : undefined },
+            { label: "Completed revenue", value: pkr(stats.revenue), icon: CheckCircle2, color: "var(--gh-0d1117)" },
           ].map(s => (
             <div key={s.label} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-medium text-[var(--gh-8c959f)]">{s.label}</p>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: s.bg, color: s.color }}><s.icon size={14} /></span>
+                <s.icon size={16} className="flex-shrink-0" style={{ color: s.color }} />
               </div>
               <p className="mt-2 truncate text-xl font-extrabold tabular-nums" style={{ color: s.color }}>{s.value}</p>
               {s.hint && <p className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[var(--gh-cf222e)]"><AlertTriangle size={11} /> {s.hint}</p>}
@@ -744,9 +745,9 @@ export default function BusinessBookingsPage() {
                           {(b.dealId?.vehicleCount ?? 1) > 1 && <span className="ml-1 text-xs font-medium text-[var(--gh-57606a)]">· {b.dealId!.vehicleCount} cars</span>}
                         </p>
                         {overdue ? (
-                          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-[var(--gh-fff0f0)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> Overdue</span>
+                          <span className="inline-flex flex-shrink-0 items-center gap-1 text-[10px] font-bold text-[var(--gh-cf222e)]"><AlertTriangle size={10} /> Overdue</span>
                         ) : (
-                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                          <StatusText color={s.color}>{s.label}</StatusText>
                         )}
                       </div>
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
@@ -796,7 +797,7 @@ export default function BusinessBookingsPage() {
                   </div>
 
                   {/* Money */}
-                  <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                  <div className="mt-3">
                     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</p>
                       {b.status !== "CANCELLED" && <PaymentTag booking={b} onClick={canManage ? () => setPayFor(b) : undefined} />}
@@ -821,7 +822,7 @@ export default function BusinessBookingsPage() {
                   )}
                   <div className={`flex items-center gap-1.5 ${primary ? "" : "flex-1"}`}>
                     {b.status !== "CANCELLED" && (
-                      <Link href={`/business/bookings/${b._id}/slip`} target="_blank" aria-label="Booking slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
+                      <Link href={`/business/bookings/${b._id}/slip`} aria-label="Booking slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
                         <FileText size={14} /> <span className={primary ? "hidden sm:inline" : ""}>Slip</span>
                       </Link>
                     )}

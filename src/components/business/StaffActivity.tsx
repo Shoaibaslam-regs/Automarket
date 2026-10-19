@@ -48,7 +48,7 @@ function ClearHistoryDialog({ open, onOpenChange, onCleared }: { open: boolean; 
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]"><Trash2 size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-[var(--gh-cf222e)]"><Trash2 size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-[var(--gh-0d1117)]">Delete activity history</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-[var(--gh-57606a)]">Deleted entries can&apos;t be brought back.</Dialog.Description>
@@ -135,7 +135,7 @@ export default function StaffActivity({ members }: { members: { userId: string; 
             const Icon = ICON[e.targetType] ?? History;
             return (
               <li key={e._id} className="flex gap-3 px-4 py-3">
-                <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"><Icon size={15} /></span>
+                <span className="mt-0.5 flex flex-shrink-0 items-center justify-center text-[var(--gh-57606a)]"><Icon size={15} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] text-[var(--gh-0d1117)]">
                     <span className="font-semibold">{e.userName}</span>{" "}

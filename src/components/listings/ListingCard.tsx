@@ -183,10 +183,10 @@ export default function ListingCard({ listing, layout = "grid", eager }: Props) 
             <PriceText listing={listing} className="mt-1.5 truncate text-[15px] font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-lg" />
 
             {specs.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1 sm:mt-2.5 sm:gap-1.5">
+              <div className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1 sm:mt-2.5 sm:gap-x-3">
                 {specs.map(({ icon: Icon, label }, i) => (
                   // Half-width phone cards show the two most useful specs; the rest appear from 400px up
-                  <span key={label} className={`${i > 1 ? "hidden min-[400px]:inline-flex" : "inline-flex"} max-w-full items-center gap-1 truncate rounded-full bg-slate-100/80 px-1.5 py-0.5 text-[10px] capitalize text-slate-600 sm:px-2 sm:text-[11px]`}>
+                  <span key={label} className={`${i > 1 ? "hidden min-[400px]:inline-flex" : "inline-flex"} max-w-full items-center gap-1 truncate text-[10px] capitalize text-slate-600 sm:text-[11px]`}>
                     <Icon size={12} strokeWidth={1.75} className="text-slate-400" />
                     {label.toLowerCase()}
                   </span>
@@ -324,7 +324,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
         )}
 
         <div className="mt-auto hidden items-center justify-between gap-3 border-t border-slate-100 pt-2.5 text-xs text-slate-500 sm:flex">
-          <span className="rounded-full bg-slate-100/80 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600">
+          <span className="text-[11px] font-medium capitalize text-slate-600">
             {listing.condition.toLowerCase()}
           </span>
           {seller && <SellerTag seller={seller} />}

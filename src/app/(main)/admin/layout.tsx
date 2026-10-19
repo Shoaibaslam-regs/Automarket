@@ -73,7 +73,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-950 px-3 py-5 lg:flex">
         <div className="mb-6 flex items-center gap-2.5 px-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/30">
+          <span className="flex items-center justify-center text-indigo-600">
             <ShieldCheck size={16} strokeWidth={2.25} />
           </span>
           <div>

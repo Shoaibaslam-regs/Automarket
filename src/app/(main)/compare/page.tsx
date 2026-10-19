@@ -58,7 +58,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
     return (
       <div className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4">
         <div className="max-w-sm text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+          <div className="mx-auto mb-4 flex items-center justify-center text-slate-400">
             <Car size={26} strokeWidth={1.6} />
           </div>
           <h1 className="text-lg font-bold text-slate-900">Pick at least two vehicles</h1>

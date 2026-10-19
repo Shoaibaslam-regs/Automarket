@@ -36,7 +36,7 @@ export default function ConfirmDialog({
           style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "420px", background: "var(--gh-ffffff)", borderRadius: "12px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gh-e1e4e8)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
             <Dialog.Title style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "var(--gh-0d1117)", display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "var(--gh-fff0f0)", color: "var(--gh-cf222e)", flexShrink: 0 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--gh-cf222e)", flexShrink: 0 }}>
                 <Trash2 size={15} />
               </span>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>

@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/business/ConfirmDialog";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
+import StatusText from "@/components/ui/StatusText";
 
 type Vehicle = {
   _id: string;
@@ -46,9 +47,7 @@ const STATUS_OPTIONS = [
 function StatusPill({ status }: { status: string }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS.INACTIVE;
   return (
-    <span className="inline-flex flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide" style={{ background: s.bg, color: s.color }}>
-      {status}
-    </span>
+    <StatusText color={s.color}>{status.charAt(0) + status.slice(1).toLowerCase()}</StatusText>
   );
 }
 

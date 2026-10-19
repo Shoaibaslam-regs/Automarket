@@ -20,6 +20,7 @@ import MyListings from "@/components/listings/MyListings";
 import UserIdBadge from "@/components/UserIdBadge";
 // Registers the model for the deal bookings populate below
 import "@/models/Deal";
+import StatusText, { textTone } from "@/components/ui/StatusText";
 
 type Oid = mongoose.Types.ObjectId;
 type MyListing = {
@@ -82,10 +83,10 @@ export default async function DashboardPage() {
   const since = user?.createdAt ? new Date(user.createdAt).getFullYear() : null;
 
   const stats: { label: string; value: number; icon: LucideIcon; tint: string; href: string }[] = [
-    { label: "Active listings", value: active, icon: Car, tint: "bg-indigo-50 text-indigo-600", href: "#listings" },
-    { label: "Sold or rented", value: closed, icon: CheckCircle2, tint: "bg-emerald-50 text-emerald-600", href: "#listings" },
-    { label: "Saved vehicles", value: savedCount, icon: Heart, tint: "bg-rose-50 text-rose-600", href: "/saved" },
-    { label: "Unread messages", value: unread, icon: MessageSquare, tint: "bg-sky-50 text-sky-600", href: "/messages" },
+    { label: "Active listings", value: active, icon: Car, tint: "text-indigo-600", href: "#listings" },
+    { label: "Sold or rented", value: closed, icon: CheckCircle2, tint: "text-emerald-600", href: "#listings" },
+    { label: "Saved vehicles", value: savedCount, icon: Heart, tint: "text-rose-600", href: "/saved" },
+    { label: "Unread messages", value: unread, icon: MessageSquare, tint: "text-sky-600", href: "/messages" },
   ];
 
   const actions: { href: string; label: string; hint: string; icon: LucideIcon }[] = [
@@ -116,7 +117,7 @@ export default async function DashboardPage() {
                 <p className="text-sm font-medium text-indigo-600">{greeting()},</p>
                 <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{session.user.name || firstName}</h1>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-200">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
                     <Crown size={12} /> {sub.plan.name}
                     {isFreeGrant(sub.source) && <span className="font-normal text-amber-700">· {planSourceLabel(sub.source)}</span>}
                   </span>
@@ -162,9 +163,7 @@ export default async function DashboardPage() {
         <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map(s => (
             <Link key={s.label} href={s.href} className="group rounded-3xl bg-white p-4 shadow-[0_8px_30px_-20px_rgba(15,23,42,0.25)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:ring-indigo-200 sm:p-5">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${s.tint}`}>
-                <s.icon size={18} />
-              </span>
+              <s.icon size={20} className={s.tint} />
               <p className="mt-3 text-2xl font-extrabold tabular-nums text-slate-900 sm:text-3xl">{s.value}</p>
               <p className="text-xs font-medium text-slate-500">{s.label}</p>
             </Link>
@@ -229,7 +228,7 @@ export default async function DashboardPage() {
                             </span>
                             <span className="block text-[11px] text-slate-500">{day(b.startDate)} → {day(b.endDate)}</span>
                           </span>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING}`}>{b.status}</span>
+                          <StatusText className={textTone(STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING)}>{b.status.charAt(0) + b.status.slice(1).toLowerCase()}</StatusText>
                         </Link>
                       </li>
                     );

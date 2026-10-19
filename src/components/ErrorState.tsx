@@ -21,7 +21,7 @@ export default function ErrorState({
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
       <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_20px_44px_-24px_rgba(15,23,42,0.25)]">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 ring-1 ring-inset ring-rose-100">
+        <div className="mx-auto flex items-center justify-center text-rose-500">
           <AlertTriangle size={26} strokeWidth={1.8} />
         </div>
         <h1 className="mt-5 text-xl font-bold tracking-tight text-slate-900">Something went wrong</h1>

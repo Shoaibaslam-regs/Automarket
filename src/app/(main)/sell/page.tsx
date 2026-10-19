@@ -276,7 +276,7 @@ export default function SellPage() {
       <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-[560px]">
           <div className="text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
+            <span className="mx-auto flex items-center justify-center text-emerald-600">
               <CheckCircle2 size={28} strokeWidth={2} />
             </span>
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Published</p>
@@ -299,8 +299,8 @@ export default function SellPage() {
               </div>
               <div className="min-w-0 flex-1 py-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{typeLabel}</span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  <span className="text-[10px] font-semibold text-slate-600">{typeLabel}</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Active
                   </span>
                 </div>
@@ -341,7 +341,7 @@ export default function SellPage() {
           <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
             <Link href={`${listingUrl}/inspect`}
               className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><Sparkles size={16} strokeWidth={1.75} /></span>
+              <span className="flex flex-shrink-0 items-center justify-center text-indigo-600"><Sparkles size={16} strokeWidth={1.75} /></span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold text-slate-900">Run AI inspection</span>
                 <span className="block text-xs text-slate-500">Add an inspection report to your listing</span>
@@ -349,7 +349,7 @@ export default function SellPage() {
             </Link>
             <Link href="/dashboard"
               className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><LayoutDashboard size={16} strokeWidth={1.75} /></span>
+              <span className="flex flex-shrink-0 items-center justify-center text-slate-700"><LayoutDashboard size={16} strokeWidth={1.75} /></span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold text-slate-900">Go to dashboard</span>
                 <span className="block text-xs text-slate-500">Manage all your listings</span>
@@ -463,7 +463,7 @@ export default function SellPage() {
             )}
             <div className="rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <span className="flex flex-shrink-0 items-center justify-center text-slate-700">
                   {(() => { const Icon = STEPS[step - 1].icon; return <Icon size={17} strokeWidth={1.75} />; })()}
                 </span>
                 <div className="min-w-0">
@@ -509,7 +509,7 @@ export default function SellPage() {
                                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                               }`}
                             >
-                              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${selected ? "bg-white/15" : "bg-slate-100"}`}>
+                              <span className="flex flex-shrink-0 items-center justify-center">
                                 <Icon size={17} strokeWidth={1.75} />
                               </span>
                               <span className="min-w-0">
@@ -711,9 +711,9 @@ export default function SellPage() {
                   <p className="text-xs text-emerald-700">or PKR {Number(form.dailyRate).toLocaleString()}/day to rent</p>
                 )}
                 {previewSpecs.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
                     {previewSpecs.map(({ icon: Icon, label }) => (
-                      <span key={label} className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 px-2 py-0.5 text-[11px] capitalize text-slate-600">
+                      <span key={label} className="inline-flex items-center gap-1 text-[11px] capitalize text-slate-600">
                         <Icon size={12} strokeWidth={1.75} className="text-slate-400" />{label.toLowerCase()}
                       </span>
                     ))}

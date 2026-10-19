@@ -10,6 +10,7 @@ import { InstallmentLine } from "@/components/sales/Installments";
 import type { InstallmentPlan } from "@/lib/installments";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, REMOVABLE_PURCHASE_STATUSES, PURCHASE_STYLE, asPayable, purchaseNumber, salePrice, type PurchaseStatus } from "@/lib/purchases";
+import StatusText from "@/components/ui/StatusText";
 
 type MyPurchase = {
   _id: string;
@@ -152,9 +153,7 @@ export default function PurchasesPage() {
                           {itemHref
                             ? <Link href={itemHref} className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)] hover:underline">{p.vehicle.title}</Link>
                             : <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">{p.vehicle.title}</p>}
-                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: st.bg, color: st.color }}>
-                            {!p.seenByBuyer ? "Updated · " : ""}{PURCHASE_LABEL[p.status]}
-                          </span>
+                          <StatusText color={st.color}>{!p.seenByBuyer ? "Updated · " : ""}{PURCHASE_LABEL[p.status]}</StatusText>
                         </div>
                         <p className="mt-1 text-[11px] text-[var(--gh-57606a)]">
                           <span className="font-mono font-bold">{purchaseNumber(p._id)}</span> · requested {fmt(p.createdAt)}
@@ -172,7 +171,7 @@ export default function PurchasesPage() {
                     {p.status === "ACCEPTED" && <p className="mt-3 text-xs font-medium text-[var(--gh-0550ae)]">Accepted! The business will contact you about payment and handover.</p>}
                     {p.status === "DECLINED" && <p className="mt-3 text-xs font-medium text-[var(--gh-cf222e)]">Declined{p.declineReason ? `: ${p.declineReason}` : ""}</p>}
 
-                    <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                    <div className="mt-3">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                         <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(p))}</p>
                         {showPayment && <PaymentTag booking={asPayable(p)} />}

@@ -634,31 +634,27 @@ export default function BusinessDashboard() {
                       label: "Leads",
                       value: stats?.customers.leads || 0,
                       color: "var(--gh-8c959f)",
-                      bg: "var(--gh-f6f8fa)",
                     },
                     {
                       label: "Interested",
                       value: stats?.customers.totalCustomers || 0,
                       color: "var(--gh-0550ae)",
-                      bg: "var(--gh-ddf4ff)",
                     },
                     {
                       label: "Test drives",
                       value: stats?.customers.testDrives || 0,
                       color: "var(--gh-7d4e00)",
-                      bg: "var(--gh-fff8c5)",
                     },
                     {
                       label: "Closed",
                       value: stats?.customers.closedSales || 0,
                       color: "var(--gh-1a7f37)",
-                      bg: "var(--gh-dafbe1)",
                     },
                   ].map(s => (
                     <div
                       key={s.label}
                       style={{
-                        background: s.bg,
+                        border: "1px solid var(--gh-e1e4e8)",
                         borderRadius: "8px",
                         padding: "12px",
                         textAlign: "center",

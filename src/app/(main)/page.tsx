@@ -240,7 +240,7 @@ export default async function HomePage() {
                 key={title}
                 className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.3)] sm:p-6"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white shadow-lg shadow-indigo-500/25">
+                <div className="flex items-center justify-center text-indigo-600">
                   <Icon size={20} strokeWidth={1.9} />
                 </div>
                 <p className="mt-4 text-[15px] font-semibold text-slate-900">{title}</p>

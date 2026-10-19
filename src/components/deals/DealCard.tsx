@@ -50,7 +50,7 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
       <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400">{deal.make} · {deal.year}</p>
-          <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-bold ring-1 ring-inset ${rent ? "bg-sky-50 text-sky-700 ring-sky-200" : "bg-indigo-50 text-indigo-700 ring-indigo-200"}`}>
+          <span className={`inline-flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold ${rent ? "text-sky-700" : "text-indigo-700"}`}>
             {rent ? <><KeyRound size={10} /> Rent</> : <><Tag size={10} /> Sale</>}
           </span>
         </div>

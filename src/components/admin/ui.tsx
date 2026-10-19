@@ -18,13 +18,13 @@ const BADGE_TONES: Record<Tone, string> = {
 };
 
 const ICON_TONES: Record<Tone, string> = {
-  neutral: "bg-slate-100 text-slate-600",
-  blue: "bg-sky-100 text-sky-700",
-  green: "bg-emerald-100 text-emerald-700",
-  amber: "bg-amber-100 text-amber-700",
-  red: "bg-rose-100 text-rose-700",
-  violet: "bg-violet-100 text-violet-700",
-  orange: "bg-orange-100 text-orange-700",
+  neutral: "text-slate-500",
+  blue: "text-sky-600",
+  green: "text-emerald-600",
+  amber: "text-amber-600",
+  red: "text-rose-600",
+  violet: "text-violet-600",
+  orange: "text-orange-600",
 };
 
 export const STATUS_TONE: Record<string, Tone> = {
@@ -84,7 +84,7 @@ export function StatCard({
       <div className="flex items-start justify-between gap-3">
         <p className="truncate text-xs font-medium text-slate-500">{label}</p>
         {Icon && (
-          <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${ICON_TONES[tone]}`}>
+          <span className={`flex flex-shrink-0 ${ICON_TONES[tone]}`}>
             <Icon size={16} strokeWidth={2} />
           </span>
         )}
@@ -382,9 +382,9 @@ export const btn = {
 };
 
 const CONFIRM_TONES = {
-  warn: { icon: "bg-amber-100 text-amber-700", button: "bg-amber-500 hover:bg-amber-600 text-white" },
-  danger: { icon: "bg-rose-100 text-rose-600", button: "bg-rose-600 hover:bg-rose-700 text-white" },
-  neutral: { icon: "bg-slate-100 text-slate-600", button: "bg-slate-900 hover:bg-slate-800 text-white" },
+  warn: { icon: "text-amber-600", button: "bg-amber-500 hover:bg-amber-600 text-white" },
+  danger: { icon: "text-rose-600", button: "bg-rose-600 hover:bg-rose-700 text-white" },
+  neutral: { icon: "text-slate-600", button: "bg-slate-900 hover:bg-slate-800 text-white" },
 };
 
 /** Confirmation modal for consequential admin actions. Stays open (and disabled) while `loading`. */
@@ -419,7 +419,7 @@ export function ConfirmDialog({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl shadow-slate-900/20 focus:outline-none">
           <div className="flex gap-4">
             {Icon && (
-              <span className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${t.icon}`}>
+              <span className={`flex flex-shrink-0 items-center justify-center ${t.icon}`}>
                 <Icon size={20} strokeWidth={2} />
               </span>
             )}

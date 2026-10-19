@@ -23,6 +23,7 @@ import type { InstallmentPlan } from "@/lib/installments";
 import { InstallmentLine, InstallmentScheduleDialog, InstallmentSetupDialog } from "@/components/sales/Installments";
 import Tip from "@/components/ui/Tip";
 import { useQuickNew } from "@/components/business/QuickNew";
+import StatusText from "@/components/ui/StatusText";
 
 type Sale = {
   _id: string;
@@ -65,7 +66,7 @@ function DialogShell({ open, onOpenChange, busy, icon: Icon, title, description,
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[460px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gh-0d1117)] text-white"><Icon size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-[var(--gh-0d1117)]"><Icon size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-[var(--gh-0d1117)]">{title}</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-[var(--gh-57606a)]">{description}</Dialog.Description>
@@ -422,7 +423,7 @@ export default function BusinessSalesPage() {
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--gh-56d364)] bg-[var(--gh-dafbe1)] px-4 py-3 text-[13px] text-[var(--gh-1a7f37)]">
             <span className="flex items-center gap-2"><CheckCircle2 size={16} /> Sale {purchaseNumber(created)} recorded.</span>
             <span className="flex gap-2">
-              <Link href={`/business/sales/${created}/slip`} target="_blank" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-1a7f37)] px-3 py-1.5 text-xs font-semibold text-white"><FileText size={13} /> Print slip</Link>
+              <Link href={`/business/sales/${created}/slip`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--gh-1a7f37)] px-3 py-1.5 text-xs font-semibold text-white"><FileText size={13} /> Print slip</Link>
               <button onClick={() => setCreated(null)} aria-label="Dismiss" className="rounded-lg px-2 hover:bg-white/50"><X size={14} /></button>
             </span>
           </div>
@@ -431,15 +432,15 @@ export default function BusinessSalesPage() {
         {stats && (
           <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              { label: "New requests", value: String(stats.requests), icon: Clock3, color: "var(--gh-7d4e00)", bg: "var(--gh-fff8c5)" },
-              { label: "Accepted, not sold yet", value: String(stats.accepted), icon: Handshake, color: "var(--gh-0550ae)", bg: "var(--gh-ddf4ff)" },
-              { label: "Sold this month", value: `PKR ${formatLakh(stats.revenueThisMonth)}`, hint: `${stats.soldThisMonth} vehicle${stats.soldThisMonth !== 1 ? "s" : ""} · PKR ${formatLakh(stats.revenueTotal)} all time`, icon: BadgeDollarSign, color: "var(--gh-1a7f37)", bg: "var(--gh-dafbe1)" },
-              { label: "Balance still due", value: `PKR ${formatLakh(stats.outstanding)}`, icon: Wallet, color: stats.outstanding ? "var(--gh-cf222e)" : "var(--gh-0d1117)", bg: "var(--gh-f6f8fa)" },
+              { label: "New requests", value: String(stats.requests), icon: Clock3, color: "var(--gh-7d4e00)" },
+              { label: "Accepted, not sold yet", value: String(stats.accepted), icon: Handshake, color: "var(--gh-0550ae)" },
+              { label: "Sold this month", value: `PKR ${formatLakh(stats.revenueThisMonth)}`, hint: `${stats.soldThisMonth} vehicle${stats.soldThisMonth !== 1 ? "s" : ""} · PKR ${formatLakh(stats.revenueTotal)} all time`, icon: BadgeDollarSign, color: "var(--gh-1a7f37)" },
+              { label: "Balance still due", value: `PKR ${formatLakh(stats.outstanding)}`, icon: Wallet, color: stats.outstanding ? "var(--gh-cf222e)" : "var(--gh-0d1117)" },
             ].map(s => (
               <div key={s.label} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium text-[var(--gh-8c959f)]">{s.label}</p>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: s.bg, color: s.color }}><s.icon size={14} /></span>
+                  <s.icon size={16} className="flex-shrink-0" style={{ color: s.color }} />
                 </div>
                 <p className="mt-2 text-lg font-extrabold leading-tight tabular-nums sm:text-xl" style={{ color: s.color }}>{s.value}</p>
                 {s.hint && <p className="mt-0.5 truncate text-[11px] text-[var(--gh-8c959f)]">{s.hint}</p>}
@@ -509,7 +510,7 @@ export default function BusinessSalesPage() {
                         {itemHref
                           ? <Link href={itemHref} target="_blank" className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)] hover:underline">{s.vehicle.title}</Link>
                           : <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">{s.vehicle.title}</p>}
-                        <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: st.bg, color: st.color }}>{PURCHASE_LABEL[s.status]}</span>
+                        <StatusText color={st.color}>{PURCHASE_LABEL[s.status]}</StatusText>
                       </div>
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[var(--gh-57606a)]">
                         <span className="font-mono font-bold">{purchaseNumber(s._id)}</span>
@@ -529,7 +530,7 @@ export default function BusinessSalesPage() {
                   {s.message && <p className="mt-2.5 line-clamp-2 text-xs italic text-[var(--gh-57606a)]">“{s.message}”</p>}
                   {s.declineReason && <p className="mt-2 text-xs text-[var(--gh-cf222e)]">Declined: {s.declineReason}</p>}
 
-                  <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                  <div className="mt-3">
                     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(s))}</p>
                       {!closedNoSale && s.status !== "REQUESTED" && <PaymentTag booking={asPayable(s)} onClick={canManage ? () => setPayFor(s) : undefined} />}
@@ -552,7 +553,7 @@ export default function BusinessSalesPage() {
                   )}
                   <div className={`flex items-center gap-1.5 ${primary ? "" : "flex-1"}`}>
                     {s.status !== "CANCELLED" && (
-                      <Link href={`/business/sales/${s._id}/slip`} target="_blank" aria-label="Sale slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
+                      <Link href={`/business/sales/${s._id}/slip`} aria-label="Sale slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
                         <FileText size={14} /> <span className={primary ? "hidden sm:inline" : ""}>Slip</span>
                       </Link>
                     )}

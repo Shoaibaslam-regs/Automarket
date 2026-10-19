@@ -30,7 +30,7 @@ export default function LimitReachedCard({
       <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-4">
-          <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white/10 text-amber-300 ring-1 ring-inset ring-white/15">
+          <span className="flex flex-shrink-0 items-center justify-center text-amber-300">
             <Lock size={20} />
           </span>
           <div>

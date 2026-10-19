@@ -253,7 +253,7 @@ function SidebarContent({
               onClick={onClose}
               className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500/15 to-fuchsia-500/10 px-2.5 py-2 text-[13.5px] font-medium text-indigo-100 ring-1 ring-inset ring-indigo-400/25 transition hover:from-indigo-500/25 hover:to-fuchsia-500/20"
             >
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-400/20 text-indigo-200">
+              <span className="flex flex-shrink-0 items-center justify-center text-indigo-200">
                 <Globe size={16} strokeWidth={1.9} />
               </span>
               <span className="min-w-0 flex-1">

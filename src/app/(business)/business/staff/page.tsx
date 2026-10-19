@@ -277,7 +277,7 @@ export default function StaffPage() {
                     style={{ borderColor: roleStyle.color, color: roleStyle.color, background: roleStyle.bg }}
                     className="h-7 w-auto flex-shrink-0 rounded-full px-2.5 text-[11px] font-semibold" />
                 ) : (
-                  <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "20px", background: roleStyle.bg, color: roleStyle.color }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", color: roleStyle.color }}>
                     {member.role}
                   </span>
                 )}

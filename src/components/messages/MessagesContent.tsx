@@ -430,7 +430,7 @@ export default function MessagesContent() {
           <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000 }} />
           <Dialog.Content
             style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "calc(100% - 32px)", maxWidth: "400px", background: "var(--gh-ffffff)", borderRadius: "14px", padding: "24px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", zIndex: 1001, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "var(--gh-fff0f0)", color: "var(--gh-cf222e)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px" }}>
+            <div style={{ color: "var(--gh-cf222e)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px" }}>
               <Trash2 size={19} strokeWidth={1.75} />
             </div>
             <Dialog.Title style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "var(--gh-0d1117)" }}>

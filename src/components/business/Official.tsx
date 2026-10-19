@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BellRing, CalendarClock, ExternalLink, Megaphone, Pin } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { ANNOUNCEMENT_LABEL, ANNOUNCEMENT_STYLE, OFFICIAL_NAME, type AnnouncementKind } from "@/lib/announcements";
+import StatusText from "@/components/ui/StatusText";
 
 export type OfficialPost = {
   _id: string; kind: AnnouncementKind; title: string; body: string; link?: string; linkLabel?: string;
@@ -46,7 +47,7 @@ export function OfficialPostCard({ post }: { post: OfficialPost }) {
         <OfficialName className="text-[13px]" />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" style={{ background: st.bg, color: st.color }}>{ANNOUNCEMENT_LABEL[post.kind]}</span>
+        <StatusText color={st.color}>{ANNOUNCEMENT_LABEL[post.kind]}</StatusText>
         {post.pinned && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--gh-57606a)]"><Pin size={10} /> Pinned</span>}
         {post.unread && <span className="rounded-full bg-indigo-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">NEW</span>}
         <span className="ml-auto text-[11px] text-[var(--gh-8c959f)]">{day(post.createdAt)}</span>

@@ -98,13 +98,13 @@ export default function ProvinceCities() {
           >
             <span className="relative flex w-full items-center gap-3 overflow-hidden rounded-[10.5px] bg-white px-3.5 py-3 sm:px-4">
               <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-amber-200/50 to-transparent animate-[pcShine_2.8s_ease-in-out_infinite]" />
-              <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-md shadow-rose-500/30">
+              <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
                 <Flame size={17} className="animate-[pcFlame_1.1s_ease-in-out_infinite]" />
               </span>
               <span className="relative min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className="truncate text-[15px] font-bold text-slate-900">{open.capital}</span>
-                  <span className="relative inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600 ring-1 ring-inset ring-rose-200">
+                  <span className="relative inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-rose-600">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />

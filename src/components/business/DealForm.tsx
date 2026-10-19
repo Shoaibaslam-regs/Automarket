@@ -71,7 +71,7 @@ function Section({ icon: Icon, title, hint, children }: { icon: typeof Car; titl
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
       <div className="mb-4 flex items-start gap-3">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><Icon size={17} /></span>
+        <span className="flex flex-shrink-0 items-center justify-center text-rose-600"><Icon size={17} /></span>
         <div>
           <h2 className="text-sm font-bold text-slate-900">{title}</h2>
           {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}

@@ -23,7 +23,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
                 <Dialog.Close aria-label="Close" className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white">
                   <X size={16} />
                 </Dialog.Close>
-                <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/30">
+                <span className="relative inline-flex items-center justify-center text-amber-500">
                   <Crown size={20} strokeWidth={2.25} />
                 </span>
                 <Dialog.Title className="relative mt-4 text-xl font-bold tracking-tight">Upgrade to {plan.name}</Dialog.Title>

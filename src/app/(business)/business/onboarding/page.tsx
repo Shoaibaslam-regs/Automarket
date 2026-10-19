@@ -120,7 +120,7 @@ export default function OnboardingPage() {
               ].map(opt => (
                 <div key={opt.id} onClick={() => setForm(p => ({ ...p, type: opt.id as "DEALER" | "RENTAL" | "BOTH" }))}
                   style={{ padding: "20px", background: "var(--gh-ffffff)", border: `2px solid ${form.type === opt.id ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", cursor: "pointer", display: "flex", alignItems: "flex-start", gap: "14px", transition: "all 0.15s" }}>
-                  <span style={{ width: "44px", height: "44px", flexShrink: 0, borderRadius: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-e1e4e8)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gh-0d1117)" }}><opt.icon size={22} strokeWidth={1.75} /></span>
+                  <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gh-0d1117)" }}><opt.icon size={22} strokeWidth={1.75} /></span>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: "15px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>{opt.title}</p>
                     <p style={{ fontSize: "13px", color: "var(--gh-57606a)" }}>{opt.desc}</p>

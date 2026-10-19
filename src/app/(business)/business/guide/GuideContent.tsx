@@ -511,7 +511,7 @@ export default function GuideContent({ urduClassName }: { urduClassName: string 
         <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gh-0d1117)] text-white"><BookOpen size={17} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-[var(--gh-0d1117)]"><BookOpen size={17} /></span>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-[var(--gh-0d1117)]">Guide · رہنمائی</h1>
               <p className="text-xs text-[var(--gh-57606a)]">Every page of the console, in English and Urdu</p>
@@ -554,7 +554,7 @@ export default function GuideContent({ urduClassName }: { urduClassName: string 
           {c.sections.map(s => (
             <section key={s.id} id={s.id} className="scroll-mt-20 rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-5">
               <div className="mb-3 flex items-center gap-2.5">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--gh-ddf4ff)] text-[var(--gh-0550ae)]"><s.icon size={17} /></span>
+                <span className="flex flex-shrink-0 items-center justify-center text-[var(--gh-0550ae)]"><s.icon size={17} /></span>
                 <h3 className={`font-bold text-[var(--gh-0d1117)] ${ur ? "text-lg" : "text-base"}`}>{s.title}</h3>
               </div>
               <p className={`text-[var(--gh-24292f)] ${ur ? "text-[15px] leading-[2.3]" : "text-sm leading-relaxed"}`}>{s.intro}</p>

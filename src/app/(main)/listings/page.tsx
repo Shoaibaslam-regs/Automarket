@@ -652,7 +652,7 @@ export default function ListingsPage({
               </div>
             ) : listings.length === 0 ? (
               <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <div className="mx-auto mb-4 flex items-center justify-center text-slate-400">
                   <Search size={24} strokeWidth={1.75} />
                 </div>
                 <p className="text-base font-semibold text-slate-900">No listings found</p>

@@ -98,7 +98,7 @@ function ReportCard({ report }: { report: Report }) {
             <div key={item.label} style={{ background: "var(--gh-f6f8fa)", borderRadius: "8px", padding: "12px" }}>
               <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginBottom: "4px" }}>{item.label}</p>
               {item.badge ? (
-                <span style={{ fontSize: "12px", fontWeight: 600, padding: "3px 8px", borderRadius: "20px", background: condStyle.bg, color: condStyle.color }}>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: condStyle.color }}>
                   {item.value}
                 </span>
               ) : (

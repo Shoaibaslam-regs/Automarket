@@ -89,7 +89,7 @@ export default function DeleteAccount() {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[460px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-2xl focus:outline-none">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <Dialog.Title className="flex items-center gap-2.5 text-[15px] font-bold text-slate-900">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white"><Trash2 size={15} /></span>
+                <span className="flex items-center justify-center text-rose-600"><Trash2 size={15} /></span>
                 Delete your account
               </Dialog.Title>
               <Dialog.Close aria-label="Close" disabled={deleting} className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>

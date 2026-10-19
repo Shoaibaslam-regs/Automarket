@@ -142,7 +142,7 @@ export default async function DealerPage({ params }: Props) {
                 {isVerified(org.verification) ? (
                   <VerifiedBadge tone="dark" className="px-2.5 py-1" />
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-200 ring-1 ring-inset ring-white/15">
+                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-200">
                     <Building2 size={13} /> Business account
                   </span>
                 )}

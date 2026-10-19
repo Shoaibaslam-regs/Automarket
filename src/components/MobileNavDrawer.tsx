@@ -109,7 +109,7 @@ export default function MobileNavDrawer({
           active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100 active:bg-slate-100"
         }`}
       >
-        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${active ? "bg-white/10 text-white" : "bg-slate-100 text-slate-600 group-hover:bg-white"}`}>
+        <span className={`flex flex-shrink-0 items-center justify-center ${active ? "text-white" : "text-slate-600"}`}>
           <Icon size={14} strokeWidth={1.9} />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -237,7 +237,7 @@ export default function MobileNavDrawer({
             >
               <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
                 <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-[mnShine_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" />
-                <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-sm shadow-rose-500/30">
+                <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
                   <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />
                 </span>
                 <span className="relative min-w-0 flex-1 truncate text-[13px] font-bold text-slate-900">Hot deals</span>
@@ -282,7 +282,7 @@ export default function MobileNavDrawer({
               onClick={onClose}
               className="flex items-center gap-2.5 rounded-lg bg-amber-50 px-2 py-1.5 text-[13px] font-semibold text-amber-800 ring-1 ring-inset ring-amber-200 transition hover:bg-amber-100"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100"><ShieldCheck size={14} /></span>
+              <span className="flex items-center justify-center text-amber-600"><ShieldCheck size={14} /></span>
               <span className="flex-1">Admin panel</span>
               <ChevronRight size={13} className="text-amber-400" />
             </Link>

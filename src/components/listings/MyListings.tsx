@@ -7,6 +7,7 @@ import { Car, ImageOff, LayoutGrid, List, MapPin, Plus, ScanSearch } from "lucid
 import DeleteListing from "./DeleteListing";
 import AvailabilityControl from "./AvailabilityControl";
 import { formatLakh } from "@/lib/format";
+import StatusText, { textTone } from "@/components/ui/StatusText";
 
 export type MyListing = {
   id: string;
@@ -101,7 +102,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
 
       {listings.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white px-6 py-14 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/20">
+          <span className="mx-auto flex items-center justify-center text-slate-900">
             <Car size={24} />
           </span>
           <p className="mt-4 font-semibold text-slate-900">Your garage is empty</p>
@@ -153,7 +154,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/listings/${l.id}`} className="min-w-0 truncate font-semibold text-slate-900 hover:underline">{l.title}</Link>
-                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE}`}>{STATUS_TEXT[l.status] ?? l.status}</span>
+                  <StatusText className={textTone(STATUS_STYLE[l.status] ?? STATUS_STYLE.INACTIVE)}>{STATUS_TEXT[l.status] ?? l.status}</StatusText>
                 </div>
                 <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-slate-500">
                   {l.make} {l.model} · {l.year} · {TYPE_LABEL[l.type]}

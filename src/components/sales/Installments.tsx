@@ -27,7 +27,7 @@ function Shell({ open, onOpenChange, busy, title, description, children }: {
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[460px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><CalendarClock size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><CalendarClock size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="flex items-center gap-1.5 text-base font-semibold text-slate-900">{title} <Tip id="installments" /></Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">{description}</Dialog.Description>
@@ -176,7 +176,7 @@ export function InstallmentScheduleDialog({ open, onOpenChange, saleId, plan, bu
       </ol>
       {error && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <Link href={`/business/sales/${saleId}/installments`} target="_blank" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
+        <Link href={`/business/sales/${saleId}/installments`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
           <Printer size={13} /> Print schedule
         </Link>
         {canManage && sum.paidCount === 0 && (

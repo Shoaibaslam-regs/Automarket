@@ -376,7 +376,7 @@ export default function AdminPage() {
                   className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 transition-colors hover:bg-slate-50/70 sm:grid-cols-[minmax(0,1fr)_112px_72px] sm:px-5"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200/70">
+                    <span className="flex flex-shrink-0 items-center justify-center text-slate-500">
                       <Car size={16} />
                     </span>
                     <div className="min-w-0 leading-tight">

@@ -83,7 +83,7 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><ShoppingBag size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><ShoppingBag size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-slate-900">{sent !== null ? "Request sent" : "Buy this vehicle"}</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">

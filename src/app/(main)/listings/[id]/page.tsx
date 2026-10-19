@@ -330,11 +330,11 @@ export default async function ListingDetailPage({ params }: Props) {
                 {l.sellerId && (business?.verified ? (
                   <VerifiedBadge />
                 ) : business ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700">
                     <Building2 size={12} /> Business account
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500">
                     <UserRound size={12} /> Private seller
                   </span>
                 ))}
@@ -378,7 +378,7 @@ export default async function ListingDetailPage({ params }: Props) {
                     </div>
                   )}
                   {l.sellerId.phoneVerifiedAt && (
-                    <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200" title="This seller confirmed their mobile number by SMS">
+                    <p className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700" title="This seller confirmed their mobile number by SMS">
                       <BadgeCheck size={12} /> Phone verified
                     </p>
                   )}
@@ -480,7 +480,7 @@ export default async function ListingDetailPage({ params }: Props) {
             {/* Owner actions */}
             {l.address && (
               <a href={mapsUrl(l.address, l.location)} target="_blank" rel="noreferrer" className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-gray-300">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><MapPin size={17} /></span>
+                <span className="flex flex-shrink-0 items-center justify-center text-rose-600"><MapPin size={17} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">Where to see the vehicle</span>
                   <span className="mt-0.5 block text-sm font-semibold text-gray-900">{l.address}</span>

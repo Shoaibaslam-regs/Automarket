@@ -54,7 +54,7 @@ export default async function DealsPage({ searchParams }: Props) {
 
         {deals.length === 0 ? (
           <div className="rounded-2xl bg-white px-6 py-16 text-center ring-1 ring-slate-200/80">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500"><Tag size={22} /></span>
+            <span className="mx-auto flex items-center justify-center text-rose-500"><Tag size={22} /></span>
             <p className="mt-3 font-semibold text-slate-900">{filtered ? "No deals match these filters" : "No deals right now"}</p>
             <p className="mt-1 text-sm text-slate-500">{filtered ? "Try another make or city." : "Check back soon. Businesses add new offers all the time."}</p>
           </div>

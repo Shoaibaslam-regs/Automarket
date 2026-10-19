@@ -23,7 +23,7 @@ function ReviewItem({ r, businessName, mine }: { r: ReviewView; businessName: st
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <p className="text-sm font-semibold text-slate-900">{r.reviewer.name}</p>
-            {mine && <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">YOU</span>}
+            {mine && <span className="text-[10px] font-bold text-indigo-700">YOU</span>}
             <span className="text-xs text-slate-400">{fmt(r.createdAt)}</span>
           </div>
           <div className="mt-1 flex items-center gap-2">

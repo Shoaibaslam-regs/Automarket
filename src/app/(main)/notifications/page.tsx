@@ -8,12 +8,12 @@ import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 import PushCard from "@/components/pwa/PushCard";
 
 const ICON: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
-  message: { icon: MessageCircle, tone: "bg-indigo-50 text-indigo-600" },
-  bookingRequest: { icon: CalendarPlus, tone: "bg-amber-50 text-amber-700" },
-  bookingUpdate: { icon: CalendarCheck, tone: "bg-sky-50 text-sky-700" },
-  purchaseUpdate: { icon: ShoppingBag, tone: "bg-emerald-50 text-emerald-700" },
-  saleRequest: { icon: BadgeDollarSign, tone: "bg-amber-50 text-amber-700" },
-  official: { icon: Megaphone, tone: "bg-fuchsia-50 text-fuchsia-600" },
+  message: { icon: MessageCircle, tone: "text-indigo-600" },
+  bookingRequest: { icon: CalendarPlus, tone: "text-amber-700" },
+  bookingUpdate: { icon: CalendarCheck, tone: "text-sky-700" },
+  purchaseUpdate: { icon: ShoppingBag, tone: "text-emerald-700" },
+  saleRequest: { icon: BadgeDollarSign, tone: "text-amber-700" },
+  official: { icon: Megaphone, tone: "text-fuchsia-600" },
 };
 
 function ago(iso: string) {
@@ -51,7 +51,7 @@ export default function NotificationsPage() {
             <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />)}</div>
           ) : items.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-              <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><Bell size={22} /></span>
+              <span className="mx-auto mb-3 flex items-center justify-center text-slate-400"><Bell size={22} /></span>
               <p className="text-sm font-semibold text-slate-900">You&apos;re all caught up</p>
               <p className="mt-1 text-sm text-slate-500">New messages, bookings and updates will show up here.</p>
               <Link href="/listings" className="mt-5 inline-flex rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Browse vehicles</Link>
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
                 return (
                   <li key={`${n.kind}-${n.id}`}>
                     <Link href={n.href} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-slate-50">
-                      <span className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon size={17} /></span>
+                      <span className={`mt-0.5 flex flex-shrink-0 items-center justify-center ${tone}`}><Icon size={18} /></span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold text-slate-900">{n.title}</span>
                         {n.body && <span className="mt-0.5 block truncate text-xs text-slate-500">{n.body}</span>}

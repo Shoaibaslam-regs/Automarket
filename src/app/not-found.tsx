@@ -47,7 +47,7 @@ export default function NotFound() {
             <div className="absolute inset-x-8 bottom-[11px] h-[2px] bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.35)_0_14px,transparent_14px_28px)] [mask-image:linear-gradient(90deg,transparent,black_20%,black_80%,transparent)]" />
             {/* Outer div centers; inner span floats (both use transform, so they can't share an element) */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-              <span className="lp-float flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/30 to-sky-500/30 text-indigo-100 shadow-[0_0_30px_-4px_rgba(99,102,241,0.8)] ring-1 ring-inset ring-white/15 backdrop-blur">
+              <span className="lp-float flex items-center justify-center text-indigo-100">
                 <Car size={22} strokeWidth={1.8} />
               </span>
             </div>
@@ -84,7 +84,7 @@ export default function NotFound() {
               href={href}
               className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06]"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-sky-500/20 text-indigo-200 ring-1 ring-inset ring-white/10">
+              <span className="flex shrink-0 items-center justify-center text-indigo-200">
                 <Icon size={18} strokeWidth={1.8} />
               </span>
               <span className="min-w-0 flex-1">

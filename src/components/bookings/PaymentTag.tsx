@@ -8,9 +8,9 @@ import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments"
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
 const TAG_STYLE: Record<PaymentStatus, { cls: string; icon: LucideIcon }> = {
-  PENDING: { cls: "bg-amber-50 text-amber-700 ring-amber-200", icon: Clock3 },
-  PARTIAL: { cls: "bg-sky-50 text-sky-700 ring-sky-200", icon: PieChart },
-  PAID: { cls: "bg-emerald-50 text-emerald-700 ring-emerald-200", icon: CheckCircle2 },
+  PENDING: { cls: "text-amber-700", icon: Clock3 },
+  PARTIAL: { cls: "text-sky-700", icon: PieChart },
+  PAID: { cls: "text-emerald-700", icon: CheckCircle2 },
 };
 
 type Payable = { totalAmount: number; deposit: number; lateFee?: number; extraCharges?: number; amountPaid?: number };
@@ -23,10 +23,10 @@ export function PaymentTag({ booking, onClick, className = "" }: { booking: Paya
   const p = paymentState(booking);
   const { cls, icon: Icon } = TAG_STYLE[p.status];
   const text = p.status === "PARTIAL" ? `${PAYMENT_LABEL.PARTIAL} · ${pkr(p.balance)} left` : PAYMENT_LABEL[p.status];
-  const body = <><Icon size={11} strokeWidth={2.4} /> {text}</>;
-  const base = `inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${cls} ${className}`;
+  const body = <><Icon size={12} strokeWidth={2.2} /> {text}</>;
+  const base = `inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold ${cls} ${className}`;
   return onClick ? (
-    <button type="button" onClick={onClick} title="Update payment" className={`${base} transition hover:brightness-95`}>{body}</button>
+    <button type="button" onClick={onClick} title="Update payment" className={`${base} underline-offset-2 hover:underline`}>{body}</button>
   ) : (
     <span className={base}>{body}</span>
   );
@@ -85,7 +85,7 @@ export function PaymentDialog({ open, onOpenChange, booking, customer, onSave }:
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><CircleDollarSign size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><CircleDollarSign size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-slate-900">Payment</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">
@@ -103,7 +103,7 @@ export function PaymentDialog({ open, onOpenChange, booking, customer, onSave }:
                 return (
                   <button key={o.id} type="button" role="radio" aria-checked={on} onClick={() => { setChoice(o.id); setError(""); }}
                     className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${on ? "border-slate-900 ring-2 ring-slate-900/10" : "border-slate-200 hover:border-slate-300"}`}>
-                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${cls}`}><Icon size={15} /></span>
+                    <span className={`flex flex-shrink-0 items-center justify-center ${cls}`}><Icon size={17} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold text-slate-900">{o.title}</span>
                       <span className="block text-xs text-slate-500">{o.hint}</span>

@@ -76,7 +76,7 @@ export default function BusinessSupportPage() {
         <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_240px]">
           <form onSubmit={send} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-5">
             <div className="mb-4 flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--gh-0d1117)] text-white"><Headset size={17} /></span>
+              <span className="flex items-center justify-center text-[var(--gh-0d1117)]"><Headset size={17} /></span>
               <div>
                 <p className="text-sm font-bold text-[var(--gh-0d1117)]">Message the team</p>
                 <p className="text-[11px] text-[var(--gh-57606a)]">Your business name and ID are attached automatically</p>

@@ -13,6 +13,7 @@ import { LATE_RULE_TEXT, rentalDays } from "@/lib/bookings";
 import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { mapsUrl } from "@/lib/address";
+import StatusText from "@/components/ui/StatusText";
 
 type ListingInfo = {
   _id: string;
@@ -151,7 +152,7 @@ function ConfirmPopup({ title = "Remove this booking?", message, icon = <Trash2 
     <div onClick={onCancel} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--gh-ffffff)", borderRadius: "12px", width: "100%", maxWidth: "400px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", overflow: "hidden", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
         <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-          <div style={{ width: "40px", height: "40px", background: "var(--gh-fff0f0)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>{icon}</div>
+          <div style={{ color: "var(--gh-cf222e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>{icon}</div>
           <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gh-8c959f)", fontSize: "20px" }}>×</button>
         </div>
         <div style={{ padding: "16px 24px 24px" }}>
@@ -413,7 +414,7 @@ export default function BookingsContent() {
                           ) : (
                             <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">{listing?.title ?? "Vehicle removed"}</p>
                           )}
-                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: look.bg, color: look.color }}>{look.label}</span>
+                          <StatusText color={look.color}>{look.label}</StatusText>
                         </div>
                         <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                           {isDeal && (
@@ -462,7 +463,7 @@ export default function BookingsContent() {
                     </div>
 
                     {/* Money */}
-                    <div className="mt-3 rounded-xl bg-[var(--gh-f6f8fa)] px-3 py-2.5">
+                    <div className="mt-3">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                         <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">PKR {total.toLocaleString()}</p>
                         {booking.status !== "CANCELLED" && <PaymentTag booking={booking} onClick={received ? () => setPayFor(booking) : undefined} />}

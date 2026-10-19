@@ -391,7 +391,7 @@ function CustomersContent() {
             <div className="flex items-center justify-between gap-2 border-b border-[var(--gh-f6f8fa)] px-4 py-2.5">
               <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]">
                 <BellRing size={14} /> Follow-ups <Tip id="followUp" />
-                {dueFollowUps.length > 0 && <span className="rounded-full bg-[var(--gh-fff8c5)] px-2 py-0.5 text-[10px] font-bold text-[var(--gh-7d4e00)]">{dueFollowUps.length} due</span>}
+                {dueFollowUps.length > 0 && <span className="text-[10px] font-bold text-[var(--gh-7d4e00)]">{dueFollowUps.length} due</span>}
               </p>
               {followUps.length > dueFollowUps.length && (
                 <button onClick={() => setShowLater(v => !v)} className="text-xs font-semibold text-[var(--gh-0550ae)]">

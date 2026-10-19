@@ -30,7 +30,7 @@ export default function PushCard({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`rounded-2xl border p-4 ${on ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200/80 bg-white"}`}>
       <div className="flex items-start gap-3">
-        <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${on ? "bg-emerald-100 text-emerald-700" : "bg-slate-900 text-white"}`}>
+        <span className={`flex flex-shrink-0 items-center justify-center ${on ? "text-emerald-700" : "text-slate-900"}`}>
           {status === "needs-install" ? <Smartphone size={18} /> : on ? <BellRing size={18} /> : <BellOff size={18} />}
         </span>
         <div className="min-w-0 flex-1">
@@ -96,7 +96,7 @@ export function PushPrompt({ className = "" }: { className?: string }) {
   return (
     <div role="dialog" aria-label="Turn on notifications" className={`fixed inset-x-3 z-[70] mx-auto max-w-md rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-slate-200 ${className}`}>
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><BellRing size={18} /></span>
+        <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><BellRing size={18} /></span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-900">Don&apos;t miss a customer</p>
           <p className="mt-0.5 text-xs text-slate-500">Get a phone alert for booking requests, buyers and messages, even when AutoMarket is closed.</p>

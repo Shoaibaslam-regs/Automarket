@@ -194,7 +194,7 @@ export default function BusinessSettingsPage() {
           <div aria-hidden className="pointer-events-none absolute -bottom-24 left-8 h-48 w-48 rounded-full bg-amber-400/15 blur-3xl" />
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-amber-300 ring-1 ring-inset ring-white/15">
+              <span className="flex items-center justify-center text-amber-300">
                 <Crown size={18} />
               </span>
               <div>

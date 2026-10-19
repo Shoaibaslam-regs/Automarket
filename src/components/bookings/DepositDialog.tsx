@@ -11,20 +11,20 @@ const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 type DepositBooking = { deposit: number; depositRefunded?: number; depositNote?: string; depositSettledAt?: string | null };
 
 const TAG_STYLE: Record<DepositStatus, string> = {
-  NONE: "bg-slate-100 text-slate-500",
-  HELD: "bg-amber-50 text-amber-700 ring-amber-200",
-  REFUNDED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  PART_KEPT: "bg-sky-50 text-sky-700 ring-sky-200",
-  KEPT: "bg-rose-50 text-rose-700 ring-rose-200",
+  NONE: "text-slate-500",
+  HELD: "text-amber-700",
+  REFUNDED: "text-emerald-700",
+  PART_KEPT: "text-sky-700",
+  KEPT: "text-rose-700",
 };
 
 /** Small tag showing where the security deposit stands; clickable for the owner. */
 export function DepositTag({ booking, onClick }: { booking: DepositBooking; onClick?: () => void }) {
   const s = depositState(booking);
   if (s.status === "NONE") return null;
-  const cls = `inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${TAG_STYLE[s.status]}`;
+  const cls = `inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold ${TAG_STYLE[s.status]}`;
   const text = <><ShieldCheck size={10} /> {DEPOSIT_LABEL[s.status]}{s.status === "PART_KEPT" ? ` · ${pkr(s.kept)} kept` : ""}</>;
-  return onClick ? <button type="button" onClick={onClick} className={`${cls} hover:opacity-80`}>{text}</button> : <span className={cls}>{text}</span>;
+  return onClick ? <button type="button" onClick={onClick} className={`${cls} underline-offset-2 hover:underline`}>{text}</button> : <span className={cls}>{text}</span>;
 }
 
 /**
@@ -73,7 +73,7 @@ export default function DepositDialog({ open, onOpenChange, booking, customer, o
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white"><ShieldCheck size={18} /></span>
+            <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><ShieldCheck size={18} /></span>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="flex items-center gap-1.5 text-base font-semibold text-slate-900">Settle security deposit <Tip id="deposit" /></Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">{customer ? `${customer} paid` : "Deposit"} {pkr(booking.deposit)}. How much did you give back?</Dialog.Description>

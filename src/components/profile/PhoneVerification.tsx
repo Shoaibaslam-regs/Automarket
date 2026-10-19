@@ -68,7 +68,7 @@ export default function PhoneVerification({ verifiedPhone, phoneVerifiedAt, curr
   return (
     <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-6">
       <div className="mb-4 flex items-start gap-3">
-        <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${verified ? "bg-[var(--gh-dafbe1)] text-[var(--gh-1a7f37)]" : "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)]"}`}>
+        <span className={`flex flex-shrink-0 items-center justify-center ${verified ? "text-[var(--gh-1a7f37)]" : "text-[var(--gh-57606a)]"}`}>
           {verified ? <BadgeCheck size={18} /> : <Smartphone size={18} />}
         </span>
         <div className="min-w-0">

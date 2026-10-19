@@ -77,7 +77,7 @@ export default function VerifyBadgeDialog({ target, onClose, onSave }: {
           {target && (
             <>
               <div className="flex gap-4">
-                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-inset ring-sky-200">
+                <span className="flex flex-shrink-0 items-center justify-center text-sky-600">
                   <BadgeCheck size={20} />
                 </span>
                 <div className="min-w-0">

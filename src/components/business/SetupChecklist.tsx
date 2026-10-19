@@ -49,7 +49,7 @@ export default function SetupChecklist() {
   return (
     <section className="mb-5 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
       <div className="flex items-start gap-3 px-4 pt-4">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-400 text-white"><Rocket size={17} /></span>
+        <span className="flex flex-shrink-0 items-center justify-center text-indigo-600"><Rocket size={17} /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-[15px] font-bold text-[var(--gh-0d1117)]">Get your business ready</h2>
           <p className="text-xs text-[var(--gh-57606a)]">{done} of {STEPS.length} done · each step ticks itself when you finish it</p>
