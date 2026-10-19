@@ -53,26 +53,33 @@ export default function LiveStats({ initial }: { initial: PublicStats }) {
   }, []);
 
   return (
-    <section aria-label="Live on AutoMarket">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-          <span className="relative flex h-2.5 w-2.5">
+    // A dark glow panel like the closing call to action (bg-slate-950 keeps it dark in both themes)
+    <section aria-label="Live on AutoMarket" className="relative overflow-hidden rounded-3xl bg-slate-950 px-5 py-7 sm:px-10 sm:py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.38),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(217,70,239,0.18),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/60 to-transparent" />
+
+      <div className="relative flex flex-col items-center text-center">
+        <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+          <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           </span>
-          Live on AutoMarket
-        </h2>
-        <p className="text-xs text-slate-400"><span className="sm:hidden">Swipe for more · </span>Updates every minute</p>
+          Live now
+        </p>
+        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">AutoMarket in numbers</h2>
+        <p className="mt-1.5 text-xs text-slate-400"><span className="sm:hidden">Swipe for more · </span>Updates every minute</p>
       </div>
-      {/* Phones: one swipeable row so the cars below stay close; bigger screens: a grid */}
-      <div className="-mx-4 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-7 [&::-webkit-scrollbar]:hidden">
+
+      {/* Phones: one swipeable row; bigger screens: centred rows (4, then 7 a row). Short dividers between numbers:
+          none before the first of each row (items 1 and 5 on tablets, only the first on wide screens). */}
+      <div className="relative -mx-5 mt-8 flex snap-x scroll-px-5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-y-8 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
         {TILES.map(({ key, label, icon: Icon }) => (
-          <div key={key} className="w-[132px] flex-shrink-0 snap-start rounded-2xl border border-slate-200/80 bg-white p-3 sm:w-auto sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-medium text-slate-500">{label}</p>
-              <Icon size={15} className="flex-shrink-0 text-indigo-500" />
-            </div>
-            <p className="mt-1.5 text-xl font-extrabold tabular-nums tracking-tight text-slate-900 sm:text-2xl"><CountUp value={stats[key]} /></p>
+          <div key={key} className="relative flex w-[118px] flex-shrink-0 snap-start flex-col items-center text-center before:absolute before:left-0 before:top-1/2 before:h-10 before:w-px before:-translate-y-1/2 before:bg-white/15 first:before:hidden sm:w-1/4 sm:[&:nth-child(5)]:before:hidden lg:w-[14.2857%] lg:[&:nth-child(5)]:before:block">
+            <Icon size={16} strokeWidth={1.75} className="text-indigo-300" />
+            <p className="mt-3 bg-gradient-to-br from-white via-white to-indigo-200 bg-clip-text text-3xl font-extrabold tabular-nums tracking-tight text-transparent sm:text-[34px]">
+              <CountUp value={stats[key]} />
+            </p>
+            <p className="mt-1 text-xs font-medium text-slate-400">{label}</p>
           </div>
         ))}
       </div>

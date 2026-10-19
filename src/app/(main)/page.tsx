@@ -125,7 +125,7 @@ export default async function HomePage() {
           <h1 className="mx-auto mt-5 max-w-3xl text-[2rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
             Buy, sell &amp; rent{" "}
             <span className="bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-transparent">
-              vehicles you&apos;ll love
+              vehicles you want
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-400 sm:text-lg">
@@ -180,8 +180,7 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-[1180px] space-y-14 px-4 py-10 sm:space-y-20 sm:py-14">
-        {/* ── Live numbers, then where a returning visitor left off ── */}
-        <LiveStats initial={stats} />
+        {/* ── Where a returning visitor left off ── */}
         <RecentlyViewed />
 
         {/* ── Browse by make ── */}
@@ -230,6 +229,9 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+
+        {/* ── Live numbers ── */}
+        <LiveStats initial={stats} />
 
         {/* ── Why AutoMarket ── */}
         <section>

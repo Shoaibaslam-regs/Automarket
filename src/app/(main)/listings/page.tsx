@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -31,6 +31,9 @@ const SORTS = [
   ["mileage_asc", "Mileage: lowest"],
 ] as const;
 const PAGE_SIZE = 12;
+/** The grid/list choice made on a phone, kept per browser */
+const VIEW_KEY = "browse-view";
+const PHONE_QUERY = "(max-width: 639px)";
 
 const MAKE_OPTIONS = [{ value: "", label: "All makes" }, ...MAKES.map(m => ({ value: m, label: m }))];
 const SORT_OPTIONS = SORTS.map(([value, label]) => ({ value, label }));
@@ -110,7 +113,28 @@ export default function ListingsPage({
   const [sort, setSort] = useState<string>(initialSort);
   // Sold and rented vehicles are shown (tagged) unless the visitor hides them
   const [availableOnly, setAvailableOnly] = useState(initialParams.available === "1");
-  const [view, setView] = useState<"grid" | "list">(initialParams.view === "list" ? "list" : "grid");
+  // Phones open in the list view (photo beside details), or the view the visitor last picked on a phone;
+  // tablets and desktops always open in the grid. Switching across the phone width (rotating, resizing)
+  // re-applies the rule. Applied after mount so the server HTML stays the grid.
+  const [view, setView] = useState<"grid" | "list">("grid");
+  useEffect(() => {
+    const phone = window.matchMedia(PHONE_QUERY);
+    const apply = () => {
+      let saved: string | null = null;
+      try { saved = localStorage.getItem(VIEW_KEY); } catch {}
+      setView(phone.matches ? (saved === "grid" ? "grid" : "list") : "grid");
+    };
+    queueMicrotask(apply);
+    phone.addEventListener("change", apply);
+    return () => phone.removeEventListener("change", apply);
+  }, []);
+  function chooseView(v: "grid" | "list") {
+    setView(v);
+    // Only a phone choice is remembered, so it never carries over to a bigger screen
+    if (window.matchMedia(PHONE_QUERY).matches) {
+      try { localStorage.setItem(VIEW_KEY, v); } catch {}
+    }
+  }
   const saveLock = useRateLock("savedSearches");
   const [saveState, setSaveState] = useState<{ query: string; status: "saving" | "saved" | "error"; message?: string } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -141,10 +165,8 @@ export default function ListingsPage({
   if (sort !== "createdAt") params.set("sort", sort);
   if (availableOnly) params.set("available", "1");
   if (page > 1) params.set("page", String(page));
-  // view only changes presentation, so it goes in the address bar but not in the API query (no refetch)
-  const urlParams = new URLSearchParams(params);
-  if (view === "list") urlParams.set("view", "list");
-  const urlQuery = urlParams.toString();
+  // The view depends on the screen, so it isn't put in the address bar (a shared link opens right on any device)
+  const urlQuery = params.toString();
   params.set("limit", String(PAGE_SIZE));
   if (!params.has("page")) params.set("page", "1");
   const query = params.toString();
@@ -210,6 +232,39 @@ export default function ListingsPage({
       document.body.style.overflow = prev;
     };
   }, [showFilters]);
+
+  // Phones and tablets: once the hero search has scrolled away, a compact search bar slides in whenever the
+  // visitor scrolls up, and tucks away again while they scroll down through the results
+  const heroSearchRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [barShown, setBarShown] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const hero = heroSearchRef.current;
+        const typing = !!barRef.current?.contains(document.activeElement);
+        if (!hero || hero.getBoundingClientRect().bottom > 56) setBarShown(false);
+        else if (y < lastY - 6) setBarShown(true);
+        else if (y > lastY + 6 && !typing) setBarShown(false);
+        if (Math.abs(y - lastY) > 6) lastY = y;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /** Brings the top of the results back into view after a change made from the compact bar. */
+  function jumpToResults() {
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function goToPage(p: number) {
     setPage(p);
@@ -431,7 +486,7 @@ export default function ListingsPage({
             Browse verified cars and bikes for sale and rent across Pakistan.
           </p>
 
-          <div className="relative mt-6 max-w-2xl">
+          <div ref={heroSearchRef} className="relative mt-6 max-w-2xl">
             <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400" />
             <SearchSuggest
               placeholder="Search by make, model, location..."
@@ -505,8 +560,8 @@ export default function ListingsPage({
             {filterPanel}
           </aside>
 
-          {/* Results */}
-          <div className="min-w-0">
+          {/* Results (scroll-mt clears the navbar and the compact bar) */}
+          <div ref={resultsRef} className="min-w-0 scroll-mt-[150px] lg:scroll-mt-24">
             <RecentlyViewed className="mb-5" />
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-4">
               <div className="flex items-center gap-3">
@@ -560,7 +615,7 @@ export default function ListingsPage({
                     <button
                       key={v}
                       type="button"
-                      onClick={() => setView(v)}
+                      onClick={() => chooseView(v)}
                       aria-label={v === "grid" ? "Grid view" : "List view"}
                       aria-pressed={view === v}
                       className={`flex w-10 items-center justify-center transition ${view === v ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
@@ -731,6 +786,114 @@ export default function ListingsPage({
       </div>
 
       {/* Mobile filter sheet */}
+      {/* Compact search bar for phones and tablets, shown on scroll up once the hero search is out of view */}
+      <div
+        ref={barRef}
+        inert={!barShown}
+        className={`fixed inset-x-0 top-[57px] z-[90] border-b border-slate-200/80 bg-white/95 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.35)] backdrop-blur-md transition-transform duration-300 ease-out lg:hidden ${
+          barShown ? "translate-y-0" : "-translate-y-[calc(100%+60px)]"
+        }`}
+      >
+        <div className="mx-auto flex max-w-[1280px] items-center gap-2 px-4 pt-2.5 sm:px-6">
+          <div className="relative min-w-0 flex-1">
+            <Search size={16} strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              enterKeyHint="search"
+              aria-label="Search vehicles"
+              placeholder={pagination.total ? `Search ${pagination.total.toLocaleString()} vehicles` : "Search make, model, city"}
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.currentTarget.blur();
+                  jumpToResults();
+                }
+              }}
+              className="h-10 w-full rounded-xl bg-slate-100 pl-9 pr-9 text-base text-slate-900 outline-none placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-indigo-400 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {search && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(true)}
+            aria-label={activeFilterCount ? `Filters (${activeFilterCount} on)` : "Filters"}
+            className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900"
+          >
+            <SlidersHorizontal size={16} strokeWidth={2} />
+            {activeFilterCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+        <div className="mx-auto flex max-w-[1280px] items-center gap-2 px-4 pb-2.5 pt-2 sm:px-6">
+          <div className="-ml-4 flex min-w-0 flex-1 gap-1.5 overflow-x-auto pl-4 pr-1 [scrollbar-width:none] sm:-ml-6 sm:pl-6 [&::-webkit-scrollbar]:hidden">
+            {TYPES.map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                aria-pressed={type === val}
+                onClick={() => {
+                  setType(val);
+                  setPage(1);
+                  jumpToResults();
+                }}
+                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  type === val ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={availableOnly}
+              onClick={() => {
+                setAvailableOnly(v => !v);
+                setPage(1);
+                jumpToResults();
+              }}
+              className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                availableOnly ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200"
+              }`}
+            >
+              Hide sold
+            </button>
+          </div>
+          <div className="flex h-8 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+            {(["grid", "list"] as const).map(v => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => chooseView(v)}
+                aria-label={v === "grid" ? "Grid view" : "List view"}
+                aria-pressed={view === v}
+                className={`flex w-8 items-center justify-center transition ${view === v ? "bg-slate-900 text-white" : "text-slate-500"}`}
+              >
+                {v === "grid" ? <LayoutGrid size={14} strokeWidth={1.75} /> : <List size={14} strokeWidth={1.75} />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {showFilters && (
         <div className="fixed inset-0 z-[150] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div className="bl-backdrop absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" data-closing={closingFilters} onClick={closeFilters} />
