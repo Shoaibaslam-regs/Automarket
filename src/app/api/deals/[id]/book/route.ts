@@ -11,8 +11,8 @@ import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings
 import { dealPrice, dealState } from "@/lib/deals";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { sendBookingRequestEmail } from "@/lib/email";
-import { triggerPusher } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { notifyTeam } from "@/lib/teamNotify";
 
 /**
  * Books a rent deal (a single car or a multi-car package) for the signed-in user. Body: { startDate, endDate }.
@@ -81,7 +81,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       console.error("Adding deal booking customer failed:", e);
     }
     try {
-      await triggerPusher(`user-${org.ownerId}`, "new-notification", { type: "booking", status: "PENDING" });
+      // Everyone in the business who handles bookings gets a badge and a phone alert
+      await notifyTeam(org._id, "manageBookings", { type: "booking", status: "PENDING" });
       const [owner, renter] = await Promise.all([
         User.findById(org.ownerId).select("name email").lean<{ name?: string; email: string }>(),
         User.findById(session.user.id).select("name email phone").lean<{ name?: string; email: string; phone?: string }>(),

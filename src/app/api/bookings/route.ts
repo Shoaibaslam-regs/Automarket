@@ -12,6 +12,7 @@ import { DEAL_BOOKING_FIELDS } from "@/lib/dealBookings";
 import { Organization } from "@/models/Organization";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { triggerPusher } from "@/lib/support";
+import { notifyTeam, organizationOf } from "@/lib/teamNotify";
 
 export async function GET(req: NextRequest) {
   try {
@@ -167,8 +168,10 @@ export async function POST(req: NextRequest) {
       console.error("Email send failed:", emailError);
     }
 
-    // Owner's badge updates live, and their phone gets an alert if they turned alerts on
+    // The vehicle's owner, and for a business vehicle everyone who handles bookings, get a badge and a phone alert
     await triggerPusher(`user-${rental.ownerId}`, "new-notification", { type: "booking", status: "PENDING" });
+    const ownerOrg = await organizationOf(rental.ownerId);
+    if (ownerOrg) await notifyTeam(ownerOrg, "manageBookings", { type: "booking", status: "PENDING" }, [String(rental.ownerId)]);
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
     console.error("Create booking error:", error);

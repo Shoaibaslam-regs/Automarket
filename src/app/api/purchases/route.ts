@@ -8,8 +8,9 @@ import { getMembership } from "@/lib/business";
 import { normalizeCnic } from "@/lib/plates";
 import { purchaseNumber } from "@/lib/purchases";
 import { ensurePurchaseCustomer, resolveSaleItem } from "@/lib/saleItems";
-import { sendChatMessage, triggerPusher } from "@/lib/support";
+import { sendChatMessage } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { notifyTeam } from "@/lib/teamNotify";
 
 /** Most purchase requests one buyer may have open at once. */
 const MAX_OPEN_REQUESTS = 10;
@@ -101,7 +102,8 @@ export async function POST(req: NextRequest) {
         `Purchase request ${purchaseNumber(String(purchase._id))}: I'd like to buy "${item.vehicle.title}".${offer} Phone: ${phone}.${message ? ` Note: ${message}` : ""} Handle it in Business console → Sales.`,
         user.name
       );
-      if (!item.ownerId.equals(item.contactId)) await triggerPusher(`user-${item.ownerId}`, "new-notification", { type: "sale" });
+      // The rest of the team that handles sales (the seller above already got the message and its alert)
+      await notifyTeam(item.organizationId, "manageSales", { type: "sale" }, [String(item.contactId)]);
     } catch (e) {
       console.error("Purchase notification failed:", e);
     }

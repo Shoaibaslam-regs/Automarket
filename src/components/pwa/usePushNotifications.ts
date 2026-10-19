@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type PushStatus = "loading" | "unsupported" | "needs-install" | "denied" | "off" | "on";
+export type PushStatus = "loading" | "not-configured" | "unsupported" | "needs-install" | "denied" | "off" | "on";
 
 const KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -44,6 +44,8 @@ export function usePushNotifications() {
     const standalone = window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     if (ios && !standalone) return setStatus("needs-install");
+    // The site was built without the public push key, so no phone can subscribe; say so instead of hiding
+    if (!KEY) return setStatus("not-configured");
     if (!supported) return setStatus("unsupported");
     if (Notification.permission === "denied") return setStatus("denied");
     const reg = await registration();
@@ -79,5 +81,19 @@ export function usePushNotifications() {
     setStatus("off");
   }
 
-  return { status, busy, error, enable, disable };
+  /** Asks the server to send a notification to this account's phones. Returns a message to show. */
+  async function test() {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/push/test", { method: "POST" });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(d.error || "Couldn't send a test"); return ""; }
+      return `Sent to ${d.devices} device${d.devices !== 1 ? "s" : ""}. It should arrive within a few seconds, even with the screen off.`;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return { status, busy, error, enable, disable, test };
 }

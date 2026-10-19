@@ -9,6 +9,7 @@ import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { can, type BusinessRole } from "@/lib/business";
 import QuickNew from "@/components/business/QuickNew";
+import { PushPrompt } from "@/components/pwa/PushCard";
 
 type WarningRow = { reason: string; at: Date; acknowledgedAt?: Date };
 
@@ -84,6 +85,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           <SuspensionGate suspension={suspension} warning={warning}>{children}</SuspensionGate>
         </div>
         {!suspension && <QuickNew />}
+        <PushPrompt className="top-14 md:left-auto md:right-6 md:top-6 md:mx-0 md:w-[380px]" />
       </div>
     </>
   );
