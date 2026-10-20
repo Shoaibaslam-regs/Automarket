@@ -325,7 +325,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
 
         <div className="mt-auto hidden items-center justify-between gap-3 border-t border-slate-100 pt-2.5 text-xs text-slate-500 sm:flex">
           <span className="text-[11px] font-medium capitalize text-slate-600">
-            {listing.condition.toLowerCase()}
+            {listing.condition?.toLowerCase()}
           </span>
           {seller && <SellerTag seller={seller} />}
         </div>

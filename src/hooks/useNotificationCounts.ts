@@ -27,6 +27,8 @@ type Counts = {
 const useCountsStore = create<Counts>(() => ({ messages: 0, ownerBookings: 0, renterBookings: 0, bookings: 0, purchases: 0, sales: 0, updates: 0 }));
 
 const POLL_MS = 20000;
+/** With Pusher connected, every new notification refreshes the counts at once, so polling is only a safety net */
+const LIVE_POLL_MS = 120000;
 let subscribers = 0;
 let stopPolling: (() => void) | null = null;
 let inFlight: Promise<void> | null = null;
@@ -64,10 +66,10 @@ export function refreshNotificationCounts(): Promise<void> {
 // One poller + one realtime subscription shared by every badge on the page
 function start(userId: string) {
   refreshNotificationCounts();
-  const interval = setInterval(refreshNotificationCounts, POLL_MS);
   const onFocus = () => refreshNotificationCounts();
   window.addEventListener("focus", onFocus);
 
+  let live = false;
   let unbind = () => {};
   try {
     const pusher = getPusherClient();
@@ -79,9 +81,14 @@ function start(userId: string) {
       channel.unbind("new-notification", handler);
       pusher.unsubscribe(channelName);
     };
+    live = true;
   } catch {
     // Pusher not configured: polling still keeps the badges up to date
   }
+  // A hidden tab doesn't poll; it refreshes when it comes back (focus)
+  const interval = setInterval(() => {
+    if (document.visibilityState === "visible") refreshNotificationCounts();
+  }, live ? LIVE_POLL_MS : POLL_MS);
 
   stopPolling = () => {
     clearInterval(interval);

@@ -24,7 +24,8 @@ const RentalSchema = new Schema<IRental>(
     deposit: { type: Number, required: true },
     availableFrom: { type: Date, required: true },
     availableTo: { type: Date },
-    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    // Read on every badge refresh (an owner's pending booking count)
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     plateNumber: { type: String, trim: true, maxlength: 20 },
   },
   { timestamps: true }

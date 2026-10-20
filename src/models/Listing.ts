@@ -66,5 +66,9 @@ ListingSchema.index({
   title: "text",
   location: "text",
 });
+// Browse and the home page (status first, then featured and newest), and each seller's or team's vehicles
+ListingSchema.index({ status: 1, featured: -1, createdAt: -1 });
+ListingSchema.index({ status: 1, type: 1, createdAt: -1 });
+ListingSchema.index({ sellerId: 1, createdAt: -1 });
 
 export const Listing = defineModel<IListing>("Listing", ListingSchema);

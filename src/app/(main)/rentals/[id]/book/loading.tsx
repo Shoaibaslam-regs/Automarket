@@ -9,9 +9,10 @@ export default function BookRentalLoading() {
         <Skeleton className="mb-6 mt-2 h-4 w-72 sm:mb-8" />
         <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <aside className="min-w-0 lg:order-2">
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-              <Skeleton className="aspect-[16/10] rounded-none" />
-              <div className="space-y-2.5 p-4">
+            {/* The vehicle summary: a small row on phones, a card with a photo on wide screens */}
+            <div className="flex gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 lg:block lg:p-0">
+              <Skeleton className="h-20 w-24 flex-shrink-0 rounded-xl lg:aspect-[16/10] lg:h-auto lg:w-full lg:rounded-none" />
+              <div className="flex-1 space-y-2.5 lg:p-4">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
                 <Skeleton className="h-5 w-1/3" />

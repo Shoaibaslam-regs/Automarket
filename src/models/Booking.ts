@@ -124,4 +124,8 @@ const BookingSchema = new Schema<IBooking>(
   { timestamps: true }
 );
 
+// Owners' booking lists and pending counts (by rental), and renters' own bookings
+BookingSchema.index({ rentalId: 1, status: 1 });
+BookingSchema.index({ renterId: 1, createdAt: -1 });
+
 export const Booking = defineModel<IBooking>("Booking", BookingSchema);

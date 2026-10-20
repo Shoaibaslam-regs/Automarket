@@ -1,12 +1,12 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Gmail only allows about 500 emails a day. For real traffic, set SMTP_HOST (and SMTP_PORT, default 587) to a
+// transactional email service such as Amazon SES, Brevo or Resend; EMAIL_USER/EMAIL_PASS are then its SMTP login.
+const auth = { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS };
+const smtpPort = Number(process.env.SMTP_PORT) || 587;
+const transporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({ host: process.env.SMTP_HOST, port: smtpPort, secure: smtpPort === 465, pool: true, auth })
+  : nodemailer.createTransport({ service: "gmail", auth });
 
 export async function sendBookingRequestEmail({
   ownerEmail,

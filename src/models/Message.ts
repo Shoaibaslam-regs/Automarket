@@ -26,5 +26,8 @@ const MessageSchema = new Schema<IMessage>(
 
 MessageSchema.index({ senderId: 1, receiverId: 1 });
 MessageSchema.index({ receiverId: 1, read: 1 });
+// The conversation list reads a user's sent and received messages, newest first
+MessageSchema.index({ senderId: 1, createdAt: -1 });
+MessageSchema.index({ receiverId: 1, createdAt: -1 });
 
 export const Message = defineModel<IMessage>("Message", MessageSchema);

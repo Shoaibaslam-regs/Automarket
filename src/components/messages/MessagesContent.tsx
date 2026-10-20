@@ -80,12 +80,29 @@ export default function MessagesContent() {
     setLoadingMsgs(false);
   }, []);
 
+  // The conversation list refreshes when a message arrives on the user's Pusher channel; polling is then only a
+  // safety net (every 30 s, and never in a hidden tab). Without Pusher it polls every 5 s as before.
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user?.id) return;
     fetchConversations();
-    const interval = setInterval(fetchConversations, 5000);
-    return () => clearInterval(interval);
-  }, [session, fetchConversations]);
+    let live = false;
+    let unbind = () => {};
+    try {
+      const channel = getPusherClient().subscribe(`user-${session.user.id}`);
+      const onNotify = (data: { type?: string }) => { if (data?.type === "message") fetchConversations(); };
+      channel.bind("new-notification", onNotify);
+      // Only unbind: the badge counter shares this channel and keeps it subscribed
+      unbind = () => channel.unbind("new-notification", onNotify);
+      live = true;
+    } catch { }
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchConversations();
+    }, live ? 30000 : 5000);
+    return () => {
+      clearInterval(interval);
+      unbind();
+    };
+  }, [session?.user?.id, fetchConversations]);
 
   useEffect(() => {
     if (!withUserId || !session?.user) return;
@@ -99,7 +116,12 @@ export default function MessagesContent() {
 
   useEffect(() => {
     if (!session?.user?.id || !activeUser) return;
+    // New messages in the open chat arrive through Pusher ("new-message"), so polling only catches anything
+    // missed: every 20 s in a visible tab. Without Pusher it polls every 3 s as before.
+    let live = false;
+    try { live = !!getPusherClient(); } catch { }
     const interval = setInterval(async () => {
+      if (live && document.visibilityState !== "visible") return;
       try {
         const res = await fetch(`/api/messages?with=${activeUser._id}`);
         const data = await res.json();
@@ -112,7 +134,7 @@ export default function MessagesContent() {
           });
         }
       } catch { }
-    }, 3000);
+    }, live ? 20000 : 3000);
 
     let channelName: string | null = null;
     try {

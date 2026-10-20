@@ -51,6 +51,18 @@ export default function ListingDetailLoading() {
               <Skeleton className="mt-4 h-10 w-full" />
               <Skeleton className="mt-2 h-10 w-full" />
             </div>
+            {/* The buy box and the financing calculator */}
+            <div className="space-y-2.5 rounded-xl border border-gray-200 bg-white p-5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="mt-1 h-10 w-full" />
+            </div>
+            <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+            </div>
           </div>
         </div>
       </div>
