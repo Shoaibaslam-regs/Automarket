@@ -105,26 +105,28 @@ export default function MobileNavDrawer({
         href={item.href}
         onClick={onClose}
         aria-current={active ? "page" : undefined}
-        className={`group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium transition ${
-          active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100 active:bg-slate-100"
+        // The current page: a dot on the left and a faint background; hover is only a light tint
+        className={`group relative flex items-center gap-2.5 rounded-lg py-1.5 pl-5 pr-2 text-[13px] font-medium transition ${
+          active ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50 active:bg-slate-50"
         }`}
       >
-        <span className={`flex flex-shrink-0 items-center justify-center ${active ? "text-white" : "text-slate-600"}`}>
-          <Icon size={14} strokeWidth={1.9} />
+        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />}
+        <span className={`flex flex-shrink-0 items-center justify-center ${active ? "text-slate-900" : "text-slate-500"}`}>
+          <Icon size={14} strokeWidth={active ? 2.2 : 1.9} />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {item.hint && (
           <span className="rounded-full bg-gradient-to-r from-amber-300 to-amber-500 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-slate-950">{item.hint}</span>
         )}
         <CountBadge count={item.count ?? 0} />
-        <ChevronRight size={13} className={active ? "text-white/60" : "text-slate-300"} />
+        <ChevronRight size={13} className={active ? "text-slate-400" : "text-slate-300"} />
       </Link>
     );
   };
 
   const section = (title: string, items: Item[]) => (
     <div>
-      <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">{title}</p>
+      <p className="pb-1 pl-5 pr-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">{title}</p>
       <div className="space-y-0.5">{items.map(row)}</div>
     </div>
   );
@@ -227,7 +229,7 @@ export default function MobileNavDrawer({
           )}
 
           <div>
-            <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Explore</p>
+            <p className="pb-1 pl-5 pr-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Explore</p>
             {/* Hot deals: highlighted like the province picker's capital card */}
             <Link
               href="/deals"
@@ -235,7 +237,7 @@ export default function MobileNavDrawer({
               aria-current={isActive("/deals") ? "page" : undefined}
               className="mn-hot mb-1 block rounded-lg"
             >
-              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
+              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg py-1.5 pl-5 pr-2 transition hover:bg-slate-50">
                 <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-[mnShine_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" />
                 <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
                   <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />

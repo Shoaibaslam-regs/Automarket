@@ -73,15 +73,13 @@ export default function UserMenuDropdown({
         onClick={onClose}
         role="menuitem"
         aria-current={active ? "page" : undefined}
-        className={`group flex items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] font-medium transition ${
-          active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+        // The current page: a dot on the left and a faint background; hover is only a light tint
+        className={`group relative flex items-center gap-3 rounded-xl py-2 pl-5 pr-2 text-[13px] font-medium transition ${
+          active ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50"
         } ${extra}`}
       >
-        <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition ${
-          active ? "bg-white/10 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900 group-hover:shadow-sm"
-        }`}>
-          <Icon size={15} strokeWidth={1.9} />
-        </span>
+        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />}
+        <Icon size={15} strokeWidth={active ? 2.2 : 1.9} className={`flex-shrink-0 transition ${active ? "text-slate-900" : "text-slate-500 group-hover:text-slate-700"}`} />
         <span className="flex-1 truncate">{label}</span>
         <CountBadge count={count ?? 0} />
       </Link>
@@ -153,7 +151,7 @@ export default function UserMenuDropdown({
             href="/admin"
             onClick={onClose}
             role="menuitem"
-            className="group flex items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] font-semibold text-amber-800 transition hover:bg-amber-50"
+            className="group flex items-center gap-3 rounded-xl py-2 pl-5 pr-2 text-[13px] font-semibold text-amber-800 transition hover:bg-amber-50"
           >
             <span className="flex items-center justify-center text-amber-700"><ShieldCheck size={15} /></span>
             <span className="flex-1">Admin panel</span>
@@ -189,7 +187,7 @@ export default function UserMenuDropdown({
         <button
           onClick={() => { onClose(); onSignOut(); }}
           role="menuitem"
-          className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] font-medium text-rose-600 transition hover:bg-rose-50"
+          className="flex w-full items-center gap-3 rounded-xl py-2 pl-5 pr-2 text-[13px] font-medium text-rose-600 transition hover:bg-rose-50"
         >
           <span className="flex items-center justify-center text-rose-500"><LogOut size={15} /></span>
           Sign out

@@ -218,7 +218,7 @@ function SidebarContent({
 
       {/* Nav */}
       <nav className="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-3">
-        <p className="px-2.5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Manage</p>
+        <p className="pb-1.5 pl-5 pr-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Manage</p>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const badge = navBadge(href);
@@ -228,17 +228,15 @@ function SidebarContent({
               href={href}
               onClick={onClose}
               aria-current={active ? "page" : undefined}
-              className={`group flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition ${
-                active ? "bg-white text-slate-950 shadow-lg shadow-black/30" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
+              // The current page: a dot on the left and a faint background; hover is only a light tint
+              className={`group relative flex items-center gap-3 rounded-xl py-2.5 pl-5 pr-2.5 text-[13.5px] font-medium transition ${
+                active ? "bg-white/[0.07] text-white" : "text-slate-400 hover:bg-white/[0.025] hover:text-slate-200"
               }`}
             >
-              <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition ${
-                active ? "bg-slate-950 text-white" : "bg-white/[0.06] text-slate-400 ring-1 ring-inset ring-white/5 group-hover:text-white"
-              }`}>
-                <Icon size={16} strokeWidth={1.9} />
-              </span>
+              {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />}
+              <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
               <span className="flex-1 truncate">{label}</span>
-              {badge > 0 ? <CountBadge count={badge} /> : active && <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500" />}
+              {badge > 0 && <CountBadge count={badge} />}
             </Link>
           );
         })}
