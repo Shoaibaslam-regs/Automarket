@@ -41,8 +41,9 @@ export default function FavoriteButton({ listingId, variant = "overlay" }: { lis
         type="button"
         onClick={onClick}
         aria-pressed={saved}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-          saved ? "border-rose-200 bg-rose-50 text-rose-600" : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+        // A plain text action (no border or fill), like Compare and Share beside it
+        className={`inline-flex items-center gap-1.5 py-1.5 text-sm font-medium transition ${
+          saved ? "text-rose-600" : "text-slate-600 hover:text-slate-900"
         }`}
       >
         {icon}

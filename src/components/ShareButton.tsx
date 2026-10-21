@@ -16,7 +16,7 @@ type Variant = "pill" | "block" | "dark";
 
 const STYLES: Record<Variant, string> = {
   // Beside Save and Compare on the listing page
-  pill: "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50",
+  pill: "inline-flex items-center gap-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900",
   // A full-width action, like the deal page's buttons
   block: "inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50",
   // On a dark header (dealer page)

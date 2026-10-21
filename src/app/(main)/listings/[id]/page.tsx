@@ -283,7 +283,8 @@ export default async function ListingDetailPage({ params }: Props) {
                   </Link>
                 </div>
               )}
-              <div className="mt-4 flex flex-wrap gap-2">
+              {/* Save · Compare · Share: plain text actions split by thin dividers */}
+              <div className="mt-4 flex items-center divide-x divide-slate-200 [&>*]:px-4 [&>*:first-child]:pl-0">
                 <FavoriteButton listingId={id} variant="pill" />
                 <CompareButton variant="pill" item={{ id, title: l.title, image: l.images?.[0], price: l.price, type: l.type }} />
                 <ShareButton path={`/listings/${id}`} title={`${l.year} ${l.make.trim()} ${l.model.trim()}`} />

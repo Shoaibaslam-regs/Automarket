@@ -1,62 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { SPLASH_KEY as KEY } from "@/lib/splash";
 
-const BRAND = "AutoMarket-Pak";
-/** Letters type at this pace; the screen fades out after the last one plus a short pause. */
-const LETTER_MS = 75;
-const TOTAL_MS = 450 + BRAND.length * LETTER_MS + 900;
+// Framer Motion is only downloaded when the splash actually shows (installed-app launches), not on normal visits
+const SplashAnimation = dynamic(() => import("./SplashAnimation"), { ssr: false });
+
+/** If the animation can't load (offline, slow chunk), the splash still leaves after this long */
+const FAILSAFE_MS = 6000;
+const FADE_MS = 380;
 
 /**
- * The installed app's opening screen: the same white background and logo as the phone's own launch screen,
- * then "AutoMarket-Pak" types out letter by letter with a blinking cursor, and the screen fades into the app.
- * Only shown when splashInitScript marked the page; ordinary browser visits never see it.
+ * The installed app's opening screen. The server-rendered cover (white, logo in the middle, the same as the
+ * phone's own launch screen) is shown by CSS before anything paints, once splashInitScript has marked <html>.
+ * Then SplashAnimation plays the car-and-name animation below the logo, and the cover fades into the app.
+ * Ordinary browser visits never see it.
  */
 export default function SplashScreen() {
-  const [gone, setGone] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "playing" | "leaving" | "gone">("idle");
+
+  const finish = useCallback(() => {
+    setPhase(p => (p === "playing" ? "leaving" : p));
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
-    if (!root.classList.contains("am-splash")) return;
+    if (!root.classList.contains("am-splash")) {
+      queueMicrotask(() => setPhase("gone"));
+      return;
+    }
     try { sessionStorage.setItem(KEY, "1"); } catch {}
-    const t = setTimeout(() => { root.classList.remove("am-splash"); setGone(true); }, TOTAL_MS + 400);
+    queueMicrotask(() => setPhase("playing"));
+    const failsafe = setTimeout(finish, FAILSAFE_MS);
+    return () => clearTimeout(failsafe);
+  }, [finish]);
+
+  useEffect(() => {
+    if (phase !== "leaving") return;
+    const t = setTimeout(() => {
+      document.documentElement.classList.remove("am-splash");
+      setPhase("gone");
+    }, FADE_MS);
     return () => clearTimeout(t);
-  }, []);
-  if (gone) return null;
+  }, [phase]);
+
+  if (phase === "gone") return null;
 
   return (
-    <div id="am-splash" aria-hidden className="theme-static">
+    <div id="am-splash" aria-hidden className={`theme-static${phase === "leaving" ? " am-leaving" : ""}`}>
       <style>{`
         #am-splash { display: none; }
         html.am-splash #am-splash {
           display: flex; position: fixed; inset: 0; z-index: 2147483000; flex-direction: column; align-items: center; justify-content: center;
-          background: #ffffff; animation: am-splash-out 380ms ease ${TOTAL_MS}ms forwards;
+          background: #ffffff; transition: opacity ${FADE_MS}ms ease;
         }
+        html.am-splash #am-splash.am-leaving { opacity: 0; }
         html.am-splash body { overflow: hidden; }
-        #am-splash img { width: 112px; height: 112px; animation: am-splash-logo 600ms cubic-bezier(.2,.8,.2,1) both; }
-        #am-splash .am-word { margin-top: 18px; display: flex; align-items: center; font: 800 26px/1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: -0.02em; color: #0f172a; }
-        #am-splash .am-word span { opacity: 0; animation: am-splash-type 1ms linear forwards; }
-        #am-splash .am-word .am-pak { color: #e11d48; }
-        #am-splash .am-caret { width: 3px; height: 28px; margin-left: 3px; border-radius: 2px; background: #e11d48; animation: am-splash-caret 700ms steps(1) infinite; }
-        #am-splash .am-tag { margin-top: 10px; font: 500 12px system-ui, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: #94a3b8; opacity: 0; animation: am-splash-fade 400ms ease ${450 + BRAND.length * LETTER_MS}ms forwards; }
-        @keyframes am-splash-logo { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
-        @keyframes am-splash-type { to { opacity: 1; } }
-        @keyframes am-splash-caret { 50% { opacity: 0; } }
-        @keyframes am-splash-fade { to { opacity: 1; } }
-        @keyframes am-splash-out { to { opacity: 0; visibility: hidden; } }
-        @media (prefers-reduced-motion: reduce) {
-          #am-splash img, #am-splash .am-word span, #am-splash .am-tag { animation-duration: 1ms !important; animation-delay: 0ms !important; }
-        }
+        #am-splash .am-logo { width: 104px; height: 104px; }
+        /* Room for the animation from the first paint, so the logo doesn't jump up when it starts */
+        #am-splash .am-stage { height: 138px; display: flex; justify-content: center; }
       `}</style>
-      {/* eslint-disable-next-line @next/next/no-img-element -- precached icon, same as the phone's launch screen */}
-      <img src="/icons/icon-192.png" alt="" />
-      <div className="am-word">
-        {BRAND.split("").map((ch, i) => (
-          <span key={i} className={i >= BRAND.indexOf("-") ? "am-pak" : undefined} style={{ animationDelay: `${450 + i * LETTER_MS}ms` }}>{ch}</span>
-        ))}
-        <i className="am-caret" />
-      </div>
-      <p className="am-tag">Buy · Sell · Rent</p>
+      {/* eslint-disable-next-line @next/next/no-img-element -- precached icon, the same as the phone's launch screen */}
+      <img className="am-logo" src="/icons/icon-192.png" alt="" />
+      <div className="am-stage">{phase !== "idle" && <SplashAnimation onDone={finish} />}</div>
     </div>
   );
 }

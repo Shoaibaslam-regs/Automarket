@@ -30,8 +30,8 @@ export default function CompareButton({ item, variant = "overlay" }: { item: Com
         type="button"
         onClick={onClick}
         aria-pressed={selected}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-          selected ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+        className={`inline-flex items-center gap-1.5 py-1.5 text-sm font-medium transition ${
+          selected ? "text-indigo-600" : "text-slate-600 hover:text-slate-900"
         }`}
       >
         <GitCompareArrows size={16} strokeWidth={2} />
