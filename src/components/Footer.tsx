@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TERMS_PATH } from "@/lib/terms";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 
 export default function Footer() {
   return (
@@ -71,7 +71,9 @@ export default function Footer() {
             All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
+            <Link href="/help" className="text-gray-500 transition hover:text-black">Help &amp; safety</Link>
             <Link href={TERMS_PATH} className="text-gray-500 transition hover:text-black">Terms &amp; Conditions</Link>
+            <Link href={PRIVACY_PATH} className="text-gray-500 transition hover:text-black">Privacy</Link>
             <Link href="/pricing" className="text-gray-500 transition hover:text-black">Pricing</Link>
           </div>
         </div>

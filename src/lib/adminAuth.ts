@@ -22,6 +22,8 @@ export function isPlatformOwner(email?: string | null): boolean {
  * Guards admin API routes. The role is re-read from the database rather than the JWT,
  * so a demoted or limited admin loses access immediately.
  * "read" lets in every admin; "write" also requires FULL access.
+ * The session must also come from the hidden admin form on /login (session.user.adminPortal, see src/lib/adminGate.ts):
+ * an admin signed in through the normal form is treated like any other user here.
  */
 export async function requireAdminApi(mode: "read" | "write"): Promise<Gate> {
   const session = await auth();
@@ -32,7 +34,7 @@ export async function requireAdminApi(mode: "read" | "write"): Promise<Gate> {
   const user = await User.findById(session.user.id)
     .select("email role adminAccess")
     .lean<{ _id: mongoose.Types.ObjectId; email: string; role: string; adminAccess?: AdminAccess }>();
-  if (!user || user.role !== "ADMIN") {
+  if (!user || user.role !== "ADMIN" || !session.user.adminPortal) {
     return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   }
   const adminAccess: AdminAccess = isPlatformOwner(user.email) ? "FULL" : user.adminAccess ?? "FULL";

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
-import { TERMS_PATH } from "@/lib/terms";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 import { useRateLock } from "@/hooks/useRateLock";
 
 export default function RegisterPage() {
@@ -108,6 +108,8 @@ export default function RegisterPage() {
               <span>
                 I agree to the{" "}
                 <Link href={TERMS_PATH} target="_blank" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Terms &amp; Conditions</Link>
+                {" "}and the{" "}
+                <Link href={PRIVACY_PATH} target="_blank" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Privacy Policy</Link>
               </span>
             </label>
 

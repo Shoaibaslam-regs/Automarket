@@ -5,8 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
-  Briefcase, Calendar, ChevronRight, Crown, Heart, LayoutDashboard, LogOut, MessageSquare, Settings, ShieldCheck, Sparkles,
-  ShoppingBag, type LucideIcon,
+  Briefcase, Calendar, ChevronRight, Crown, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare, Settings, ShieldCheck, ShoppingBag, Sparkles, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
@@ -62,6 +61,7 @@ export default function UserMenuDropdown({
     { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
     { href: "/profile", label: "Profile & settings", icon: Settings },
+    { href: "/help", label: "Help & safety", icon: LifeBuoy },
   ];
 
   const row = ({ href, label, icon: Icon, count }: Item, extra = "") => {
@@ -108,7 +108,7 @@ export default function UserMenuDropdown({
           <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-inset ring-white/15">
             <Crown size={11} /> {plan ? plan.name : "…"}
           </span>
-          {user.role === "ADMIN" && (
+          {user.role === "ADMIN" && user.adminPortal && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-inset ring-amber-300/25">
               <ShieldCheck size={11} /> Admin
             </span>
@@ -146,7 +146,7 @@ export default function UserMenuDropdown({
         ) : (
           row({ href: inBusiness ? "/" : "/business", label: inBusiness ? "Back to marketplace" : sub && !hasBusiness ? "Start a business" : "Business console", icon: Briefcase })
         )}
-        {user.role === "ADMIN" && (
+        {user.role === "ADMIN" && user.adminPortal && (
           <Link
             href="/admin"
             onClick={onClose}

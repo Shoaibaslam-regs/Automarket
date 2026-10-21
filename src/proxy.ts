@@ -9,9 +9,11 @@ const adminRoutes = ["/admin"];
 export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
-  const isAdmin = req.auth?.user?.role === "ADMIN";
+  // The admin panel needs an ADMIN who signed in through the hidden admin form (requireAdminApi checks the same)
+  const isAdmin = req.auth?.user?.role === "ADMIN" && req.auth.user.adminPortal === true;
 
-  if (adminRoutes.some(r => pathname.startsWith(r))) {
+  // "/admin" and "/admin/…" only
+  if (adminRoutes.some(r => pathname === r || pathname.startsWith(`${r}/`))) {
     if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
     if (!isAdmin) return NextResponse.redirect(new URL("/", req.url));
   }

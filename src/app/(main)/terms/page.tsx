@@ -196,7 +196,7 @@ const SECTIONS: Section[] = [
       <p>
         We store the details you give us (name, email, phone, listings, messages, bookings) to run the marketplace. Your phone
         number and name are shown to people you deal with through your listings and bookings. We don&apos;t sell your personal
-        data. Messages with our team are used only to help you.
+        data. Messages with our team are used only to help you. The <Link href="/privacy">Privacy Policy</Link> explains this in full.
       </p>
     ),
   },

@@ -118,7 +118,7 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-[1180px] px-4 pb-10 pt-10 text-center sm:pb-14 sm:pt-16">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-slate-200 ring-1 ring-inset ring-white/15 backdrop-blur">
-            <BadgeCheck size={14} className="text-emerald-400" />
+            <BadgeCheck size={14} className="text-blue-400" />
             Pakistan&apos;s trusted automobile marketplace
           </span>
 

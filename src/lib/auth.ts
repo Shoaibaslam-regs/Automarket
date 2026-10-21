@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
+import { hasAdminGate } from "@/lib/adminGate";
 
 /**
  * Too many failed sign-ins for this email or IP. The code carries the seconds left ("rate_limited_840"),
@@ -32,15 +33,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // "admin" from the hidden admin form on /login (see src/lib/adminGate.ts)
+        portal: { label: "Portal", type: "text" },
       },
       async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
         const email = String(credentials.email).trim();
         const password = String(credentials.password);
+        const adminPortal = credentials.portal === "admin";
+        const ip = clientIp(request);
+
+        // The admin form only works after the access key opened it (signed, short-lived cookie), and failed admin
+        // sign-ins are also limited per IP. Every refusal looks the same as a wrong password.
+        if (adminPortal) {
+          if (!hasAdminGate(request.headers.get("cookie"))) return null;
+          const adminLimit = await isRateLimited("adminLogin", ip);
+          if (!adminLimit.ok) throw new RateLimitedSignin(adminLimit.retryAfterSec);
+        }
 
         // Only failed attempts count: 5 per email and 30 per IP; reaching the limit locks sign-in for 15 minutes
         const emailKey = email.toLowerCase();
-        const ip = clientIp(request);
         const [byEmail, byIp] = await Promise.all([isRateLimited("loginEmail", emailKey), isRateLimited("loginIp", ip)]);
         if (!byEmail.ok || !byIp.ok) throw new RateLimitedSignin(Math.max(byEmail.ok ? 0 : byEmail.retryAfterSec, byIp.ok ? 0 : byIp.retryAfterSec));
 
@@ -49,7 +61,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // The same work and the same answer whether the email is unknown or the password is wrong
         const isValid = await bcrypt.compare(password, user?.password || DUMMY_HASH);
-        if (!user || !user.password || !isValid) {
+        // On the admin form a correct password for a non-admin account is still a refusal
+        if (!user || !user.password || !isValid || (adminPortal && user.role !== "ADMIN")) {
+          if (adminPortal) {
+            const a = await hitRateLimit("adminLogin", ip);
+            if (a.remaining === 0) throw new RateLimitedSignin(a.retryAfterSec);
+          }
           const [e, i] = await Promise.all([hitRateLimit("loginEmail", emailKey), hitRateLimit("loginIp", ip)]);
           // The failure that reaches the limit already locks, so the button locks straight away
           if (e.remaining === 0 || i.remaining === 0) throw new RateLimitedSignin(Math.max(e.remaining === 0 ? e.retryAfterSec : 0, i.remaining === 0 ? i.retryAfterSec : 0));
@@ -62,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           image: user.image,
           role: user.role,
+          adminPortal,
         };
       },
     }),
@@ -89,6 +107,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        // Only a sign-in through the hidden admin form opens the admin panel (proxy.ts, requireAdminApi)
+        token.adminPortal = user.adminPortal === true && user.role === "ADMIN";
       }
       return token;
     },
@@ -96,6 +116,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.adminPortal = token.adminPortal === true && token.role === "ADMIN";
       }
       return session;
     },

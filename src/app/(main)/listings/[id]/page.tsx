@@ -110,14 +110,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const price = `PKR ${listing.price.toLocaleString()}${listing.type === "RENT" ? "/day" : ""}`;
   const title = `${listing.year} ${listing.make.trim()} ${listing.model.trim()} — ${price} in ${listing.location.trim()}`;
   const description = listing.description.replace(/\s+/g, " ").trim().slice(0, 160);
-  const images = listing.images?.length ? [{ url: listing.images[0], alt: listing.title }] : undefined;
-
   return {
     title,
     description,
     alternates: { canonical: `/listings/${id}` },
-    openGraph: { title, description, url: `/listings/${id}`, images },
-    twitter: { card: "summary_large_image", title, description, images: images?.map(i => i.url) },
+    // The preview image is opengraph-image.tsx next to this page (photo, title, price and city)
+    openGraph: { title, description, url: `/listings/${id}` },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

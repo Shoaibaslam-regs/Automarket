@@ -24,6 +24,9 @@ export const RATE_LIMITS = {
   phoneOtpNumber: { limit: 5, windowSec: 24 * 60 * 60 },
   /** Reports of listings, deals and businesses, per user */
   reports: { limit: 10, windowSec: 24 * 60 * 60 },
+  /** Wrong admin access keys typed on /login, and failed admin sign-ins, per IP */
+  adminKey: { limit: 5, windowSec: 15 * 60, lockout: true },
+  adminLogin: { limit: 5, windowSec: 15 * 60, lockout: true },
   /** Wrong passwords when deleting an account */
   accountDelete: { limit: 5, windowSec: 15 * 60, lockout: true },
   /** AI calls cost money per request */

@@ -32,13 +32,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { deal } = page;
   const title = `${dealLabel(deal)}: ${deal.title} — PKR ${formatLakh(dealPrice(deal.price, deal))}${isRentDeal(deal) ? "/day" : ""} in ${deal.location}`;
   const description = (deal.description || `${deal.year} ${deal.make} ${deal.model} offered by ${deal.business.name}.`).replace(/\s+/g, " ").slice(0, 160);
-  const images = deal.images[0] ? [{ url: deal.images[0], alt: deal.title }] : undefined;
   return {
     title,
     description,
     alternates: { canonical: `/deals/${deal._id}` },
-    openGraph: { title, description, url: `/deals/${deal._id}`, images },
-    twitter: { card: "summary_large_image", title, description, images: images?.map(i => i.url) },
+    // The preview image is opengraph-image.tsx next to this page
+    openGraph: { title, description, url: `/deals/${deal._id}` },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

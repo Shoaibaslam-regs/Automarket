@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
-  Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, KeyRound, LayoutDashboard, LogOut, MessageSquare,
+  Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare,
   Search, Settings, ShieldCheck, ShoppingBag, Sparkles, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
@@ -82,7 +82,7 @@ export default function MobileNavDrawer({
   ];
   const browse: Item[] = [
     { href: "/listings", label: "Browse vehicles", icon: Search },
-    { href: "/listings?type=RENT", label: "Rentals", icon: KeyRound },
+    { href: "/help", label: "Help & safety", icon: LifeBuoy },
     { href: "/pricing", label: "Plans & pricing", icon: Crown, hint: plan && plan.id === "FREE" ? "Upgrade" : undefined },
   ];
   const account: Item[] = [
@@ -278,7 +278,7 @@ export default function MobileNavDrawer({
             </Link>
           )}
 
-          {user?.role === "ADMIN" && (
+          {user?.role === "ADMIN" && user.adminPortal && (
             <Link
               href="/admin"
               onClick={onClose}
