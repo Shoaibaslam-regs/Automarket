@@ -22,6 +22,7 @@ import { mapsUrl } from "@/lib/address";
 import { BadgeCheck, Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
+import ShareButton from "@/components/ShareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
 import { getMembership } from "@/lib/business";
@@ -285,6 +286,7 @@ export default async function ListingDetailPage({ params }: Props) {
               <div className="mt-4 flex flex-wrap gap-2">
                 <FavoriteButton listingId={id} variant="pill" />
                 <CompareButton variant="pill" item={{ id, title: l.title, image: l.images?.[0], price: l.price, type: l.type }} />
+                <ShareButton path={`/listings/${id}`} title={`${l.year} ${l.make.trim()} ${l.model.trim()}`} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
                 {specs.map((spec) => (

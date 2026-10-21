@@ -23,6 +23,7 @@ import DealerVehicles from "@/components/listings/DealerVehicles";
 import StarRating from "@/components/reviews/StarRating";
 import BusinessReviews, { type ReviewViewer } from "@/components/reviews/BusinessReviews";
 import { toReviewView } from "@/components/reviews/types";
+import ShareButton from "@/components/ShareButton";
 import ReportButton from "@/components/reports/ReportButton";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
@@ -157,7 +158,8 @@ export default async function DealerPage({ params }: Props) {
                 <span className="font-semibold">{count ? average.toFixed(1) : "New"}</span>
                 <span className="text-slate-400">{count} review{count !== 1 ? "s" : ""}</span>
               </a>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name} />
                 <ReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} hidden={isMember} tone="dark" />
               </div>
             </div>

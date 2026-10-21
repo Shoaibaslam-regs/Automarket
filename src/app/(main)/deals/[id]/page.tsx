@@ -16,6 +16,7 @@ import { mapsUrl } from "@/lib/address";
 import { getDealPage, getLiveDeals } from "@/lib/publicDeals";
 import { SITE_URL } from "@/lib/site";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
+import ShareButton from "@/components/ShareButton";
 import ReportButton from "@/components/reports/ReportButton";
 
 // Same for every visitor, so the page itself is cached too; deal changes clear it straight away
@@ -170,6 +171,7 @@ export default async function DealPage({ params }: Props) {
                     </a>
                   )}
                 </div>
+                <ShareButton variant="block" path={`/deals/${deal._id}`} title={deal.title} label="Share this deal" />
                 <div className="pt-1 text-center">
                   <ReportButton targetType="DEAL" targetId={String(deal._id)} label={deal.title} />
                 </div>
