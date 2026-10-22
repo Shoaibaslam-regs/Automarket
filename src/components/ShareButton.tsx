@@ -16,7 +16,7 @@ type Variant = "pill" | "block" | "dark";
 
 const STYLES: Record<Variant, string> = {
   // Beside Save and Compare on the listing page
-  pill: "inline-flex items-center gap-1.5 py-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900",
+  pill: "flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95",
   // A full-width action, like the deal page's buttons
   block: "inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50",
   // On a dark header (dealer page)
@@ -102,8 +102,10 @@ export default function ShareButton({ path, title, label = "Share", variant = "p
 
   return (
     <span ref={wrap} className={`relative ${variant === "block" ? "block" : "inline-flex"}`}>
-      <button type="button" onClick={onClick} aria-haspopup="menu" aria-expanded={open} className={`${STYLES[variant]} ${className}`}>
-        <Share2 size={variant === "dark" ? 14 : 16} strokeWidth={2} /> {label}
+      <button type="button" onClick={onClick} aria-haspopup="menu" aria-expanded={open}
+        {...(variant === "pill" && { "aria-label": label, title: label })} className={`${STYLES[variant]} ${className}`}>
+        <Share2 size={variant === "dark" ? 14 : variant === "pill" ? 19 : 16} strokeWidth={2} />
+        {variant !== "pill" && <> {label}</>}
       </button>
       {open && (
         <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200 ${MENU_POSITION[variant]}`}>

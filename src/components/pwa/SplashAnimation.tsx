@@ -11,16 +11,13 @@ const DRIVE_EASE = [0.45, 0, 0.15, 1] as const;
 
 /** A small side-view car facing right: slate body, rose stripe (the logo's red), wheels that spin. */
 function Car({ spin }: { spin: boolean }) {
+  // Each wheel spins around its own centre (fill-box), so it stays on the car while it turns
   const wheel = (cx: number) => (
-    <motion.g
-      style={{ originX: `${cx}px`, originY: "20px" }}
-      animate={spin ? { rotate: 360 } : undefined}
-      transition={{ duration: 0.35, repeat: Infinity, ease: "linear" }}
-    >
+    <g className={spin ? "am-wheel" : undefined} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
       <circle cx={cx} cy={20} r={5} fill="#0f172a" />
       <circle cx={cx} cy={20} r={2.2} fill="#e2e8f0" />
       <path d={`M${cx - 3.6} 20h7.2M${cx} 16.4v7.2`} stroke="#0f172a" strokeWidth={1} />
-    </motion.g>
+    </g>
   );
   return (
     <svg width={64} height={28} viewBox="0 0 64 28" aria-hidden>
@@ -84,7 +81,8 @@ export default function SplashAnimation({ onDone }: { onDone: () => void }) {
             initial={{ left: "0%", opacity: 1 }}
             animate={{ left: ["0%", "100%", "122%"], opacity: [1, 1, 0] }}
             transition={{ duration: total, times: [0, driveShare, 1], ease: [DRIVE_EASE, "easeIn"] }}
-            style={{ position: "absolute", bottom: 8, x: "-100%", display: "flex", alignItems: "center" }}
+            // The SVG has 3px below the wheels, so 5px puts the tyres on the road's top edge (bottom 6 + 2px tall)
+            style={{ position: "absolute", bottom: 5, x: "-100%", display: "flex", alignItems: "center" }}
           >
             {/* Speed lines behind the car */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, marginRight: 4 }}>
@@ -112,6 +110,8 @@ export default function SplashAnimation({ onDone }: { onDone: () => void }) {
       </motion.p>
       <style>{`
         .am-road-dashes { animation: am-road 0.35s linear infinite; }
+        .am-wheel { animation: am-spin 0.35s linear infinite; }
+        @keyframes am-spin { to { transform: rotate(360deg); } }
         @keyframes am-road { to { background-position: -28px 0; } }
       `}</style>
     </div>

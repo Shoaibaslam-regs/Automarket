@@ -235,10 +235,10 @@ export default function AIInspectionForm({ listingId, listingImages, existingRep
           }}
           onUploadError={(err) => { setUploading(false); setError(err.message); }}
           appearance={{
-            container: "border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-gray-400 transition",
-            label: "text-sm text-gray-500",
-            allowedContent: "text-xs text-gray-400",
-            button: "bg-gray-900 text-white text-sm px-4 py-2 rounded-lg",
+            container: "border-2 border-dashed border-slate-200 rounded-xl p-6 cursor-pointer hover:border-slate-400 transition",
+            label: "text-sm text-slate-500",
+            allowedContent: "text-xs text-slate-400",
+            button: "bg-slate-900 text-white text-sm px-4 py-2 rounded-lg",
           }}
           content={{
             label: uploading ? "Uploading & checking photos with AI…" : "Drop more photos here or click to upload",

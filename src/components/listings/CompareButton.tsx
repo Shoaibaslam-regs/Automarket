@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { GitCompareArrows } from "lucide-react";
 import { MAX_COMPARE, useCompare, type CompareItem } from "@/hooks/useCompare";
+import { toast } from "@/lib/toast";
 
-/** Adds/removes a listing from the compare tray. "overlay" sits on a card photo; "pill" is for the listing page. */
+/** Adds/removes a listing from the compare tray. "overlay" sits on a card photo; "pill" is the icon button on the listing page. */
 export default function CompareButton({ item, variant = "overlay" }: { item: CompareItem; variant?: "overlay" | "pill" }) {
   const selected = useCompare(s => s.items.some(i => i.id === item.id));
   const toggle = useCompare(s => s.toggle);
@@ -19,7 +20,12 @@ export default function CompareButton({ item, variant = "overlay" }: { item: Com
   function onClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (toggle(item) === "full") setFull(true);
+    const result = toggle(item);
+    if (result === "full") {
+      setFull(true);
+      // The listing page button has no text, so say it in a toast
+      if (variant === "pill") toast(`You can compare up to ${MAX_COMPARE} vehicles`);
+    }
   }
 
   const label = full ? `You can compare up to ${MAX_COMPARE}` : selected ? "Remove from compare" : "Add to compare";
@@ -30,12 +36,13 @@ export default function CompareButton({ item, variant = "overlay" }: { item: Com
         type="button"
         onClick={onClick}
         aria-pressed={selected}
-        className={`inline-flex items-center gap-1.5 py-1.5 text-sm font-medium transition ${
+        aria-label={label}
+        title={label}
+        className={`flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-slate-100 active:scale-95 ${
           selected ? "text-indigo-600" : "text-slate-600 hover:text-slate-900"
         }`}
       >
-        <GitCompareArrows size={16} strokeWidth={2} />
-        {full ? `Max ${MAX_COMPARE}` : selected ? "Comparing" : "Compare"}
+        <GitCompareArrows size={19} strokeWidth={2} />
       </button>
     );
   }

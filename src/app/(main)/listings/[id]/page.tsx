@@ -19,7 +19,10 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { closedTag } from "@/lib/availability";
 import { mapsUrl } from "@/lib/address";
-import { BadgeCheck, Building2, ChevronRight, MapPin, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, CalendarCheck, ChevronRight, Cog, Fuel, Gauge, MapPin, MessageCircle, MessageSquare, Palette, Phone, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
+import ReadMore from "@/components/ui/ReadMore";
+import { RingAvatar } from "@/components/UserMenuDropdown";
+import { conditionLabel } from "@/lib/vehicleOptions";
 import FavoriteButton from "@/components/listings/FavoriteButton";
 import CompareButton from "@/components/listings/CompareButton";
 import ShareButton from "@/components/ShareButton";
@@ -43,6 +46,10 @@ type Props = { params: Promise<{ id: string }> };
  * Everything on the page that is the same for every visitor, cached for PUBLIC_CACHE_SECONDS and cleared
  * when the listing is edited. Cached values come back as plain JSON: ids and dates are strings.
  */
+// One dark main action per box and quiet outlined ones, so the column stays calm
+const PRIMARY_BTN = "flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800";
+const OUTLINE_BTN = "flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50";
+
 const loadListingPage = (id: string) =>
   unstable_cache(
     async () => {
@@ -150,6 +157,7 @@ export default async function ListingDetailPage({ params }: Props) {
     sellerId: {
       _id?: mongoose.Types.ObjectId;
       name?: string;
+      image?: string;
       phone?: string;
       phoneVerifiedAt?: string;
       createdAt?: Date;
@@ -193,13 +201,14 @@ export default async function ListingDetailPage({ params }: Props) {
   // Phones: price and contact fixed to the bottom, for anyone who isn't the seller while it can still be bought or rented
   const showContactBar = !!l.sellerId && !isOwner && !closed;
 
+  // Shown as icon + value; the label is the icon's tooltip and is read out by screen readers
   const specs = [
-    { label: "Condition", value: l.condition },
-    { label: "Mileage", value: l.mileage ? `${l.mileage.toLocaleString()} km` : "N/A" },
-    { label: "Fuel type", value: l.fuelType ?? "N/A" },
-    { label: "Transmission", value: l.transmission ?? "N/A" },
-    { label: "Color", value: l.color ?? "N/A" },
-    { label: "Location", value: l.location },
+    { label: "Condition", icon: ShieldCheck, value: l.condition ? conditionLabel(l.condition) : "N/A" },
+    { label: "Mileage", icon: Gauge, value: l.mileage ? `${l.mileage.toLocaleString()} km` : "N/A" },
+    { label: "Fuel type", icon: Fuel, value: l.fuelType ?? "N/A" },
+    { label: "Transmission", icon: Cog, value: l.transmission ?? "N/A" },
+    { label: "Color", icon: Palette, value: l.color ?? "N/A" },
+    { label: "Location", icon: MapPin, value: l.location },
   ];
 
   const inspectionSpecs = inspection ? [
@@ -236,7 +245,7 @@ export default async function ListingDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <script
         type="application/ld+json"
         // Escape "<" so listing text can't close the script tag
@@ -248,27 +257,27 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Left */}
           <div className="lg:col-span-2 space-y-6">
           {/* Images */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
               <ImageGallery images={l.images ?? []} title={l.title} />
             </div>
             {/* Title + price */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">{l.title}</h1>
-                  <p className="text-gray-500 mt-1">{l.make} {l.model} · {l.year}</p>
+                  <h1 className="text-2xl font-semibold text-slate-900">{l.title}</h1>
+                  <p className="text-slate-500 mt-1">{l.make} {l.model} · {l.year}</p>
                 </div>
                 <div className="text-right">
                   {/* Rent-only listings store the daily rate as their price */}
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-slate-900">
                     PKR {l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(l.price)}
-                    {l.type === "RENT" && <span className="text-sm font-medium text-gray-400">/day</span>}
+                    {l.type === "RENT" && <span className="text-sm font-medium text-slate-400">/day</span>}
                   </p>
                   {l.type !== "RENT" && l.price >= 1e5 && (
-                    <p className="text-xs text-gray-400">PKR {l.price.toLocaleString("en-PK")}</p>
+                    <p className="text-xs text-slate-400">PKR {l.price.toLocaleString("en-PK")}</p>
                   )}
                   {rental && l.type !== "RENT" && (
-                    <p className="text-sm text-green-600 mt-1">PKR {rental.dailyRate.toLocaleString()}/day</p>
+                    <p className="mt-1 text-sm text-slate-500">or rent at <span className="font-semibold text-slate-800">PKR {rental.dailyRate.toLocaleString()}</span>/day</p>
                   )}
                 </div>
               </div>
@@ -290,37 +299,39 @@ export default async function ListingDetailPage({ params }: Props) {
                   </Link>
                 </div>
               )}
-              {/* Save · Compare · Share: plain text actions split by thin dividers */}
-              <div className="mt-4 flex items-center divide-x divide-slate-200 [&>*]:px-4 [&>*:first-child]:pl-0">
+              {/* Save · Compare · Share: icon buttons (labels in their tooltips); saving confirms with a toast */}
+              <div className="-ml-2.5 mt-3 flex items-center gap-1">
                 <FavoriteButton listingId={id} variant="pill" />
                 <CompareButton variant="pill" item={{ id, title: l.title, image: l.images?.[0], price: l.price, type: l.type }} />
                 <ShareButton path={`/listings/${id}`} title={`${l.year} ${l.make.trim()} ${l.model.trim()}`} />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
-                {specs.map((spec) => (
-                  <div key={spec.label}>
-                    <p className="text-xs text-gray-400">{spec.label}</p>
-                    <p className="text-sm font-medium text-gray-800 mt-0.5">{spec.value}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-100">
+                {specs.map(({ label, icon: Icon, value }) => (
+                  <div key={label} title={label} className="flex min-w-0 items-center gap-2.5">
+                    <Icon size={18} strokeWidth={1.75} aria-hidden className="flex-shrink-0 text-slate-400" />
+                    <p className="min-w-0 truncate text-sm font-medium text-slate-800">
+                      <span className="sr-only">{label}: </span>{value}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Description */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold text-gray-900 mb-3">Description</h2>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{l.description}</p>
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-3">Description</h2>
+              <ReadMore text={l.description} lines={5} className="text-sm leading-7 text-slate-600" />
             </div>
 
             {/* AI Inspection */}
             {inspection && inspectionSpecs.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-gray-900 mb-4">AI inspection report</h2>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
+                <h2 className="text-base font-semibold text-slate-900 mb-4">AI inspection report</h2>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                   {inspectionSpecs.map((s) => (
-                    <div key={s.label} className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-400">{s.label}</p>
-                      <p className="text-sm font-medium text-gray-800 mt-0.5">{s.value}</p>
+                    <div key={s.label}>
+                      <p className="text-xs text-slate-400">{s.label}</p>
+                      <p className="text-sm font-medium text-slate-800 mt-0.5">{s.value}</p>
                     </div>
                   ))}
                 </div>
@@ -333,9 +344,9 @@ export default async function ListingDetailPage({ params }: Props) {
           <div className="space-y-4">
 
             {/* Seller */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
               <div className="mb-4 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-gray-700">Listed by</h2>
+                <h2 className="text-sm font-semibold text-slate-900">Listed by</h2>
                 {l.sellerId && (business?.verified ? (
                   <VerifiedBadge />
                 ) : business ? (
@@ -343,7 +354,7 @@ export default async function ListingDetailPage({ params }: Props) {
                     <Building2 size={12} /> Business account
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
                     <UserRound size={12} /> Private seller
                   </span>
                 ))}
@@ -351,36 +362,34 @@ export default async function ListingDetailPage({ params }: Props) {
               {l.sellerId ? (
                 <>
                   {business ? (
-                    <Link href={`/dealers/${business.slug}`} className="group -m-2 flex items-center gap-3 rounded-xl p-2 transition hover:bg-gray-50">
+                    <Link href={`/dealers/${business.slug}`} className="group -m-2 flex items-center gap-3 rounded-xl p-2 transition hover:bg-slate-50">
                       <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-bold text-white">
                         {business.logo ? <Image src={business.logo} alt="" fill sizes="44px" className="object-cover" /> : business.name[0]?.toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-gray-900">{business.name}</p>
+                        <p className="truncate text-sm font-semibold text-slate-900">{business.name}</p>
                         {rating.count > 0 ? (
-                          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
+                          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                             <StarRating value={rating.average} size={12} />
-                            <span className="font-semibold text-gray-800">{rating.average.toFixed(1)}</span>
+                            <span className="font-semibold text-slate-800">{rating.average.toFixed(1)}</span>
                             <span>({rating.count} review{rating.count !== 1 ? "s" : ""})</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-400">No reviews yet</p>
+                          <p className="text-xs text-slate-400">No reviews yet</p>
                         )}
-                        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-500">
+                        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500">
                           <Building2 size={11} /> {business.type === "RENTAL" ? "Rental company" : business.type === "BOTH" ? "Dealer & rentals" : "Dealer"}
                           {business.city && <><MapPin size={11} className="ml-1" /> {business.city}</>}
                         </p>
                       </div>
-                      <ChevronRight size={16} className="text-gray-300 transition group-hover:text-gray-500" />
+                      <ChevronRight size={16} className="text-slate-300 transition group-hover:text-slate-500" />
                     </Link>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
-                        {l.sellerId.name?.[0]?.toUpperCase() ?? "?"}
-                      </div>
+                      <RingAvatar name={l.sellerId.name} image={l.sellerId.image} size={38} />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{l.sellerId.name ?? "Unknown"}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-medium text-slate-900">{l.sellerId.name ?? "Unknown"}</p>
+                        <p className="text-xs text-slate-400">
                           Individual seller{l.sellerId.createdAt ? ` · on AutoMarket since ${new Date(l.sellerId.createdAt).getFullYear()}` : ""}
                         </p>
                       </div>
@@ -392,95 +401,101 @@ export default async function ListingDetailPage({ params }: Props) {
                     </p>
                   )}
                   {business && (
-                    <p className="mt-3 text-xs text-gray-500">
+                    <p className="mt-3 text-xs text-slate-500">
                       Listed by {l.sellerId.name?.split(" ")[0] ?? "a team member"} at {business.name}.{" "}
                       <Link href={`/dealers/${business.slug}#reviews`} className="font-semibold text-indigo-700 hover:underline">See reviews</Link>
                     </p>
                   )}
-                  {l.sellerId.phone && (
-                    <a href={`tel:${l.sellerId.phone}`}
-                      className="mt-4 w-full block text-center py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
-                      Call seller
-                    </a>
+                  {/* One dark main action (Call), quiet outlined ones beside it */}
+                  {!isOwner && (
+                    <div className="mt-4 space-y-2">
+                      {l.sellerId.phone && (
+                        <a href={`tel:${l.sellerId.phone}`} className={PRIMARY_BTN}>
+                          <Phone size={16} /> Call seller
+                        </a>
+                      )}
+                      {(whatsapp || session?.user) && (
+                        <div className={`grid gap-2 ${whatsapp && session?.user ? "grid-cols-2" : "grid-cols-1"}`}>
+                          {whatsapp && (
+                            <a href={whatsapp} target="_blank" rel="noreferrer" className={OUTLINE_BTN}>
+                              <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
+                            </a>
+                          )}
+                          {session?.user && (
+                            <Link href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`} className={OUTLINE_BTN}>
+                              <MessageSquare size={16} className="text-slate-500" /> Message
+                            </Link>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
-
-                  {whatsapp && (
-                    <a href={whatsapp}
-                      target="_blank" rel="noreferrer"
-                      className="mt-2 w-full block text-center py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition">
-                      WhatsApp
-                    </a>
+                  {/* A short safety reminder next to the contact buttons */}
+                  {!isOwner && (
+                    <p className="mt-4 flex items-start gap-2 border-t border-slate-100 pt-3.5 text-xs leading-relaxed text-slate-500">
+                      <ShieldAlert size={14} className="mt-px flex-shrink-0 text-amber-500" />
+                      <span>
+                        Never pay in advance. See the vehicle and its documents first.{" "}
+                        <Link href="/help#safety" className="font-semibold text-slate-700 hover:underline">Safety tips</Link>
+                      </span>
+                    </p>
                   )}
-                  {session?.user && !isOwner && (
-  <Link
-    href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`}
-    style={{ display: "block", marginTop: "8px", padding: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "var(--gh-0d1117)", textDecoration: "none", fontWeight: 500 }}
-  >
-    Message seller
-  </Link>
-)}
                   <div className="mt-3 text-center">
                     <ReportButton targetType="LISTING" targetId={String(l._id)} label={l.title} hidden={isOwner || (!!business && viewerOrg === business.id)} />
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-400">Seller info unavailable</p>
+                <p className="text-sm text-slate-400">Seller info unavailable</p>
               )}
             </div>
 
             {canBuy && business && (
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h2 className="text-sm font-semibold text-gray-700">Buy from {business.name}</h2>
-                <p className="mb-3 mt-1 text-xs text-gray-500">Send a purchase request. The business agrees the price with you, and you get a sale slip when it&apos;s done.</p>
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
+                <h2 className="text-sm font-semibold text-slate-900">Buy from {business.name}</h2>
+                <p className="mb-3 mt-1 text-xs text-slate-500">Send a purchase request. The business agrees the price with you, and you get a sale slip when it&apos;s done.</p>
                 <BuyRequestButton listingId={String(l._id)} title={l.title} price={l.price} businessName={business.name} />
               </div>
             )}
 
             {/* Rental */}
             {rental && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-semibold text-gray-700 mb-4">Rental rates</h2>
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
+                <h2 className="mb-4 text-sm font-semibold text-slate-900">Rental rates</h2>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Daily</span>
-                    <span className="font-medium">PKR {rental.dailyRate.toLocaleString()}</span>
+                    <span className="text-slate-500">Daily</span>
+                    <span className="font-semibold text-slate-900">PKR {rental.dailyRate.toLocaleString()}</span>
                   </div>
                   {rental.weeklyRate && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Weekly</span>
-                      <span className="font-medium">PKR {rental.weeklyRate.toLocaleString()}</span>
+                      <span className="text-slate-500">Weekly</span>
+                      <span className="font-semibold text-slate-900">PKR {rental.weeklyRate.toLocaleString()}</span>
                     </div>
                   )}
                   {rental.monthlyRate && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Monthly</span>
-                      <span className="font-medium">PKR {rental.monthlyRate.toLocaleString()}</span>
+                      <span className="text-slate-500">Monthly</span>
+                      <span className="font-semibold text-slate-900">PKR {rental.monthlyRate.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
-                    <span className="text-gray-500">Security deposit</span>
-                    <span className="font-medium">PKR {rental.deposit.toLocaleString()}</span>
+                  <div className="flex justify-between text-sm pt-2 border-t border-slate-100">
+                    <span className="text-slate-500">Security deposit</span>
+                    <span className="font-semibold text-slate-900">PKR {rental.deposit.toLocaleString()}</span>
                   </div>
                 </div>
 
                 {closed ? (
-                  <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2.5 text-center text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200">
+                  <p className="mt-4 text-center text-xs font-medium text-slate-500">
                     {closed.tone === "sold" ? "Sold, so it can't be booked" : "Rented out right now, so it can't be booked"}
                   </p>
                 ) : !isOwner && session?.user && (
-                  <Link
-                    href={`/rentals/${l._id}/book`}
-                    className="mt-4 w-full block text-center py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
-                  >
-                    Book now
+                  <Link href={`/rentals/${l._id}/book`} className={`mt-4 ${PRIMARY_BTN}`}>
+                    <CalendarCheck size={16} /> Book now
                   </Link>
                 )}
                 {!closed && !isOwner && !session?.user && (
-                  <Link
-                    href="/login"
-                    style={{ display: "block", marginTop: "12px", padding: "10px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", textDecoration: "none" }}
-                  >
-                    Login first for online booking
+                  <Link href="/login" className={`mt-4 ${OUTLINE_BTN}`}>
+                    Sign in to book online
                   </Link>
                 )}
               </div>
@@ -490,31 +505,29 @@ export default async function ListingDetailPage({ params }: Props) {
 
             {/* Owner actions */}
             {l.address && (
-              <a href={mapsUrl(l.address, l.location)} target="_blank" rel="noreferrer" className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-gray-300">
-                <span className="flex flex-shrink-0 items-center justify-center text-rose-600"><MapPin size={17} /></span>
+              <a href={mapsUrl(l.address, l.location)} target="_blank" rel="noreferrer" className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5 transition hover:border-slate-300">
+                <span className="flex flex-shrink-0 items-center justify-center text-slate-400"><MapPin size={17} /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">Where to see the vehicle</span>
-                  <span className="mt-0.5 block text-sm font-semibold text-gray-900">{l.address}</span>
-                  <span className="block text-xs text-gray-500">{l.location}</span>
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">Where to see the vehicle</span>
+                  <span className="mt-0.5 block text-sm font-semibold text-slate-900">{l.address}</span>
+                  <span className="block text-xs text-slate-500">{l.location}</span>
                   <span className="mt-1.5 inline-block text-xs font-semibold text-indigo-600 group-hover:underline">Open in Google Maps</span>
                 </span>
               </a>
             )}
 
             {isOwner && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">Manage listing</h2>
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
+                <h2 className="mb-3 text-sm font-semibold text-slate-900">Manage listing</h2>
                 <div className="mb-3">
-                  <p className="mb-1.5 text-xs text-gray-500">Mark it sold or rented when it&apos;s taken, so buyers see it straight away.</p>
+                  <p className="mb-1.5 text-xs text-slate-500">Mark it sold or rented when it&apos;s taken, so buyers see it straight away.</p>
                   <AvailabilityControl id={id} type={l.type} status={l.status} size="md" />
                 </div>
                 <div className="space-y-2">
-                  <Link href={`/sell/edit/${l._id}`}
-                    className="w-full block text-center py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition">
+                  <Link href={`/sell/edit/${l._id}`} className={OUTLINE_BTN}>
                     Edit listing
                   </Link>
-                  <Link href={`/listings/${l._id}/inspect`}
-                    className="w-full block text-center py-2 border border-blue-300 text-blue-600 text-sm rounded-lg hover:bg-blue-50 transition">
+                  <Link href={`/listings/${l._id}/inspect`} className={OUTLINE_BTN}>
                     Run AI inspection
                   </Link>
                 </div>

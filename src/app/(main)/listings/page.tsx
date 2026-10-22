@@ -385,6 +385,12 @@ export default function ListingsPage({
     transmission && { label: transmission, clear: () => setTransmission("") },
   ].filter(Boolean) as { label: string; clear: () => void }[];
   const activeFilterCount = activeChips.length;
+  // Empty results: the search and each filter as a one-tap removal, the city worded as "Search all Pakistan"
+  const emptyFixes = [
+    search && { label: `"${search}"`, clear: () => setSearch("") },
+    ...activeChips.map(c => (location && c.label === location ? { label: "Search all Pakistan", clear: c.clear } : c)),
+    availableOnly && { label: "Hide sold & rented", clear: () => setAvailableOnly(false) },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
 
   // Plain JSX (not an inner component) so inputs aren't remounted and don't lose focus on each keystroke
   const filterPanel = (
@@ -597,8 +603,8 @@ export default function ListingsPage({
           <div className="lg:flex lg:items-end lg:justify-between lg:gap-10">
             <div className="flex items-start justify-between gap-3">
             <div>
-              {/* The home hero's "vehicles you want" gradient, in deeper shades for the light page */}
-              <h1 className="w-fit bg-gradient-to-r from-indigo-600 via-sky-500 to-emerald-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-[28px]">Marketplace</h1>
+              {/* The marketplace's brand gradient (indigo → fuchsia, as on avatars and menu dots) */}
+              <h1 className="w-fit bg-gradient-to-r from-indigo-600 to-fuchsia-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-[28px]">Marketplace</h1>
               <p className="mt-1 text-sm text-slate-500">Browse cars and bikes for sale and rent across Pakistan.</p>
             </div>
             {/* Phones and tablets: the city beside the title; desktop has it at the end of the tabs */}
@@ -841,21 +847,48 @@ export default function ListingsPage({
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+              // Says which filters to drop (one tap each) instead of only "Clear filters"
+              <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
                 <div className="mx-auto mb-4 flex items-center justify-center text-slate-400">
                   <Search size={24} strokeWidth={1.75} />
                 </div>
-                <p className="text-base font-semibold text-slate-900">No listings found</p>
-                <p className="mx-auto mt-1 max-w-xs text-sm text-slate-500">
-                  Try adjusting your filters or searching for something else.
-                </p>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  Clear filters
-                </button>
+                {emptyFixes.length > 0 ? (
+                  <>
+                    <p className="text-base font-semibold text-slate-900">No vehicles match all of these</p>
+                    <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">Try removing one of them:</p>
+                    <div className="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2">
+                      {emptyFixes.map(fix => (
+                        <button
+                          key={fix.label}
+                          type="button"
+                          onClick={() => { fix.clear(); setPage(1); }}
+                          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                        >
+                          <X size={14} className="text-slate-400" /> {fix.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button type="button" onClick={clearFilters} className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                      Clear all filters
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-semibold text-slate-900">{availableOnly ? "No available vehicles right now" : "No vehicles listed yet"}</p>
+                    <p className="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+                      {availableOnly ? "Show sold and rented ones too, or check back soon." : "Be the first to list one. It's free to start."}
+                    </p>
+                    {availableOnly ? (
+                      <button type="button" onClick={() => { setAvailableOnly(false); setPage(1); }} className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                        Show sold &amp; rented
+                      </button>
+                    ) : (
+                      <Link href="/sell" className="mt-5 inline-block rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                        Sell a vehicle
+                      </Link>
+                    )}
+                  </>
+                )}
               </div>
             ) : (
               <div
