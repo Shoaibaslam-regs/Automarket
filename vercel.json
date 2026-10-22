@@ -3,10 +3,18 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "regions": ["sin1"],
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

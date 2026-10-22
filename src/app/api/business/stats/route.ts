@@ -7,6 +7,7 @@ import { Booking } from "@/models/Booking";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { getBusinessRentals, getOrgUserIds } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -126,7 +127,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Business stats error:", error);
+    reportError("Business stats error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

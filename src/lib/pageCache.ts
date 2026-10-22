@@ -2,6 +2,7 @@ import { revalidateTag } from "next/cache";
 import mongoose from "mongoose";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Public pages that look the same for every visitor (a listing, a business page) cache their database
@@ -23,7 +24,7 @@ function expire(tag: string) {
   try {
     revalidateTag(tag, NOW);
   } catch (e) {
-    console.error("Cache invalidation failed:", tag, e);
+    reportError("Cache invalidation failed:", tag, e);
   }
 }
 

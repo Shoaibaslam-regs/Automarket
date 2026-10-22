@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { can, getMembership } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 /** The owner or a manager acknowledges every open admin warning, which hides the console banner. */
 export async function PATCH() {
@@ -24,7 +25,7 @@ export async function PATCH() {
     );
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Acknowledge warnings error:", error);
+    reportError("Acknowledge warnings error:", error);
     return NextResponse.json({ error: "Failed to acknowledge" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { Report } from "@/models/Report";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("Admin reports GET error:", error);
+    reportError("Admin reports GET error:", error);
     return NextResponse.json({ error: "Failed to load reports" }, { status: 500 });
   }
 }

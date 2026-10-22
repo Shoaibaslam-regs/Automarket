@@ -42,6 +42,10 @@ export const RATE_LIMITS = {
   bookings: { limit: 10, windowSec: 60 * 60 },
   purchases: { limit: 10, windowSec: 60 * 60 },
   savedSearches: { limit: 20, windowSec: 60 * 60 },
+  /** Browser crash reports sent to the admin Errors page, per IP */
+  clientErrors: { limit: 20, windowSec: 60 * 60 },
+  /** The daily cron, keyed by Pakistan day, so a repeated call doesn't send the reminders twice */
+  cronDaily: { limit: 1, windowSec: 20 * 60 * 60 },
 } as const satisfies Record<string, { limit: number; windowSec: number; lockout?: boolean }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

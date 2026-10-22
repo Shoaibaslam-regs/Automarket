@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { PushSubscription } from "@/models/PushSubscription";
+import { reportError } from "@/lib/errorLog";
 
 const MAX_DEVICES = 10;
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (extra.length) await PushSubscription.deleteMany({ _id: { $in: extra.map(e => e._id) } });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Push subscribe error:", error);
+    reportError("Push subscribe error:", error);
     return NextResponse.json({ error: "Couldn't turn on notifications" }, { status: 500 });
   }
 }
@@ -44,7 +45,7 @@ export async function DELETE(req: NextRequest) {
     await PushSubscription.deleteOne({ endpoint, userId: session.user.id });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Push unsubscribe error:", error);
+    reportError("Push unsubscribe error:", error);
     return NextResponse.json({ error: "Couldn't turn off notifications" }, { status: 500 });
   }
 }

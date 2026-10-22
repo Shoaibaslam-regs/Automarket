@@ -7,6 +7,7 @@ import { getOrgUserIds } from "@/lib/business";
 import { MANUAL_IN, MANUAL_OUT, MONEY_LABEL, pkRange } from "@/lib/money";
 import { moneyGate } from "@/lib/moneyAccess";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       vehicles: vehicles.map(v => ({ id: String(v._id), title: v.title, status: v.status })),
     });
   } catch (error) {
-    console.error("Money entries GET error:", error);
+    reportError("Money entries GET error:", error);
     return NextResponse.json({ error: "Failed to load money" }, { status: 500 });
   }
 }
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
       { type: "MONEY", id: entry._id, label: MONEY_LABEL[b.category] }, { details: [note, vehicleLabel].filter(Boolean).join(" · ") || undefined, amount: type === "OUT" ? -amount : amount });
     return NextResponse.json({ entry }, { status: 201 });
   } catch (error) {
-    console.error("Money entries POST error:", error);
+    reportError("Money entries POST error:", error);
     return NextResponse.json({ error: "Failed to save" }, { status: 500 });
   }
 }

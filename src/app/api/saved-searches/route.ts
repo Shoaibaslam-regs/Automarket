@@ -4,6 +4,7 @@ import { SavedSearch } from "@/models/SavedSearch";
 import { auth } from "@/lib/auth";
 import { describeFilters, filtersToSearchParams, hasFilters, parseFilters } from "@/lib/listingFilters";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 const MAX_SAVED_SEARCHES = 10;
 
@@ -15,7 +16,7 @@ export async function GET() {
     const searches = await SavedSearch.find({ userId: session.user.id }).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ searches });
   } catch (error) {
-    console.error("Get saved searches error:", error);
+    reportError("Get saved searches error:", error);
     return NextResponse.json({ error: "Failed to fetch saved searches" }, { status: 500 });
   }
 }
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     const search = await SavedSearch.create({ userId: session.user.id, name, filters, emailAlerts: body.emailAlerts !== false });
     return NextResponse.json({ search }, { status: 201 });
   } catch (error) {
-    console.error("Create saved search error:", error);
+    reportError("Create saved search error:", error);
     return NextResponse.json({ error: "Failed to save search" }, { status: 500 });
   }
 }

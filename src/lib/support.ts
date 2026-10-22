@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { Message } from "@/models/Message";
+import { reportError } from "@/lib/errorLog";
 
 type SupportAdmin = { _id: mongoose.Types.ObjectId; name?: string };
 
@@ -32,7 +33,7 @@ export async function triggerPusher(channel: string, event: string, data: unknow
     const { pusherServer } = await import("@/lib/pusher");
     await pusherServer.trigger(channel, event, data);
   } catch (e) {
-    console.error("Pusher error:", e);
+    reportError("Pusher error:", e);
   }
 }
 

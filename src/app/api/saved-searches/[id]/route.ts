@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import { SavedSearch } from "@/models/SavedSearch";
 import { auth } from "@/lib/auth";
+import { reportError } from "@/lib/errorLog";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!search) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ search });
   } catch (error) {
-    console.error("Update saved search error:", error);
+    reportError("Update saved search error:", error);
     return NextResponse.json({ error: "Failed to update saved search" }, { status: 500 });
   }
 }
@@ -38,7 +39,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (!deletedCount) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error("Delete saved search error:", error);
+    reportError("Delete saved search error:", error);
     return NextResponse.json({ error: "Failed to delete saved search" }, { status: 500 });
   }
 }

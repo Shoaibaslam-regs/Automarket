@@ -6,6 +6,7 @@ import { Organization } from "@/models/Organization";
 import { Deal } from "@/models/Deal";
 import { PUBLIC_CACHE_SECONDS } from "@/lib/pageCache";
 import { liveQuery } from "@/lib/publicDeals";
+import { reportError } from "@/lib/errorLog";
 
 /** The marketplace's live numbers shown on the home page. */
 export type PublicStats = {
@@ -36,7 +37,7 @@ export const getPublicStats = unstable_cache(
       ]);
       return { listings, forSale, forRent, businesses, users, deals, cities, at: new Date().toISOString() };
     } catch (err) {
-      console.error("Public stats failed:", err);
+      reportError("Public stats failed:", err);
       return EMPTY_STATS;
     }
   },

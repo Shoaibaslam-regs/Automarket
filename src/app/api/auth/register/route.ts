@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models";
 import { clientIp, hitRateLimit, isRateLimited, waitText } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Register error:", error);
+    reportError("Register error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

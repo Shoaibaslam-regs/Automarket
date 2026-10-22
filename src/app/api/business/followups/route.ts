@@ -6,6 +6,7 @@ import { can, getMembership } from "@/lib/business";
 import { Customer } from "@/models/Customer";
 import { FollowUp } from "@/models/FollowUp";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Open follow-ups for the whole team, soonest first (`?done=1` for the last 50 finished ones). */
 export async function GET(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       .lean();
     return NextResponse.json({ followUps, canEdit: can(member.role, "editCustomers") });
   } catch (error) {
-    console.error("Follow-ups GET error:", error);
+    reportError("Follow-ups GET error:", error);
     return NextResponse.json({ error: "Failed to load follow-ups" }, { status: 500 });
   }
 }
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
       { type: "CUSTOMER", id: customer._id, label: customer.name }, { details: note });
     return NextResponse.json({ followUp }, { status: 201 });
   } catch (error) {
-    console.error("Follow-ups POST error:", error);
+    reportError("Follow-ups POST error:", error);
     return NextResponse.json({ error: "Failed to add the follow-up" }, { status: 500 });
   }
 }

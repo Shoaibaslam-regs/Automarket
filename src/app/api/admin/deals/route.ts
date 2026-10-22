@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { Deal } from "@/models/Deal";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function GET() {
       .lean();
     return NextResponse.json({ deals });
   } catch (error) {
-    console.error("Admin deals GET error:", error);
+    reportError("Admin deals GET error:", error);
     return NextResponse.json({ error: "Failed to load deals" }, { status: 500 });
   }
 }

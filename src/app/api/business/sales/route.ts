@@ -12,7 +12,8 @@ import { dealPrice } from "@/lib/deals";
 import { purchaseNumber, salePrice } from "@/lib/purchases";
 import { ensurePurchaseCustomer, finishSale, resolveSaleItem } from "@/lib/saleItems";
 import { logBusinessAction } from "@/lib/businessLog";
-import { recordPaymentChange } from "@/lib/ledger";
+import { moneyTransaction, recordPaymentChange } from "@/lib/ledger";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -62,7 +63,7 @@ export async function GET() {
 
     return NextResponse.json({ sales, stats, vehicles, canManage: can(member.role, "manageSales"), canManageMoney: can(member.role, "manageMoney") });
   } catch (error) {
-    console.error("Business sales GET error:", error);
+    reportError("Business sales GET error:", error);
     return NextResponse.json({ error: "Failed to load sales" }, { status: 500 });
   }
 }
@@ -119,32 +120,37 @@ export async function POST(req: NextRequest) {
 
     const sold = body.sold === true;
     const now = new Date();
-    const purchase = await Purchase.create({
-      organizationId: member.organizationId,
-      ...ref,
-      vehicle,
-      buyer: { name: buyerName, phone: buyerPhone, email: text(body.buyer?.email, 120) || undefined, cnic: cnic ?? undefined },
-      source: "WALK_IN",
-      askingPrice,
-      agreedPrice: price,
-      amountPaid,
-      plateNumber: plate ?? undefined,
-      notes: text(body.notes, 1000) || undefined,
-      status: sold ? "COMPLETED" : "ACCEPTED",
-      acceptedAt: now,
-      completedAt: sold ? now : undefined,
-      createdBy: session.user.id,
-      handledBy: session.user.id,
+    // The record and the cash book entry for what was paid are saved together
+    const userId = session.user.id;
+    const purchase = await moneyTransaction(async dbSession => {
+      const [created] = await Purchase.create([{
+        organizationId: member.organizationId,
+        ...ref,
+        vehicle,
+        buyer: { name: buyerName, phone: buyerPhone, email: text(body.buyer?.email, 120) || undefined, cnic: cnic ?? undefined },
+        source: "WALK_IN",
+        askingPrice,
+        agreedPrice: price,
+        amountPaid,
+        plateNumber: plate ?? undefined,
+        notes: text(body.notes, 1000) || undefined,
+        status: sold ? "COMPLETED" : "ACCEPTED",
+        acceptedAt: now,
+        completedAt: sold ? now : undefined,
+        createdBy: userId,
+        handledBy: userId,
+      }], { session: dbSession });
+      if (amountPaid > 0) await recordPaymentChange(userId, amountPaid, "SALE_PAYMENT", { purchaseId: created._id, listingId: created.listingId, vehicleLabel: vehicle.title }, `${purchaseNumber(String(created._id))} · ${buyerName}`, { session: dbSession });
+      return created;
     });
     if (sold) await finishSale(purchase);
-    try { await ensurePurchaseCustomer(purchase); } catch (e) { console.error("Sale customer sync failed:", e); }
+    try { await ensurePurchaseCustomer(purchase); } catch (e) { reportError("Sale customer sync failed:", e); }
 
-    if (amountPaid > 0) await recordPaymentChange(session.user.id, amountPaid, "SALE_PAYMENT", { purchaseId: purchase._id, listingId: purchase.listingId, vehicleLabel: vehicle.title }, `${purchaseNumber(String(purchase._id))} · ${buyerName}`);
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, sold ? "sale.complete" : "sale.create",
       { type: "SALE", id: purchase._id, label: vehicle.title }, { details: `Walk-in · ${buyerName}`, amount: price });
     return NextResponse.json({ sale: purchase }, { status: 201 });
   } catch (error) {
-    console.error("Business sales POST error:", error);
+    reportError("Business sales POST error:", error);
     return NextResponse.json({ error: "Failed to record the sale" }, { status: 500 });
   }
 }

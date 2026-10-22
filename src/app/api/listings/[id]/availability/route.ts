@@ -8,6 +8,7 @@ import { getMembership, isUserBusinessSuspended } from "@/lib/business";
 import { availabilityOptions, AVAILABILITY_LABEL, type Availability } from "@/lib/availability";
 import { invalidateListingAndSeller } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Business roles that may mark a teammate's vehicle sold, rented or available. */
 const TEAM_ROLES = ["OWNER", "MANAGER", "SALES"];
@@ -59,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await invalidateListingAndSeller(id, sellerId);
     return NextResponse.json({ ok: true, status: next });
   } catch (error) {
-    console.error("Listing availability error:", error);
+    reportError("Listing availability error:", error);
     return NextResponse.json({ error: "Failed to update the listing" }, { status: 500 });
   }
 }

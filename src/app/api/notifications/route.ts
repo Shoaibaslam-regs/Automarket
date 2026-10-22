@@ -15,6 +15,7 @@ import { bookingNumber } from "@/lib/bookings";
 import { purchaseNumber, PURCHASE_LABEL, type PurchaseStatus } from "@/lib/purchases";
 import { OFFICIAL_NAME } from "@/lib/announcements";
 import type { NotificationItem } from "@/lib/notifications";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 type Oid = mongoose.Types.ObjectId;
@@ -121,7 +122,7 @@ export async function GET() {
     items.sort((a, b) => b.at.localeCompare(a.at));
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("Notifications GET error:", error);
+    reportError("Notifications GET error:", error);
     return NextResponse.json({ error: "Failed to load notifications" }, { status: 500 });
   }
 }

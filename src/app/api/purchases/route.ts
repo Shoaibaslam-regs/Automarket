@@ -11,6 +11,7 @@ import { ensurePurchaseCustomer, resolveSaleItem } from "@/lib/saleItems";
 import { sendChatMessage } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { notifyTeam } from "@/lib/teamNotify";
+import { reportError } from "@/lib/errorLog";
 
 /** Most purchase requests one buyer may have open at once. */
 const MAX_OPEN_REQUESTS = 10;
@@ -28,7 +29,7 @@ export async function GET() {
     await Purchase.updateMany({ buyerId: session.user.id, seenByBuyer: false }, { $set: { seenByBuyer: true } });
     return NextResponse.json({ purchases: purchases.map(p => ({ ...p, business: byId.get(String(p.organizationId)) ?? null })) });
   } catch (error) {
-    console.error("Purchases GET error:", error);
+    reportError("Purchases GET error:", error);
     return NextResponse.json({ error: "Failed to load purchases" }, { status: 500 });
   }
 }
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
       status: "REQUESTED",
     });
 
-    try { await ensurePurchaseCustomer(purchase); } catch (e) { console.error("Purchase customer sync failed:", e); }
+    try { await ensurePurchaseCustomer(purchase); } catch (e) { reportError("Purchase customer sync failed:", e); }
 
     // The team member who listed it hears about it in Messages; the owner gets a badge refresh
     try {
@@ -105,12 +106,12 @@ export async function POST(req: NextRequest) {
       // The rest of the team that handles sales (the seller above already got the message and its alert)
       await notifyTeam(item.organizationId, "manageSales", { type: "sale" }, [String(item.contactId)]);
     } catch (e) {
-      console.error("Purchase notification failed:", e);
+      reportError("Purchase notification failed:", e);
     }
 
     return NextResponse.json({ purchase }, { status: 201 });
   } catch (error) {
-    console.error("Purchases POST error:", error);
+    reportError("Purchases POST error:", error);
     return NextResponse.json({ error: "Failed to send the purchase request" }, { status: 500 });
   }
 }

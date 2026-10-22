@@ -8,6 +8,7 @@ import { canReviewBusiness, getBusinessRatings } from "@/lib/reviews";
 import { triggerPusher } from "@/lib/support";
 import { invalidateBusinessSlug } from "@/lib/pageCache";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 const PAGE_SIZE = 10;
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     const summary = ratings.get(String(org._id)) ?? { average: 0, count: 0 };
     return NextResponse.json({ reviews, summary, hasMore: page * PAGE_SIZE < summary.count });
   } catch (error) {
-    console.error("Business reviews GET error:", error);
+    reportError("Business reviews GET error:", error);
     return NextResponse.json({ error: "Failed to load reviews" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     invalidateBusinessSlug(slug);
     return NextResponse.json({ review });
   } catch (error) {
-    console.error("Business review POST error:", error);
+    reportError("Business review POST error:", error);
     return NextResponse.json({ error: "Failed to save review" }, { status: 500 });
   }
 }
@@ -97,7 +98,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ s
     invalidateBusinessSlug(slug);
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error("Business review DELETE error:", error);
+    reportError("Business review DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete review" }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import { triggerPusher } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 export async function GET(req: NextRequest) {
   try {
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ conversations: Array.from(conversationMap.values()) });
   } catch (error) {
-    console.error("Messages GET error:", error);
+    reportError("Messages GET error:", error);
     return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
   }
 }
@@ -129,8 +130,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: populated }, { status: 201 });
   } catch (error) {
-    console.error("Messages POST error:", error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    reportError("Messages POST error:", error);
+    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }
 }
 
@@ -167,7 +168,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ ok: true, deleted: result.modifiedCount });
   } catch (error) {
-    console.error("Messages DELETE error:", error);
+    reportError("Messages DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete conversation" }, { status: 500 });
   }
 }

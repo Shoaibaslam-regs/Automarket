@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { RateLimit } from "@/models/RateLimit";
 import { clientIp, rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Sets a new password from a forgot-password link. Body: { token, password }.
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, email: user.email });
   } catch (error) {
-    console.error("Reset password error:", error);
+    reportError("Reset password error:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

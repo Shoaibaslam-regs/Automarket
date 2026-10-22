@@ -1,3 +1,4 @@
+import { reportError } from "@/lib/errorLog";
  import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -304,7 +305,7 @@ export async function POST(req: NextRequest) {
       try {
         report = await analyzeWithGemini(images);
       } catch (error) {
-        console.error(
+        reportError(
           "Gemini failed. Using demo report:",
           error
         );
@@ -364,7 +365,7 @@ export async function POST(req: NextRequest) {
       isDemo,
     });
   } catch (error: unknown) {
-    console.error(
+    reportError(
       "AI inspection error:",
       error
     );

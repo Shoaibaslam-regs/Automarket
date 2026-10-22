@@ -17,6 +17,7 @@ import { BusinessReview } from "@/models/BusinessReview";
 import { Purchase } from "@/models/Purchase";
 import { Ad } from "@/models/Ad";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -37,7 +38,7 @@ export async function GET() {
     const member = await getMembership(session.user.id);
     return NextResponse.json({ organization: { ...org, plan: sub.planId }, myRole: member?.role ?? null });
   } catch (error) {
-    console.error("Get org error:", error);
+    reportError("Get org error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ organization: org }, { status: 201 });
   } catch (error) {
-    console.error("Create org error:", error);
+    reportError("Create org error:", error);
     return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
   }
 }
@@ -121,7 +122,7 @@ export async function PATCH(req: NextRequest) {
     }
     return NextResponse.json({ organization: org });
   } catch (error) {
-    console.error("Update org error:", error);
+    reportError("Update org error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -162,7 +163,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete org error:", error);
+    reportError("Delete org error:", error);
     return NextResponse.json({ error: "Failed to delete business" }, { status: 500 });
   }
 }

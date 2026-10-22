@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { getSubscription, getUsage } from "@/lib/subscription";
 import { quotaResetsAt } from "@/lib/plans";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET() {
       planDaysLeft: sub.expiresAt ? Math.max(0, Math.ceil((new Date(sub.expiresAt).getTime() - Date.now()) / 86_400_000)) : null,
     });
   } catch (error) {
-    console.error("Subscription error:", error);
+    reportError("Subscription error:", error);
     return NextResponse.json({ error: "Failed to load subscription" }, { status: 500 });
   }
 }

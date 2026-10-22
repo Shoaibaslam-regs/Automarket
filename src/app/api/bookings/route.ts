@@ -13,6 +13,7 @@ import { Organization } from "@/models/Organization";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { triggerPusher } from "@/lib/support";
 import { notifyTeam, organizationOf } from "@/lib/teamNotify";
+import { reportError } from "@/lib/errorLog";
 
 export async function GET(req: NextRequest) {
   try {
@@ -71,7 +72,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ bookings: enriched });
   } catch (error) {
-    console.error("Get bookings error:", error);
+    reportError("Get bookings error:", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
   }
 }
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
     try {
       await ensureBookingCustomer(booking._id);
     } catch (customerError) {
-      console.error("Adding booking customer failed:", customerError);
+      reportError("Adding booking customer failed:", customerError);
     }
 
     try {
@@ -165,7 +166,7 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (emailError) {
-      console.error("Email send failed:", emailError);
+      reportError("Email send failed:", emailError);
     }
 
     // The vehicle's owner, and for a business vehicle everyone who handles bookings, get a badge and a phone alert
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
     if (ownerOrg) await notifyTeam(ownerOrg, "manageBookings", { type: "booking", status: "PENDING" }, [String(rental.ownerId)]);
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
-    console.error("Create booking error:", error);
+    reportError("Create booking error:", error);
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 }

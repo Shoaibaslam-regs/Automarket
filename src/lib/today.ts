@@ -15,3 +15,17 @@ export type TodayItem = {
   /** Label for the button, e.g. "Hand over" */
   action: string;
 };
+
+/** What the daily cron's morning notification counts for one person (src/lib/dailyJobs.ts) */
+export type DigestCounts = { pickups: number; returns: number; installments: number; followUps: number };
+
+/** "2 returns due · 1 installment due", or "" when there's nothing */
+export function digestText(c: DigestCounts): string {
+  const part = (n: number, one: string, many: string) => (n ? `${n} ${n === 1 ? one : many}` : "");
+  return [
+    part(c.returns, "return due", "returns due"),
+    part(c.pickups, "pickup", "pickups"),
+    part(c.installments, "installment due", "installments due"),
+    part(c.followUps, "follow-up", "follow-ups"),
+  ].filter(Boolean).join(" · ");
+}

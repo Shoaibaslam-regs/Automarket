@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { SITE_URL } from "@/lib/site";
+import { reportError } from "@/lib/errorLog";
 
 // Regenerate at most once an hour so new listings show up without a rebuild
 export const revalidate = 3600;
@@ -36,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   } catch (err) {
     // Still serve the static pages if the database is unreachable (e.g. during a build)
-    console.error("Sitemap listings failed:", err);
+    reportError("Sitemap listings failed:", err);
     return staticPages;
   }
 }

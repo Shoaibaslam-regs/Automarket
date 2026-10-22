@@ -4,6 +4,7 @@ import { LedgerEntry } from "@/models/LedgerEntry";
 import { moneyGate } from "@/lib/moneyAccess";
 import { logBusinessAction } from "@/lib/businessLog";
 import { MONEY_LABEL } from "@/lib/money";
+import { reportError } from "@/lib/errorLog";
 
 /** Deletes an entry added by hand. Automatic entries follow real payments, so change the payment instead. */
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       { type: "MONEY", id: entry._id, label: MONEY_LABEL[entry.category] }, { details: `PKR ${entry.amount.toLocaleString()} ${entry.type === "IN" ? "in" : "out"}` });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Money entry DELETE error:", error);
+    reportError("Money entry DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }

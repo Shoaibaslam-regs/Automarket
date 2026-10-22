@@ -7,6 +7,7 @@ import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
 import { invalidateDeal } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Finds a deal of the caller's business. `manage` also requires the manageDeals permission. */
 async function gate(id: string, manage: boolean) {
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (g.error) return g.error;
     return NextResponse.json({ deal: g.deal, permissions: { canManage: can(g.member.role, "manageDeals") } });
   } catch (error) {
-    console.error("Deal GET error:", error);
+    reportError("Deal GET error:", error);
     return NextResponse.json({ error: "Failed to load deal" }, { status: 500 });
   }
 }
@@ -63,7 +64,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       { type: "DEAL", id: g.deal._id, label: g.deal.title }, { details: pauseOnly ? (body.paused ? "Paused" : "Resumed") : "Edited details" });
     return NextResponse.json({ deal: g.deal });
   } catch (error) {
-    console.error("Deal PATCH error:", error);
+    reportError("Deal PATCH error:", error);
     return NextResponse.json({ error: "Failed to update deal" }, { status: 500 });
   }
 }
@@ -77,7 +78,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await logBusinessAction({ userId: g.userId, organizationId: g.member.organizationId }, "deal.delete", { type: "DEAL", id: g.deal._id, label: g.deal.title });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Deal DELETE error:", error);
+    reportError("Deal DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete deal" }, { status: 500 });
   }
 }

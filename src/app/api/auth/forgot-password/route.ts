@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { clientIp, hitRateLimit } from "@/lib/rateLimit";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
+import { reportError } from "@/lib/errorLog";
 
 /** How long a reset link works. */
 const RESET_TTL_MS = 60 * 60 * 1000;
@@ -44,12 +45,12 @@ export async function POST(req: NextRequest) {
     try {
       await sendPasswordResetEmail({ to: user.email, name: user.name, link });
     } catch (e) {
-      console.error("Password reset email failed:", e);
+      reportError("Password reset email failed:", e);
       return NextResponse.json({ error: "We couldn't send the email right now. Please try again in a few minutes." }, { status: 502 });
     }
     return done;
   } catch (error) {
-    console.error("Forgot password error:", error);
+    reportError("Forgot password error:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

@@ -13,6 +13,7 @@ import { isUserBusinessSuspended } from "@/lib/business";
 import { PUBLIC_CACHE_SECONDS, invalidateListingAndSeller } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
+import { reportError } from "@/lib/errorLog";
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest) {
       { headers: { "Cache-Control": `public, max-age=0, s-maxage=${PUBLIC_CACHE_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_SECONDS}` } }
     );
   } catch (error) {
-    console.error("Get listings error:", error);
+    reportError("Get listings error:", error);
     return NextResponse.json(
       { error: "Failed to fetch listings" },
       { status: 500 }
@@ -148,14 +149,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Email users whose saved searches match, without delaying the seller's response
-    after(() => notifySavedSearches(listing.toObject()).catch(err => console.error("Saved search alerts failed:", err)));
+    after(() => notifySavedSearches(listing.toObject()).catch(err => reportError("Saved search alerts failed:", err)));
 
     // A business member's new listing should appear on the business page straight away
     await invalidateListingAndSeller(listing._id, session.user.id);
     await logBusinessAction({ userId: session.user.id }, "listing.create", { type: "LISTING", id: listing._id, label: listing.title }, { amount: listing.price });
     return NextResponse.json({ listing }, { status: 201 });
   } catch (error) {
-    console.error("Create listing error:", error);
+    reportError("Create listing error:", error);
     return NextResponse.json(
       { error: "Failed to create listing" },
       { status: 500 }

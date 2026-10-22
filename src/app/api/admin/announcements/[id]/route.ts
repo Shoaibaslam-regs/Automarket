@@ -5,6 +5,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { Announcement } from "@/models/Announcement";
 import { logAdminAction } from "@/lib/adminLog";
 import { parseAnnouncement } from "@/lib/official";
+import { reportError } from "@/lib/errorLog";
 
 /** Edits a post (only the fields sent), e.g. { pinned: true }. Followers aren't notified again. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await logAdminAction(gate.admin, "announcement.update", { type: "ANNOUNCEMENT", id: announcement._id, label: announcement.title }, Object.keys(parsed.data).join(", "));
     return NextResponse.json({ announcement });
   } catch (error) {
-    console.error("Admin announcement PATCH error:", error);
+    reportError("Admin announcement PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the announcement" }, { status: 500 });
   }
 }
@@ -40,7 +41,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await logAdminAction(gate.admin, "announcement.delete", { type: "ANNOUNCEMENT", id: announcement._id, label: announcement.title });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Admin announcement DELETE error:", error);
+    reportError("Admin announcement DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete the announcement" }, { status: 500 });
   }
 }

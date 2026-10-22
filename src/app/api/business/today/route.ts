@@ -10,6 +10,7 @@ import { bookingNumber } from "@/lib/bookings";
 import { purchaseNumber } from "@/lib/purchases";
 import { pkDay, pkRange } from "@/lib/money";
 import type { TodayItem } from "@/lib/today";
+import { reportError } from "@/lib/errorLog";
 
 type BookingRow = {
   _id: unknown; status: string; startDate: Date; endDate: Date; dueBackAt?: Date; completedAt?: Date; deposit: number;
@@ -88,7 +89,7 @@ export async function GET() {
     items.sort((a, b) => Number(b.overdue) - Number(a.overdue) || a.at.localeCompare(b.at));
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("Business today GET error:", error);
+    reportError("Business today GET error:", error);
     return NextResponse.json({ error: "Failed to load today's tasks" }, { status: 500 });
   }
 }

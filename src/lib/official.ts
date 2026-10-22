@@ -3,6 +3,7 @@ import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { Announcement } from "@/models/Announcement";
 import { ANNOUNCEMENT_KINDS, MAX_BODY, MAX_TITLE, type AnnouncementKind } from "@/lib/announcements";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -68,7 +69,7 @@ export async function notifyFollowers(payload: { title: string; kind: string }) 
       await pusherServer.trigger(channels.slice(i, i + 100), "new-notification", { type: "official", ...payload });
     }
   } catch (e) {
-    console.error("Official notification failed:", e);
+    reportError("Official notification failed:", e);
   }
 }
 

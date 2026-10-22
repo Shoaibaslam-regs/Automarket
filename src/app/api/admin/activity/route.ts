@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isPlatformOwner, requireAdminApi } from "@/lib/adminAuth";
 import { logAdminAction } from "@/lib/adminLog";
 import { AdminLog } from "@/models/AdminLog";
+import { reportError } from "@/lib/errorLog";
 
 const PAGE_SIZE = 50;
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
     ]);
     return NextResponse.json({ entries, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)), canClear: isPlatformOwner(gate.admin.email) });
   } catch (error) {
-    console.error("Admin activity GET error:", error);
+    reportError("Admin activity GET error:", error);
     return NextResponse.json({ error: "Failed to load the activity log" }, { status: 500 });
   }
 }
@@ -54,7 +55,7 @@ export async function DELETE(req: NextRequest) {
     }
     return NextResponse.json({ deleted: deletedCount });
   } catch (error) {
-    console.error("Admin activity DELETE error:", error);
+    reportError("Admin activity DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete activity history" }, { status: 500 });
   }
 }

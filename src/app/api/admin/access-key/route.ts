@@ -5,6 +5,7 @@ import { hitRateLimit, isRateLimited, waitText } from "@/lib/rateLimit";
 import { adminKeyProblem, adminKeyStatus, checkAdminAccessKey, setAdminAccessKey } from "@/lib/adminKey";
 import { logAdminAction } from "@/lib/adminLog";
 import { User } from "@/models/User";
+import { reportError } from "@/lib/errorLog";
 
 const limited = (sec: number) =>
   NextResponse.json({ error: `Too many wrong passwords. Please try again in ${waitText(sec)}.`, code: "RATE_LIMITED", retryAfter: sec }, { status: 429, headers: { "Retry-After": String(sec) } });
@@ -50,7 +51,7 @@ export async function PUT(req: NextRequest) {
     await logAdminAction(gate.admin, "settings.adminKey", { type: "SETTINGS", label: "Admin access key" }, "Key changed from the admin panel");
     return NextResponse.json({ source: "panel", changedAt });
   } catch (error) {
-    console.error("Admin access key PUT error:", error);
+    reportError("Admin access key PUT error:", error);
     return NextResponse.json({ error: "Failed to change the key" }, { status: 500 });
   }
 }

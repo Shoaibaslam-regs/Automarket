@@ -7,6 +7,7 @@ import { getSupportAdmin, triggerPusher } from "@/lib/support";
 import { isPlanId, PLANS } from "@/lib/plans";
 import { upgradeRequestText } from "@/lib/supportContact";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 /** Don't post the same request twice if the user clicks again within this window. */
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
   } catch (error) {
-    console.error("Upgrade request error:", error);
+    reportError("Upgrade request error:", error);
     return NextResponse.json({ error: "Failed to send your request" }, { status: 500 });
   }
 }

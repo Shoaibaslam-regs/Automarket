@@ -8,6 +8,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { bookingNumber } from "@/lib/bookings";
 import { checkPlanLimit } from "@/lib/subscription";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -124,6 +125,6 @@ export async function syncBookingCustomers(rentalIds: Oid[]) {
     .limit(50)
     .lean<Array<{ _id: Oid }>>();
   for (const b of unlinked) {
-    try { await ensureBookingCustomer(b._id); } catch (e) { console.error("Customer sync failed for booking", b._id, e); }
+    try { await ensureBookingCustomer(b._id); } catch (e) { reportError("Customer sync failed for booking", b._id, e); }
   }
 }

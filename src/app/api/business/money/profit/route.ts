@@ -8,6 +8,7 @@ import { Booking } from "@/models/Booking";
 import { getOrgUserIds } from "@/lib/business";
 import { moneyGate } from "@/lib/moneyAccess";
 import { salePrice } from "@/lib/purchases";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -55,7 +56,7 @@ export async function GET() {
     const totals = vehicles.reduce((t, v) => ({ costs: t.costs + v.costs, income: t.income + v.income, profit: t.profit + v.profit }), { costs: 0, income: 0, profit: 0 });
     return NextResponse.json({ vehicles, totals });
   } catch (error) {
-    console.error("Money profit GET error:", error);
+    reportError("Money profit GET error:", error);
     return NextResponse.json({ error: "Failed to load profit" }, { status: 500 });
   }
 }

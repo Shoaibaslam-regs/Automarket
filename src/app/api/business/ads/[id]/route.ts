@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Ad } from "@/models/Ad";
 import { getMembership, can } from "@/lib/business";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Cancels a request the team hasn't answered yet. Approved ads can only be stopped by an admin. */
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +27,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.cancel", { type: "BUSINESS", id: ad._id, label: ad.targetLabel });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Business ad DELETE error:", error);
+    reportError("Business ad DELETE error:", error);
     return NextResponse.json({ error: "Failed to cancel the request" }, { status: 500 });
   }
 }

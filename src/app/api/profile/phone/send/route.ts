@@ -8,6 +8,7 @@ import { normalizePkMobile } from "@/lib/phone";
 import { hitRateLimit, waitText } from "@/lib/rateLimit";
 import { OTP_TTL_MS, hashOtp, newOtp } from "@/lib/phoneOtp";
 import { SmsNotConfiguredError, sendSms } from "@/lib/sms";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Texts a 6-digit verification code to a Pakistani mobile number. Body: { phone }.
@@ -49,12 +50,12 @@ export async function POST(req: NextRequest) {
       if (e instanceof SmsNotConfiguredError) {
         return NextResponse.json({ error: "Phone verification isn't available yet. Please try again later." }, { status: 503 });
       }
-      console.error("Verification SMS failed:", e);
+      reportError("Verification SMS failed:", e);
       return NextResponse.json({ error: "We couldn't send the code. Check the number and try again." }, { status: 502 });
     }
     return NextResponse.json({ ok: true, phone, expiresInSec: OTP_TTL_MS / 1000 });
   } catch (error) {
-    console.error("Phone send-code error:", error);
+    reportError("Phone send-code error:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

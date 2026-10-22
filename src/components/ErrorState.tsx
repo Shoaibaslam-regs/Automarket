@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { isStaleBuildError, reloadForStaleBuild } from "@/lib/staleBuild";
+import { reportClientError } from "@/lib/clientErrors";
 
 /** Shared fallback UI for the route-group error.tsx boundaries. */
 export default function ErrorState({
@@ -20,6 +21,7 @@ export default function ErrorState({
   const [reloading, setReloading] = useState(false);
   useEffect(() => {
     console.error(error);
+    reportClientError(error, "Page error");
     if (reloadForStaleBuild(error)) queueMicrotask(() => setReloading(true));
   }, [error]);
   // "Try again" can't fetch files that are gone, so for those errors it loads the new version

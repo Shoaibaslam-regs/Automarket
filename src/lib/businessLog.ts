@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { BusinessLog, type BusinessLogTarget } from "@/models/BusinessLog";
 import { User } from "@/models/User";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 const asId = (v: unknown) => (v && mongoose.Types.ObjectId.isValid(String(v)) ? new mongoose.Types.ObjectId(String(v)) : undefined);
@@ -34,6 +35,6 @@ export async function logBusinessAction(
       amount: Number.isFinite(extra.amount) ? Math.round(extra.amount!) : undefined,
     });
   } catch (e) {
-    console.error(`Business log write failed (${action}):`, e);
+    reportError(`Business log write failed (${action}):`, e);
   }
 }

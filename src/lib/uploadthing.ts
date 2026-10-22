@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { VehicleImage } from "@/models/VehicleImage";
 import { checkVehicleImageUrl } from "@/lib/vehicleImageCheck";
+import { reportError } from "@/lib/errorLog";
 
 const f = createUploadthing();
 const utapi = new UTApi();
@@ -48,7 +49,7 @@ export const ourFileRouter = {
         return { ok: true, url: file.ufsUrl, vehicleType: check.vehicleType };
       } catch (err) {
         // Fail closed: if we can't verify the image, don't keep it.
-        console.error("Vehicle image check failed:", err);
+        reportError("Vehicle image check failed:", err);
         await utapi.deleteFiles(file.key).catch(() => {});
         return { ok: false, reason: "We couldn't verify this image right now. Please try again." };
       }

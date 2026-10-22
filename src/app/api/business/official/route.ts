@@ -7,6 +7,7 @@ import { Announcement } from "@/models/Announcement";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 type OrgFollow = { followsOfficial?: boolean; followedOfficialAt?: Date };
 
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ following, followedAt: org?.followedOfficialAt ?? null, followers, canChange: can(member.role, "manageTeam"), announcements: feed });
   } catch (error) {
-    console.error("Official feed GET error:", error);
+    reportError("Official feed GET error:", error);
     return NextResponse.json({ error: "Failed to load updates" }, { status: 500 });
   }
 }
@@ -64,7 +65,7 @@ export async function PATCH(req: NextRequest) {
     }
     return NextResponse.json({ following: follow });
   } catch (error) {
-    console.error("Official follow PATCH error:", error);
+    reportError("Official follow PATCH error:", error);
     return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }

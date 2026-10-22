@@ -10,6 +10,7 @@ import { User } from "@/models/User";
 import { REPORT_REASONS } from "@/lib/reports";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { triggerPusher, getSupportAdmin } from "@/lib/support";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
-    console.error("Report POST error:", error);
+    reportError("Report POST error:", error);
     return NextResponse.json({ error: "Couldn't send your report" }, { status: 500 });
   }
 }

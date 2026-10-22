@@ -3,6 +3,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { SiteSetting } from "@/models/SiteSetting";
 import { cleanPaymentDetails } from "@/lib/paymentDetails";
 import { logAdminAction } from "@/lib/adminLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Saves the payment account people pay into. An empty form clears it, which hides the payment card everywhere. */
 export async function PUT(req: NextRequest) {
@@ -19,7 +20,7 @@ export async function PUT(req: NextRequest) {
       details ? [details.bankName, details.iban || details.accountNumber, details.jazzcash && "JazzCash", details.easypaisa && "EasyPaisa"].filter(Boolean).join(" · ") : "Cleared");
     return NextResponse.json({ details });
   } catch (error) {
-    console.error("Payment details PUT error:", error);
+    reportError("Payment details PUT error:", error);
     return NextResponse.json({ error: "Failed to save payment details" }, { status: 500 });
   }
 }

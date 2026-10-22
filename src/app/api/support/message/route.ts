@@ -8,6 +8,7 @@ import { User } from "@/models/User";
 import { getSupportAdmin, triggerPusher } from "@/lib/support";
 import { supportTopicLabel } from "@/lib/supportTopics";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
   } catch (error) {
-    console.error("Support message error:", error);
+    reportError("Support message error:", error);
     return NextResponse.json({ error: "Failed to send your message" }, { status: 500 });
   }
 }

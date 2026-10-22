@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import type { Suggestion } from "@/lib/suggest";
+import { reportError } from "@/lib/errorLog";
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const title = (s: string) => s.trim().replace(/\s+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
     ];
     return NextResponse.json({ suggestions }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60" } });
   } catch (error) {
-    console.error("Search suggest error:", error);
+    reportError("Search suggest error:", error);
     return NextResponse.json({ suggestions: [] });
   }
 }

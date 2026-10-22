@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { Deal } from "@/models/Deal";
 import { invalidateDeal } from "@/lib/pageCache";
 import { logAdminAction } from "@/lib/adminLog";
+import { reportError } from "@/lib/errorLog";
 
 /** Disables or re-enables a deal (`{ disabledByAdmin }`), e.g. a misleading or abusive offer. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await logAdminAction(gate.admin, disabledByAdmin ? "deal.disable" : "deal.enable", { type: "DEAL", id: deal._id, label: deal.title });
     return NextResponse.json({ deal });
   } catch (error) {
-    console.error("Admin deal PATCH error:", error);
+    reportError("Admin deal PATCH error:", error);
     return NextResponse.json({ error: "Failed to update deal" }, { status: 500 });
   }
 }
@@ -38,7 +39,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Admin deal DELETE error:", error);
+    reportError("Admin deal DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete deal" }, { status: 500 });
   }
 }

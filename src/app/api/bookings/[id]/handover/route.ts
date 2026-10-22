@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Rental } from "@/models/Rental";
 import { loadOwnedBooking } from "@/lib/bookingAccess";
 import { normalizeCnic, normalizePlate } from "@/lib/plates";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Sets the handover details on a booking: the vehicle's number plate and the renter's CNIC. Body: { plateNumber, cnic, dueBackAt? } (the return time only while the vehicle is out).
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (rentalId) await Rental.updateOne({ _id: rentalId }, { $set: { plateNumber: plate } });
     return NextResponse.json({ plateNumber: plate, renterCnic, dueBackAt: booking.dueBackAt });
   } catch (error) {
-    console.error("Booking handover details error:", error);
+    reportError("Booking handover details error:", error);
     return NextResponse.json({ error: "Failed to save the handover details" }, { status: 500 });
   }
 }

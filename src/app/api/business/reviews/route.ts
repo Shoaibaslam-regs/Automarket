@@ -8,6 +8,7 @@ import { can, getMembership } from "@/lib/business";
 import { getBusinessRatings } from "@/lib/reviews";
 import { invalidateBusinessPage } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function GET() {
       permissions: { canReply: can(member.role, "replyReviews") },
     });
   } catch (error) {
-    console.error("Business reviews console GET error:", error);
+    reportError("Business reviews console GET error:", error);
     return NextResponse.json({ error: "Failed to load reviews" }, { status: 500 });
   }
 }
@@ -71,7 +72,7 @@ export async function PATCH(req: NextRequest) {
       { type: "REVIEW", id: review._id, label: `${review.rating}★ review` }, { details: reply ? reply.slice(0, 120) : "Removed reply" });
     return NextResponse.json({ review });
   } catch (error) {
-    console.error("Business review reply error:", error);
+    reportError("Business review reply error:", error);
     return NextResponse.json({ error: "Failed to save reply" }, { status: 500 });
   }
 }

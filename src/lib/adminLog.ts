@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { AdminLog, type AdminLogTarget } from "@/models/AdminLog";
 import { User } from "@/models/User";
+import { reportError } from "@/lib/errorLog";
 
 type Admin = { _id: mongoose.Types.ObjectId; email: string };
 
@@ -28,6 +29,6 @@ export async function logAdminAction(
       details: details?.slice(0, 500),
     });
   } catch (e) {
-    console.error(`Admin log write failed (${action}):`, e);
+    reportError(`Admin log write failed (${action}):`, e);
   }
 }

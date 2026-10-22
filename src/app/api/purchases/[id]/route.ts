@@ -6,6 +6,7 @@ import { Purchase } from "@/models/Purchase";
 import { Organization } from "@/models/Organization";
 import { REMOVABLE_PURCHASE_STATUSES, purchaseNumber } from "@/lib/purchases";
 import { triggerPusher } from "@/lib/support";
+import { reportError } from "@/lib/errorLog";
 
 async function loadOwn(userId: string, id: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const organization = await Organization.findById(purchase.organizationId).select("name phone email address city logo").lean();
     return NextResponse.json({ purchase: purchase.toObject(), organization });
   } catch (error) {
-    console.error("Purchase GET error:", error);
+    reportError("Purchase GET error:", error);
     return NextResponse.json({ error: "Failed to load the purchase" }, { status: 500 });
   }
 }
@@ -51,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (org) await triggerPusher(`user-${org.ownerId}`, "new-notification", { type: "sale", note: `${purchaseNumber(String(purchase._id))} cancelled` });
     return NextResponse.json({ purchase });
   } catch (error) {
-    console.error("Purchase PATCH error:", error);
+    reportError("Purchase PATCH error:", error);
     return NextResponse.json({ error: "Failed to cancel" }, { status: 500 });
   }
 }
@@ -78,7 +79,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Purchase DELETE error:", error);
+    reportError("Purchase DELETE error:", error);
     return NextResponse.json({ error: "Failed to remove the purchase" }, { status: 500 });
   }
 }

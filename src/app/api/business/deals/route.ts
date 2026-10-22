@@ -8,6 +8,7 @@ import { invalidateDeal } from "@/lib/pageCache";
 import { checkPlanLimit } from "@/lib/subscription";
 import { ListingLog } from "@/models/ListingLog";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET() {
     const deals = await Deal.find({ organizationId: member.organizationId }).sort({ createdAt: -1 }).populate("createdBy", "name").lean();
     return NextResponse.json({ deals, permissions: { canManage: can(member.role, "manageDeals") } });
   } catch (error) {
-    console.error("Deals GET error:", error);
+    reportError("Deals GET error:", error);
     return NextResponse.json({ error: "Failed to load deals" }, { status: 500 });
   }
 }
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       { type: "DEAL", id: deal._id, label: deal.title });
     return NextResponse.json({ deal }, { status: 201 });
   } catch (error) {
-    console.error("Deals POST error:", error);
+    reportError("Deals POST error:", error);
     return NextResponse.json({ error: "Failed to create deal" }, { status: 500 });
   }
 }

@@ -16,6 +16,7 @@ import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
 import { Deal } from "@/models/Deal";
 import { logBusinessAction } from "@/lib/businessLog";
 import { parseCheck } from "@/lib/checklist";
+import { reportError } from "@/lib/errorLog";
 
 /** Finds a booking that belongs to one of the caller's business rental vehicles. */
 async function loadBusinessBooking(userId: string, id: string) {
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     ]);
     return NextResponse.json({ booking, organization });
   } catch (error) {
-    console.error("Business booking GET error:", error);
+    reportError("Business booking GET error:", error);
     return NextResponse.json({ error: "Failed to load booking" }, { status: 500 });
   }
 }
@@ -164,13 +165,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         }
         await triggerPusher(`user-${booking.renterId}`, "new-notification", { type: "booking", status });
       } catch (e) {
-        console.error("Booking notification failed:", e);
+        reportError("Booking notification failed:", e);
       }
     }
 
     return NextResponse.json({ booking });
   } catch (error) {
-    console.error("Business booking PATCH error:", error);
+    reportError("Business booking PATCH error:", error);
     return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
   }
 }
@@ -207,7 +208,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Business booking DELETE error:", error);
+    reportError("Business booking DELETE error:", error);
     return NextResponse.json({ error: "Failed to remove booking" }, { status: 500 });
   }
 }

@@ -5,7 +5,9 @@ import { loadOwnedBooking } from "@/lib/bookingAccess";
 import { amountDue, paymentState } from "@/lib/payments";
 import { logBusinessAction } from "@/lib/businessLog";
 import { bookingNumber } from "@/lib/bookings";
-import { recordPaymentChange } from "@/lib/ledger";
+import { moneyTransaction, recordPaymentChange } from "@/lib/ledger";
+import { Booking } from "@/models/Booking";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Records what the renter has paid. Body: { status: "PENDING" | "PARTIAL" | "PAID", amountPaid? }.
@@ -37,17 +39,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Choose pending, partly paid or paid" }, { status: 400 });
     }
 
-    const before = booking.amountPaid ?? 0;
+    // Set atomically and read the previous amount in the same step, so two people saving at once can't
+    // both count the same money in the cash book; the entry is in the same transaction as the payment
+    const now = new Date();
+    const userId = session.user.id;
+    const before = await moneyTransaction(async dbSession => {
+      const prev = await Booking.findOneAndUpdate({ _id: booking._id }, { $set: { amountPaid: paid, paymentUpdatedAt: now } }, { session: dbSession, projection: { amountPaid: 1 } })
+        .lean<{ amountPaid?: number }>();
+      const was = prev?.amountPaid ?? 0;
+      await recordPaymentChange(userId, paid - was, "BOOKING_PAYMENT", { bookingId: booking._id }, bookingNumber(String(booking._id)), { session: dbSession });
+      return was;
+    });
     booking.amountPaid = paid;
-    booking.paymentUpdatedAt = new Date();
-    await booking.save();
-    await recordPaymentChange(session.user.id, paid - before, "BOOKING_PAYMENT", { bookingId: booking._id }, bookingNumber(String(booking._id)));
+    booking.paymentUpdatedAt = now;
     await logBusinessAction({ userId: session.user.id }, "booking.payment",
       { type: "BOOKING", id: booking._id, label: bookingNumber(String(booking._id)) },
       { details: `PKR ${before.toLocaleString()} → PKR ${paid.toLocaleString()} of ${due.toLocaleString()}`, amount: paid - before });
     return NextResponse.json({ amountPaid: paid, payment: paymentState(booking) });
   } catch (error) {
-    console.error("Booking payment error:", error);
+    reportError("Booking payment error:", error);
     return NextResponse.json({ error: "Failed to save the payment" }, { status: 500 });
   }
 }

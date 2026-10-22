@@ -14,6 +14,7 @@ import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { clearAdHistory } from "@/lib/adHistory";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -42,7 +43,7 @@ export async function GET() {
     ]);
     return NextResponse.json({ ads, business: org, options, canPromote: can(member.role, "promote") });
   } catch (error) {
-    console.error("Business ads GET error:", error);
+    reportError("Business ads GET error:", error);
     return NextResponse.json({ error: "Failed to load ads" }, { status: 500 });
   }
 }
@@ -95,14 +96,14 @@ export async function POST(req: NextRequest) {
     if (admin && !admin._id.equals(session.user.id)) {
       await sendChatMessage(session.user.id, String(admin._id),
         `Hi AutoMarket team, "${org.name}" asked for a sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
-        session.user.name).catch(e => console.error("Ad request message failed:", e));
+        session.user.name).catch(e => reportError("Ad request message failed:", e));
     }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.request",
       { type: "BUSINESS", id: ad._id, label: targetLabel }, { details: `${weeks} week${weeks > 1 ? "s" : ""} · ${paymentRef}`, amount: price });
 
     return NextResponse.json({ ad }, { status: 201 });
   } catch (error) {
-    console.error("Business ads POST error:", error);
+    reportError("Business ads POST error:", error);
     return NextResponse.json({ error: "Failed to send your request" }, { status: 500 });
   }
 }
@@ -122,7 +123,7 @@ export async function DELETE() {
     }
     return NextResponse.json({ cleared });
   } catch (error) {
-    console.error("Business ads DELETE error:", error);
+    reportError("Business ads DELETE error:", error);
     return NextResponse.json({ error: "Failed to clear the history" }, { status: 500 });
   }
 }

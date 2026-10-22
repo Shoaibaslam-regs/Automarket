@@ -7,6 +7,7 @@ import { logAdminAction } from "@/lib/adminLog";
 import { sendChatMessage } from "@/lib/support";
 import { SPONSORED_AD } from "@/lib/plans";
 import { AD_KIND_LABEL, DAY_MS, type AdKind } from "@/lib/ads";
+import { reportError } from "@/lib/errorLog";
 
 const day = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Karachi" });
 
@@ -70,14 +71,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     revalidatePath("/");
 
     if (!gate.admin._id.equals(ad.requestedBy)) {
-      await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoMarket").catch(e => console.error("Ad message failed:", e));
+      await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoMarket").catch(e => reportError("Ad message failed:", e));
     }
     await logAdminAction(gate.admin, `ad.${action}`, { type: "AD", id: ad._id, label: ad.targetLabel },
       action === "approve" ? `${ad.weeks} week${ad.weeks > 1 ? "s" : ""}, PKR ${ad.price.toLocaleString()} · ${ad.paymentRef} · ${day(ad.startsAt!)} to ${day(ad.endsAt!)}` : reason);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Admin ad PATCH error:", error);
+    reportError("Admin ad PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the ad" }, { status: 500 });
   }
 }

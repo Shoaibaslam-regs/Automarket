@@ -6,6 +6,7 @@ import { Listing } from "@/models/Listing";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { sendBookingConfirmedEmail } from "@/lib/email";
+import { reportError } from "@/lib/errorLog";
 
 export async function PATCH(
   req: NextRequest,
@@ -61,7 +62,7 @@ export async function PATCH(
           });
         }
       } catch (e) {
-        console.error("Email failed:", e);
+        reportError("Email failed:", e);
       }
     }
     return NextResponse.json({ booking });

@@ -117,7 +117,8 @@ const PurchaseSchema = new Schema<IPurchase>(
     declinedAt: Date,
     cancelledAt: Date,
   },
-  { timestamps: true }
+  // Two people changing what was paid at once must not both succeed; other edits don't need the check
+  { timestamps: true, optimisticConcurrency: ["amountPaid", "installmentPlan", "status"] }
 );
 
 PurchaseSchema.index({ organizationId: 1, createdAt: -1 });

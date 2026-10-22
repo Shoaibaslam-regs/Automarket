@@ -4,6 +4,7 @@ import { User } from "@/models/User";
 import { listingMatches, type ListingFilters } from "@/lib/listingFilters";
 import { formatPrice } from "@/lib/format";
 import { sendSavedSearchAlertEmail } from "@/lib/email";
+import { reportError } from "@/lib/errorLog";
 
 type NewListing = {
   _id: mongoose.Types.ObjectId;
@@ -61,5 +62,5 @@ export async function notifySavedSearches(listing: NewListing) {
   );
 
   const failed = results.filter(r => r.status === "rejected");
-  if (failed.length) console.error(`Saved search alerts: ${failed.length}/${results.length} emails failed`, failed[0]);
+  if (failed.length) reportError(`Saved search alerts: ${failed.length}/${results.length} emails failed`, failed[0]);
 }

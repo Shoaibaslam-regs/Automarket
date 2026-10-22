@@ -11,8 +11,9 @@ import { REMOVABLE_PURCHASE_STATUSES, purchaseNumber, purchasePayment, salePrice
 import { ensurePurchaseCustomer, finishSale } from "@/lib/saleItems";
 import { sendChatMessage, triggerPusher } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
-import { recordPaymentChange } from "@/lib/ledger";
+import { moneyTransaction, recordPaymentChange } from "@/lib/ledger";
 import { MAX_INSTALLMENT_MONTHS, buildSchedule, installmentSummary } from "@/lib/installments";
+import { reportError } from "@/lib/errorLog";
 
 type Member = NonNullable<Awaited<ReturnType<typeof getMembership>>>;
 type SaleDoc = NonNullable<Awaited<ReturnType<typeof Purchase.findOne>>>;
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     ]);
     return NextResponse.json({ purchase, organization });
   } catch (error) {
-    console.error("Business sale GET error:", error);
+    reportError("Business sale GET error:", error);
     return NextResponse.json({ error: "Failed to load the sale" }, { status: 500 });
   }
 }
@@ -162,10 +163,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const paidBefore = (await Purchase.findById(sale._id).select("amountPaid").lean<{ amountPaid?: number }>())?.amountPaid ?? 0;
     sale.handledBy = new mongoose.Types.ObjectId(session.user.id);
     if (tellBuyer && sale.buyerId) sale.seenByBuyer = false;
-    await sale.save();
+    // The sale and its cash book entry are saved together. Purchase checks its version when money fields change,
+    // so if a teammate changed this sale since it was loaded the save fails (409) instead of counting money twice.
+    const change = (sale.amountPaid ?? 0) - paidBefore;
+    const userId = session.user.id;
+    try {
+      await moneyTransaction(async dbSession => {
+        await sale.save({ session: dbSession });
+        if (change) await recordPaymentChange(userId, change, action === "payInstallment" ? "INSTALLMENT" : "SALE_PAYMENT", { purchaseId: sale._id, listingId: sale.listingId, vehicleLabel: sale.vehicle.title }, `${purchaseNumber(String(sale._id))} · ${sale.buyer.name}`, { session: dbSession });
+      });
+    } catch (e) {
+      if (e instanceof mongoose.Error.VersionError) return NextResponse.json({ error: "Someone else just changed this sale. Reload and try again.", code: "CONFLICT" }, { status: 409 });
+      throw e;
+    }
     {
-      const change = (sale.amountPaid ?? 0) - paidBefore;
-      if (change) await recordPaymentChange(session.user.id, change, action === "payInstallment" ? "INSTALLMENT" : "SALE_PAYMENT", { purchaseId: sale._id, listingId: sale.listingId, vehicleLabel: sale.vehicle.title }, `${purchaseNumber(String(sale._id))} · ${sale.buyer.name}`);
       const act = ({ accept: "sale.accept", decline: "sale.decline", complete: "sale.complete", payment: "sale.payment", installments: "sale.installments", payInstallment: "sale.installmentPaid" } as Record<string, string>)[action];
       if (act) {
         const paidNow = sale.amountPaid ?? 0;
@@ -183,7 +194,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (action === "complete") {
       await finishSale(sale);
-      try { await ensurePurchaseCustomer(sale); } catch (e) { console.error("Sale customer sync failed:", e); }
+      try { await ensurePurchaseCustomer(sale); } catch (e) { reportError("Sale customer sync failed:", e); }
     }
     if (tellBuyer && sale.buyerId) {
       try {
@@ -191,12 +202,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         await sendChatMessage(session.user.id, String(sale.buyerId), tellBuyer, me?.name);
         await triggerPusher(`user-${sale.buyerId}`, "new-notification", { type: "purchase", status: sale.status });
       } catch (e) {
-        console.error("Sale notification failed:", e);
+        reportError("Sale notification failed:", e);
       }
     }
     return NextResponse.json({ sale });
   } catch (error) {
-    console.error("Business sale PATCH error:", error);
+    reportError("Business sale PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the sale" }, { status: 500 });
   }
 }
@@ -241,7 +252,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       { type: "SALE", id: sale._id, label: `${purchaseNumber(String(sale._id))} · ${sale.vehicle.title}` });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Business sale DELETE error:", error);
+    reportError("Business sale DELETE error:", error);
     return NextResponse.json({ error: "Failed to remove the sale" }, { status: 500 });
   }
 }

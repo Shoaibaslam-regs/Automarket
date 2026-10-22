@@ -13,6 +13,7 @@ import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
 import { Deal } from "@/models/Deal";
 import { dealPrice } from "@/lib/deals";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ export async function GET() {
       permissions: { role: member.role, canManage: can(member.role, "manageBookings") },
     });
   } catch (error) {
-    console.error("Business bookings GET error:", error);
+    reportError("Business bookings GET error:", error);
     return NextResponse.json({ error: "Failed to load bookings" }, { status: 500 });
   }
 }
@@ -192,7 +193,7 @@ export async function POST(req: NextRequest) {
       try {
         await ensureBookingCustomer(booking._id);
       } catch (e) {
-        console.error("Adding walk-in customer failed:", e);
+        reportError("Adding walk-in customer failed:", e);
       }
     }
 
@@ -201,7 +202,7 @@ export async function POST(req: NextRequest) {
       { details: `${walkIn?.name ?? "Walk-in"} · ${days} day${days !== 1 ? "s" : ""}`, amount: booking.totalAmount });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
-    console.error("Business booking POST error:", error);
+    reportError("Business booking POST error:", error);
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 }

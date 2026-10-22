@@ -2,6 +2,7 @@ import { Employee } from "@/models/Employee";
 import { User } from "@/models/User";
 import { can, type BusinessPermission, type BusinessRole } from "@/lib/businessPermissions";
 import { triggerPusher } from "@/lib/support";
+import { reportError } from "@/lib/errorLog";
 
 type EventData = Record<string, unknown>;
 
@@ -16,7 +17,7 @@ export async function notifyTeam(organizationId: unknown, permission: BusinessPe
     const ids = [...new Set(members.filter(m => can(m.role, permission)).map(m => String(m.userId)))].filter(id => !skip.includes(id));
     await Promise.all(ids.map(id => triggerPusher(`user-${id}`, "new-notification", data)));
   } catch (e) {
-    console.error("Team notification failed:", e);
+    reportError("Team notification failed:", e);
   }
 }
 

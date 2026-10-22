@@ -5,6 +5,7 @@ import { Listing } from "@/models/Listing";
 import { Booking } from "@/models/Booking";
 import { Message } from "@/models/Message";
 import { requireAdminApi } from "@/lib/adminAuth";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -152,7 +153,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Analytics error:", error);
+    reportError("Analytics error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

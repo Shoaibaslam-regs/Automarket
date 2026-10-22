@@ -30,4 +30,6 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "ad.clearHistory": "Cleared ad history",
   "settings.payment": "Changed payment details",
   "settings.adminKey": "Changed the admin access key",
+  "errors.resolve": "Marked errors fixed",
+  "errors.clear": "Cleared fixed errors",
 };

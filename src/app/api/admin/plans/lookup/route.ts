@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
 import { effectivePlanId } from "@/lib/plans";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Plan lookup error:", error);
+    reportError("Plan lookup error:", error);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }

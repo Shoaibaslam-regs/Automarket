@@ -13,6 +13,7 @@ import { ensureBookingCustomer } from "@/lib/customerSync";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { notifyTeam } from "@/lib/teamNotify";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Books a rent deal (a single car or a multi-car package) for the signed-in user. Body: { startDate, endDate }.
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     try {
       await ensureBookingCustomer(booking._id);
     } catch (e) {
-      console.error("Adding deal booking customer failed:", e);
+      reportError("Adding deal booking customer failed:", e);
     }
     try {
       // Everyone in the business who handles bookings gets a badge and a phone alert
@@ -104,12 +105,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         });
       }
     } catch (e) {
-      console.error("Deal booking notification failed:", e);
+      reportError("Deal booking notification failed:", e);
     }
 
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
-    console.error("Deal booking error:", error);
+    reportError("Deal booking error:", error);
     return NextResponse.json({ error: "Failed to book this deal" }, { status: 500 });
   }
 }

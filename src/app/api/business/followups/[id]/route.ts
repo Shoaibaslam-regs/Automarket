@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { can, getMembership } from "@/lib/business";
 import { FollowUp } from "@/models/FollowUp";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 type Member = NonNullable<Awaited<ReturnType<typeof getMembership>>>;
 type Doc = NonNullable<Awaited<ReturnType<typeof FollowUp.findOne>>>;
@@ -47,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     return NextResponse.json({ followUp });
   } catch (error) {
-    console.error("Follow-up PATCH error:", error);
+    reportError("Follow-up PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the follow-up" }, { status: 500 });
   }
 }
@@ -63,7 +64,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await found.followUp.deleteOne();
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Follow-up DELETE error:", error);
+    reportError("Follow-up DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete the follow-up" }, { status: 500 });
   }
 }

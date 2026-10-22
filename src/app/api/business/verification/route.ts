@@ -8,6 +8,7 @@ import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { badgeRequestText } from "@/lib/supportContact";
 import { VERIFIED_BADGE, badgeState, type BadgeVerification } from "@/lib/plans";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { reportError } from "@/lib/errorLog";
 
 type OrgBadge = {
   _id: { toString(): string };
@@ -47,7 +48,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Verification status error:", error);
+    reportError("Verification status error:", error);
     return NextResponse.json({ error: "Failed to load badge status" }, { status: 500 });
   }
 }
@@ -92,7 +93,7 @@ export async function POST() {
     );
     return NextResponse.json({ supportUserId }, { status: 201 });
   } catch (error) {
-    console.error("Verification request error:", error);
+    reportError("Verification request error:", error);
     return NextResponse.json({ error: "Failed to send your request" }, { status: 500 });
   }
 }

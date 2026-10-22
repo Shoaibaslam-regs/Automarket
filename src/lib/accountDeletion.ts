@@ -18,6 +18,7 @@ import { Purchase } from "@/models/Purchase";
 import { invalidateBusinessPage, invalidateListingPage } from "@/lib/pageCache";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
 import { PushSubscription } from "@/models/PushSubscription";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -135,7 +136,7 @@ export async function deleteAccount(userId: string): Promise<void> {
       await new UTApi().deleteFiles(keys);
     } catch (e) {
       // The account still goes; leftover files are only storage, nothing links to them any more
-      console.error("UploadThing cleanup failed:", e);
+      reportError("UploadThing cleanup failed:", e);
     }
   }
   await VehicleImage.deleteMany({ userId: id, url: { $in: removable.map(i => i.url) } });

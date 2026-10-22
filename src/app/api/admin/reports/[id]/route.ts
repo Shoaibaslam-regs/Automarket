@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { Report } from "@/models/Report";
 import { logAdminAction } from "@/lib/adminLog";
 import { REPORT_REASON_LABEL } from "@/lib/reports";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Closes a report. Body: { action: "resolve" | "dismiss", note? }.
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ ok: true, closed: res.modifiedCount });
   } catch (error) {
-    console.error("Admin report PATCH error:", error);
+    reportError("Admin report PATCH error:", error);
     return NextResponse.json({ error: "Failed to update the report" }, { status: 500 });
   }
 }

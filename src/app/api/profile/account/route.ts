@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { isPlatformOwner } from "@/lib/adminAuth";
 import { checkAccountDeletion, deleteAccount } from "@/lib/accountDeletion";
+import { reportError } from "@/lib/errorLog";
 
 /** What deleting the signed-in account would remove, and anything that has to be sorted out first. */
 export async function GET() {
@@ -19,7 +20,7 @@ export async function GET() {
     if (isPlatformOwner(user.email)) check.blockers.unshift("The platform owner account can't be deleted.");
     return NextResponse.json({ ...check, email: user.email, hasPassword: !!user.password });
   } catch (error) {
-    console.error("Account deletion check error:", error);
+    reportError("Account deletion check error:", error);
     return NextResponse.json({ error: "Failed to check your account" }, { status: 500 });
   }
 }
@@ -62,7 +63,7 @@ export async function DELETE(req: NextRequest) {
     await deleteAccount(session.user.id);
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error("Account deletion error:", error);
+    reportError("Account deletion error:", error);
     return NextResponse.json({ error: "Failed to delete your account" }, { status: 500 });
   }
 }

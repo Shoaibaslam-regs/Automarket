@@ -6,6 +6,7 @@ import { User } from "@/models/User";
 import { PhoneOtp } from "@/models/PhoneOtp";
 import { OTP_MAX_ATTEMPTS, hashOtp } from "@/lib/phoneOtp";
 import { formatPkMobile } from "@/lib/phone";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Checks the texted code. Body: { code }. On success the number becomes the account's verified phone
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     await otp.deleteOne();
     return NextResponse.json({ ok: true, verifiedPhone: otp.phone, phone: formatPkMobile(otp.phone), phoneVerifiedAt: now });
   } catch (error) {
-    console.error("Phone verify error:", error);
+    reportError("Phone verify error:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

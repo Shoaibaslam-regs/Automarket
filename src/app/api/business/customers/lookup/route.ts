@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { can, getMembership } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ user: { id: user._id.toString(), name: user.name ?? "", email: user.email, phone: user.phone ?? "" } });
   } catch (error) {
-    console.error("Customer lookup error:", error);
+    reportError("Customer lookup error:", error);
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
 }

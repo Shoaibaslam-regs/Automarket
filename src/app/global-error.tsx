@@ -3,6 +3,7 @@
 import "./globals.css";
 import { useEffect } from "react";
 import { isStaleBuildError, reloadForStaleBuild } from "@/lib/staleBuild";
+import { reportClientError } from "@/lib/clientErrors";
 
 // Replaces the root layout when it crashes, so it must render its own <html> and <body>
 export default function GlobalError({
@@ -13,7 +14,10 @@ export default function GlobalError({
   unstable_retry: () => void;
 }) {
   // A page left open across a deployment fails to load the new code; a reload fixes it
-  useEffect(() => { reloadForStaleBuild(error); }, [error]);
+  useEffect(() => {
+    reportClientError(error, "App crash");
+    reloadForStaleBuild(error);
+  }, [error]);
   const onRetry = isStaleBuildError(error) ? () => window.location.reload() : unstable_retry;
   return (
     <html lang="en">

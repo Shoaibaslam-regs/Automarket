@@ -6,6 +6,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { clearAdHistory, finishedAdFilter } from "@/lib/adHistory";
 import { logAdminAction } from "@/lib/adminLog";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("Admin ads GET error:", error);
+    reportError("Admin ads GET error:", error);
     return NextResponse.json({ error: "Failed to load ads" }, { status: 500 });
   }
 }
@@ -65,7 +66,7 @@ export async function DELETE() {
     if (cleared > 0) await logAdminAction(gate.admin, "ad.clearHistory", { type: "AD", label: "Ad history" }, `${cleared} finished ad${cleared > 1 ? "s" : ""}`);
     return NextResponse.json({ cleared });
   } catch (error) {
-    console.error("Admin ads DELETE error:", error);
+    reportError("Admin ads DELETE error:", error);
     return NextResponse.json({ error: "Failed to clear the history" }, { status: 500 });
   }
 }

@@ -6,6 +6,7 @@ import { BusinessLog } from "@/models/BusinessLog";
 import { can, getMembership } from "@/lib/business";
 import { BUSINESS_LOG_TYPES } from "@/lib/businessActions";
 import { logBusinessAction } from "@/lib/businessLog";
+import { reportError } from "@/lib/errorLog";
 
 const PAGE_SIZE = 50;
 
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
     ]);
     return NextResponse.json({ entries, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) });
   } catch (error) {
-    console.error("Business activity GET error:", error);
+    reportError("Business activity GET error:", error);
     return NextResponse.json({ error: "Failed to load activity" }, { status: 500 });
   }
 }
@@ -65,7 +66,7 @@ export async function DELETE(req: NextRequest) {
     }
     return NextResponse.json({ deleted: deletedCount });
   } catch (error) {
-    console.error("Business activity DELETE error:", error);
+    reportError("Business activity DELETE error:", error);
     return NextResponse.json({ error: "Failed to delete activity history" }, { status: 500 });
   }
 }

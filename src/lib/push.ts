@@ -1,6 +1,7 @@
 import webpush from "web-push";
 import { connectDB } from "@/lib/mongodb";
 import { PushSubscription } from "@/models/PushSubscription";
+import { reportError } from "@/lib/errorLog";
 
 /** What a phone notification shows; `url` opens when it's tapped, `tag` replaces an older one with the same tag. */
 export type PushPayload = { title: string; body: string; url: string; tag?: string };
@@ -34,7 +35,7 @@ export async function sendPush(userIds: unknown[], payload: PushPayload) {
     if (gone.length) await PushSubscription.deleteMany({ _id: { $in: gone } });
     await PushSubscription.updateMany({ _id: { $in: subs.map(s => s._id).filter(id => !gone.includes(id)) } }, { $set: { lastSentAt: new Date() } });
   } catch (e) {
-    console.error("Push failed:", e);
+    reportError("Push failed:", e);
   }
 }
 

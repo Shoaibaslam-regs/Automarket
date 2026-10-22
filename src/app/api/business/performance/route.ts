@@ -7,6 +7,7 @@ import { LedgerEntry } from "@/models/LedgerEntry";
 import { Employee } from "@/models/Employee";
 import { User } from "@/models/User";
 import { can, getMembership } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
 const PKT_OFFSET_MS = 5 * 60 * 60 * 1000;
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ from, to, people });
   } catch (error) {
-    console.error("Business performance GET error:", error);
+    reportError("Business performance GET error:", error);
     return NextResponse.json({ error: "Failed to load performance" }, { status: 500 });
   }
 }

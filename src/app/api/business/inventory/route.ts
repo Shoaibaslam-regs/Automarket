@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
 import { getInventorySellerIds, getMembership } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function GET() {
 
     return NextResponse.json({ listings: withPermissions });
   } catch (error) {
-    console.error("Business inventory error:", error);
+    reportError("Business inventory error:", error);
     return NextResponse.json({ error: "Failed to fetch inventory" }, { status: 500 });
   }
 }

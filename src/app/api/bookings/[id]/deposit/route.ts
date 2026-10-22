@@ -5,8 +5,9 @@ import { loadOwnedBooking } from "@/lib/bookingAccess";
 import { depositState, DEPOSIT_LABEL } from "@/lib/checklist";
 import { logBusinessAction } from "@/lib/businessLog";
 import { bookingNumber } from "@/lib/bookings";
-import { recordPaymentChange, recordOut } from "@/lib/ledger";
+import { moneyTransaction, recordPaymentChange, recordOut } from "@/lib/ledger";
 import { getMembership } from "@/lib/business";
+import { reportError } from "@/lib/errorLog";
 
 /**
  * Settles the security deposit after the vehicle is back. Body: { refunded, note? }.
@@ -40,17 +41,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     booking.depositRefunded = refunded;
     booking.depositNote = note || undefined;
     booking.depositSettledAt = new Date();
-    await booking.save();
-
-    // Cash book: a refund is money out; lowering an earlier refund puts it back in
+    // Cash book: a refund is money out; lowering an earlier refund puts it back in. Saved in one transaction with the deposit.
     const change = refunded - before;
     const ref = bookingNumber(String(booking._id));
-    if (change > 0) {
-      const member = await getMembership(session.user.id);
-      if (member) await recordOut(session.user.id, member.organizationId, "DEPOSIT_REFUND", change, { bookingId: booking._id }, ref);
-    } else if (change < 0) {
-      await recordPaymentChange(session.user.id, -change, "BOOKING_PAYMENT", { bookingId: booking._id }, `${ref} deposit refund corrected`);
-    }
+    const member = change > 0 ? await getMembership(session.user.id) : null;
+    const userId = session.user.id;
+    await moneyTransaction(async dbSession => {
+      await booking.save({ session: dbSession });
+      if (change > 0 && member) await recordOut(userId, member.organizationId, "DEPOSIT_REFUND", change, { bookingId: booking._id }, ref, { session: dbSession });
+      else if (change < 0) await recordPaymentChange(userId, -change, "BOOKING_PAYMENT", { bookingId: booking._id }, `${ref} deposit refund corrected`, { session: dbSession });
+    });
 
     const state = depositState(booking);
     await logBusinessAction({ userId: session.user.id }, "booking.deposit",
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       { details: `${DEPOSIT_LABEL[state.status]}: PKR ${state.refunded.toLocaleString()} back${state.kept ? `, PKR ${state.kept.toLocaleString()} kept (${note})` : ""}`, amount: -change });
     return NextResponse.json({ depositRefunded: refunded, depositNote: booking.depositNote ?? null, depositSettledAt: booking.depositSettledAt, deposit: state });
   } catch (error) {
-    console.error("Booking deposit error:", error);
+    reportError("Booking deposit error:", error);
     return NextResponse.json({ error: "Failed to save the deposit" }, { status: 500 });
   }
 }

@@ -9,6 +9,7 @@ import { Customer } from "@/models/Customer";
 import { Listing } from "@/models/Listing";
 import { Booking } from "@/models/Booking";
 import { Purchase } from "@/models/Purchase";
+import { reportError } from "@/lib/errorLog";
 
 /** The new-business setup checklist: which first steps are done. Only the owner and managers see it. */
 export async function GET() {
@@ -44,7 +45,7 @@ export async function GET() {
     };
     return NextResponse.json({ show: true, orgId: String(orgId), steps });
   } catch (error) {
-    console.error("Business checklist GET error:", error);
+    reportError("Business checklist GET error:", error);
     return NextResponse.json({ error: "Failed to load the checklist" }, { status: 500 });
   }
 }

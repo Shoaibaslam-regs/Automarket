@@ -5,6 +5,7 @@ import { Announcement } from "@/models/Announcement";
 import { Organization } from "@/models/Organization";
 import { logAdminAction } from "@/lib/adminLog";
 import { notifyFollowers, parseAnnouncement } from "@/lib/official";
+import { reportError } from "@/lib/errorLog";
 
 /** Every official post, newest first (pinned on top), with the number of following businesses. */
 export async function GET() {
@@ -19,7 +20,7 @@ export async function GET() {
     ]);
     return NextResponse.json({ announcements, followers, businesses });
   } catch (error) {
-    console.error("Admin announcements GET error:", error);
+    reportError("Admin announcements GET error:", error);
     return NextResponse.json({ error: "Failed to load announcements" }, { status: 500 });
   }
 }
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     await notifyFollowers({ title: announcement.title, kind: announcement.kind });
     return NextResponse.json({ announcement }, { status: 201 });
   } catch (error) {
-    console.error("Admin announcements POST error:", error);
+    reportError("Admin announcements POST error:", error);
     return NextResponse.json({ error: "Failed to post the announcement" }, { status: 500 });
   }
 }

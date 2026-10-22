@@ -20,6 +20,8 @@ export interface IUser extends Document {
   planSource?: PlanSource;
   /** When the account's one free trial was started; set once and never cleared, so it can't be given again */
   trialUsedAt?: Date;
+  /** The planExpiresAt the "plan ends soon" reminder was sent for (daily cron), so each period is reminded once */
+  planReminderFor?: Date;
   /** Forgot-password link: only a SHA-256 hash of the token is stored, and it expires (see /api/auth/forgot-password) */
   /** Mobile number confirmed by SMS code (E.164, +92…), and when; cleared if the profile phone changes */
   verifiedPhone?: string;
@@ -54,6 +56,7 @@ const UserSchema = new Schema<IUser>(
     planExpiresAt: { type: Date },
     planSource: { type: String, enum: ["PAID", "ADMIN_GRANT", "TRIAL"] },
     trialUsedAt: { type: Date },
+    planReminderFor: { type: Date },
     verifiedPhone: { type: String, index: true, sparse: true },
     phoneVerifiedAt: { type: Date },
     trialPhone: { type: String, index: true, sparse: true },

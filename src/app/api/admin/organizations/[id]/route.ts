@@ -9,6 +9,7 @@ import { triggerPusher } from "@/lib/support";
 import { isVerified } from "@/lib/plans";
 import { invalidateBusinessSlug, invalidateListingPage } from "@/lib/pageCache";
 import { logAdminAction } from "@/lib/adminLog";
+import { reportError } from "@/lib/errorLog";
 
 const BADGE_MONTHS = [1, 3, 6, 12];
 const fmtDate = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -22,7 +23,7 @@ async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.T
     await triggerPusher(`chat-${[String(adminId), String(ownerId)].sort().join("-")}`, "new-message", populated);
     await triggerPusher(`user-${ownerId}`, "new-notification", { type: "message", from: "AutoMarket", preview: content.slice(0, 50) });
   } catch (e) {
-    console.error("Suspension notice failed:", e);
+    reportError("Suspension notice failed:", e);
   }
 }
 
@@ -158,7 +159,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Business update error:", error);
+    reportError("Business update error:", error);
     return NextResponse.json({ error: "Failed to update business" }, { status: 500 });
   }
 }

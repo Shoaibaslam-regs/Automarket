@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Favorite } from "@/models/Favorite";
 import { Listing } from "@/models/Listing";
 import { auth } from "@/lib/auth";
+import { reportError } from "@/lib/errorLog";
 
 // IDs of the current user's saved listings (the heart buttons only need to know which are saved)
 export async function GET() {
@@ -14,7 +15,7 @@ export async function GET() {
     const ids = await Favorite.find({ userId: session.user.id }).distinct("listingId");
     return NextResponse.json({ ids: ids.map(String) });
   } catch (error) {
-    console.error("Get favorites error:", error);
+    reportError("Get favorites error:", error);
     return NextResponse.json({ error: "Failed to fetch favorites" }, { status: 500 });
   }
 }
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ saved: true });
   } catch (error) {
-    console.error("Add favorite error:", error);
+    reportError("Add favorite error:", error);
     return NextResponse.json({ error: "Failed to save listing" }, { status: 500 });
   }
 }
@@ -56,7 +57,7 @@ export async function DELETE(req: NextRequest) {
     await Favorite.deleteOne({ userId: session.user.id, listingId });
     return NextResponse.json({ saved: false });
   } catch (error) {
-    console.error("Remove favorite error:", error);
+    reportError("Remove favorite error:", error);
     return NextResponse.json({ error: "Failed to remove listing" }, { status: 500 });
   }
 }
