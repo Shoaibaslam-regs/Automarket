@@ -1,22 +1,27 @@
 import Skeleton from "@/components/ui/Skeleton";
-import { DarkBar, DarkHero, SkeletonPage, VehicleCard, VehicleRow } from "@/components/ui/PageSkeleton";
+import { SkeletonPage, VehicleCard, VehicleRow } from "@/components/ui/PageSkeleton";
 
-/** Browse: the dark hero with search and type chips, the filter sidebar (desktop), the toolbar and the results. */
+/** Browse: the plain header with search and type tabs, the filter sidebar (desktop), the toolbar and the results. */
 export default function ListingsLoading() {
   return (
     <SkeletonPage>
-      <DarkHero>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 sm:pb-12 sm:pt-12">
-          <DarkBar className="h-3 w-24" />
-          <DarkBar className="mt-3 h-7 w-56 sm:h-10 sm:w-80" />
-          <DarkBar className="mt-3 h-4 w-full max-w-md" />
-          <DarkBar className="mt-6 h-[52px] w-full max-w-2xl rounded-2xl" />
-          <div className="mt-4 flex gap-2">
-            {[48, 80, 80, 92].map(w => <DarkBar key={w} className="h-8 rounded-full" style={{ width: w }} />)}
+      <div className="mx-auto max-w-[1280px] px-4 pt-5 sm:px-6 sm:pt-9">
+        <div className="lg:flex lg:items-end lg:justify-between lg:gap-10">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Skeleton className="h-7 w-40 sm:h-8 sm:w-44" />
+              <Skeleton className="mt-2 h-4 w-72 max-w-full" />
+            </div>
+            <Skeleton className="mt-1 h-5 w-24 flex-shrink-0 lg:hidden" />
           </div>
+          <Skeleton className="mt-4 h-[46px] w-full rounded-xl lg:mt-0 lg:max-w-md" />
         </div>
-      </DarkHero>
-      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mt-4 flex gap-6 border-b border-slate-200 pb-2.5">
+          {["w-6", "w-14", "w-14", "w-[84px]"].map(w => <Skeleton key={w} className={`h-4 ${w}`} />)}
+          <Skeleton className="ml-auto hidden h-4 w-24 lg:block" />
+        </div>
+      </div>
+      <div className="mx-auto max-w-[1280px] px-4 pb-6 pt-4 sm:px-6 sm:py-8">
         <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-8">
           <aside className="hidden space-y-5 rounded-[22px] border border-slate-200/80 bg-white p-5 lg:block">
             <Skeleton className="h-4 w-20" />
@@ -28,16 +33,17 @@ export default function ListingsLoading() {
             ))}
           </aside>
           <div className="min-w-0">
-            {/* Toolbar: on phones the count, then [Hide sold | view], then [Filters | sort]; one row on wider screens */}
-            <div className="mb-5 space-y-2.5 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 sm:flex sm:items-center sm:gap-2 sm:space-y-0 sm:px-4 [&>*:first-child]:sm:mr-auto">
-              <Skeleton className="h-4 w-36" />
-              <div className="grid grid-cols-[minmax(0,1fr)_80px] gap-2 sm:flex">
-                <Skeleton className="h-10 rounded-xl sm:w-40" />
-                <Skeleton className="h-10 rounded-xl sm:w-20" />
+            {/* Toolbar: on phones [count … Hide sold] then [Filters | sort | view] with no card; one row in a card on wider screens */}
+            <div className="mb-4 space-y-2.5 sm:mb-5 sm:flex sm:items-center sm:gap-2 sm:space-y-0 sm:rounded-2xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 [&>*:first-child]:sm:mr-auto">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3.5 w-16 sm:hidden" />
               </div>
-              <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 sm:flex">
+              <div className="grid grid-cols-[90px_minmax(0,1fr)_80px] gap-2 sm:flex">
+                <Skeleton className="hidden h-10 rounded-xl sm:block sm:w-40" />
                 <Skeleton className="h-10 rounded-xl sm:w-28 lg:hidden" />
                 <Skeleton className="h-10 rounded-xl sm:w-[190px]" />
+                <Skeleton className="h-10 rounded-xl sm:w-20" />
               </div>
             </div>
             {/* Phones open in the list view, wider screens in the grid */}

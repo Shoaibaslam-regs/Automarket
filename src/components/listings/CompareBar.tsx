@@ -22,7 +22,7 @@ export default function CompareBar() {
   if (items.length === 0 || pathname === "/compare" || pathname === "/") return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[120] flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+var(--am-bottom-bar,0px))] z-[120] flex justify-center px-4">
       <div className="bl-pop pointer-events-auto flex w-full max-w-xl items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/95 p-2.5 pl-3 text-white shadow-2xl shadow-black/30 backdrop-blur">
         <GitCompareArrows size={18} className="hidden flex-shrink-0 text-indigo-300 sm:block" />
         <div className="flex min-w-0 flex-1 gap-2">

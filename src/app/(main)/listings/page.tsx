@@ -15,6 +15,7 @@ import {
 import { useRateLock } from "@/hooks/useRateLock";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import SearchSuggest from "@/components/SearchSuggest";
+import { CITIES, MY_CITY_KEY } from "@/lib/cities";
 
 const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
 const TYPES = [
@@ -43,6 +44,56 @@ const YEAR_OPTIONS = [
   { value: "", label: "Any" },
   ...Array.from({ length: THIS_YEAR - 1979 }, (_, i) => String(THIS_YEAR - i)).map(y => ({ value: y, label: y })),
 ];
+// Quick price picks as [label, min, max] in PKR ("" = no limit): lakh and crore for sale, per day for rent
+const SALE_PRICE_PICKS = [
+  ["Under 10 lakh", "", "1000000"],
+  ["10–25 lakh", "1000000", "2500000"],
+  ["25–50 lakh", "2500000", "5000000"],
+  ["50 lakh–1 crore", "5000000", "10000000"],
+  ["Over 1 crore", "10000000", ""],
+] as const;
+const RENT_PRICE_PICKS = [
+  ["Under 5,000", "", "5000"],
+  ["5,000–10,000", "5000", "10000"],
+  ["10,000–20,000", "10000", "20000"],
+  ["Over 20,000", "20000", ""],
+] as const;
+const CITY_OPTIONS = [{ value: "", label: "All Pakistan" }, ...CITIES.map(c => ({ value: c, label: c }))];
+
+/**
+ * A price box typed in lakh ("26" or "2.5") that holds rupees for the filter. It keeps the typed text, so a
+ * half-typed "2." isn't rewritten, and follows outside changes (quick picks, Clear all).
+ */
+function LakhInput({ value, onChange, placeholder }: { value: string; onChange: (pkr: string) => void; placeholder: string }) {
+  const toText = (v: string) => (v ? String(Number(v) / 1e5) : "");
+  const [text, setText] = useState(() => toText(value));
+  const [shown, setShown] = useState(value);
+  if (value !== shown) {
+    setShown(value);
+    setText(toText(value));
+  }
+  return (
+    <div className="relative min-w-0 flex-1">
+      <input
+        type="text"
+        inputMode="decimal"
+        placeholder={placeholder}
+        value={text}
+        onChange={e => {
+          const t = e.target.value.replace(/[^\d.]/g, "");
+          const n = parseFloat(t);
+          const pkr = t && !Number.isNaN(n) ? String(Math.round(n * 1e5)) : "";
+          setText(t);
+          setShown(pkr);
+          onChange(pkr);
+        }}
+        className={`${fieldClass} pr-11`}
+      />
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">lakh</span>
+    </div>
+  );
+}
+
 const MILEAGE_OPTIONS = [
   { value: "", label: "Any mileage" },
   ...[10000, 25000, 50000, 75000, 100000, 150000].map(km => ({ value: String(km), label: `Up to ${km.toLocaleString("en-PK")} km` })),
@@ -148,6 +199,38 @@ export default function ListingsPage({
       setClosingFilters(false);
     }, 220);
   }
+
+  // The visitor's city: applied when Browse opens without a location in the address, changed with the city picker
+  useEffect(() => {
+    if (initial.location) return;
+    let saved = "";
+    try { saved = localStorage.getItem(MY_CITY_KEY) ?? ""; } catch {}
+    if (saved) queueMicrotask(() => setLocation(saved));
+    // Only on open: later changes come from the visitor
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  function chooseCity(city: string) {
+    setLocation(city);
+    setPage(1);
+    try { localStorage.setItem(MY_CITY_KEY, city); } catch {}
+  }
+  // A location typed in the filters that isn't one of the listed cities still shows in the picker
+  const cityOptions = location && !CITY_OPTIONS.some(o => o.value === location)
+    ? [...CITY_OPTIONS, { value: location, label: location }]
+    : CITY_OPTIONS;
+  const cityPicker = (
+    <div className="flex items-center gap-1 text-slate-500">
+      <MapPin size={14} strokeWidth={2} className="flex-shrink-0" />
+      <Select
+        value={location}
+        onChange={chooseCity}
+        options={cityOptions}
+        ariaLabel="City"
+        size="sm"
+        className="w-auto max-w-[150px] gap-1 border-0 bg-transparent px-1 text-[13px] font-semibold text-slate-700 hover:text-slate-900"
+      />
+    </div>
+  );
 
   // Free-text inputs update instantly in the UI but only trigger a fetch once typing pauses
   const debouncedSearch = useDebounce(search);
@@ -366,7 +449,37 @@ export default function ListingsPage({
       </div>
 
       <div>
-        <FilterLabel>Price (PKR)</FilterLabel>
+        <FilterLabel>{type === "RENT" ? "Rent per day (PKR)" : "Price"}</FilterLabel>
+        {/* Quick picks; pressing the chosen one again clears it */}
+        <div className="mb-2.5 flex flex-wrap gap-1.5">
+          {(type === "RENT" ? RENT_PRICE_PICKS : SALE_PRICE_PICKS).map(([label, min, max]) => {
+            const on = minPrice === min && maxPrice === max;
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => {
+                  setMinPrice(on ? "" : min);
+                  setMaxPrice(on ? "" : max);
+                  setPage(1);
+                }}
+                className={`bl-press rounded-full px-3 py-1.5 text-xs font-medium ${
+                  on ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:ring-slate-400"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {/* Sale prices are typed in lakh (26 = 26 lakh); rent per day in rupees */}
+        {type !== "RENT" ? (
+          <div className="flex items-center gap-2">
+            <LakhInput value={minPrice} onChange={v => { setMinPrice(v); setPage(1); }} placeholder="Min" />
+            <span className="text-slate-300">–</span>
+            <LakhInput value={maxPrice} onChange={v => { setMaxPrice(v); setPage(1); }} placeholder="Max" />
+          </div>
+        ) : (
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -394,6 +507,7 @@ export default function ListingsPage({
             className={`${fieldClass} min-w-0`}
           />
         </div>
+        )}
         {(Number(minPrice) >= 1e5 || Number(maxPrice) >= 1e5) && (
           <p className="mt-1.5 text-[11px] text-slate-500">
             {minPrice ? formatLakh(Number(minPrice)) : "Any"} – {maxPrice ? formatLakh(Number(maxPrice)) : "Any"}
@@ -476,17 +590,22 @@ export default function ListingsPage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero + search */}
-      <section className="relative z-20 bg-slate-950">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.35),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.18),transparent_50%)]" />
-        <div className="relative mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 sm:pb-12 sm:pt-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">Marketplace</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">Find your next ride</h1>
-          <p className="mt-2 max-w-xl text-sm text-slate-400 sm:text-base">
-            Browse verified cars and bikes for sale and rent across Pakistan.
-          </p>
+      {/* Plain header on the page background: title beside the search on desktop, type tabs underneath
+          (the home page keeps the dark hero) */}
+      <section className="relative z-20">
+        <div className="mx-auto max-w-[1280px] px-4 pt-5 sm:px-6 sm:pt-9">
+          <div className="lg:flex lg:items-end lg:justify-between lg:gap-10">
+            <div className="flex items-start justify-between gap-3">
+            <div>
+              {/* The home hero's "vehicles you want" gradient, in deeper shades for the light page */}
+              <h1 className="w-fit bg-gradient-to-r from-indigo-600 via-sky-500 to-emerald-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-[28px]">Marketplace</h1>
+              <p className="mt-1 text-sm text-slate-500">Browse cars and bikes for sale and rent across Pakistan.</p>
+            </div>
+            {/* Phones and tablets: the city beside the title; desktop has it at the end of the tabs */}
+            <div className="mt-1 flex-shrink-0 lg:hidden">{cityPicker}</div>
+            </div>
 
-          <div ref={heroSearchRef} className="relative mt-6 max-w-2xl">
+          <div ref={heroSearchRef} className="relative mt-4 w-full lg:mt-0 lg:max-w-md">
             <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400" />
             <SearchSuggest
               placeholder="Search by make, model, location..."
@@ -502,7 +621,7 @@ export default function ListingsPage({
                 else if (sg.kind === "city") { setLocation(sg.location); setSearch(""); }
                 else router.push(sg.href);
               }}
-              inputClassName="w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-11 text-[15px] text-slate-900 shadow-xl shadow-black/20 outline-none ring-1 ring-white/10 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
+              inputClassName="w-full rounded-xl border-0 bg-white py-3 pl-11 pr-11 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05)] outline-none ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400"
             />
             {search && (
               <button
@@ -518,9 +637,11 @@ export default function ListingsPage({
               </button>
             )}
           </div>
+          </div>
 
-          {/* Quick type switch */}
-          <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Quick type switch: underline tabs, then the city on desktop */}
+          <div className="-mx-4 mt-4 flex items-end border-b border-slate-200 px-4 sm:mx-0 sm:px-0">
+          <div className="flex min-w-0 flex-1 gap-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {TYPES.map(([val, label]) => (
               <button
                 key={val}
@@ -529,20 +650,22 @@ export default function ListingsPage({
                   setType(val);
                   setPage(1);
                 }}
-                className={`bl-press flex-shrink-0 rounded-full px-4 py-1.5 text-[13px] font-medium ${
+                className={`-mb-px flex-shrink-0 border-b-2 pb-2.5 text-sm font-medium transition ${
                   type === val
-                    ? "bg-white text-slate-900"
-                    : "bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 hover:bg-white/15"
+                    ? "border-slate-900 text-slate-900"
+                    : "border-transparent text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {label}
               </button>
             ))}
           </div>
+          <div className="mb-1.5 hidden flex-shrink-0 lg:block">{cityPicker}</div>
+          </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-[1280px] px-4 pb-6 pt-4 sm:px-6 sm:py-8">
         <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-8">
           {/* Desktop sidebar */}
           <aside className="sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:block">
@@ -562,9 +685,11 @@ export default function ListingsPage({
 
           {/* Results (scroll-mt clears the navbar and the compact bar) */}
           <div ref={resultsRef} className="min-w-0 scroll-mt-[150px] lg:scroll-mt-24">
-            <RecentlyViewed className="mb-5" />
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-4">
-              <div className="flex items-center gap-3">
+            <RecentlyViewed compact className="mb-4 sm:mb-5" />
+            {/* Phones: two tight rows with no card ([count … Hide sold], then [Filters | sort | view]);
+                wider screens: one row in a card */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 sm:mb-5 sm:rounded-2xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 sm:shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <div className="flex min-w-0 items-center gap-3">
                 <p className="text-sm text-slate-500">
                   <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
                   {pagination.total !== 1 ? "s" : ""} found
@@ -587,9 +712,19 @@ export default function ListingsPage({
                 )}
               </div>
 
-              {/* Phones: [Hide sold & rented | view] then [Filters | sort]; wider screens keep one row */}
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                <label className="order-1 inline-flex h-10 flex-auto cursor-pointer whitespace-nowrap select-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm sm:order-none sm:flex-none">
+              {/* On phones this label sits beside the count as plain text; wider screens give it a box in the row */}
+              <label className="inline-flex cursor-pointer select-none items-center gap-1.5 whitespace-nowrap text-xs font-medium text-slate-600 sm:hidden">
+                <input
+                  type="checkbox"
+                  checked={availableOnly}
+                  onChange={e => { setAvailableOnly(e.target.checked); setPage(1); }}
+                  className="h-3.5 w-3.5 accent-slate-900"
+                />
+                Hide sold
+              </label>
+
+              <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+                <label className="hidden h-10 cursor-pointer whitespace-nowrap select-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm sm:inline-flex">
                   <input
                     type="checkbox"
                     checked={availableOnly}
@@ -601,7 +736,7 @@ export default function ListingsPage({
                 <button
                   type="button"
                   onClick={() => setShowFilters(true)}
-                  className="order-3 inline-flex h-10 flex-shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 shadow-sm sm:order-none lg:hidden"
+                  className="inline-flex h-10 flex-shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 shadow-sm lg:hidden"
                 >
                   <SlidersHorizontal size={15} strokeWidth={2} />
                   Filters
@@ -610,7 +745,7 @@ export default function ListingsPage({
                   )}
                 </button>
 
-                <div className="order-2 flex h-10 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="order-last flex h-10 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:order-none">
                   {(["grid", "list"] as const).map(v => (
                     <button
                       key={v}
@@ -625,7 +760,7 @@ export default function ListingsPage({
                   ))}
                 </div>
 
-                <div className="order-4 flex min-w-0 flex-1 basis-0 items-center gap-2 sm:order-none sm:flex-none sm:basis-auto">
+                <div className="flex min-w-0 flex-1 basis-0 items-center gap-2 sm:flex-none sm:basis-auto">
                   <ArrowUpDown size={14} strokeWidth={2} className="hidden flex-shrink-0 text-slate-400 sm:block" />
                   <div className="min-w-0 flex-1 sm:w-[190px] sm:flex-none">
                     <Select

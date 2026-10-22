@@ -34,6 +34,8 @@ import type { IListing } from "@/models/Listing";
 // Registers the model for the seller → business populate in loadSimilar
 import "@/models/Organization";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
+import { whatsappUrl } from "@/lib/phone";
+import ContactBar from "@/components/listings/ContactBar";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -186,6 +188,11 @@ export default async function ListingDetailPage({ params }: Props) {
   const viewerOrg = viewerId && business ? (await getMembership(viewerId))?.organizationId.toString() : undefined;
   const canBuy = !!business && isForSale && !closed && !isOwner && viewerOrg !== business.id;
 
+  const priceText = `PKR ${l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(l.price)}`;
+  const whatsapp = whatsappUrl(l.sellerId?.phone, `Hi, I'm interested in: ${l.title}`);
+  // Phones: price and contact fixed to the bottom, for anyone who isn't the seller while it can still be bought or rented
+  const showContactBar = !!l.sellerId && !isOwner && !closed;
+
   const specs = [
     { label: "Condition", value: l.condition },
     { label: "Mileage", value: l.mileage ? `${l.mileage.toLocaleString()} km` : "N/A" },
@@ -235,7 +242,7 @@ export default async function ListingDetailPage({ params }: Props) {
         // Escape "<" so listing text can't close the script tag
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className={`max-w-6xl mx-auto px-4 pt-8 ${showContactBar ? "pb-28 lg:pb-8" : "pb-8"}`}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Left */}
@@ -397,11 +404,13 @@ export default async function ListingDetailPage({ params }: Props) {
                     </a>
                   )}
 
-                  <a href={`https://wa.me/${l.sellerId.phone?.replace(/\D/g, "")}?text=Hi, I'm interested in: ${l.title}`}
-                    target="_blank" rel="noreferrer"
-                    className="mt-2 w-full block text-center py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition">
-                    WhatsApp
-                  </a>
+                  {whatsapp && (
+                    <a href={whatsapp}
+                      target="_blank" rel="noreferrer"
+                      className="mt-2 w-full block text-center py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition">
+                      WhatsApp
+                    </a>
+                  )}
                   {session?.user && !isOwner && (
   <Link
     href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`}
@@ -529,6 +538,16 @@ export default async function ListingDetailPage({ params }: Props) {
         <RecentlyViewed excludeId={id} className="mt-10" />
         <TrackListingView listing={{ id, title: l.title, price: l.price, type: l.type, image: l.images?.[0], location: l.location, year: l.year }} />
       </div>
+      {showContactBar && (
+        <ContactBar
+          price={priceText}
+          perDay={l.type === "RENT"}
+          phone={l.sellerId?.phone}
+          whatsapp={whatsapp}
+          messageHref={session?.user ? `/messages?with=${sellerId}&listing=${l._id}` : undefined}
+          bookHref={rental ? (session?.user ? `/rentals/${l._id}/book` : "/login") : undefined}
+        />
+      )}
     </div>
   );
 }

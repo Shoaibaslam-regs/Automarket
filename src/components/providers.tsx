@@ -2,11 +2,16 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import FeedbackDialog from "@/components/FeedbackDialog";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        {children}
+        {/* Opened from the menus and the footer with openFeedback() */}
+        <FeedbackDialog />
+      </ThemeProvider>
     </SessionProvider>
   );
 }

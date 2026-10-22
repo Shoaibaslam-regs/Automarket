@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
-  Briefcase, Calendar, ChevronRight, Crown, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare, Settings, ShieldCheck, ShoppingBag, Sparkles, type LucideIcon,
+  Briefcase, Calendar, ChevronRight, Crown, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare, MessageSquareHeart, Settings, ShieldCheck, ShoppingBag, Sparkles, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
@@ -13,8 +13,10 @@ import UserIdBadge from "@/components/UserIdBadge";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import { openFeedback } from "@/components/FeedbackDialog";
 
-type Item = { href: string; label: string; icon: LucideIcon; count?: number };
+/** `action` makes the row a button (e.g. opening a dialog) instead of a link */
+type Item = { href: string; label: string; icon: LucideIcon; count?: number; action?: () => void };
 
 /** Avatar with the gradient ring shared by the account menu, mobile drawer and business sidebar. */
 export function RingAvatar({ name, image, size = 30 }: { name?: string | null; image?: string | null; size?: number }) {
@@ -62,9 +64,19 @@ export default function UserMenuDropdown({
     { href: "/saved", label: "Saved", icon: Heart },
     { href: "/profile", label: "Profile & settings", icon: Settings },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
+    { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
   ];
 
-  const row = ({ href, label, icon: Icon, count }: Item, extra = "") => {
+  const row = ({ href, label, icon: Icon, count, action }: Item, extra = "") => {
+    if (action) {
+      return (
+        <button key={href} type="button" onClick={action} role="menuitem"
+          className={`group relative flex w-full items-center gap-3 rounded-xl py-2 pl-5 pr-2 text-left text-[13px] font-medium text-slate-700 transition hover:bg-slate-50 ${extra}`}>
+          <Icon size={15} strokeWidth={1.9} className="flex-shrink-0 text-slate-500 transition group-hover:text-slate-700" />
+          <span className="flex-1 truncate">{label}</span>
+        </button>
+      );
+    }
     const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
       <Link

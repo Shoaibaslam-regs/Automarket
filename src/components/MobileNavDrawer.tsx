@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
-  Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare,
+  Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare, MessageSquareHeart,
   Search, Settings, ShieldCheck, ShoppingBag, Sparkles, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
@@ -17,8 +17,10 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import { InstallAppRow } from "@/components/pwa/InstallBanner";
 import PushCard from "@/components/pwa/PushCard";
+import { openFeedback } from "@/components/FeedbackDialog";
 
-type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string };
+/** `action` makes the row a button (e.g. opening a dialog) instead of a link */
+type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string; action?: () => void };
 
 
 /**
@@ -83,6 +85,7 @@ export default function MobileNavDrawer({
   const browse: Item[] = [
     { href: "/listings", label: "Browse vehicles", icon: Search },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
+    { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
     { href: "/pricing", label: "Plans & pricing", icon: Crown, hint: plan && plan.id === "FREE" ? "Upgrade" : undefined },
   ];
   const account: Item[] = [
@@ -97,8 +100,18 @@ export default function MobileNavDrawer({
   ];
 
   const row = (item: Item) => {
-    const active = isActive(item.href);
     const Icon = item.icon;
+    if (item.action) {
+      return (
+        <button key={item.href} type="button" onClick={item.action}
+          className="group relative flex w-full items-center gap-2.5 rounded-lg py-1.5 pl-5 pr-2 text-left text-[13px] font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-50">
+          <span className="flex flex-shrink-0 items-center justify-center text-slate-500"><Icon size={14} strokeWidth={1.9} /></span>
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          <ChevronRight size={13} className="text-slate-300" />
+        </button>
+      );
+    }
+    const active = isActive(item.href);
     return (
       <Link
         key={item.href + item.label}

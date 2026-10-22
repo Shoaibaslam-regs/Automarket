@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
+import { FeedbackLink } from "@/components/FeedbackDialog";
 
 export default function Footer() {
   return (
@@ -75,6 +76,7 @@ export default function Footer() {
             <Link href={TERMS_PATH} className="text-gray-500 transition hover:text-black">Terms &amp; Conditions</Link>
             <Link href={PRIVACY_PATH} className="text-gray-500 transition hover:text-black">Privacy</Link>
             <Link href="/pricing" className="text-gray-500 transition hover:text-black">Pricing</Link>
+            <FeedbackLink className="text-gray-500 transition hover:text-black" />
           </div>
         </div>
 

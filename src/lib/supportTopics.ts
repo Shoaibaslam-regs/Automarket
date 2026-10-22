@@ -7,6 +7,7 @@ export const SUPPORT_TOPICS = [
   { id: "BOOKING", label: "Bookings or a customer issue" },
   { id: "REPORT", label: "Report a problem or abuse" },
   { id: "APPEAL", label: "Suspension appeal" },
+  { id: "FEEDBACK", label: "Feedback & ideas" },
   { id: "OTHER", label: "Something else" },
 ] as const;
 

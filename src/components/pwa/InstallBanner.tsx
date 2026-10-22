@@ -35,7 +35,7 @@ export default function InstallBanner() {
 
   return (
     <div role="dialog" aria-label="Install the AutoMarket app"
-      className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-md rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-slate-200 sm:hidden">
+      className="fixed inset-x-3 bottom-[calc(0.75rem+var(--am-bottom-bar,0px))] z-[60] mx-auto max-w-md rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-slate-200 sm:hidden">
       <div className="flex items-start gap-3">
         <Image src="/icons/icon-192.png" alt="" width={44} height={44} className="rounded-xl ring-1 ring-slate-200" />
         <div className="min-w-0 flex-1">

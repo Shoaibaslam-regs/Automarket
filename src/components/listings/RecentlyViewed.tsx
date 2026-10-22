@@ -27,8 +27,11 @@ export function TrackListingView({ listing }: { listing: Omit<ViewedListing, "at
   return null;
 }
 
-/** A row of recently opened listings, scrolling sideways on phones. Hidden when there are none. */
-export default function RecentlyViewed({ excludeId, className = "" }: { excludeId?: string; className?: string }) {
+/**
+ * A row of recently opened listings, scrolling sideways on phones. Hidden when there are none.
+ * `compact` (Browse, above the results) shows small horizontal cards; elsewhere (home, listing page) photo cards.
+ */
+export default function RecentlyViewed({ excludeId, compact = false, className = "" }: { excludeId?: string; compact?: boolean; className?: string }) {
   const [items, setItems] = useState<ViewedListing[]>([]);
   useEffect(() => {
     queueMicrotask(() => setItems(read().filter(v => v.id !== excludeId)));
@@ -42,10 +45,35 @@ export default function RecentlyViewed({ excludeId, className = "" }: { excludeI
 
   return (
     <section className={className} aria-label="Recently viewed">
-      <div className="mb-2.5 flex items-center justify-between">
-        <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900"><History size={15} className="text-slate-400" /> Recently viewed</h2>
-        <button onClick={clear} className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700"><X size={12} /> Clear</button>
+      {compact ? (
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold text-slate-700"><History size={13} className="text-slate-400" /> Recently viewed</h2>
+          <button onClick={clear} className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-700"><X size={11} /> Clear</button>
+        </div>
+      ) : (
+        <div className="mb-2.5 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900"><History size={15} className="text-slate-400" /> Recently viewed</h2>
+          <button onClick={clear} className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700"><X size={12} /> Clear</button>
+        </div>
+      )}
+      {compact ? (
+      // Small horizontal cards: thumbnail beside the title and price
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+        {items.map(v => (
+          <Link key={v.id} href={`/listings/${v.id}`} className="flex w-[165px] flex-shrink-0 items-center gap-2 rounded-lg border border-slate-200/80 bg-white p-1 pr-2 transition hover:border-slate-300">
+            <div className="relative h-8 w-11 flex-shrink-0 overflow-hidden rounded-md bg-slate-100">
+              {v.image
+                ? <Image src={v.image} alt="" fill sizes="44px" className="object-cover" />
+                : <div className="flex h-full items-center justify-center text-slate-300"><Car size={13} /></div>}
+            </div>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-[11px] font-medium text-slate-800">{v.title}</p>
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">PKR {formatLakh(v.price)}{v.type === "RENT" && <span className="text-[10px] font-normal text-slate-400">/day</span>}</p>
+            </div>
+          </Link>
+        ))}
       </div>
+      ) : (
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
         {items.map(v => (
           <Link key={v.id} href={`/listings/${v.id}`} className="w-[150px] flex-shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white transition hover:border-slate-300 sm:w-[170px]">
@@ -62,6 +90,7 @@ export default function RecentlyViewed({ excludeId, className = "" }: { excludeI
           </Link>
         ))}
       </div>
+      )}
     </section>
   );
 }

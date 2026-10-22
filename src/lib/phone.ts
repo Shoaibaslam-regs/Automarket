@@ -19,3 +19,14 @@ export function formatPkMobile(e164?: string | null): string {
   const d = e164.replace(/^\+92/, "0");
   return d.length === 11 ? `${d.slice(0, 4)} ${d.slice(4)}` : d;
 }
+
+/**
+ * A wa.me chat link. Pakistani numbers in any form ("0300…", "+92 300…") get the 92 country code WhatsApp needs;
+ * other numbers keep their digits. Null when there is no number.
+ */
+export function whatsappUrl(phone: string | null | undefined, text?: string): string | null {
+  if (!phone) return null;
+  const digits = normalizePkMobile(phone)?.slice(1) ?? phone.replace(/\D/g, "");
+  if (!digits) return null;
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+}
