@@ -11,7 +11,7 @@ import { SUPPORT_WHATSAPP, whatsappLink } from "@/lib/supportContact";
 import { useRateLock } from "@/hooks/useRateLock";
 import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 
-type Org = { name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
+type Org = { _id: string; name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
 /** Business console page for contacting the AutoMarket team about anything, including suspension appeals. */
 export default function BusinessSupportPage() {
@@ -52,7 +52,7 @@ export default function BusinessSupportPage() {
   }
 
   const suspended = org?.isActive === false;
-  const wa = whatsappLink(`Hi AutoMarket team, this is ${session?.user?.name ?? "a business user"}${org ? ` from ${org.name}` : ""} (ID #${session?.user?.id?.slice(-6) ?? ""}). `);
+  const wa = whatsappLink(`Hi AutoMarket team, this is ${session?.user?.name ?? "a business user"}${org ? ` from ${org.name} (business ID #${org._id.slice(-6)})` : ""}, my ID #${session?.user?.id?.slice(-6) ?? ""}. `);
 
   return (
     <div className="min-h-screen bg-[var(--gh-f6f8fa)]">

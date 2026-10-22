@@ -22,6 +22,7 @@ type Stats = {
 };
 
 type Organization = {
+  _id: string;
   name: string;
   type: string;
   plan: string;
@@ -345,7 +346,7 @@ export default function BusinessDashboard() {
               <p className="hidden text-xs text-[var(--gh-8c959f)] sm:block">
                 {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>
-              <UserIdBadge id={session?.user?.id} className="mt-1 hidden sm:inline-flex" />
+              <UserIdBadge id={org?._id} kind="business" className="mt-1 hidden sm:inline-flex" />
             </div>
 
             <div className="flex flex-shrink-0 items-center gap-2">
@@ -382,7 +383,6 @@ export default function BusinessDashboard() {
           </div>
 
           <div className="biz-dash-body" style={{ padding: "24px" }}>
-            <SetupChecklist />
             <TodayCard />
             {/* Main stats */}
             <div className="stat-grid" style={{ marginBottom: "20px" }}>
@@ -785,6 +785,9 @@ export default function BusinessDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* First steps for a new business, kept below the daily work */}
+            <SetupChecklist />
           </div>
         </div>
       </div>

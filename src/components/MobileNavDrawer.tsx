@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
+import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -139,7 +140,7 @@ export default function MobileNavDrawer({
 
   const section = (title: string, items: Item[]) => (
     <div>
-      <p className="pb-1 pl-5 pr-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">{title}</p>
+      <MenuGroupTitle className="pl-5 pr-2">{title}</MenuGroupTitle>
       <div className="space-y-0.5">{items.map(row)}</div>
     </div>
   );
@@ -242,7 +243,7 @@ export default function MobileNavDrawer({
           )}
 
           <div>
-            <p className="pb-1 pl-5 pr-2 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Explore</p>
+            <MenuGroupTitle className="pl-5 pr-2">Explore</MenuGroupTitle>
             {/* Hot deals: highlighted like the province picker's capital card */}
             <Link
               href="/deals"

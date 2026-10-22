@@ -10,6 +10,7 @@ import {
 import { CountBadge } from "@/components/NotificationBadge";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import UserIdBadge from "@/components/UserIdBadge";
+import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -56,12 +57,14 @@ export default function UserMenuDropdown({
   const hasBusiness = !!sub?.hasBusiness;
   const biz = useMyBusiness(hasBusiness);
 
-  const items: Item[] = [
+  const activity: Item[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/messages", label: "Messages", icon: MessageSquare, count: counts.messages },
     { href: "/bookings", label: "Bookings", icon: Calendar, count: counts.bookings },
     { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
+  ];
+  const account: Item[] = [
     { href: "/profile", label: "Profile & settings", icon: Settings },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
     { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
@@ -101,7 +104,7 @@ export default function UserMenuDropdown({
   return (
     <div
       role="menu"
-      className="absolute right-0 top-[calc(100%+10px)] z-[200] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-hidden rounded-[22px] bg-white shadow-[0_24px_60px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+      className="absolute right-0 top-[calc(100%+10px)] z-[200] max-h-[calc(100vh-80px)] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-y-auto overscroll-contain rounded-[22px] bg-white shadow-[0_24px_60px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
     >
       <style>{`@keyframes umIn { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
 
@@ -135,8 +138,15 @@ export default function UserMenuDropdown({
       </div>
 
       {/* Links */}
-      <div className="space-y-0.5 p-2">
-        {items.map(item => row(item))}
+      <div className="space-y-3 px-2 pb-2 pt-3">
+        <div className="space-y-0.5">
+          <MenuGroupTitle className="pl-5 pr-2">Activity</MenuGroupTitle>
+          {activity.map(item => row(item))}
+        </div>
+        <div className="space-y-0.5">
+          <MenuGroupTitle className="pl-5 pr-2">Account & help</MenuGroupTitle>
+          {account.map(item => row(item))}
+        </div>
       </div>
 
       <div className="mx-3 h-px bg-slate-100" />

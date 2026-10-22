@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
     if (admin._id.equals(session.user.id)) return NextResponse.json({ error: "You're the support admin." }, { status: 400 });
 
     const me = await User.findById(session.user.id).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
-    const org = me?.organizationId ? await Organization.findById(me.organizationId).select("name").lean<{ name: string }>() : null;
-    const context = [org ? `Business: ${org.name}` : null, `ID #${session.user.id.slice(-6)}`].filter(Boolean).join(" · ");
+    const org = me?.organizationId ? await Organization.findById(me.organizationId).select("name").lean<{ _id: mongoose.Types.ObjectId; name: string }>() : null;
+    const context = [org ? `Business: ${org.name} (business ID #${String(org._id).slice(-6)})` : null, `ID #${session.user.id.slice(-6)}`].filter(Boolean).join(" · ");
     const content = `[${topicLabel}] ${context}\n\n${text}`;
 
     const recent = await Message.exists({

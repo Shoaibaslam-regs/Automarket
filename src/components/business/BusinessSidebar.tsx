@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
+import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import {
   ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Rocket, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import NotificationBell from "@/components/NotificationBell";
 export const ORG_UPDATED_EVENT = "business-org-updated";
 
 type Organization = {
+  _id: string;
   name: string;
   type: string;
   plan: string;
@@ -30,22 +32,35 @@ type Organization = {
   logo?: string;
 };
 
-const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/business/inventory", label: "Inventory", icon: Car },
-  { href: "/business/customers", label: "Customers", icon: Users },
-  { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
-  { href: "/business/staff", label: "Staff", icon: User },
-  { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
-  { href: "/business/deals", label: "Deals", icon: Tag },
-  { href: "/business/promote", label: "Promote", icon: Rocket },
-  { href: "/business/money", label: "Money", icon: Wallet },
-  { href: "/business/reviews", label: "Reviews", icon: Star },
-  { href: "/business/reports", label: "Reports", icon: BarChart3 },
-  { href: "/business/guide", label: "Guide · رہنمائی", icon: BookOpen },
-  { href: "/business/updates", label: "Updates", icon: Megaphone },
-  { href: "/business/settings", label: "Settings", icon: Settings },
-  { href: "/business/support", label: "Help & support", icon: Headset },
+type NavItem = { href: string; label: string; icon: LucideIcon };
+
+/** Two groups: the shop's daily work first, then growing the business, updates and help. */
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  {
+    title: "Manage",
+    items: [
+      { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/business/inventory", label: "Inventory", icon: Car },
+      { href: "/business/customers", label: "Customers", icon: Users },
+      { href: "/business/bookings", label: "Bookings", icon: CalendarCheck },
+      { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
+      { href: "/business/deals", label: "Deals", icon: Tag },
+      { href: "/business/money", label: "Money", icon: Wallet },
+      { href: "/business/staff", label: "Staff", icon: User },
+    ],
+  },
+  {
+    title: "Grow & help",
+    items: [
+      { href: "/business/promote", label: "Promote", icon: Rocket },
+      { href: "/business/reviews", label: "Reviews", icon: Star },
+      { href: "/business/reports", label: "Reports", icon: BarChart3 },
+      { href: "/business/updates", label: "Updates", icon: Megaphone },
+      { href: "/business/guide", label: "Guide · رہنمائی", icon: BookOpen },
+      { href: "/business/settings", label: "Settings", icon: Settings },
+      { href: "/business/support", label: "Help & support", icon: Headset },
+    ],
+  },
 ];
 
 /** The phone bottom bar's shortcuts, with the badge each one shows. */
@@ -105,6 +120,10 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
           <div className="mb-1 border-b border-white/10 px-2.5 pb-2.5 pt-1.5">
             <p className="truncate text-[13px] font-semibold text-white">{session?.user?.name}</p>
             <p className="truncate text-[11px] text-slate-400">{session?.user?.email}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <UserIdBadge id={org?._id} kind="business" className="!bg-white/5 !px-1.5 !text-[10px] !text-slate-300 !ring-white/10" />
+              <UserIdBadge id={session?.user?.id} kind="me" className="!bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
+            </div>
           </div>
           {[
             ...(org?.slug ? [{ label: "Public business page", href: `/dealers/${org.slug}`, icon: Globe }] : []),
@@ -219,32 +238,36 @@ function SidebarContent({
 
       {/* Nav */}
       <nav className="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-3">
-        <p className="pb-1.5 pl-5 pr-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Manage</p>
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
-          const badge = navBadge(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              aria-current={active ? "page" : undefined}
-              // The current page: a dot on the left and a faint background; hover is only a light tint
-              className={`group relative flex items-center gap-3 rounded-xl py-2.5 pl-5 pr-2.5 text-[13.5px] font-medium transition ${
-                active ? "bg-white/[0.07] text-white" : "text-slate-400 hover:bg-white/[0.025] hover:text-slate-200"
-              }`}
-            >
-              {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />}
-              <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
-              <span className="flex-1 truncate">{label}</span>
-              {badge > 0 && <CountBadge count={badge} />}
-            </Link>
-          );
-        })}
+        {NAV_GROUPS.map((group, i) => (
+          <div key={group.title} className={`space-y-0.5 ${i > 0 ? "pt-4" : ""}`}>
+            <MenuGroupTitle tone="dark" className="pl-5 pr-2.5">{group.title}</MenuGroupTitle>
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + "/");
+              const badge = navBadge(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  aria-current={active ? "page" : undefined}
+                  // The current page: a dot on the left and a faint background; hover is only a light tint
+                  className={`group relative flex items-center gap-3 rounded-xl py-2.5 pl-5 pr-2.5 text-[13.5px] font-medium transition ${
+                    active ? "bg-white/[0.07] text-white" : "text-slate-400 hover:bg-white/[0.025] hover:text-slate-200"
+                  }`}
+                >
+                  {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />}
+                  <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
+                  <span className="flex-1 truncate">{label}</span>
+                  {badge > 0 && <CountBadge count={badge} />}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
 
         {org?.slug && (
           <>
-            <p className="px-2.5 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Your shop</p>
+            <MenuGroupTitle tone="dark" className="pl-5 pr-2.5 pt-4">Your shop</MenuGroupTitle>
             <a
               href={`/dealers/${org.slug}`}
               target="_blank"
@@ -278,7 +301,7 @@ function SidebarContent({
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-slate-200">{session?.user?.name}</p>
-            <UserIdBadge id={session?.user?.id} className="mt-0.5 !bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
+            <UserIdBadge id={session?.user?.id} kind="me" className="mt-0.5 !bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
           </div>
           <Link
             href="/"

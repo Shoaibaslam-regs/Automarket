@@ -51,7 +51,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "Look at the “Today” list. Red lines are late, so do those first.",
           "Tap the button on a line (for example “Hand over” or “Confirm”). It opens the right page with that booking or sale already found.",
           "To add something new from any page, tap the round “+” button at the bottom right and choose: booking, sale, customer, vehicle, deal, expense or money in.",
-          "A new business also sees “Get your business ready”. Do each step; it ticks itself when it's done.",
+          "A new business also sees “Get your business ready” at the bottom of the dashboard. Do each step; it ticks itself when it's done.",
         ],
         termsTitle: "What you'll see in Today",
         terms: [
@@ -252,6 +252,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "If you see “No AutoMarket account found”, the person hasn't signed up yet or the email is spelt differently.",
           "The Performance tab (owner and managers) shows this month's bookings, handovers, sales and money collected by each person.",
           "The Activity tab (owner only) lists everything your team did: bookings, payments, sales, expenses and customer changes, with who did it and when.",
+          "Your business has its own “Business ID”, and every person has their own “My ID”. Find the Business ID on the Dashboard, in Business settings, or by tapping your business name in the menu. Tap an ID to copy it, and give the Business ID when you contact AutoMarket about the shop.",
         ],
         open: { href: "/business/staff", label: "Open Staff" },
       },
@@ -276,7 +277,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "“Today” کی فہرست دیکھیں۔ سرخ لائنیں دیر سے ہیں، پہلے وہ کریں۔",
           "لائن کا بٹن دبائیں (مثلاً “Hand over” یا “Confirm”)۔ صحیح صفحہ کھل جائے گا اور وہ بکنگ یا سیل پہلے سے ڈھونڈی ہوئی ہوگی۔",
           "کسی بھی صفحے سے نئی چیز شامل کرنے کے لیے نیچے دائیں گول “+” بٹن دبائیں اور چنیں: بکنگ، سیل، کسٹمر، گاڑی، ڈیل، خرچہ یا آمدنی۔",
-          "نئے بزنس کو “Get your business ready” بھی نظر آتا ہے۔ ہر قدم پورا کریں، کام ہوتے ہی خود ٹک ہو جاتا ہے۔",
+          "نئے بزنس کو ڈیش بورڈ کے نیچے “Get your business ready” بھی نظر آتا ہے۔ ہر قدم پورا کریں، کام ہوتے ہی خود ٹک ہو جاتا ہے۔",
         ],
         termsTitle: "Today میں کیا نظر آتا ہے",
         terms: [
@@ -477,6 +478,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "اگر “No AutoMarket account found” آئے تو اس شخص نے ابھی سائن اپ نہیں کیا یا ای میل کی اسپیلنگ مختلف ہے۔",
           "Performance ٹیب (مالک اور مینیجر) ہر شخص کی اس مہینے کی بکنگز، گاڑی حوالگی، سیلز اور وصول کی گئی رقم دکھاتا ہے۔",
           "Activity ٹیب (صرف مالک) ٹیم کا ہر کام دکھاتا ہے: بکنگز، ادائیگیاں، سیلز، اخراجات اور کسٹمر کی تبدیلیاں، کس نے اور کب کیں۔",
+          "آپ کے بزنس کی اپنی “Business ID” ہے، اور ہر شخص کی اپنی “My ID”۔ Business ID ڈیش بورڈ پر، Business settings میں، یا مینو میں اپنے بزنس کے نام کو دبا کر ملے گی۔ ID کو دبائیں تو کاپی ہو جاتی ہے۔ دکان کے بارے میں AutoMarket سے رابطہ کریں تو Business ID بتائیں۔",
         ],
         open: { href: "/business/staff", label: "Staff کھولیں" },
       },

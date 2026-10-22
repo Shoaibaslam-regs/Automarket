@@ -5,20 +5,38 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Bug, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, Megaphone, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
+import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 
-const NAV = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/listings", label: "Listings", icon: Car },
-  { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
-  { href: "/admin/deals", label: "Deals", icon: Tag },
-  { href: "/admin/reports", label: "Reports", icon: Flag },
-  { href: "/admin/ads", label: "Ad requests", icon: Rocket },
-  { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/activity", label: "Activity", icon: History },
-  { href: "/admin/errors", label: "Errors", icon: Bug },
+const NAV_GROUPS = [
+  {
+    title: "Manage",
+    items: [
+      { href: "/admin", label: "Overview", icon: LayoutDashboard },
+      { href: "/admin/users", label: "Users", icon: Users },
+      { href: "/admin/listings", label: "Listings", icon: Car },
+      { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
+      { href: "/admin/deals", label: "Deals", icon: Tag },
+    ],
+  },
+  {
+    title: "Review",
+    items: [
+      { href: "/admin/reports", label: "Reports", icon: Flag },
+      { href: "/admin/ads", label: "Ad requests", icon: Rocket },
+      { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+    ],
+  },
+  {
+    title: "Monitor",
+    items: [
+      { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/admin/activity", label: "Activity", icon: History },
+      { href: "/admin/errors", label: "Errors", icon: Bug },
+    ],
+  },
 ];
+// The phone and tablet bar shows every page in one scrolling row
+const NAV = NAV_GROUPS.flatMap(g => g.items);
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -90,25 +108,29 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Manage</p>
-        <nav className="flex flex-col gap-0.5">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
-                }`}
-              >
-                <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-300" : "text-slate-500 group-hover:text-slate-300"} />
-                {label}
-                {badge(href)}
-              </Link>
-            );
-          })}
+        <nav className="-mx-1 flex flex-col overflow-y-auto px-1 pb-3">
+          {NAV_GROUPS.map((group, i) => (
+            <div key={group.title} className={`flex flex-col gap-0.5 ${i > 0 ? "pt-4" : ""}`}>
+              <MenuGroupTitle tone="dark" className="px-3">{group.title}</MenuGroupTitle>
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                    }`}
+                  >
+                    <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-300" : "text-slate-500 group-hover:text-slate-300"} />
+                    {label}
+                    {badge(href)}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <AccessCard />

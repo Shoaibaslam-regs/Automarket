@@ -47,7 +47,7 @@ export default function SetupChecklist() {
   }
 
   return (
-    <section className="mb-5 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
+    <section className="mt-5 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
       <div className="flex items-start gap-3 px-4 pt-4">
         <span className="flex flex-shrink-0 items-center justify-center text-indigo-600"><Rocket size={17} /></span>
         <div className="min-w-0 flex-1">

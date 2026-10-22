@@ -10,6 +10,7 @@ import { planInfo, planSourceLabel } from "@/lib/plans";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import BusinessProfileCard from "@/components/business/BusinessProfileCard";
+import UserIdBadge from "@/components/UserIdBadge";
 
 type Organization = {
   _id: string;
@@ -184,6 +185,8 @@ export default function BusinessSettingsPage() {
       <div style={{ padding: "20px 24px", background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)" }}>
         <Link href="/business/dashboard" style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>← Dashboard</Link>
         <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--gh-0d1117)", marginTop: "4px" }}>Business settings</h1>
+        {/* The business's own ID, separate from each member's account ID, to quote to support */}
+        <UserIdBadge id={org?._id} kind="business" className="mt-1.5" />
       </div>
 
       <div style={{ maxWidth: "680px", margin: "0 auto", padding: "24px 20px", display: "flex", flexDirection: "column", gap: "20px" }}>
