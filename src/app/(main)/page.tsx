@@ -62,7 +62,7 @@ async function getData() {
     const active = { status: "ACTIVE" };
     const [forSale, forRent] = await Promise.all([
       Listing.find({ ...active, type: { $in: ["SALE", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(8).populate(CARD_SELLER_POPULATE).lean(),
-      Listing.find({ ...active, type: { $in: ["RENT", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(4).populate(CARD_SELLER_POPULATE).lean(),
+      Listing.find({ ...active, type: { $in: ["RENT", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(8).populate(CARD_SELLER_POPULATE).lean(),
     ]);
     return { forSale: forSale as unknown as ListingWithId[], forRent: forRent as unknown as ListingWithId[] };
   } catch (err) {
@@ -71,6 +71,12 @@ async function getData() {
     return { forSale: [] as ListingWithId[], forRent: [] as ListingWithId[] };
   }
 }
+
+// The home page's one-row, swipeable vehicle strips (Latest for sale, Available for rent): about 2 cards in view
+// on phones, 3 on tablets and 5 on desktop, with a thin scrollbar from tablets up for mouse users
+const STRIP =
+  "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:gap-4 sm:px-0 sm:pb-3 sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:hidden sm:[&::-webkit-scrollbar]:block sm:[&::-webkit-scrollbar]:h-1.5 sm:[&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-slate-300";
+const STRIP_ITEM = "w-[58%] flex-shrink-0 snap-start min-[480px]:w-[40%] sm:w-[calc((100%-32px)/3)] lg:w-[calc((100%-64px)/5)]";
 
 function SectionHeader({ eyebrow, title, href }: { eyebrow: string; title: string; href?: string }) {
   return (
@@ -216,11 +222,10 @@ export default async function HomePage() {
           {forSale.length === 0 ? (
             <EmptyState text="No listings for sale yet" />
           ) : (
-            // One swipeable row on every screen (4 cards in view on desktop, the rest a scroll away)
-            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:gap-5 sm:px-0 sm:pb-3 sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:hidden sm:[&::-webkit-scrollbar]:block sm:[&::-webkit-scrollbar]:h-1.5 sm:[&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-slate-300">
+            <div className={STRIP}>
               {forSale.map(listing => (
-                <div key={String(listing._id)} className="w-[72%] flex-shrink-0 snap-start min-[480px]:w-[45%] sm:w-[calc((100%-40px)/3)] lg:w-[calc((100%-60px)/4)]">
-                  <ListingCard listing={listing} />
+                <div key={String(listing._id)} className={STRIP_ITEM}>
+                  <ListingCard listing={listing} compact />
                 </div>
               ))}
             </div>
@@ -233,11 +238,10 @@ export default async function HomePage() {
           {forRent.length === 0 ? (
             <EmptyState text="No rentals yet" />
           ) : (
-            // Swipeable row on mobile, grid on larger screens
-            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className={STRIP}>
               {forRent.map(listing => (
-                <div key={String(listing._id)} className="w-[72%] flex-shrink-0 snap-start min-[480px]:w-[45%] sm:w-auto">
-                  <ListingCard listing={listing} />
+                <div key={String(listing._id)} className={STRIP_ITEM}>
+                  <ListingCard listing={listing} compact />
                 </div>
               ))}
             </div>
