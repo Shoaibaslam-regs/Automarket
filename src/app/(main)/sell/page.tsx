@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 import Select from "@/components/ui/Select";
+import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 import { formatLakh } from "@/lib/format";
 import { CONDITIONS, FUEL_TYPES, MAKES, TRANSMISSIONS } from "@/lib/vehicleOptions";
 import { formatLimit, planInfo } from "@/lib/plans";
@@ -130,7 +131,9 @@ export default function SellPage() {
       })
       .catch(() => {});
   }, []);
-  const [published, setPublished] = useState<{ id: string; type: string; price: number } | null>(null);
+  const [published, setPublished] = useState<{ id: string; type: string; price: number; title?: string } | null>(null);
+  // The launch animation plays over the success screen right after publishing
+  const [launching, setLaunching] = useState(false);
 
   // Drafts: the form is saved in this browser as you type, so a closed tab or a dropped connection loses nothing
   const draftKey = session?.user?.id ? `sell-draft:${session.user.id}` : null;
@@ -240,7 +243,8 @@ export default function SellPage() {
     refreshSub();
     clearDraft();
     // Show the success screen instead of jumping straight to the listing
-    setPublished({ id: data.listing._id, type: data.listing.type, price: data.listing.price });
+    setPublished({ id: data.listing._id, type: data.listing.type, price: data.listing.price, title: data.listing.title });
+    setLaunching(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -274,6 +278,7 @@ export default function SellPage() {
     const listingUrl = `/listings/${published.id}`;
     return (
       <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-14">
+        <LaunchOverlay show={launching} {...LAUNCH_TEXT.listing(published.title)} onDone={() => setLaunching(false)} />
         <div className="mx-auto max-w-[560px]">
           <div className="text-center">
             <span className="mx-auto flex items-center justify-center text-emerald-600">

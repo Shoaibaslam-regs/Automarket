@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Building2, Car, KeyRound, Rocket } from "lucide-react";
 import Link from "next/link";
 import Select from "@/components/ui/Select";
+import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 import { PLAN_LIST, formatLimit, formatPlanPrice, planInfo } from "@/lib/plans";
 import { useSubscription } from "@/components/subscription/useSubscription";
 
@@ -18,6 +19,8 @@ export default function OnboardingPage() {
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Plays the launch animation once the business is created, then opens the console
+  const [launched, setLaunched] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -61,13 +64,15 @@ export default function OnboardingPage() {
     if (requestsPlan) {
       await fetch("/api/support/upgrade-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: chosenPlan.id }) }).catch(() => {});
     }
-    router.push("/business/dashboard");
+    // The launch animation, then the console
+    setLaunched(true);
   }
 
   const steps = ["Business type", "Details", "Choose plan", "Launch"];
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <LaunchOverlay show={launched} {...LAUNCH_TEXT.business(form.name.trim() || undefined)} onDone={() => router.push("/business/dashboard")} />
 
       {/* Header */}
       <div style={{ background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", display: "flex", alignItems: "center", gap: "12px" }}>

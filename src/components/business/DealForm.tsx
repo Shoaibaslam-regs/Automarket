@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Camera, Car, Clock3, ImageOff, Percent, Tag } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 import Select from "@/components/ui/Select";
+import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 import { formatLakh } from "@/lib/format";
 import { MAX_DEAL_IMAGES, MAX_PERCENT, dealLabel, dealPrice } from "@/lib/deals";
 import { CONDITIONS, FUEL_TYPES, MAKES, TRANSMISSIONS, conditionLabel } from "@/lib/vehicleOptions";
@@ -90,6 +91,8 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  // A new deal plays the launch animation, then goes to the deals list
+  const [launched, setLaunched] = useState(false);
   const [error, setError] = useState("");
   const set = <K extends keyof DealFormValues>(k: K, v: DealFormValues[K]) => setForm(p => ({ ...p, [k]: v }));
 
@@ -110,12 +113,19 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setSaving(false); setError(data.error || "Failed to save the deal"); return; }
+    // A new deal gets the launch animation first; saving an edit goes straight back
+    if (!dealId) { setLaunched(true); return; }
+    backToDeals();
+  }
+
+  function backToDeals() {
     router.push("/business/deals");
     router.refresh();
   }
 
   return (
     <form onSubmit={save} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <LaunchOverlay show={launched} {...LAUNCH_TEXT.deal(form.title || undefined)} onDone={backToDeals} />
       <div className="space-y-5">
         <Section icon={Camera} title="Photos" hint={`Real photos of the vehicle on offer. The first is the main photo. Up to ${MAX_DEAL_IMAGES}.`}>
           <ImageUpload images={form.images} onChange={urls => set("images", urls)} maxImages={MAX_DEAL_IMAGES} />
