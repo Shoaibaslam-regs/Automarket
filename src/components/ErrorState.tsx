@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { isStaleBuildError, reloadForStaleBuild } from "@/lib/staleBuild";
 
 /** Shared fallback UI for the route-group error.tsx boundaries. */
 export default function ErrorState({
@@ -14,9 +15,23 @@ export default function ErrorState({
   retry: () => void;
   homeHref?: string;
 }) {
+  // A page left open across a deployment fails to load the new code; a reload fixes it
+  const stale = isStaleBuildError(error);
+  const [reloading, setReloading] = useState(false);
   useEffect(() => {
     console.error(error);
+    if (reloadForStaleBuild(error)) queueMicrotask(() => setReloading(true));
   }, [error]);
+  // "Try again" can't fetch files that are gone, so for those errors it loads the new version
+  const onRetry = stale ? () => window.location.reload() : retry;
+
+  if (reloading) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center px-4 py-16 text-sm text-slate-500">
+        AutoMarket was updated. Loading the new version…
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
@@ -32,7 +47,7 @@ export default function ErrorState({
         <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={retry}
+            onClick={onRetry}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             <RotateCcw size={15} strokeWidth={2} />

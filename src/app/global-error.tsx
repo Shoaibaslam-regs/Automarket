@@ -1,6 +1,8 @@
 "use client"; // Error boundaries must be Client Components
 
 import "./globals.css";
+import { useEffect } from "react";
+import { isStaleBuildError, reloadForStaleBuild } from "@/lib/staleBuild";
 
 // Replaces the root layout when it crashes, so it must render its own <html> and <body>
 export default function GlobalError({
@@ -10,6 +12,9 @@ export default function GlobalError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  // A page left open across a deployment fails to load the new code; a reload fixes it
+  useEffect(() => { reloadForStaleBuild(error); }, [error]);
+  const onRetry = isStaleBuildError(error) ? () => window.location.reload() : unstable_retry;
   return (
     <html lang="en">
       <body className="bg-slate-950 text-white">
@@ -24,7 +29,7 @@ export default function GlobalError({
           <div className="mt-8 flex gap-3">
             <button
               type="button"
-              onClick={unstable_retry}
+              onClick={onRetry}
               className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             >
               Try again

@@ -36,6 +36,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Each Vercel deployment gets its own id, so a phone still running the previous version does a full reload
+  // on its next tap instead of asking for code files that no longer exist (which showed "Something went wrong")
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID || process.env.VERCEL_DEPLOYMENT_ID || undefined,
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

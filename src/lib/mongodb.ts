@@ -30,6 +30,13 @@ export async function connectDB() {
       .then((m) => m.connection);
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    // Forget the failed attempt so the next request tries again; otherwise one network blip
+    // (an Atlas DNS or timeout error) would break every page until the server restarts
+    cached.promise = null;
+    throw err;
+  }
   return cached.conn;
 }
