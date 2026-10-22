@@ -8,6 +8,7 @@ import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import VerifiedBadgeOffer from "@/components/subscription/VerifiedBadgeOffer";
+import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { PLANS, PLAN_LIST, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
@@ -45,7 +46,7 @@ const FAQ = [
   },
   {
     q: "How do I pay?",
-    a: "Online payments are coming soon. Until then, tap Message the team (or WhatsApp) and an admin will activate your plan and share payment details.",
+    a: "Online payments are coming soon. Until then, pay by bank transfer, JazzCash or EasyPaisa to the account shown under How to pay, then tap Message the team (or WhatsApp) with the transaction ID and an admin will activate your plan.",
   },
 ];
 
@@ -83,6 +84,8 @@ export default function PricingPage() {
         <PlanCards currentPlanId={sub?.planId ?? null} signedIn={signedIn} onUpgrade={setUpgrading} />
 
         <VerifiedBadgeOffer />
+
+        <PaymentDetailsCard className="mt-12" />
 
         {/* Current usage */}
         {sub && current && (

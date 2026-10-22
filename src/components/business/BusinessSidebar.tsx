@@ -8,7 +8,7 @@ import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import {
-  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
+  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Rocket, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -38,6 +38,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/business/staff", label: "Staff", icon: User },
   { href: "/business/sales", label: "Sales", icon: BadgeDollarSign },
   { href: "/business/deals", label: "Deals", icon: Tag },
+  { href: "/business/promote", label: "Promote", icon: Rocket },
   { href: "/business/money", label: "Money", icon: Wallet },
   { href: "/business/reviews", label: "Reviews", icon: Star },
   { href: "/business/reports", label: "Reports", icon: BarChart3 },

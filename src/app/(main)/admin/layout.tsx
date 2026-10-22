@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, Megaphone, ShieldCheck, Tag, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Car, Eye, Flag, History, LayoutDashboard, Megaphone, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 
 const NAV = [
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/admin/deals", label: "Deals", icon: Tag },
   { href: "/admin/reports", label: "Reports", icon: Flag },
+  { href: "/admin/ads", label: "Ad requests", icon: Rocket },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/activity", label: "Activity", icon: History },
@@ -58,15 +59,19 @@ function ViewOnlyBanner() {
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
-  // Open reports waiting for review, refreshed on each admin page change
+  // Open reports and ad requests waiting for review, refreshed on each admin page change
   const [openReports, setOpenReports] = useState(0);
+  const [waitingAds, setWaitingAds] = useState(0);
   useEffect(() => {
     fetch("/api/admin/reports?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenReports(d?.open ?? 0)).catch(() => {});
+    fetch("/api/admin/ads?count=1").then(r => (r.ok ? r.json() : null)).then(d => setWaitingAds(d?.waiting ?? 0)).catch(() => {});
   }, [pathname]);
-  const badge = (href: string) =>
-    href === "/admin/reports" && openReports > 0 ? (
-      <span className="ml-auto rounded-full bg-rose-600 px-1.5 py-px text-[10px] font-bold leading-4 text-white" aria-label={`${openReports} open`}>{openReports}</span>
+  const badge = (href: string) => {
+    const n = href === "/admin/reports" ? openReports : href === "/admin/ads" ? waitingAds : 0;
+    return n > 0 ? (
+      <span className="ml-auto rounded-full bg-rose-600 px-1.5 py-px text-[10px] font-bold leading-4 text-white" aria-label={`${n} waiting`}>{n}</span>
     ) : null;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">

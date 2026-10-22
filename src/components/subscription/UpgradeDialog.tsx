@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Clock3, Crown, ShieldCheck, X } from "lucide-react";
 import { formatLimit, formatPlanPrice, type Plan } from "@/lib/plans";
 import ContactTeam from "./ContactTeam";
+import PaymentDetailsCard from "./PaymentDetailsCard";
 
 /**
  * Shown when someone picks a paid plan. Online payment is not wired up yet,
@@ -14,7 +15,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
     <Dialog.Root open={plan !== null} onOpenChange={o => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl bg-white shadow-2xl shadow-slate-950/30 focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 max-h-[calc(100dvh-32px)] overflow-y-auto rounded-3xl bg-white shadow-2xl shadow-slate-950/30 focus:outline-none">
           {plan && (
             <>
               <div className="relative overflow-hidden bg-slate-950 px-6 pb-6 pt-7 text-white">
@@ -46,6 +47,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
                 <p className="flex items-center gap-2 text-xs text-slate-500">
                   <ShieldCheck size={14} className="text-emerald-600" /> You won&apos;t be charged anything today.
                 </p>
+                <PaymentDetailsCard compact />
                 <ContactTeam plan={plan} />
                 <Dialog.Close className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
                   Maybe later

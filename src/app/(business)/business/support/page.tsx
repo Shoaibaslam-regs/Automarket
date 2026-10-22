@@ -9,6 +9,7 @@ import Select from "@/components/ui/Select";
 import { SUPPORT_TOPICS, type SupportTopicId } from "@/lib/supportTopics";
 import { SUPPORT_WHATSAPP, whatsappLink } from "@/lib/supportContact";
 import { useRateLock } from "@/hooks/useRateLock";
+import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 
 type Org = { name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
@@ -137,6 +138,7 @@ export default function BusinessSupportPage() {
               <p className="mt-3 flex items-center gap-1.5 font-semibold text-[var(--gh-0d1117)]"><ShieldCheck size={13} /> Reporting abuse?</p>
               <p className="mt-1">Choose &ldquo;Report a problem or abuse&rdquo; and include links or booking numbers.</p>
             </div>
+            <PaymentDetailsCard compact />
           </div>
         </div>
       </div>

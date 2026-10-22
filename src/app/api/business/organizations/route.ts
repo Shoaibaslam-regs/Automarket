@@ -15,6 +15,7 @@ import { invalidateBusinessSlug, invalidateDeal } from "@/lib/pageCache";
 import { Deal } from "@/models/Deal";
 import { BusinessReview } from "@/models/BusinessReview";
 import { Purchase } from "@/models/Purchase";
+import { Ad } from "@/models/Ad";
 import { logBusinessAction } from "@/lib/businessLog";
 
 function generateSlug(name: string): string {
@@ -150,7 +151,7 @@ export async function DELETE(req: NextRequest) {
     await Deal.deleteMany({ organizationId: org._id });
     await Purchase.deleteMany({ organizationId: org._id });
     await BusinessReview.deleteMany({ organizationId: org._id });
-    await Promise.all([FollowUp, LedgerEntry, BusinessLog].map(M => (M as typeof FollowUp).deleteMany({ organizationId: org._id })));
+    await Promise.all([FollowUp, LedgerEntry, BusinessLog, Ad].map(M => (M as typeof FollowUp).deleteMany({ organizationId: org._id })));
     await User.updateMany(
       { organizationId: org._id },
       { $unset: { organizationId: "", organizationRole: "" } }

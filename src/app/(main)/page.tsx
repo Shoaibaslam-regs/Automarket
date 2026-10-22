@@ -20,6 +20,8 @@ import LiveStats from "@/components/home/LiveStats";
 import HomeSearchInput from "@/components/home/HomeSearchInput";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import { getPublicStats } from "@/lib/publicStats";
+import SponsoredRow from "@/components/home/SponsoredRow";
+import { getSponsored } from "@/lib/sponsored";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
 type ListingWithId = IListing & { _id: string };
@@ -102,10 +104,11 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default async function HomePage() {
-  const [{ forSale, forRent }, deals, stats] = await Promise.all([
+  const [{ forSale, forRent }, deals, stats, sponsored] = await Promise.all([
     getData(),
     getLiveDeals({ sort: "discount", limit: 4 }).catch(() => []),
     getPublicStats(),
+    getSponsored().catch(err => { console.error("Sponsored ads failed:", err); return []; }),
   ]);
   const now = new Date().getTime();
 
@@ -189,7 +192,6 @@ export default async function HomePage() {
           <BrandLogos />
         </section>
 
-        {/* ── Latest for sale ── */}
         {/* ── Hot deals (only while some are running) ── */}
         {deals.length > 0 && (
           <section>
@@ -200,6 +202,15 @@ export default async function HomePage() {
           </section>
         )}
 
+        {/* ── Paid ads from businesses (Business → Promote), only while some are running ── */}
+        {sponsored.length > 0 && (
+          <section>
+            <SectionHeader eyebrow="Sponsored" title="Featured by businesses" />
+            <SponsoredRow items={sponsored} now={now} />
+          </section>
+        )}
+
+        {/* ── Latest for sale ── */}
         <section>
           <SectionHeader eyebrow="Fresh arrivals" title="Latest for sale" href="/listings?type=SALE" />
           {forSale.length === 0 ? (

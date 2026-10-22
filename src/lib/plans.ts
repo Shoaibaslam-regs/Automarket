@@ -143,6 +143,24 @@ export const VERIFIED_BADGE = {
   ],
 };
 
+/**
+ * Sponsored ads: a business pays to show its business page, a deal or a vehicle in the "Sponsored" row on
+ * the home page. Requested from Business → Promote, paid manually and switched on by an admin (Admin → Ad requests).
+ */
+export const SPONSORED_AD = {
+  name: "Sponsored ad",
+  /** PKR per week */
+  pricePerWeek: 1000,
+  /** The lengths a business can pick, in weeks */
+  weeks: [1, 2, 4] as const,
+  /** Most ads running on the home page at the same time */
+  maxRunning: 8,
+};
+
+export function adPrice(weeks: number): number {
+  return SPONSORED_AD.pricePerWeek * weeks;
+}
+
 /** The badge fields stored on an Organization. Dates may be strings once sent to the client. */
 export type BadgeVerification = {
   verifiedAt?: Date | string | null;

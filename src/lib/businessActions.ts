@@ -40,6 +40,8 @@ export const BUSINESS_ACTION_LABEL: Record<string, string> = {
   "business.followOfficial": "Followed AutoMarket Official",
   "business.unfollowOfficial": "Unfollowed AutoMarket Official",
   "review.reply": "Replied to a review",
+  "ad.request": "Asked for a sponsored ad",
+  "ad.cancel": "Cancelled a sponsored ad request",
 };
 
 export const BUSINESS_LOG_TYPES = ["BOOKING", "SALE", "CUSTOMER", "DEAL", "LISTING", "STAFF", "MONEY", "BUSINESS", "REVIEW"] as const;

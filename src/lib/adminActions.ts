@@ -24,4 +24,8 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "announcement.update": "Edited announcement",
   "announcement.delete": "Deleted announcement",
   "activity.clear": "Deleted activity history",
+  "ad.approve": "Approved sponsored ad",
+  "ad.reject": "Refused sponsored ad",
+  "ad.stop": "Stopped sponsored ad",
+  "settings.payment": "Changed payment details",
 };
