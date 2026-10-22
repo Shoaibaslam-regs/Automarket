@@ -66,7 +66,7 @@ export default function LiveStats({ initial }: { initial: PublicStats }) {
           </span>
           Live now
         </p>
-        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">AutoMarket in numbers</h2>
+        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">Streaming</h2>
         <p className="mt-1.5 text-xs text-slate-400"><span className="sm:hidden">Swipe for more · </span>Updates every minute</p>
       </div>
 

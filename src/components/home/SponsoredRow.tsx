@@ -1,56 +1,68 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Building2, MapPin, Star } from "lucide-react";
-import ListingCard from "@/components/listings/ListingCard";
-import DealCard from "@/components/deals/DealCard";
+import { ArrowRight, Building2, Store } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import type { SponsoredItem, SponsoredShop } from "@/lib/sponsored";
+import { formatLakh } from "@/lib/format";
+import type { SponsoredItem } from "@/lib/sponsored";
 
-const TYPE_LABEL: Record<string, string> = { DEALER: "Car dealer", RENTAL: "Rental company", BOTH: "Dealer & rentals" };
-
-/** A sponsored business page: the same card frame as deals and listings, with the logo in place of a photo. */
-function ShopCard({ shop }: { shop: SponsoredShop }) {
+/** The gold "Sponsored" ribbon across the photo's top-left corner. */
+function Ribbon() {
   return (
-    <Link
-      href={`/dealers/${shop.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300"
-    >
-      <div className="flex aspect-[4/3] items-center justify-center bg-slate-50">
-        {shop.logo ? (
-          <Image src={shop.logo} alt={shop.name} width={96} height={96} className="h-20 w-20 rounded-full object-cover ring-1 ring-slate-200 sm:h-24 sm:w-24" />
-        ) : (
-          <Building2 size={40} strokeWidth={1.5} className="text-slate-300" />
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{TYPE_LABEL[shop.type] ?? "Business"}</p>
-        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-sm font-semibold text-slate-900 sm:text-[15px]">
-          <span className="truncate">{shop.name}</span>
-          {shop.verified && <VerifiedBadge variant="icon" size={15} />}
-        </p>
-        {shop.rating.count > 0 && (
-          <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-            <Star size={12} className="fill-amber-400 text-amber-400" /> {shop.rating.average.toFixed(1)} ({shop.rating.count})
-          </p>
-        )}
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500 sm:text-xs">
-          <span className="flex min-w-0 items-center gap-1">{shop.city && <><MapPin size={12} className="flex-shrink-0" /> <span className="truncate">{shop.city}</span></>}</span>
-          <span className="inline-flex flex-shrink-0 items-center gap-0.5 font-semibold text-slate-700">Visit <ArrowRight size={12} className="transition group-hover:translate-x-0.5" /></span>
-        </div>
-      </div>
-    </Link>
+    <span className="theme-static pointer-events-none absolute -left-8 top-5 w-32 -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 py-0.5 text-center text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-950 shadow-md">
+      Sponsored
+    </span>
   );
 }
 
-/** The home page's Sponsored row: paid ads (Business → Promote) shown with the site's normal cards. */
-export default function SponsoredRow({ items, now }: { items: SponsoredItem[]; now: number }) {
+/** A compact sponsored card: photo with the ribbon, title and price, and a link to the business's shop page. */
+function SponsoredCard({ item }: { item: SponsoredItem }) {
+  const shop = `/dealers/${item.business.slug}`;
   return (
-    <div className="grid grid-cols-2 items-start gap-3 sm:gap-4 lg:grid-cols-4">
-      {items.map(item =>
-        item.kind === "SHOP" ? <ShopCard key={item.adId} shop={item.shop} />
-        : item.kind === "DEAL" ? <DealCard key={item.adId} deal={item.deal} now={now} />
-        : <ListingCard key={item.adId} listing={item.listing} />
-      )}
+    <div className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300">
+      <Link href={item.href} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+          {item.kind === "SHOP" ? (
+            <span className="flex h-full items-center justify-center bg-slate-50">
+              {item.image
+                ? <Image src={item.image} alt={item.title} width={88} height={88} className="h-[72px] w-[72px] rounded-full object-cover ring-1 ring-slate-200 sm:h-[88px] sm:w-[88px]" />
+                : <Building2 size={36} strokeWidth={1.5} className="text-slate-300" />}
+            </span>
+          ) : item.image ? (
+            <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 50vw, 280px" className="object-cover transition duration-500 group-hover:scale-105" />
+          ) : null}
+          <Ribbon />
+        </div>
+        <div className="px-3 pt-2.5">
+          <p className="truncate text-[13px] font-semibold text-slate-900 sm:text-sm">{item.title}</p>
+          {item.price != null && (
+            <p className="mt-0.5 text-sm font-bold text-slate-900">
+              <span className="mr-1 text-[10px] font-semibold text-slate-400">PKR</span>
+              {item.perDay ? item.price.toLocaleString("en-PK") : formatLakh(item.price)}
+              {item.perDay && <span className="ml-0.5 text-[11px] font-medium text-slate-400">/day</span>}
+            </p>
+          )}
+        </div>
+      </Link>
+      <Link href={shop} className="mx-3 mb-2.5 mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 sm:text-xs">
+        {item.kind === "SHOP" ? (
+          <><Store size={13} className="flex-shrink-0" /> <span className="truncate">Visit shop</span></>
+        ) : (
+          <>
+            {item.business.verified ? <VerifiedBadge variant="icon" size={13} /> : <Store size={13} className="flex-shrink-0" />}
+            <span className="truncate">{item.business.name}</span>
+          </>
+        )}
+        <ArrowRight size={12} className="ml-auto flex-shrink-0" />
+      </Link>
+    </div>
+  );
+}
+
+/** The home page's Sponsored row: paid ads (Business → Promote) as compact cards. */
+export default function SponsoredRow({ items }: { items: SponsoredItem[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+      {items.map(item => <SponsoredCard key={item.adId} item={item} />)}
     </div>
   );
 }

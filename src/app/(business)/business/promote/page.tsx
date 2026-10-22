@@ -36,6 +36,8 @@ export default function PromotePage() {
   const [sent, setSent] = useState(false);
   const [cancelling, setCancelling] = useState<Ad | null>(null);
   const [busy, setBusy] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [clearError, setClearError] = useState("");
   const lock = useRateLock("support");
 
   function load() {
@@ -73,6 +75,19 @@ export default function PromotePage() {
     if (res.ok) { setCancelling(null); load(); }
   }
 
+  async function clearHistory() {
+    setBusy(true);
+    setClearError("");
+    const res = await fetch("/api/business/ads", { method: "DELETE" });
+    const d = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) { setClearError(d.error || "Couldn't clear the history"); return; }
+    setClearing(false);
+    load();
+  }
+
+  const FINISHED = ["ENDED", "REJECTED", "CANCELLED", "STOPPED"];
+  const finished = data?.ads.filter(a => FINISHED.includes(adState(a))).length ?? 0;
   const choices = kind === "DEAL" ? data?.options.deals ?? [] : kind === "LISTING" ? data?.options.listings ?? [] : [];
 
   return (
@@ -80,6 +95,9 @@ export default function PromotePage() {
       <ConfirmDialog open={cancelling !== null} onOpenChange={o => !o && setCancelling(null)} title="Cancel this request?"
         description="The team won't run this ad. If you already paid, message the team about a refund."
         confirmLabel="Cancel request" loadingLabel="Cancelling..." loading={busy} onConfirm={cancel} />
+      <ConfirmDialog open={clearing} onOpenChange={setClearing} title="Clear ad history?"
+        description={`This removes ${finished} finished ad${finished !== 1 ? "s" : ""} (ended, refused, cancelled or stopped) from this list. Waiting and running ads stay.`}
+        confirmLabel="Clear history" loadingLabel="Clearing..." loading={busy} error={clearError} onConfirm={clearHistory} />
 
       <div className="border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
@@ -170,7 +188,12 @@ export default function PromotePage() {
             )}
 
             <section>
-              <p className="mb-2 text-sm font-bold text-[var(--gh-0d1117)]">Your ads</p>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-[var(--gh-0d1117)]">Your ads</p>
+                {data.canPromote && finished > 0 && (
+                  <button onClick={() => { setClearError(""); setClearing(true); }} className="text-xs font-semibold text-[var(--gh-57606a)] hover:text-[var(--gh-cf222e)]">Clear history</button>
+                )}
+              </div>
               {data.ads.length === 0 ? (
                 <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-10 text-center">
                   <Megaphone size={26} strokeWidth={1.5} className="mx-auto mb-2 text-[var(--gh-8c959f)]" />

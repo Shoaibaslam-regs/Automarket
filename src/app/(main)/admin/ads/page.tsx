@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ExternalLink, Rocket, X } from "lucide-react";
-import { Badge, PageHeader, Panel, Segmented, btn } from "@/components/admin/ui";
+import { ExternalLink, Rocket, Trash2, X } from "lucide-react";
+import { Badge, ConfirmDialog, PageHeader, Panel, Segmented, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import StatusText from "@/components/ui/StatusText";
 import { SPONSORED_AD } from "@/lib/plans";
@@ -35,6 +35,7 @@ export default function AdminAdsPage() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [clearing, setClearing] = useState(false);
 
   function load(t: Tab) {
     return fetch(`/api/admin/ads?tab=${t}`)
@@ -68,6 +69,13 @@ export default function AdminAdsPage() {
     load(tab);
   }
 
+  async function clearHistory() {
+    setBusy(true);
+    const res = await fetch("/api/admin/ads", { method: "DELETE" });
+    setBusy(false);
+    if (res.ok) { setClearing(false); load(tab); }
+  }
+
   const endPreview = acting?.action === "approve" && start
     ? fmt(Math.max(new Date(`${start}T00:00:00+05:00`).getTime(), acting.at) + acting.ad.weeks * 7 * DAY_MS)
     : "";
@@ -77,7 +85,11 @@ export default function AdminAdsPage() {
       <PageHeader title="Ad requests"
         description={`Businesses pay PKR ${SPONSORED_AD.pricePerWeek.toLocaleString()} a week for a spot in the home page's Sponsored row (${counts.running} of ${SPONSORED_AD.maxRunning} running now). Check the payment arrived, then approve.`} />
 
-      <div className="mb-4">
+      <ConfirmDialog open={clearing} onOpenChange={setClearing} title="Clear ad history?" tone="danger" icon={Trash2}
+        description="Removes every finished ad (ended, refused, cancelled or stopped) from the Past tab. Businesses keep their own copy until they clear it, and approvals stay in the activity log."
+        confirmLabel="Clear history" loadingLabel="Clearing…" loading={busy} onConfirm={clearHistory} />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <Segmented<Tab>
           value={tab}
           onChange={t => { setAds(null); setTab(t); }}
@@ -87,6 +99,9 @@ export default function AdminAdsPage() {
             { value: "PAST", label: "Past" },
           ]}
         />
+        {tab === "PAST" && canWrite && ads && ads.length > 0 && (
+          <button onClick={() => setClearing(true)} className={`${btn.base} ${btn.danger}`}><Trash2 size={13} /> Clear history</button>
+        )}
       </div>
 
       {ads === null ? (

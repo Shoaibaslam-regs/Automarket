@@ -61,7 +61,7 @@ async function getData() {
     await connectDB();
     const active = { status: "ACTIVE" };
     const [forSale, forRent] = await Promise.all([
-      Listing.find({ ...active, type: { $in: ["SALE", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(6).populate(CARD_SELLER_POPULATE).lean(),
+      Listing.find({ ...active, type: { $in: ["SALE", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(8).populate(CARD_SELLER_POPULATE).lean(),
       Listing.find({ ...active, type: { $in: ["RENT", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(4).populate(CARD_SELLER_POPULATE).lean(),
     ]);
     return { forSale: forSale as unknown as ListingWithId[], forRent: forRent as unknown as ListingWithId[] };
@@ -206,7 +206,7 @@ export default async function HomePage() {
         {sponsored.length > 0 && (
           <section>
             <SectionHeader eyebrow="Sponsored" title="Featured by businesses" />
-            <SponsoredRow items={sponsored} now={now} />
+            <SponsoredRow items={sponsored} />
           </section>
         )}
 
@@ -216,9 +216,12 @@ export default async function HomePage() {
           {forSale.length === 0 ? (
             <EmptyState text="No listings for sale yet" />
           ) : (
-            <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            // One swipeable row on every screen (4 cards in view on desktop, the rest a scroll away)
+            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:gap-5 sm:px-0 sm:pb-3 sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:hidden sm:[&::-webkit-scrollbar]:block sm:[&::-webkit-scrollbar]:h-1.5 sm:[&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-slate-300">
               {forSale.map(listing => (
-                <ListingCard key={String(listing._id)} listing={listing} />
+                <div key={String(listing._id)} className="w-[72%] flex-shrink-0 snap-start min-[480px]:w-[45%] sm:w-[calc((100%-40px)/3)] lg:w-[calc((100%-60px)/4)]">
+                  <ListingCard listing={listing} />
+                </div>
               ))}
             </div>
           )}

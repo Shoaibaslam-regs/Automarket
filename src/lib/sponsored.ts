@@ -4,29 +4,28 @@ import { Ad } from "@/models/Ad";
 import { Deal } from "@/models/Deal";
 import { Listing } from "@/models/Listing";
 import { Organization } from "@/models/Organization";
-import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
-import { liveQuery, type PublicDeal } from "@/lib/publicDeals";
-import { getBusinessRatings } from "@/lib/reviews";
+import { liveQuery } from "@/lib/publicDeals";
+import { dealPrice } from "@/lib/deals";
 import { isVerified, SPONSORED_AD, type BadgeVerification } from "@/lib/plans";
-import type { IListing } from "@/models/Listing";
 
 type Oid = mongoose.Types.ObjectId;
 
-export type SponsoredShop = {
-  id: string; name: string; slug: string; type: string; logo?: string; city?: string;
-  verified: boolean; rating: { average: number; count: number };
+/** One compact card in the home page's Sponsored row (plain JSON). SHOP ads use the logo as the picture and have no price. */
+export type SponsoredItem = {
+  adId: string;
+  kind: "SHOP" | "DEAL" | "LISTING";
+  href: string;
+  image?: string;
+  title: string;
+  price?: number;
+  perDay?: boolean;
+  business: { name: string; slug: string; logo?: string; verified: boolean };
 };
 
-/** One card in the home page's Sponsored row (plain JSON). */
-export type SponsoredItem =
-  | { adId: string; kind: "SHOP"; shop: SponsoredShop }
-  | { adId: string; kind: "DEAL"; deal: PublicDeal }
-  | { adId: string; kind: "LISTING"; listing: IListing & { _id: string } };
-
-type OrgRow = { _id: Oid; name: string; slug: string; type: string; logo?: string; city?: string; verification?: BadgeVerification };
+type OrgRow = { _id: Oid; name: string; slug: string; logo?: string; verification?: BadgeVerification };
 
 /**
- * Approved ads running now, as cards, in the order they started. Skips ads whose business is suspended or
+ * Approved ads running now, as compact cards, in the order they started. Skips ads whose business is suspended or
  * whose deal or vehicle is no longer live, so a sold car never shows as sponsored.
  */
 export async function getSponsored(): Promise<SponsoredItem[]> {
@@ -40,29 +39,31 @@ export async function getSponsored(): Promise<SponsoredItem[]> {
   const ids = (k: string) => ads.filter(a => a.kind === k && a.targetId).map(a => a.targetId!);
   const [orgs, deals, listings] = await Promise.all([
     Organization.find({ _id: { $in: ads.map(a => a.organizationId) }, isActive: { $ne: false } })
-      .select("name slug type logo city verification.verifiedAt verification.expiresAt").lean<OrgRow[]>(),
-    Deal.find({ _id: { $in: ids("DEAL") }, ...liveQuery(now) }).lean<Array<Record<string, unknown> & { _id: Oid }>>(),
-    Listing.find({ _id: { $in: ids("LISTING") }, status: "ACTIVE" }).populate(CARD_SELLER_POPULATE).lean<Array<Record<string, unknown> & { _id: Oid }>>(),
+      .select("name slug logo verification.verifiedAt verification.expiresAt").lean<OrgRow[]>(),
+    Deal.find({ _id: { $in: ids("DEAL") }, ...liveQuery(now) }).select("title images price discountType discountValue dealType")
+      .lean<Array<{ _id: Oid; title: string; images: string[]; price: number; discountType: "PERCENT" | "AMOUNT"; discountValue: number; dealType?: string }>>(),
+    Listing.find({ _id: { $in: ids("LISTING") }, status: "ACTIVE" }).select("title images price type")
+      .lean<Array<{ _id: Oid; title: string; images: string[]; price: number; type: string }>>(),
   ]);
   const orgById = new Map(orgs.map(o => [String(o._id), o]));
   const dealById = new Map(deals.map(d => [String(d._id), d]));
   const listingById = new Map(listings.map(l => [String(l._id), l]));
-  const ratings = await getBusinessRatings(ads.filter(a => a.kind === "SHOP").map(a => String(a.organizationId)));
 
-  const items: unknown[] = [];
+  const items: SponsoredItem[] = [];
   for (const a of ads) {
     const org = orgById.get(String(a.organizationId));
     if (!org) continue;
-    const business = { id: String(org._id), name: org.name, slug: org.slug, logo: org.logo, city: org.city, verified: isVerified(org.verification) };
+    const business = { name: org.name, slug: org.slug, logo: org.logo, verified: isVerified(org.verification) };
+    const adId = String(a._id);
     if (a.kind === "SHOP") {
-      items.push({ adId: a._id, kind: "SHOP", shop: { ...business, type: org.type, rating: ratings.get(String(org._id)) ?? { average: 0, count: 0 } } });
+      items.push({ adId, kind: "SHOP", href: `/dealers/${org.slug}`, image: org.logo, title: org.name, business });
     } else if (a.kind === "DEAL") {
-      const deal = dealById.get(String(a.targetId));
-      if (deal) items.push({ adId: a._id, kind: "DEAL", deal: { ...deal, business } });
+      const d = dealById.get(String(a.targetId));
+      if (d) items.push({ adId, kind: "DEAL", href: `/deals/${d._id}`, image: d.images[0], title: d.title, price: dealPrice(d.price, d), perDay: d.dealType === "RENT", business });
     } else {
-      const listing = listingById.get(String(a.targetId));
-      if (listing) items.push({ adId: a._id, kind: "LISTING", listing });
+      const l = listingById.get(String(a.targetId));
+      if (l) items.push({ adId, kind: "LISTING", href: `/listings/${l._id}`, image: l.images[0], title: l.title, price: l.price, perDay: l.type === "RENT", business });
     }
   }
-  return JSON.parse(JSON.stringify(items)) as SponsoredItem[];
+  return items;
 }

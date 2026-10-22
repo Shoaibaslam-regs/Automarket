@@ -42,6 +42,7 @@ export const BUSINESS_ACTION_LABEL: Record<string, string> = {
   "review.reply": "Replied to a review",
   "ad.request": "Asked for a sponsored ad",
   "ad.cancel": "Cancelled a sponsored ad request",
+  "ad.clearHistory": "Cleared ad history",
 };
 
 export const BUSINESS_LOG_TYPES = ["BOOKING", "SALE", "CUSTOMER", "DEAL", "LISTING", "STAFF", "MONEY", "BUSINESS", "REVIEW"] as const;

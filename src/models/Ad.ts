@@ -29,6 +29,9 @@ export interface IAd extends Document {
   reason?: string;
   handledBy?: mongoose.Types.ObjectId;
   handledAt?: Date;
+  /** Cleared from the business's Promote history / the admin's Past tab; deleted once both have cleared it */
+  hiddenByBusiness?: boolean;
+  hiddenByAdmin?: boolean;
   createdAt: Date;
 }
 
@@ -49,6 +52,8 @@ const AdSchema = new Schema<IAd>(
     reason: { type: String, trim: true, maxlength: 500 },
     handledBy: { type: Schema.Types.ObjectId, ref: "User" },
     handledAt: Date,
+    hiddenByBusiness: { type: Boolean, default: false },
+    hiddenByAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

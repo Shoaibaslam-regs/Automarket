@@ -13,6 +13,7 @@ import { AD_KIND_LABEL, type AdKind } from "@/lib/ads";
 import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { clearAdHistory } from "@/lib/adHistory";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -35,7 +36,7 @@ export async function GET() {
     const member = await getMembership(session.user.id);
     if (!member) return NextResponse.json({ error: "No business found" }, { status: 403 });
     const [ads, org, options] = await Promise.all([
-      Ad.find({ organizationId: member.organizationId }).sort({ createdAt: -1 }).limit(100).lean(),
+      Ad.find({ organizationId: member.organizationId, hiddenByBusiness: { $ne: true } }).sort({ createdAt: -1 }).limit(100).lean(),
       Organization.findById(member.organizationId).select("name slug").lean<{ name: string; slug: string }>(),
       promotable(member.organizationId),
     ]);
@@ -103,5 +104,25 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Business ads POST error:", error);
     return NextResponse.json({ error: "Failed to send your request" }, { status: 500 });
+  }
+}
+
+/** Clears the business's finished ads (ended, refused, cancelled, stopped) from its Promote history. */
+export async function DELETE() {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await connectDB();
+    const member = await getMembership(session.user.id);
+    if (!member || !can(member.role, "promote")) return NextResponse.json({ error: "Only the owner or a manager can clear ad history" }, { status: 403 });
+    const cleared = await clearAdHistory("business", { organizationId: member.organizationId });
+    if (cleared > 0) {
+      await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.clearHistory",
+        { type: "BUSINESS", label: "Ad history" }, { details: `${cleared} finished ad${cleared > 1 ? "s" : ""}` });
+    }
+    return NextResponse.json({ cleared });
+  } catch (error) {
+    console.error("Business ads DELETE error:", error);
+    return NextResponse.json({ error: "Failed to clear the history" }, { status: 500 });
   }
 }

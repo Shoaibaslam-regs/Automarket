@@ -27,5 +27,6 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "ad.approve": "Approved sponsored ad",
   "ad.reject": "Refused sponsored ad",
   "ad.stop": "Stopped sponsored ad",
+  "ad.clearHistory": "Cleared ad history",
   "settings.payment": "Changed payment details",
 };
