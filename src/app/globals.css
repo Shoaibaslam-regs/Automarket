@@ -366,6 +366,19 @@ body {
   animation-delay: var(--lp-shimmer-delay, 0s);
 }
 .lp-deal-shimmer:hover::after { animation-duration: 2.4s; }
+/* Sponsored cards (home page): a faint gold light sweeping across the photo now and then, staggered per card
+   with --lp-shimmer-delay. Lighter and slower than the deal shimmer so the row doesn't flicker. */
+.lp-sponsor-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(253, 230, 138, 0.10) 30%, rgba(255, 255, 255, 0.30) 50%, rgba(253, 230, 138, 0.10) 70%, transparent);
+  animation: lp-deal-shimmer 7s ease-in-out infinite;
+  animation-delay: var(--lp-shimmer-delay, 0s);
+}
 .lp-scan        { animation: lp-scan 3.6s ease-in-out infinite; }
 .lp-pulse-ring  { animation: lp-pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
@@ -396,7 +409,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .lp-aurora, .lp-gradient-text, .lp-float, .lp-marquee, .lp-scan, .lp-pulse-ring, .lp-border-spin,
-  .lp-shine::after, .lp-deal-shimmer::after, .lp-reveal .lp-pop { animation: none !important; }
+  .lp-shine::after, .lp-deal-shimmer::after, .lp-sponsor-shimmer::after, .lp-reveal .lp-pop { animation: none !important; }
   .lp-rise { animation: none; opacity: 1; }
   .lp-reveal { opacity: 1; transform: none; transition: none; }
 }

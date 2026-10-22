@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
-import { ADMIN_GATE_COOKIE, ADMIN_GATE_TTL_SEC, isAdminAccessKey, newGateValue } from "@/lib/adminGate";
+import { ADMIN_GATE_COOKIE, ADMIN_GATE_TTL_SEC, newGateValue } from "@/lib/adminGate";
+import { checkAdminAccessKey } from "@/lib/adminKey";
 
 // Same wording as a wrong password on /login, so a wrong key gives nothing away
 const GENERIC = "Invalid email or password";
@@ -9,7 +10,8 @@ const limited = (retryAfter: number) =>
   NextResponse.json({ error: GENERIC, code: "RATE_LIMITED", retryAfter }, { status: 429, headers: { "Retry-After": String(retryAfter) } });
 
 /**
- * Checks a value typed into the email field of /login against ADMIN_ACCESS_KEY. A correct key sets a short-lived
+ * Checks a value typed into the email field of /login against the admin access key (the one set in the admin
+ * panel, else ADMIN_ACCESS_KEY; see src/lib/adminKey.ts). A correct key sets a short-lived
  * signed cookie that opens the admin sign-in form (the credentials sign-in requires it for portal "admin"); it signs
  * no one in. Wrong keys count per IP (5 in 15 minutes, then locked).
  */
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!before.ok) return limited(before.retryAfterSec);
 
   const { key } = await req.json().catch(() => ({}));
-  if (typeof key !== "string" || !isAdminAccessKey(key.trim())) {
+  if (typeof key !== "string" || !(await checkAdminAccessKey(key.trim()))) {
     const r = await hitRateLimit("adminKey", ip);
     if (r.remaining === 0) return limited(r.retryAfterSec);
     return NextResponse.json({ error: GENERIC }, { status: 401 });

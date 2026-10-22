@@ -27,6 +27,8 @@ export const RATE_LIMITS = {
   /** Wrong admin access keys typed on /login, and failed admin sign-ins, per IP */
   adminKey: { limit: 5, windowSec: 15 * 60, lockout: true },
   adminLogin: { limit: 5, windowSec: 15 * 60, lockout: true },
+  /** Wrong passwords when the platform owner changes the admin access key */
+  adminKeyChange: { limit: 5, windowSec: 15 * 60, lockout: true },
   /** Wrong passwords when deleting an account */
   accountDelete: { limit: 5, windowSec: 15 * 60, lockout: true },
   /** AI calls cost money per request */

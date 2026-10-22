@@ -8,19 +8,22 @@ import type { SponsoredItem } from "@/lib/sponsored";
 /** The gold "Sponsored" ribbon across the photo's top-left corner. */
 function Ribbon() {
   return (
-    <span className="theme-static pointer-events-none absolute -left-8 top-5 w-32 -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 py-0.5 text-center text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-950 shadow-md">
+    <span className="theme-static pointer-events-none absolute -left-8 top-5 z-[2] w-32 -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 py-0.5 text-center text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-950 shadow-md">
       Sponsored
     </span>
   );
 }
 
-/** A compact sponsored card: photo with the ribbon, title and price, and a link to the business's shop page. */
-function SponsoredCard({ item }: { item: SponsoredItem }) {
+/**
+ * A compact sponsored card: photo with the ribbon and a light gold shimmer (`lp-sponsor-shimmer`, staggered by
+ * `index`), title and price, and a link to the business's shop page.
+ */
+function SponsoredCard({ item, index }: { item: SponsoredItem; index: number }) {
   const shop = `/dealers/${item.business.slug}`;
   return (
     <div className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300">
       <Link href={item.href} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        <div className="lp-sponsor-shimmer relative aspect-[4/3] overflow-hidden bg-slate-100" style={{ "--lp-shimmer-delay": `${index * 0.9}s` } as React.CSSProperties}>
           {item.kind === "SHOP" ? (
             <span className="flex h-full items-center justify-center bg-slate-50">
               {item.image
@@ -62,7 +65,7 @@ function SponsoredCard({ item }: { item: SponsoredItem }) {
 export default function SponsoredRow({ items }: { items: SponsoredItem[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-      {items.map(item => <SponsoredCard key={item.adId} item={item} />)}
+      {items.map((item, i) => <SponsoredCard key={item.adId} item={item} index={i} />)}
     </div>
   );
 }

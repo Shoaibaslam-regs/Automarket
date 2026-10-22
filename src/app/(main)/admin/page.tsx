@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Calendar, Car, CircleCheck,
 import PlanGiftDialog, { fmtPlanDate, type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import PaymentSettings from "@/components/admin/PaymentSettings";
+import AdminKeySettings from "@/components/admin/AdminKeySettings";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, isVerified, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
 import VerifyBadgeDialog, { type BadgeAction } from "@/components/admin/VerifyBadgeDialog";
@@ -321,6 +322,8 @@ export default function AdminPage() {
           <PlanLookup />
 
           <PaymentSettings />
+
+          <AdminKeySettings />
 
           <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
             <Panel

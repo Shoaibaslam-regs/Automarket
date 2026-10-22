@@ -29,4 +29,5 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "ad.stop": "Stopped sponsored ad",
   "ad.clearHistory": "Cleared ad history",
   "settings.payment": "Changed payment details",
+  "settings.adminKey": "Changed the admin access key",
 };
