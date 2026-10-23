@@ -17,11 +17,14 @@ const FADE_MS = 380;
 
 /**
  * The logo's size at first paint and once settled, and the height of the car-and-name area under it.
- * Android shows its own launch screen first, with the icon at 192dp (= CSS px), so there the cover starts at
- * that size and takes over without a jump; a smaller start looked like a shrink before the animation's shrink.
+ * Android shows its own launch screen first: Android 12+ draws the maskable icon on the white background at
+ * 288dp across (a 192dp icon area plus the hidden adaptive-icon margin), so its red mark is about 137dp tall.
+ * In icon-192.png the mark fills 118/192 of the image, so the cover starts at 137 / (118 / 192) ≈ 224px and the
+ * mark is the same size when it takes over. Starting smaller (160, then 192) showed as a small shrink just
+ * before the animation's own shrink. dp = CSS px.
  */
 const LOGO_START = 160;
-const LOGO_START_ANDROID = 192;
+const LOGO_START_ANDROID = 224;
 const LOGO_END = 104;
 const STAGE_H = 138;
 /** How far the logo's centre rises: half of the settled logo + stage, so the finished group is centred */

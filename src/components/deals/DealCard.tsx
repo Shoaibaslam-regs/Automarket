@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, CarFront, Clock3, Gauge, ImageOff, Images, KeyRound, MapPin, Tag } from "lucide-react";
+import { Building2, CarFront, Clock3, Flame, Gauge, ImageOff, KeyRound, MapPin, Tag } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { formatLakh } from "@/lib/format";
 import { daysLeft, dealLabel, dealPrice, isRentDeal } from "@/lib/deals";
@@ -19,7 +19,7 @@ export function endsText(endsAt: string, now: number): string {
 const PHOTO_TAG = "theme-static absolute inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-medium text-white backdrop-blur sm:gap-1 sm:px-2 sm:py-0.5 sm:text-[10px] sm:font-bold";
 
 /**
- * A deal in a grid: photo with the discount, deal price over the normal price, and who is offering it.
+ * A deal in a grid: photo with the discount, a tilted "Deal" ribbon, deal price over the normal price, and who is offering it.
  * Phones get a short card (one-line title, price, city); make, type, mileage and the business
  * show from `sm` up, and the deal page has everything.
  */
@@ -50,12 +50,10 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
             <CarFront className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {cars} cars
           </span>
         )}
-        {deal.images.length > 1 && (
-          <span className={`${PHOTO_TAG} right-1.5 top-1.5 bg-black/55 sm:right-2 sm:top-2 sm:font-semibold`}>
-            <Images className="h-2.5 w-2.5 sm:hidden" />
-            {deal.images.length}<span className="hidden sm:inline"> photos</span>
-          </span>
-        )}
+        {/* A tiny tilted "Deal" ribbon across the top-right corner, like Sponsored, in the hot-deal colours */}
+        <span className="theme-static pointer-events-none absolute -right-7 top-3.5 z-[2] flex w-24 rotate-45 items-center justify-center gap-0.5 bg-gradient-to-r from-rose-600 to-orange-500 py-px text-[8px] font-extrabold uppercase tracking-[0.14em] text-white shadow-md shadow-rose-600/30 sm:-right-8 sm:top-4 sm:w-28 sm:text-[9px]">
+          <Flame className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> Deal
+        </span>
       </div>
       <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:p-4">
         <div className="hidden items-center justify-between gap-2 sm:flex">

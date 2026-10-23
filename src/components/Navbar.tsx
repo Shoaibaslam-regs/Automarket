@@ -139,10 +139,9 @@ export default function Navbar() {
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-label="Account menu"
-                  className={`flex h-11 min-w-[168px] items-center gap-2.5 rounded-2xl pl-1.5 pr-3 ring-1 ring-inset transition duration-200 ${
-                    menuOpen
-                      ? "bg-slate-50 shadow-[0_8px_20px_-10px_rgba(15,23,42,0.35)] ring-slate-300"
-                      : "bg-white shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-slate-200/90 hover:bg-slate-50 hover:ring-slate-300"
+                  // No box around the avatar and name: only a light tint on hover and while the menu is open
+                  className={`flex h-11 min-w-[168px] items-center gap-2.5 rounded-2xl pl-1.5 pr-3 transition duration-200 ${
+                    menuOpen ? "bg-slate-100" : "hover:bg-slate-100"
                   }`}
                 >
                   <span className="relative flex flex-shrink-0">
