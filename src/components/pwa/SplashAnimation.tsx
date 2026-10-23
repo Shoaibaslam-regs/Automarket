@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, type RefObject } from "react";
+import { animate, motion, useReducedMotion } from "framer-motion";
 import CarIllustration from "@/components/launch/CarIllustration";
 
 /** The car drives across the word in this long, then leaves; the screen hands over after HOLD_MS more. */
@@ -9,14 +9,34 @@ const DRIVE_S = 1.35;
 const EXIT_S = 0.35;
 const HOLD_MS = 650;
 const DRIVE_EASE = [0.45, 0, 0.15, 1] as const;
+/** The logo settles in this long, starting together with the car; quick at first so it clears the word's row */
+const LOGO_S = 0.8;
+const LOGO_EASE = [0.33, 0, 0.15, 1] as const;
 
 /**
  * The moving part of the installed app's splash (loaded only while it shows): a car drives in from the left along
  * a road, "AutoMarket-Pak" appears behind it as it goes, then the car leaves and "Buy · Sell · Rent" fades in.
- * Calls onDone when it's time to hand over to the app. With reduced motion it shows the finished state briefly.
+ * At the same moment the splash's logo (`logo`, server-rendered large in the centre) shrinks and rises into place
+ * above it, so the two read as one movement. Calls onDone when it's time to hand over to the app.
+ * With reduced motion the logo settles at once and the finished state shows briefly.
  */
-export default function SplashAnimation({ onDone }: { onDone: () => void }) {
+export default function SplashAnimation({
+  logo, logoScale, logoLift, onDone,
+}: {
+  logo: RefObject<HTMLImageElement | null>;
+  logoScale: number;
+  logoLift: number;
+  onDone: () => void;
+}) {
   const reduce = useReducedMotion();
+
+  // Started in the same commit as the motion elements below, so the logo and the car begin on the same frame
+  useEffect(() => {
+    const el = logo.current;
+    if (!el) return;
+    const controls = animate(el, { scale: logoScale, y: -logoLift }, reduce ? { duration: 0 } : { duration: LOGO_S, ease: LOGO_EASE });
+    return () => controls.stop();
+  }, [logo, logoScale, logoLift, reduce]);
 
   useEffect(() => {
     const ms = reduce ? 1400 : (DRIVE_S + EXIT_S) * 1000 + HOLD_MS;
@@ -28,7 +48,13 @@ export default function SplashAnimation({ onDone }: { onDone: () => void }) {
   const driveShare = DRIVE_S / total;
 
   return (
-    <div style={{ marginTop: 26, width: "min(300px, 78vw)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    // The whole row eases in as the logo lifts away, so the road doesn't appear before there's room for it
+    <motion.div
+      initial={reduce ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: LOGO_S * 0.6, ease: LOGO_EASE }}
+      style={{ marginTop: 26, width: "min(300px, 78vw)", display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
       <div style={{ position: "relative", width: "100%", height: 74 }}>
         {/* The word, revealed up to the car's nose */}
         <motion.div
@@ -90,6 +116,6 @@ export default function SplashAnimation({ onDone }: { onDone: () => void }) {
         .am-road-dashes { animation: am-road 0.35s linear infinite; }
         @keyframes am-road { to { background-position: -28px 0; } }
       `}</style>
-    </div>
+    </motion.div>
   );
 }

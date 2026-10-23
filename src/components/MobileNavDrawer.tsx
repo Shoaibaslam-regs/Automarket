@@ -146,7 +146,9 @@ export default function MobileNavDrawer({
   );
 
   return (
-    <div className="fixed inset-0 z-[150] md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+    // Hidden from 769px, the same width at which Navbar swaps its menu button for the desktop links
+    // (md:hidden hid it from 768px, so on an upright iPad, exactly 768px wide, the button opened nothing)
+    <div className="fixed inset-0 z-[150] min-[769px]:hidden" role="dialog" aria-modal="true" aria-label="Menu">
       <div onClick={onClose} className="absolute inset-0 animate-[mnFade_0.2s_ease] bg-slate-950/50 backdrop-blur-sm" />
       <style>{`
         @keyframes mnFade { from { opacity: 0 } to { opacity: 1 } }
