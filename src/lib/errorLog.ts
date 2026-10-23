@@ -62,8 +62,13 @@ async function save(o: Occurrence): Promise<void> {
   }
 }
 
+// During `next build` there is no one to show the log to, and when the build can't reach the database, waiting
+// for this write kept pages past Next's 60 s limit and failed the build. The error is still printed.
+const BUILDING = process.env.NEXT_PHASE === "phase-production-build";
+
 /** Saves an occurrence after the response is sent when inside a request, otherwise right away. Never throws. */
 export function recordError(o: Occurrence): Promise<void> {
+  if (BUILDING) return Promise.resolve();
   const task = save(o);
   try {
     after(() => task);

@@ -16,8 +16,10 @@ import { useRateLock } from "@/hooks/useRateLock";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import SearchSuggest from "@/components/SearchSuggest";
 import { CITIES, MY_CITY_KEY } from "@/lib/cities";
+import { MAKES as ALL_MAKES } from "@/lib/vehicleOptions";
 
-const MAKES = ["Toyota", "Honda", "Suzuki", "Hyundai", "Kia", "Nissan", "BYD", "Mercedes", "BMW", "Audi", "Porsche", "Mini", "Bentley", "Ferrari", "Lamborghini", "Ford", "Yamaha", "Kawasaki"];
+// The shared makes list, without the Sell form's "Other"
+const MAKES = ALL_MAKES.filter(m => m !== "Other");
 const TYPES = [
   ["", "All"],
   ["SALE", "For Sale"],

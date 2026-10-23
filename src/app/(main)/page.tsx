@@ -72,20 +72,26 @@ async function getData() {
   }
 }
 
-function SectionHeader({ eyebrow, title, href }: { eyebrow: string; title: string; href?: string }) {
+/**
+ * A section's heading: the title, then a thin indigo→fuchsia line across (like the menu group headings, so the
+ * sections read as clearly divided), and a quiet "View all" when the section has a page of its own.
+ */
+function SectionHeader({ title, href, line = true }: { title: string; href?: string; line?: boolean }) {
   return (
-    <div className="mb-5 flex items-end justify-between gap-4">
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600">{eyebrow}</p>
-        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{title}</h2>
-      </div>
+    <div className="mb-4 flex items-center gap-3">
+      <h2 className="min-w-0 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{title}</h2>
+      {line ? (
+        <span aria-hidden className="h-px min-w-6 flex-1 bg-gradient-to-r from-indigo-500/40 via-fuchsia-500/20 to-transparent" />
+      ) : (
+        <span className="flex-1" />
+      )}
       {href && (
         <Link
           href={href}
-          className="group inline-flex flex-shrink-0 items-center gap-1 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+          className="group inline-flex flex-shrink-0 items-center gap-1 text-[13px] font-medium text-slate-500 transition hover:text-slate-900"
         >
           View all
-          <ArrowRight size={15} className="transition group-hover:translate-x-0.5" />
+          <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
         </Link>
       )}
     </div>
@@ -188,14 +194,14 @@ export default async function HomePage() {
 
         {/* ── Browse by make ── */}
         <section>
-          <SectionHeader eyebrow="Brands" title="Browse by make" href="/listings" />
+          <SectionHeader title="Browse by make" href="/listings" line={false} />
           <BrandLogos />
         </section>
 
         {/* ── Hot deals (only while some are running) ── */}
         {deals.length > 0 && (
           <section>
-            <SectionHeader eyebrow="Limited time" title="Hot deals" href="/deals" />
+            <SectionHeader title="Hot deals" href="/deals" line={false} />
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {deals.map(d => <DealCard key={d._id} deal={d} now={now} />)}
             </div>
@@ -205,22 +211,22 @@ export default async function HomePage() {
         {/* ── Paid ads from businesses (Business → Promote), only while some are running ── */}
         {sponsored.length > 0 && (
           <section>
-            <SectionHeader eyebrow="Sponsored" title="Featured businesses" />
+            <SectionHeader title="Featured businesses" line={false} />
             <SponsoredRow items={sponsored} />
           </section>
         )}
 
         {/* ── Latest for sale ── */}
         <section>
-          <SectionHeader eyebrow="Fresh arrivals" title="Latest for sale" href="/listings?type=SALE" />
+          <SectionHeader title="Latest for sale" href="/listings?type=SALE" line={false} />
           {forSale.length === 0 ? (
             <EmptyState text="No listings for sale yet" />
           ) : (
-            // One swipeable row on every screen (4 cards in view on desktop, the rest a scroll away)
+            // One swipeable row on every screen: short cards, about 2 in view on phones; full cards, 4 in view on desktop
             <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:gap-5 sm:px-0 sm:pb-3 sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:hidden sm:[&::-webkit-scrollbar]:block sm:[&::-webkit-scrollbar]:h-1.5 sm:[&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-slate-300">
               {forSale.map(listing => (
-                <div key={String(listing._id)} className="w-[72%] flex-shrink-0 snap-start min-[480px]:w-[45%] sm:w-[calc((100%-40px)/3)] lg:w-[calc((100%-60px)/4)]">
-                  <ListingCard listing={listing} />
+                <div key={String(listing._id)} className="w-[44%] flex-shrink-0 snap-start min-[480px]:w-[36%] sm:w-[calc((100%-40px)/3)] lg:w-[calc((100%-60px)/4)]">
+                  <ListingCard listing={listing} compact="phone" />
                 </div>
               ))}
             </div>
@@ -229,15 +235,15 @@ export default async function HomePage() {
 
         {/* ── For rent ── */}
         <section>
-          <SectionHeader eyebrow="Rentals" title="Available for rent" href="/listings?type=RENT" />
+          <SectionHeader title="Available for rent" href="/listings?type=RENT" line={false} />
           {forRent.length === 0 ? (
             <EmptyState text="No rentals yet" />
           ) : (
-            // Swipeable row on mobile, grid on larger screens
+            // Swipeable row of short cards on phones (about 2 in view), a grid of full cards on larger screens
             <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {forRent.map(listing => (
-                <div key={String(listing._id)} className="w-[72%] flex-shrink-0 snap-start min-[480px]:w-[45%] sm:w-auto">
-                  <ListingCard listing={listing} />
+                <div key={String(listing._id)} className="w-[44%] flex-shrink-0 snap-start min-[480px]:w-[36%] sm:w-auto">
+                  <ListingCard listing={listing} compact="phone" />
                 </div>
               ))}
             </div>
@@ -249,7 +255,7 @@ export default async function HomePage() {
 
         {/* ── Why AutoMarket ── */}
         <section>
-          <SectionHeader eyebrow="Why AutoMarket" title="Everything you need, in one place" />
+          <SectionHeader title="Everything you need, in one place" />
           <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
@@ -268,7 +274,7 @@ export default async function HomePage() {
 
         {/* ── How it works ── */}
         <section>
-          <SectionHeader eyebrow="Selling made simple" title="How it works" />
+          <SectionHeader title="How it works" />
           <ol className="relative grid gap-3 sm:grid-cols-3 sm:gap-5">
             <div className="pointer-events-none absolute left-[16%] right-[16%] top-[42px] hidden h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent sm:block" />
             {STEPS.map(step => (
@@ -287,7 +293,7 @@ export default async function HomePage() {
 
         {/* ── Browse by province ── */}
         <section>
-          <SectionHeader eyebrow="Near you" title="Browse by province" />
+          <SectionHeader title="Browse by province" />
           <ProvinceCities />
         </section>
 
