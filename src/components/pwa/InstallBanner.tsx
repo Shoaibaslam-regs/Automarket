@@ -2,8 +2,28 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Download, Share, SquarePlus, X } from "lucide-react";
-import { usePwaInstall } from "./usePwaInstall";
+import { Download, Ellipsis, Share, SquarePlus, X } from "lucide-react";
+import { usePwaInstall, type IosBrowser } from "./usePwaInstall";
+
+const SHARE = <><Share size={12} className="inline align-[-2px]" /> <strong>Share</strong></>;
+const ADD = <><SquarePlus size={12} className="inline align-[-2px]" /> <strong>Add to Home Screen</strong></>;
+
+/** The "Add to Home Screen" steps for the iPhone or iPad browser the visitor is using. */
+function IosSteps({ browser }: { browser: IosBrowser | null }) {
+  switch (browser) {
+    case "chrome":
+      return <>Tap {SHARE} at the top right of the address bar, then {ADD}.</>;
+    case "edge":
+    case "firefox":
+      return <>Open the menu (<strong>☰</strong> or <Ellipsis size={12} className="inline align-[-2px]" />), tap {SHARE}, then {ADD}.</>;
+    case "inapp":
+      return <>This app&apos;s browser can&apos;t install apps. Open the <Ellipsis size={12} className="inline align-[-2px]" /> menu, choose <strong>Open in browser</strong>, then tap {SHARE} and {ADD}.</>;
+    case "safari":
+      return <>Tap {SHARE} (on newer iPhones it&apos;s under <Ellipsis size={12} className="inline align-[-2px]" />), then {ADD}.</>;
+    default:
+      return <>Tap {SHARE} in your browser, then {ADD}.</>;
+  }
+}
 
 const KEY = "pwa-install-dismissed";
 const QUIET_DAYS = 14;
@@ -14,7 +34,7 @@ const QUIET_DAYS = 14;
  * hides it for two weeks (kept per browser).
  */
 export default function InstallBanner() {
-  const { canPrompt, iosHint, install } = usePwaInstall();
+  const { canPrompt, iosHint, iosBrowser, install } = usePwaInstall();
   const [ready, setReady] = useState(false);
   const [dismissed, setDismissed] = useState(true);
 
@@ -43,9 +63,7 @@ export default function InstallBanner() {
           {canPrompt ? (
             <p className="mt-0.5 text-xs text-slate-500">Opens full screen from your home screen. Free, no Play Store, takes a second.</p>
           ) : (
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              Tap <Share size={12} className="inline align-[-2px]" /> <strong>Share</strong> below, then <SquarePlus size={12} className="inline align-[-2px]" /> <strong>Add to Home Screen</strong>.
-            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500"><IosSteps browser={iosBrowser} /></p>
           )}
         </div>
         <button onClick={close} aria-label="Not now" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={16} /></button>
@@ -62,9 +80,9 @@ export default function InstallBanner() {
   );
 }
 
-/** "Install app" row for menus; shows the iPhone steps inline when there's no install prompt. */
+/** "Install app" row for menus; shows the iPhone/iPad steps inline when there's no install prompt. */
 export function InstallAppRow({ onDone }: { onDone?: () => void }) {
-  const { canPrompt, iosHint, install } = usePwaInstall();
+  const { canPrompt, iosHint, iosBrowser, install } = usePwaInstall();
   const [showSteps, setShowSteps] = useState(false);
   if (!canPrompt && !iosHint) return null;
   return (
@@ -74,9 +92,7 @@ export function InstallAppRow({ onDone }: { onDone?: () => void }) {
         <Download size={14} /> Install AutoMarket app
       </button>
       {showSteps && (
-        <p className="mt-1.5 px-1 text-[11px] leading-relaxed text-slate-500">
-          Tap <Share size={11} className="inline align-[-1px]" /> <strong>Share</strong> in Safari, then <strong>Add to Home Screen</strong>.
-        </p>
+        <p className="mt-1.5 px-1 text-[11px] leading-relaxed text-slate-500"><IosSteps browser={iosBrowser} /></p>
       )}
     </div>
   );

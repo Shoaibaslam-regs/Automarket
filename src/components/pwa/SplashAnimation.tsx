@@ -22,10 +22,11 @@ const LOGO_EASE = [0.4, 0, 0.2, 1] as const;
  * With reduced motion the logo settles at once and the finished state shows briefly.
  */
 export default function SplashAnimation({
-  logo, logoScale, logoLift, onDone,
+  logo, logoEnd, logoLift, onDone,
 }: {
   logo: RefObject<HTMLImageElement | null>;
-  logoScale: number;
+  /** The settled size in px; the start size is read from the image, since it differs on Android */
+  logoEnd: number;
   logoLift: number;
   onDone: () => void;
 }) {
@@ -35,9 +36,10 @@ export default function SplashAnimation({
   useEffect(() => {
     const el = logo.current;
     if (!el) return;
-    const controls = animate(el, { scale: logoScale, y: -logoLift }, reduce ? { duration: 0 } : { duration: LOGO_S, ease: LOGO_EASE });
+    const scale = logoEnd / (el.offsetWidth || logoEnd);
+    const controls = animate(el, { scale, y: -logoLift }, reduce ? { duration: 0 } : { duration: LOGO_S, ease: LOGO_EASE });
     return () => controls.stop();
-  }, [logo, logoScale, logoLift, reduce]);
+  }, [logo, logoEnd, logoLift, reduce]);
 
   useEffect(() => {
     const ms = reduce ? 1400 : (DRIVE_S + EXIT_S) * 1000 + HOLD_MS;

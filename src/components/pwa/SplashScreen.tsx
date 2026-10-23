@@ -15,8 +15,13 @@ if (typeof document !== "undefined" && document.documentElement.classList.contai
 const FAILSAFE_MS = 6000;
 const FADE_MS = 380;
 
-/** The logo's size at first paint and once settled, and the height of the car-and-name area under it */
+/**
+ * The logo's size at first paint and once settled, and the height of the car-and-name area under it.
+ * Android shows its own launch screen first, with the icon at 192dp (= CSS px), so there the cover starts at
+ * that size and takes over without a jump; a smaller start looked like a shrink before the animation's shrink.
+ */
 const LOGO_START = 160;
+const LOGO_START_ANDROID = 192;
 const LOGO_END = 104;
 const STAGE_H = 138;
 /** How far the logo's centre rises: half of the settled logo + stage, so the finished group is centred */
@@ -72,11 +77,15 @@ export default function SplashScreen() {
         html.am-splash #am-splash.am-leaving { opacity: 0; }
         html.am-splash body { overflow: hidden; }
         /* The logo starts large in the exact centre (placed with top/left, since Framer Motion owns transform);
-           SplashAnimation scales it to ${LOGO_END}px and lifts it ${LOGO_LIFT}px, onto the top of the final layout */
+           SplashAnimation scales it (from whichever start size) to ${LOGO_END}px and lifts it ${LOGO_LIFT}px, onto the top of the final layout */
         #am-splash .am-logo {
           position: absolute; width: ${LOGO_START}px; height: ${LOGO_START}px;
           left: calc(50% - ${LOGO_START / 2}px); top: calc(50% - ${LOGO_START / 2}px);
           will-change: transform; z-index: 1;
+        }
+        html.am-android #am-splash .am-logo {
+          width: ${LOGO_START_ANDROID}px; height: ${LOGO_START_ANDROID}px;
+          left: calc(50% - ${LOGO_START_ANDROID / 2}px); top: calc(50% - ${LOGO_START_ANDROID / 2}px);
         }
         /* The car and name sit just under where the logo ends up */
         #am-splash .am-stage {
@@ -86,7 +95,7 @@ export default function SplashScreen() {
       `}</style>
       {/* eslint-disable-next-line @next/next/no-img-element -- precached icon, the same as the phone's launch screen */}
       <img ref={logoRef} className="am-logo" src="/icons/icon-192.png" alt="" />
-      <div className="am-stage">{phase !== "idle" && <SplashAnimation logo={logoRef} logoScale={LOGO_END / LOGO_START} logoLift={LOGO_LIFT} onDone={finish} />}</div>
+      <div className="am-stage">{phase !== "idle" && <SplashAnimation logo={logoRef} logoEnd={LOGO_END} logoLift={LOGO_LIFT} onDone={finish} />}</div>
     </div>
   );
 }
