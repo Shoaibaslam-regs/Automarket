@@ -8,10 +8,11 @@ import CarIllustration from "@/components/launch/CarIllustration";
 const DRIVE_S = 1.35;
 const EXIT_S = 0.35;
 const HOLD_MS = 650;
-const DRIVE_EASE = [0.45, 0, 0.15, 1] as const;
-/** The logo settles in this long, starting together with the car; quick at first so it clears the word's row */
-const LOGO_S = 0.8;
-const LOGO_EASE = [0.33, 0, 0.15, 1] as const;
+// Moving from the first frame (no slow start), so the car is visibly under way while the logo shrinks
+const DRIVE_EASE = [0.25, 0.1, 0.25, 1] as const;
+/** The logo settles in this long, on the same frame the car starts: a short, direct shrink rather than a stage of its own */
+const LOGO_S = 0.45;
+const LOGO_EASE = [0.4, 0, 0.2, 1] as const;
 
 /**
  * The moving part of the installed app's splash (loaded only while it shows): a car drives in from the left along
@@ -48,11 +49,11 @@ export default function SplashAnimation({
   const driveShare = DRIVE_S / total;
 
   return (
-    // The whole row eases in as the logo lifts away, so the road doesn't appear before there's room for it
+    // The row is there from the first frame, rising the last few pixels with the logo, so both start together
     <motion.div
-      initial={reduce ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: LOGO_S * 0.6, ease: LOGO_EASE }}
+      initial={reduce ? false : { y: 8 }}
+      animate={{ y: 0 }}
+      transition={{ duration: LOGO_S, ease: LOGO_EASE }}
       style={{ marginTop: 26, width: "min(300px, 78vw)", display: "flex", flexDirection: "column", alignItems: "center" }}
     >
       <div style={{ position: "relative", width: "100%", height: 74 }}>

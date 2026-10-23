@@ -5,7 +5,11 @@ import dynamic from "next/dynamic";
 import { SPLASH_KEY as KEY } from "@/lib/splash";
 
 // Framer Motion is only downloaded when the splash actually shows (installed-app launches), not on normal visits
-const SplashAnimation = dynamic(() => import("./SplashAnimation"), { ssr: false });
+const loadAnimation = () => import("./SplashAnimation");
+const SplashAnimation = dynamic(loadAnimation, { ssr: false });
+// On a splash launch, start downloading it as soon as this file runs instead of after hydration,
+// so the large logo isn't left waiting before it shrinks
+if (typeof document !== "undefined" && document.documentElement.classList.contains("am-splash")) void loadAnimation();
 
 /** If the animation can't load (offline, slow chunk), the splash still leaves after this long */
 const FAILSAFE_MS = 6000;
