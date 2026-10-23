@@ -7,6 +7,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { formatCnicInput } from "@/lib/plates";
 import { useRateLock } from "@/hooks/useRateLock";
+import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -31,6 +32,9 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
+  // The launch animation plays with the dialog closed (an open dialog blocks taps outside it, so "tap to skip"
+  // wouldn't work), then the dialog comes back on its "Request sent" panel
+  const [celebrating, setCelebrating] = useState(false);
   const buyLock = useRateLock("purchases");
   // Start with the phone on the buyer's profile, so most people only press Send
   const [profilePhone, setProfilePhone] = useState("");
@@ -70,11 +74,15 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
     buyLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't send your request"); return; }
     setSent(data.purchase?._id ?? "");
+    setOpen(false);
+    setCelebrating(true);
   }
 
   const field = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 
   return (
+    <>
+    <LaunchOverlay show={celebrating} {...LAUNCH_TEXT.purchase(businessName)} onDone={() => { setCelebrating(false); setOpen(true); }} />
     <Dialog.Root open={open} onOpenChange={o => { if (!saving) { setOpen(o); if (!o) { setSent(null); setError(""); } } }}>
       <Dialog.Trigger asChild>
         <button type="button" className={btn}><ShoppingBag size={16} /> Buy this vehicle</button>
@@ -134,5 +142,6 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    </>
   );
 }

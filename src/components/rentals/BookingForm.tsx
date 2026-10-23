@@ -7,6 +7,7 @@ import { ArrowRight, CalendarDays, Info, Phone, UserRound } from "lucide-react";
 import { normalizePkMobile } from "@/lib/phone";
 import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
 import { useRateLock } from "@/hooks/useRateLock";
+import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 
 interface Props {
   /** Book a rental listing... */
@@ -49,6 +50,8 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
   const bookLock = useRateLock("bookings");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Set once the request is accepted: the launch animation plays, then My bookings opens
+  const [sent, setSent] = useState(false);
   // The renter's name and phone come from their profile, so the owner can call them; a missing phone is asked for here
   const [me, setMe] = useState<{ name?: string; phone?: string } | null>(null);
   const [phone, setPhone] = useState("");
@@ -102,13 +105,19 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     bookLock.check(res, data);
 
     if (!res.ok) { setError(data.error); return; }
-    router.push("/bookings?success=true");
+    router.prefetch("/bookings?success=true");
+    setSent(true);
   }
 
-  const disabled = loading || days <= 0 || bookLock.locked;
+  const disabled = loading || sent || days <= 0 || bookLock.locked;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <LaunchOverlay
+        show={sent}
+        {...LAUNCH_TEXT.booking(days > 0 ? `${days} day${days === 1 ? "" : "s"} from ${fmtDay(startDate)}` : undefined)}
+        onDone={() => router.push("/bookings?success=true")}
+      />
       <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
         <h2 className="text-base font-semibold text-slate-900">Select your dates</h2>
         <p className="mt-0.5 text-[13px] text-slate-500">
