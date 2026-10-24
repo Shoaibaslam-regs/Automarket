@@ -4,7 +4,8 @@ import CarIllustration from "@/components/launch/CarIllustration";
  * The 404 page's little story: the splash's car drives in along the road (lane dashes rushing past), runs into a
  * rock, jolts back and tips up, the rock shakes and an impact flash pops, then smoke keeps rising from the bonnet.
  * It plays once (about 2.6 s) and stays crashed; the page's "404" can shudder at the impact with `crash-shudder`.
- * Plain CSS, so the page stays a server component. With reduced motion the car simply rests against the rock.
+ * Plain CSS, so the page stays a server component. It follows the theme (the car and road use the theme's slate
+ * shades, so they are dark on white and pale in dark mode). With reduced motion the car rests against the rock.
  *
  * Positions are in % of the road's width, so it fits any screen: the rock stands at 64%, and the car (72px wide)
  * stops with its nose just touching it.
@@ -13,8 +14,8 @@ export default function CrashScene() {
   return (
     <div aria-hidden className="crash relative mx-auto h-16 w-full max-w-md">
       {/* The road: a soft line with lane dashes, which move only while the car is driving */}
-      <div className="absolute inset-x-0 bottom-3 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-      <div className="crash-road absolute inset-x-8 bottom-[11px] h-[2px] bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.35)_0_14px,transparent_14px_28px)] [mask-image:linear-gradient(90deg,transparent,black_20%,black_80%,transparent)]" />
+      <div className="absolute inset-x-0 bottom-3 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+      <div className="crash-road absolute inset-x-8 bottom-[11px] h-[2px] bg-[repeating-linear-gradient(90deg,rgb(var(--tw-c-slate-400))_0_14px,transparent_14px_28px)] [mask-image:linear-gradient(90deg,transparent,black_20%,black_80%,transparent)]" />
 
       {/* The rock */}
       <svg viewBox="0 0 44 30" className="crash-rock absolute bottom-3 left-[64%] h-[30px] w-11">
@@ -27,7 +28,7 @@ export default function CrashScene() {
       {/* The car: drives to the rock, then jolts back and tips up a little */}
       <div className="crash-car absolute bottom-[13px]">
         <div className="crash-tilt relative origin-bottom-right">
-          <CarIllustration light width={72} wheelTurns={6} />
+          <CarIllustration themed width={72} wheelTurns={6} />
           {/* Impact flash where the nose meets the rock */}
           <svg viewBox="0 0 24 24" className="crash-flash absolute -right-5 -bottom-0.5 h-9 w-9">
             <path d="M12 1 L14 9 L22 6 L16 12 L23 17 L14 15 L12 23 L10 15 L1 17 L8 12 L2 6 L10 9 Z" fill="#fbbf24" />
@@ -35,7 +36,7 @@ export default function CrashScene() {
           </svg>
           {/* Smoke from the bonnet, rising for as long as the page is open */}
           {[0, 1, 2].map(i => (
-            <span key={i} className="crash-smoke absolute right-3 top-0 block h-3 w-3 rounded-full bg-slate-300/60 blur-[1px]" style={{ animationDelay: `${2.3 + i * 0.6}s` }} />
+            <span key={i} className="crash-smoke absolute right-3 top-0 block h-3 w-3 rounded-full bg-slate-400/50 blur-[1px]" style={{ animationDelay: `${2.3 + i * 0.6}s` }} />
           ))}
         </div>
       </div>
