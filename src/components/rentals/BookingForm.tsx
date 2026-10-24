@@ -7,7 +7,8 @@ import { ArrowRight, CalendarDays, Info, Phone, UserRound } from "lucide-react";
 import { normalizePkMobile } from "@/lib/phone";
 import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
 import { useRateLock } from "@/hooks/useRateLock";
-import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
+import RequestSent from "@/components/launch/RequestSent";
+import { bookingSteps } from "@/lib/requestSteps";
 
 interface Props {
   /** Book a rental listing... */
@@ -50,7 +51,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
   const bookLock = useRateLock("bookings");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // Set once the request is accepted: the launch animation plays, then My bookings opens
+  // Set once the request is accepted: the card turns into the "Request sent" panel
   const [sent, setSent] = useState(false);
   // The renter's name and phone come from their profile, so the owner can call them; a missing phone is asked for here
   const [me, setMe] = useState<{ name?: string; phone?: string } | null>(null);
@@ -105,19 +106,30 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     bookLock.check(res, data);
 
     if (!res.ok) { setError(data.error); return; }
-    router.prefetch("/bookings?success=true");
+    router.prefetch("/bookings");
     setSent(true);
   }
 
   const disabled = loading || sent || days <= 0 || bookLock.locked;
 
+  if (sent) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-6 sm:py-10">
+        <RequestSent
+          title="Booking request sent"
+          subtitle={`${days} day${days === 1 ? "" : "s"} from ${fmtDay(startDate)}. The owner will confirm your dates soon. Follow each step in My bookings.`}
+          track={bookingSteps("PENDING")!}
+        >
+          <Link href="/bookings" className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+            View my bookings <ArrowRight size={15} />
+          </Link>
+        </RequestSent>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <LaunchOverlay
-        show={sent}
-        {...LAUNCH_TEXT.booking(days > 0 ? `${days} day${days === 1 ? "" : "s"} from ${fmtDay(startDate)}` : undefined)}
-        onDone={() => router.push("/bookings?success=true")}
-      />
       <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
         <h2 className="text-base font-semibold text-slate-900">Select your dates</h2>
         <p className="mt-0.5 text-[13px] text-slate-500">

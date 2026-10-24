@@ -11,6 +11,8 @@ import type { InstallmentPlan } from "@/lib/installments";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import { OPEN_PURCHASE_STATUSES, PURCHASE_LABEL, REMOVABLE_PURCHASE_STATUSES, PURCHASE_STYLE, asPayable, purchaseNumber, salePrice, type PurchaseStatus } from "@/lib/purchases";
 import StatusText from "@/components/ui/StatusText";
+import StepTrack from "@/components/ui/StepTrack";
+import { purchaseSteps } from "@/lib/requestSteps";
 
 type MyPurchase = {
   _id: string;
@@ -167,6 +169,10 @@ export default function PurchasesPage() {
                       </div>
                     </div>
 
+                    {(() => {
+                      const track = purchaseSteps(p.status);
+                      return track && <StepTrack {...track} className="mt-3" />;
+                    })()}
                     {p.status === "REQUESTED" && <p className="mt-3 text-xs font-medium text-[var(--gh-7d4e00)]">Waiting for the business to accept your request.</p>}
                     {p.status === "ACCEPTED" && <p className="mt-3 text-xs font-medium text-[var(--gh-0550ae)]">Accepted! The business will contact you about payment and handover.</p>}
                     {p.status === "DECLINED" && <p className="mt-3 text-xs font-medium text-[var(--gh-cf222e)]">Declined{p.declineReason ? `: ${p.declineReason}` : ""}</p>}

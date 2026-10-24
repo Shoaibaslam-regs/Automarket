@@ -15,14 +15,12 @@ export const LAUNCH_TEXT = {
   listing: (title?: string) => ({ title: "Vehicle published!", subtitle: title ? `${title} is live on AutoMarket.` : "It's live on AutoMarket now." }),
   deal: (title?: string) => ({ title: "Deal published!", subtitle: title ? `${title} is live on the Deals page.` : "Your offer is live on the Deals page." }),
   business: (name?: string) => ({ title: "Your business is live!", subtitle: name ? `${name} is ready. Opening your console…` : "Opening your business console…" }),
-  booking: (when?: string) => ({ title: "Booking request sent!", subtitle: when ? `${when}. The owner will confirm it soon.` : "The owner will confirm your dates soon." }),
-  purchase: (business?: string) => ({ title: "Purchase request sent!", subtitle: business ? `${business} will contact you to agree the price.` : "The business will contact you to agree the price." }),
 };
 
 /**
  * Plays the launch animation over the page while `show` is true and calls onDone once, when it ends, is tapped,
- * or the failsafe fires. Used after publishing a vehicle (Sell), publishing a new deal, creating a business and
- * sending a booking request (BookingForm, for rentals and rent deals) or a purchase request (BuyRequestButton).
+ * or the failsafe fires. Used after publishing a vehicle (Sell), publishing a new deal and creating a business.
+ * Requests (bookings, purchases) use the quieter in-place RequestSent instead.
  */
 export default function LaunchOverlay({ show, title, subtitle, onDone }: { show: boolean; title: string; subtitle: string; onDone: () => void }) {
   // The caller's callback may change every render; keep the latest without restarting the timers

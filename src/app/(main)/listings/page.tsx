@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Search, SlidersHorizontal, X, MapPin, ChevronLeft, ChevronRight, ArrowUpDown, Bell, BellRing, LayoutGrid, List } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin, ArrowUpDown, Bell, BellRing, LayoutGrid, List, ChevronDown, Loader2 } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import Select from "@/components/ui/Select";
 import { IListing } from "@/models/Listing";
@@ -34,6 +34,8 @@ const SORTS = [
   ["mileage_asc", "Mileage: lowest"],
 ] as const;
 const PAGE_SIZE = 12;
+/** Opening a link with ?page=N reloads at most this many pages, so a long scroll can be resumed without a huge request */
+const MAX_RESUME_PAGES = 8;
 /** The grid/list choice made on a phone, kept per browser */
 const VIEW_KEY = "browse-view";
 const PHONE_QUERY = "(max-width: 639px)";
@@ -114,19 +116,6 @@ function useDebounce<T>(value: T, delay = 500): T {
   return debounced;
 }
 
-// Page numbers to show, with "…" gaps: 1 … 4 5 [6] 7 8 … 20
-function pageWindow(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  const pages: (number | "…")[] = [1];
-  if (start > 2) pages.push("…");
-  for (let p = start; p <= end; p++) pages.push(p);
-  if (end < total - 1) pages.push("…");
-  pages.push(total);
-  return pages;
-}
-
 const fieldClass =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 
@@ -144,13 +133,16 @@ export default function ListingsPage({
   const initial = parseFilters(initialParams);
   const str = (v: string | number | undefined) => (v === undefined ? "" : String(v));
   const initialSort = typeof initialParams.sort === "string" && SORTS.some(([v]) => v === initialParams.sort) ? initialParams.sort : "createdAt";
-  const initialPage = Math.max(1, Number(initialParams.page) || 1);
+  // How many pages were loaded when this link was made (scrolling adds pages), so Back returns to the same spot
+  const initialPage = Math.min(MAX_RESUME_PAGES, Math.max(1, Number(initialParams.page) || 1));
   const router = useRouter();
   const { status: authStatus } = useSession();
 
   const [listings, setListings] = useState<ListingWithId[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  // The number of pages loaded so far: scrolling near the end loads the next one, any filter change resets it to 1
   const [page, setPage] = useState(initialPage);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState(str(initial.search));
   const [type, setType] = useState<string>(str(initial.type));
   const [make, setMake] = useState(str(initial.make));
@@ -249,12 +241,13 @@ export default function ListingsPage({
   const params = filtersToSearchParams(filters);
   if (sort !== "createdAt") params.set("sort", sort);
   if (availableOnly) params.set("available", "1");
+  // The query without a page: changing it starts the list again from the top
+  params.set("limit", String(PAGE_SIZE));
+  const query = params.toString();
+  params.delete("limit");
   if (page > 1) params.set("page", String(page));
   // The view depends on the screen, so it isn't put in the address bar (a shared link opens right on any device)
   const urlQuery = params.toString();
-  params.set("limit", String(PAGE_SIZE));
-  if (!params.has("page")) params.set("page", "1");
-  const query = params.toString();
 
   // Mirror the current search in the address bar without a navigation
   useEffect(() => {
@@ -289,14 +282,25 @@ export default function ListingsPage({
   const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
   const loading = loadedQuery !== query;
 
+  // The query whose pages are on screen, so a "load more" answer that arrives after a filter change is dropped
+  const currentQuery = useRef(query);
+  // Only the first load resumes a longer scroll (?page=N in the link); every later query starts at page 1
+  const resumePages = useRef(initialPage);
+
   useEffect(() => {
     const controller = new AbortController();
+    currentQuery.current = query;
+    const pages = resumePages.current;
+    resumePages.current = 1;
+    const getPage = (n: number) =>
+      fetch(`/api/listings?${query}&page=${n}`, { signal: controller.signal }).then(r => r.json());
 
-    fetch(`/api/listings?${query}`, { signal: controller.signal })
-      .then(r => r.json())
-      .then(d => {
-        setListings(d.listings || []);
-        setPagination(d.pagination || { page: 1, pages: 1, total: 0 });
+    Promise.all(Array.from({ length: pages }, (_, i) => getPage(i + 1)))
+      .then(results => {
+        const last = results[results.length - 1];
+        setListings(results.flatMap(d => d.listings || []));
+        setPagination(last.pagination || { page: 1, pages: 1, total: 0 });
+        setPage(Math.min(pages, Math.max(1, last.pagination?.pages ?? 1)));
         setLoadedQuery(query);
       })
       .catch(err => {
@@ -307,6 +311,44 @@ export default function ListingsPage({
 
     return () => controller.abort();
   }, [query]);
+
+  const hasMore = !loading && page < pagination.pages;
+
+  /** Adds the next page below the vehicles already shown. */
+  function loadMore() {
+    if (loadingMore || !hasMore) return;
+    const forQuery = query;
+    const next = page + 1;
+    setLoadingMore(true);
+    fetch(`/api/listings?${forQuery}&page=${next}`)
+      .then(r => r.json())
+      .then(d => {
+        if (currentQuery.current !== forQuery) return;
+        setListings(prev => {
+          // A listing published meanwhile shifts the pages by one; skip any card already shown
+          const seen = new Set(prev.map(l => String(l._id)));
+          return [...prev, ...(d.listings || []).filter((l: ListingWithId) => !seen.has(String(l._id)))];
+        });
+        if (d.pagination) setPagination(d.pagination);
+        setPage(next);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingMore(false));
+  }
+
+  // Load the next page automatically when the end of the list comes within about two screens
+  const moreRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef(loadMore);
+  useEffect(() => { loadMoreRef.current = loadMore; });
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) loadMoreRef.current();
+    }, { rootMargin: "0px 0px 1200px 0px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, page]);
 
   // Lock page scroll behind the mobile filter sheet
   useEffect(() => {
@@ -349,11 +391,6 @@ export default function ListingsPage({
   /** Brings the top of the results back into view after a change made from the compact bar. */
   function jumpToResults() {
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function goToPage(p: number) {
-    setPage(p);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function clearFilters() {
@@ -898,58 +935,38 @@ export default function ListingsPage({
                 className={view === "list" ? "flex flex-col gap-3 sm:gap-4" : "grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3"}
               >
                 {listings.map((listing, i) => (
-                  <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i, 8) * 40}ms` } as React.CSSProperties}>
+                  // Each newly added page staggers in from its own first card
+                  <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i % PAGE_SIZE, 8) * 40}ms` } as React.CSSProperties}>
                     <ListingCard listing={listing} layout={view} eager={i < (view === "list" ? 1 : 3)} />
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => goToPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  aria-label="Previous page"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                {pageWindow(page, pagination.pages).map((p, i) =>
-                  p === "…" ? (
-                    <span key={`gap-${i}`} className="px-1 text-sm text-slate-400">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => goToPage(p)}
-                      aria-current={p === page ? "page" : undefined}
-                      className={`h-9 min-w-9 rounded-xl px-2 text-sm font-medium transition ${
-                        p === page
-                          ? "bg-slate-900 text-white shadow-sm"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-slate-400"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => goToPage(Math.min(pagination.pages, page + 1))}
-                  disabled={page === pagination.pages}
-                  aria-label="Next page"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </nav>
+            {/* More results: loaded automatically near the end (moreRef), with a button as a fallback */}
+            {!loading && listings.length > 0 && (
+              <div ref={moreRef} className="mt-8 flex flex-col items-center gap-2 text-center">
+                {loadingMore ? (
+                  <p className="flex items-center gap-2 py-2.5 text-sm text-slate-500" role="status">
+                    <Loader2 size={16} className="animate-spin" /> Loading more vehicles…
+                  </p>
+                ) : hasMore ? (
+                  <button
+                    type="button"
+                    onClick={loadMore}
+                    className="inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                  >
+                    Show more vehicles <ChevronDown size={15} />
+                  </button>
+                ) : null}
+                <p className="text-xs text-slate-400">
+                  {hasMore || loadingMore
+                    ? `Showing ${listings.length.toLocaleString()} of ${pagination.total.toLocaleString()}`
+                    : pagination.total > PAGE_SIZE
+                      ? `You've seen all ${pagination.total.toLocaleString()} vehicles`
+                      : null}
+                </p>
+              </div>
             )}
           </div>
         </div>

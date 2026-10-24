@@ -5,9 +5,9 @@ import { useTheme } from "./ThemeProvider";
 import type { ThemeChoice } from "@/lib/theme";
 
 const OPTIONS: { value: ThemeChoice; label: string; icon: LucideIcon }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: "", icon: Sun },
+  { value: "dark", label: "", icon: Moon },
+  { value: "system", label: "", icon: Monitor },
 ];
 
 /**

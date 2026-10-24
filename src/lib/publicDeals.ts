@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DEALS_PAGE_SIZE } from "@/lib/deals";
 import { unstable_cache } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { Deal } from "@/models/Deal";
@@ -72,7 +73,8 @@ export function getLiveDeals(filters: DealFilters = {}): Promise<PublicDeal[]> {
       if (f.city) query.location = new RegExp(`^${f.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
       if (f.orgId && mongoose.Types.ObjectId.isValid(f.orgId)) query.organizationId = new mongoose.Types.ObjectId(f.orgId);
       const sort: Record<string, 1 | -1> = f.sort === "newest" ? { createdAt: -1 } : { endsAt: 1 };
-      const deals = await Deal.find(query).sort(sort).limit(f.sort === "discount" ? 200 : f.limit).lean<Array<{ organizationId: Oid; price: number; discountType: string; discountValue: number }>>();
+      // "Biggest discount" sorts in memory, so it reads a wider pool first
+      const deals = await Deal.find(query).sort(sort).limit(f.sort === "discount" ? Math.max(200, f.limit) : f.limit).lean<Array<{ organizationId: Oid; price: number; discountType: string; discountValue: number }>>();
 
       const orgs = await Organization.find({ _id: { $in: [...new Set(deals.map(d => String(d.organizationId)))] }, isActive: { $ne: false } })
         .select(ORG_FIELDS)
@@ -91,6 +93,29 @@ export function getLiveDeals(filters: DealFilters = {}): Promise<PublicDeal[]> {
     ["live-deals", JSON.stringify(f)],
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [DEALS_TAG] }
   )();
+}
+
+/** The most live deals the Deals page lists for one filter set (it shows them DEALS_PAGE_SIZE at a time). */
+export const DEALS_POOL = 500;
+const DEAL_SORTS = ["ending", "newest", "discount"] as const;
+
+/** The Deals page filters from the URL (`make`, `city`, `type`, `sort`), the same for the page and `/api/deals`. */
+export function parseDealParams(get: (key: string) => string | null | undefined): Omit<DealFilters, "orgId" | "limit"> {
+  const sort = get("sort");
+  const type = get("type");
+  return {
+    make: get("make") || "",
+    city: get("city") || "",
+    type: type === "RENT" || type === "SALE" ? type : "",
+    sort: (DEAL_SORTS as readonly string[]).includes(sort ?? "") ? (sort as DealFilters["sort"]) : "ending",
+  };
+}
+
+/** One page of the Deals page's list, read from the same cached pool, with the total for "Showing 24 of 75". */
+export async function getLiveDealsPage(filters: Omit<DealFilters, "orgId" | "limit">, page: number): Promise<{ deals: PublicDeal[]; total: number }> {
+  const all = await getLiveDeals({ ...filters, limit: DEALS_POOL });
+  const start = (Math.max(1, page) - 1) * DEALS_PAGE_SIZE;
+  return { deals: all.slice(start, start + DEALS_PAGE_SIZE), total: all.length };
 }
 
 export type DealPage = {

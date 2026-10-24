@@ -14,6 +14,8 @@ import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments"
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { mapsUrl } from "@/lib/address";
 import StatusText from "@/components/ui/StatusText";
+import StepTrack from "@/components/ui/StepTrack";
+import { bookingSteps } from "@/lib/requestSteps";
 
 type ListingInfo = {
   _id: string;
@@ -430,6 +432,12 @@ export default function BookingsContent() {
                         </p>
                       </div>
                     </div>
+
+                    {/* The renter follows the booking step by step (the owner acts with the buttons instead) */}
+                    {!received && (() => {
+                      const track = bookingSteps(booking.status);
+                      return track && <StepTrack {...track} className="mt-3" />;
+                    })()}
 
                     {/* People, pickup, return, handover */}
                     <div className="mt-3 space-y-1.5 text-xs">

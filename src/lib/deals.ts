@@ -13,6 +13,8 @@ export type DealState = "LIVE" | "SCHEDULED" | "EXPIRED" | "PAUSED" | "DISABLED"
 
 export const MAX_PERCENT = 90;
 export const MAX_DEAL_IMAGES = 10;
+/** The Deals page shows this many at first and adds this many more as the visitor scrolls */
+export const DEALS_PAGE_SIZE = 24;
 
 /** Rent deals are bookable packages priced per day; deals saved before the type existed are sales. */
 export const isRentDeal = (d: { dealType?: string | null }) => d.dealType === "RENT";

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Flame, Tag } from "lucide-react";
-import DealCard from "@/components/deals/DealCard";
+import DealsGrid from "@/components/deals/DealsGrid";
 import DealFilters from "@/components/deals/DealFilters";
 import Footer from "@/components/Footer";
-import { getDealFacets, getLiveDeals, type DealFilters as Filters } from "@/lib/publicDeals";
+import { getDealFacets, getLiveDealsPage, parseDealParams } from "@/lib/publicDeals";
 
 export const metadata: Metadata = {
   title: "Deals on cars and bikes",
@@ -14,17 +14,14 @@ export const metadata: Metadata = {
 
 type Props = { searchParams: Promise<{ make?: string; city?: string; sort?: string; type?: string }> };
 
-const SORTS = ["ending", "newest", "discount"] as const;
-
 export default async function DealsPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const sort = (SORTS as readonly string[]).includes(sp.sort ?? "") ? (sp.sort as Filters["sort"]) : "ending";
-  const [deals, facets] = await Promise.all([
-    getLiveDeals({ make: sp.make, city: sp.city, sort, type: sp.type === "RENT" || sp.type === "SALE" ? sp.type : "" }),
-    getDealFacets(),
-  ]);
+  const filters = parseDealParams(k => sp[k as keyof typeof sp]);
+  const [{ deals, total }, facets] = await Promise.all([getLiveDealsPage(filters, 1), getDealFacets()]);
   const now = new Date().getTime();
-  const filtered = !!(sp.make || sp.city || sp.type);
+  const filtered = !!(filters.make || filters.city || filters.type);
+  // The same filters for /api/deals when the grid loads more; also the grid's key, so a filter change starts over
+  const query = new URLSearchParams(Object.entries(filters).filter(([, v]) => v) as [string, string][]).toString();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -45,7 +42,7 @@ export default async function DealsPage({ searchParams }: Props) {
       <div className="mx-auto max-w-[1200px] px-4 py-6 sm:py-8">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
-            {deals.length} {deals.length === 1 ? "deal" : "deals"} {filtered ? "match" : "running now"}
+            {total} {total === 1 ? "deal" : "deals"} {filtered ? "match" : "running now"}
           </p>
           <Suspense fallback={<div className="h-10" />}>
             <DealFilters makes={facets.makes} cities={facets.cities} />
@@ -59,9 +56,7 @@ export default async function DealsPage({ searchParams }: Props) {
             <p className="mt-1 text-sm text-slate-500">{filtered ? "Try another make or city." : "Check back soon. Businesses add new offers all the time."}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {deals.map(d => <DealCard key={d._id} deal={d} now={now} />)}
-          </div>
+          <DealsGrid key={query} initial={deals} total={total} query={query} now={now} />
         )}
       </div>
 

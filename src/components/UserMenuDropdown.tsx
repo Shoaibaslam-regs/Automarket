@@ -61,7 +61,7 @@ export default function UserMenuDropdown({
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/messages", label: "Messages", icon: MessageSquare, count: counts.messages },
     { href: "/bookings", label: "Bookings", icon: Calendar, count: counts.bookings },
-    { href: "/purchases", label: "My purchases", icon: ShoppingBag, count: counts.purchases },
+    { href: "/purchases", label: "Purchases", icon: ShoppingBag, count: counts.purchases },
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const account: Item[] = [

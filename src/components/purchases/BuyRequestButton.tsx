@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { CheckCircle2, ShoppingBag, X } from "lucide-react";
+import { ShoppingBag, X } from "lucide-react";
 import { formatCnicInput } from "@/lib/plates";
 import { useRateLock } from "@/hooks/useRateLock";
-import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
+import RequestSent from "@/components/launch/RequestSent";
+import { purchaseSteps } from "@/lib/requestSteps";
 
 const pkr = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
 
@@ -32,9 +33,6 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
-  // The launch animation plays with the dialog closed (an open dialog blocks taps outside it, so "tap to skip"
-  // wouldn't work), then the dialog comes back on its "Request sent" panel
-  const [celebrating, setCelebrating] = useState(false);
   const buyLock = useRateLock("purchases");
   // Start with the phone on the buyer's profile, so most people only press Send
   const [profilePhone, setProfilePhone] = useState("");
@@ -74,15 +72,11 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
     buyLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't send your request"); return; }
     setSent(data.purchase?._id ?? "");
-    setOpen(false);
-    setCelebrating(true);
   }
 
   const field = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 
   return (
-    <>
-    <LaunchOverlay show={celebrating} {...LAUNCH_TEXT.purchase(businessName)} onDone={() => { setCelebrating(false); setOpen(true); }} />
     <Dialog.Root open={open} onOpenChange={o => { if (!saving) { setOpen(o); if (!o) { setSent(null); setError(""); } } }}>
       <Dialog.Trigger asChild>
         <button type="button" className={btn}><ShoppingBag size={16} /> Buy this vehicle</button>
@@ -91,25 +85,29 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] max-h-[calc(100vh-32px)] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl focus:outline-none">
           <div className="flex items-start gap-3">
-            <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><ShoppingBag size={18} /></span>
-            <div className="min-w-0 flex-1">
-              <Dialog.Title className="text-base font-semibold text-slate-900">{sent !== null ? "Request sent" : "Buy this vehicle"}</Dialog.Title>
+            {sent === null && <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><ShoppingBag size={18} /></span>}
+            {/* Once sent, the panel below shows the title; these stay for screen readers */}
+            <div className={`min-w-0 flex-1 ${sent !== null ? "sr-only" : ""}`}>
+              <Dialog.Title className="text-base font-semibold text-slate-900">{sent !== null ? "Purchase request sent" : "Buy this vehicle"}</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">
                 {sent !== null ? `${businessName} has your request and will contact you.` : `${title} · asking ${pkr(price)}`}
               </Dialog.Description>
             </div>
+            {sent !== null && <span className="flex-1" />}
             <Dialog.Close aria-label="Close" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>
           </div>
 
           {sent !== null ? (
-            <div className="mt-5 space-y-4">
-              <p className="flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                <CheckCircle2 size={18} className="mt-px flex-shrink-0" />
-                The business will accept your request, agree the price with you and arrange payment and handover. You&apos;ll get your sale slip once it&apos;s done.
-              </p>
-              <Link href="/purchases" className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
-                Go to My purchases
-              </Link>
+            <div className="pb-1 pt-2">
+              <RequestSent
+                title="Purchase request sent"
+                subtitle={`${businessName} will contact you to agree the price, then arrange payment and handover. Follow each step in My purchases.`}
+                track={purchaseSteps("REQUESTED")!}
+              >
+                <Link href="/purchases" className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                  Go to My purchases
+                </Link>
+              </RequestSent>
             </div>
           ) : (
             <form onSubmit={submit} className="mt-5 space-y-3.5">
@@ -142,6 +140,5 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-    </>
   );
 }
