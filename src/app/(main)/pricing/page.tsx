@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { CalendarClock, Check, Gift, Headset, Minus, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarClock, Check, Gift, Headset, Megaphone, Minus, ShieldCheck, Sparkles } from "lucide-react";
+import StepCards from "@/components/ui/StepCards";
 import PlanCards from "@/components/subscription/PlanCards";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import VerifiedBadgeOffer from "@/components/subscription/VerifiedBadgeOffer";
-import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLANS, PLAN_LIST, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
+import { PLANS, PLAN_LIST, SPONSORED_AD, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Listings & deals per month", value: p => formatLimit(p.limits.listings) },
@@ -85,7 +86,66 @@ export default function PricingPage() {
 
         <VerifiedBadgeOffer />
 
-        <PaymentDetailsCard className="mt-12" />
+        {/* Sponsored ads: what a business gets and what it costs (numbers from SPONSORED_AD). Businesses ask for them
+            from Business → Promote, where the payment details are */}
+        <section className="mx-auto mt-12 max-w-[760px] rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900">
+            <Megaphone size={20} className="flex-shrink-0 text-amber-500" /> Get Your Business Noticed
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+            Reach more potential buyers and put your business, deals, or vehicles in the spotlight with Sponsored Ads.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            {[
+              ["More Visibility", "Get featured at the top of your city's homepage."],
+              ["Reach More Buyers", "Appear in relevant vehicle browsing and search results."],
+              ["Build Trust", "Stand out with a premium Sponsored badge."],
+              ["Track Performance", "Monitor ad views and clicks to understand your reach."],
+              ["Flexible Promotion", `Choose ${SPONSORED_AD.weeks.join(", ").replace(/, (\d+)$/, ", or $1")}-week campaigns and renew anytime.`],
+            ].map(([title, text]) => (
+              <li key={title} className="flex gap-2">
+                <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-600" />
+                <span><strong className="font-semibold text-slate-900">{title}:</strong> {text}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-2">
+            <div>
+              <h3 className="text-[15px] font-semibold text-slate-900">Standard · PKR {SPONSORED_AD.pricePerWeek.STANDARD.toLocaleString("en-PK")} / week</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                Get increased visibility across your city with shared sponsored placements. Your ads appear in rotation alongside other businesses.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-[15px] font-semibold text-slate-900">Top · PKR {SPONSORED_AD.pricePerWeek.TOP.toLocaleString("en-PK")} / week</h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                Get premium priority placement at the top of your city. Limited to just {SPONSORED_AD.topPerCity} top-sponsored businesses per city.
+              </p>
+            </div>
+          </div>
+          <Link href="/business/promote" className="mt-5 inline-flex items-center gap-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300">
+            Promote your business <ArrowRight size={15} />
+          </Link>
+        </section>
+
+        {/* How paying works, step by step: the account details themselves are shown where people pay (the upgrade
+            dialog, Business → Promote and Business → Help & support), not on this page */}
+        <section className="mt-12">
+          <div className="mx-auto max-w-[560px] text-center">
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">How payment works</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">
+              There&apos;s no card checkout yet. You pay the AutoMarket team directly by bank transfer, JazzCash or EasyPaisa.
+            </p>
+          </div>
+          <StepCards
+            className="mt-6"
+            steps={[
+              { title: "Choose a plan", desc: "Tap Upgrade on the plan you want and send the request." },
+              { title: "Pay the team", desc: "The account details are shown when you upgrade, and in your business console under Help & support." },
+              { title: "We switch it on", desc: "An admin activates your plan once the payment is confirmed, and you get a message in Messages." },
+            ]}
+          />
+        </section>
 
         {/* Current usage */}
         {sub && current && (

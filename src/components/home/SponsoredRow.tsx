@@ -1,28 +1,83 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Building2, Store } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { formatLakh } from "@/lib/format";
+import { trackAds } from "@/lib/adTrack";
 import type { SponsoredItem } from "@/lib/sponsored";
 
-/** The gold "Sponsored" ribbon across the photo's top-left corner. */
-function Ribbon() {
+/** The gold "Sponsored" ribbon across the photo's top-left corner (smaller on the list layout's small photo). */
+function Ribbon({ small = false }: { small?: boolean }) {
   return (
-    <span className="theme-static pointer-events-none absolute -left-8 top-5 z-[2] w-32 -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 py-0.5 text-center text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-950 shadow-md">
+    <span className={`theme-static pointer-events-none absolute z-[2] -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 text-center font-extrabold uppercase text-slate-950 shadow-md ${
+      small ? "-left-7 top-3.5 w-24 py-px text-[7px] tracking-[0.12em]" : "-left-8 top-5 w-32 py-0.5 text-[9px] tracking-[0.14em]"
+    }`}>
       Sponsored
     </span>
   );
 }
 
+/** Counts a view once at least half the card has been on screen, at most once per ad per session (trackAds). */
+function useViewTracking(adId: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { trackAds([adId], "view"); observer.disconnect(); }
+    }, { threshold: 0.5 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [adId]);
+  return ref;
+}
+
 /**
  * A compact sponsored card: photo with the ribbon and a light gold shimmer (`lp-sponsor-shimmer`, staggered by
- * `index`), title and price, and a link to the business's shop page.
+ * `index`), title and price, and a link to the business's shop page. Counts its views and taps. `layout="list"`
+ * is the Browse list view's row: a small photo beside the details.
  */
-function SponsoredCard({ item, index }: { item: SponsoredItem; index: number }) {
+export function SponsoredCard({ item, index = 0, layout = "grid" }: { item: SponsoredItem; index?: number; layout?: "grid" | "list" }) {
   const shop = `/dealers/${item.business.slug}`;
+  const ref = useViewTracking(item.adId);
+  const tap = () => trackAds([item.adId], "tap");
+  const price = item.price != null && (
+    <p className="mt-0.5 text-sm font-bold text-slate-900">
+      <span className="mr-1 text-[10px] font-semibold text-slate-400">PKR</span>
+      {item.perDay ? item.price.toLocaleString("en-PK") : formatLakh(item.price)}
+      {item.perDay && <span className="ml-0.5 text-[11px] font-medium text-slate-400">/day</span>}
+    </p>
+  );
+
+  if (layout === "list") {
+    return (
+      <div ref={ref} className="flex overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:ring-slate-300">
+        <Link href={item.href} onClick={tap} className="relative w-32 flex-shrink-0 overflow-hidden bg-slate-100 sm:w-44">
+          <span className="block aspect-[4/3] h-full">
+            {item.image
+              ? <Image src={item.image} alt={item.title} fill sizes="176px" className={item.kind === "SHOP" ? "object-contain p-4" : "object-cover"} />
+              : <Building2 size={28} strokeWidth={1.5} className="absolute inset-0 m-auto text-slate-300" />}
+          </span>
+          <Ribbon small />
+        </Link>
+        <div className="flex min-w-0 flex-1 flex-col justify-center px-3 py-2.5">
+          <Link href={item.href} onClick={tap} className="truncate text-[13px] font-semibold text-slate-900 hover:underline sm:text-sm">{item.title}</Link>
+          {price}
+          <Link href={shop} onClick={tap} className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900">
+            {item.business.verified ? <VerifiedBadge variant="icon" size={12} /> : <Store size={12} className="flex-shrink-0" />}
+            <span className="truncate">{item.kind === "SHOP" ? "Visit shop" : item.business.name}</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300">
-      <Link href={item.href} className="block">
+    <div ref={ref} className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300">
+      <Link href={item.href} onClick={tap} className="block">
         <div className="lp-sponsor-shimmer relative aspect-[4/3] overflow-hidden bg-slate-100" style={{ "--lp-shimmer-delay": `${index * 0.9}s` } as React.CSSProperties}>
           {item.kind === "SHOP" ? (
             <span className="flex h-full items-center justify-center bg-slate-50">
@@ -37,16 +92,10 @@ function SponsoredCard({ item, index }: { item: SponsoredItem; index: number }) 
         </div>
         <div className="px-3 pt-2.5">
           <p className="truncate text-[13px] font-semibold text-slate-900 sm:text-sm">{item.title}</p>
-          {item.price != null && (
-            <p className="mt-0.5 text-sm font-bold text-slate-900">
-              <span className="mr-1 text-[10px] font-semibold text-slate-400">PKR</span>
-              {item.perDay ? item.price.toLocaleString("en-PK") : formatLakh(item.price)}
-              {item.perDay && <span className="ml-0.5 text-[11px] font-medium text-slate-400">/day</span>}
-            </p>
-          )}
+          {price}
         </div>
       </Link>
-      <Link href={shop} className="mx-3 mb-2.5 mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 sm:text-xs">
+      <Link href={shop} onClick={tap} className="mx-3 mb-2.5 mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 sm:text-xs">
         {item.kind === "SHOP" ? (
           <><Store size={13} className="flex-shrink-0" /> <span className="truncate">Visit shop</span></>
         ) : (

@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Megaphone, Send } from "lucide-react";
+import { Eye, Megaphone, MousePointerClick, Send } from "lucide-react";
 import Select from "@/components/ui/Select";
 import StatusText from "@/components/ui/StatusText";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useRateLock } from "@/hooks/useRateLock";
-import { SPONSORED_AD, adPrice } from "@/lib/plans";
+import { AD_TIER_LABEL, SPONSORED_AD, adPrice, standardShare, type AdTier } from "@/lib/plans";
 import { AD_KIND_LABEL, AD_STATE_LABEL, AD_STATE_TONE, adHref, adState, type AdKind } from "@/lib/ads";
 
 type Ad = {
   _id: string; kind: AdKind; targetId?: string; targetLabel: string; weeks: number; price: number;
   paymentRef: string; status: string; startsAt?: string; endsAt?: string; reason?: string; createdAt: string;
+  tier?: AdTier; city?: string; views?: number; taps?: number;
 };
+type Reach = { city: string; standard: number; top: number; topFreeFrom: string | null };
 type Option = { _id: string; title: string };
-type Data = { ads: Ad[]; business: { name: string; slug: string } | null; options: { deals: Option[]; listings: Option[] }; canPromote: boolean };
+type Data = { ads: Ad[]; business: { name: string; slug: string } | null; options: { deals: Option[]; listings: Option[] }; canPromote: boolean; reach: Reach };
 
 const day = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 const input = "w-full rounded-lg border border-[var(--gh-d0d7de)] px-3 py-2.5 text-[13px] outline-none focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10";
@@ -29,6 +31,7 @@ export default function PromotePage() {
   const [kind, setKind] = useState<AdKind>("SHOP");
   const [targetId, setTargetId] = useState("");
   const [weeks, setWeeks] = useState<number>(SPONSORED_AD.weeks[0]);
+  const [tier, setTier] = useState<AdTier>("STANDARD");
   const [paymentRef, setPaymentRef] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
@@ -55,7 +58,7 @@ export default function PromotePage() {
     const res = await fetch("/api/business/ads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind, targetId, weeks, paymentRef, note }),
+      body: JSON.stringify({ kind, targetId, weeks, tier, paymentRef, note }),
     });
     const d = await res.json().catch(() => ({}));
     setSending(false);
@@ -102,7 +105,7 @@ export default function PromotePage() {
       <div className="border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
         <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Promote</h1>
-        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Show your business, a deal or a vehicle in the Sponsored row on the AutoMarket home page</p>
+        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Show your business, a deal or a vehicle to buyers in your city, on the home page and between Browse results</p>
       </div>
 
       <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:px-6">
@@ -110,7 +113,7 @@ export default function PromotePage() {
 
         <ol className="grid gap-2 text-[13px] text-[var(--gh-57606a)] sm:grid-cols-3">
           {[
-            `Pay PKR ${SPONSORED_AD.pricePerWeek.toLocaleString()} a week to the account below.`,
+            `Pay PKR ${SPONSORED_AD.pricePerWeek.STANDARD.toLocaleString()} (Standard) or ${SPONSORED_AD.pricePerWeek.TOP.toLocaleString()} (Top) a week to the account below.`,
             "Send the request here with the transaction ID.",
             "The team checks the payment and puts your ad on the home page.",
           ].map((t, i) => (
@@ -156,13 +159,38 @@ export default function PromotePage() {
                   </div>
                 )}
 
+                <p className={label}>Placement *</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["STANDARD", "TOP"] as AdTier[]).map(t => (
+                    <button key={t} type="button" onClick={() => setTier(t)}
+                      className={`rounded-lg px-3 py-2 text-left ring-1 ring-inset transition ${tier === t ? "bg-[var(--gh-0d1117)] text-white ring-[var(--gh-0d1117)]" : "bg-white text-[var(--gh-0d1117)] ring-[var(--gh-d0d7de)] hover:bg-[var(--gh-f6f8fa)]"}`}>
+                      <span className="block text-[13px] font-semibold">{AD_TIER_LABEL[t]} · PKR {SPONSORED_AD.pricePerWeek[t].toLocaleString()}/week</span>
+                      <span className="block text-[11px] opacity-75">{t === "TOP" ? `Always first in your city (${SPONSORED_AD.topPerCity} per city)` : "Shares the places in your city"}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-[var(--gh-57606a)]">
+                  {!data.reach.city
+                    ? <>Your business has no city, so the ad is shown everywhere. <Link href="/business/settings" className="font-semibold text-[var(--gh-0d1117)] underline">Add your city</Link> to reach local buyers first.</>
+                    : tier === "TOP"
+                      ? data.reach.topFreeFrom
+                        ? <>Both Top places in {data.reach.city} are taken until {day(data.reach.topFreeFrom)}. The team will start yours then, or choose Standard to start sooner.</>
+                        : <>A Top place in {data.reach.city} is free: your ad shows first to every visitor there.</>
+                      : (() => {
+                        const n = standardShare(data.reach.standard + 1, data.reach.top);
+                        return n <= 1
+                          ? <>{data.reach.standard} other Standard ad{data.reach.standard === 1 ? "" : "s"} in {data.reach.city} this week: yours appears on every visit there.</>
+                          : <>{data.reach.standard} other Standard ads run in {data.reach.city} this week, so yours appears in about 1 in {n} visits there.</>;
+                      })()}
+                </p>
+
                 <p className={label}>How long *</p>
                 <div className="grid grid-cols-3 gap-2">
                   {SPONSORED_AD.weeks.map(w => (
                     <button key={w} type="button" onClick={() => setWeeks(w)}
                       className={`rounded-lg px-2 py-2 text-center ring-1 ring-inset transition ${weeks === w ? "bg-[var(--gh-0d1117)] text-white ring-[var(--gh-0d1117)]" : "bg-white text-[var(--gh-0d1117)] ring-[var(--gh-d0d7de)] hover:bg-[var(--gh-f6f8fa)]"}`}>
                       <span className="block text-[13px] font-semibold">{w} week{w > 1 ? "s" : ""}</span>
-                      <span className="block text-[11px] opacity-75">PKR {adPrice(w).toLocaleString()}</span>
+                      <span className="block text-[11px] opacity-75">PKR {adPrice(w, tier).toLocaleString()}</span>
                     </button>
                   ))}
                 </div>
@@ -180,7 +208,7 @@ export default function PromotePage() {
 
                 <button type="submit" disabled={sending || lock.locked}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:opacity-50 sm:w-auto sm:px-5">
-                  <Send size={14} /> {lock.locked ? lock.text : sending ? "Sending…" : `Send request · PKR ${adPrice(weeks).toLocaleString()}`}
+                  <Send size={14} /> {lock.locked ? lock.text : sending ? "Sending…" : `Send request · PKR ${adPrice(weeks, tier).toLocaleString()}`}
                 </button>
               </form>
             ) : (
@@ -216,9 +244,16 @@ export default function PromotePage() {
                           <StatusText className={AD_STATE_TONE[state]}>{AD_STATE_LABEL[state]}</StatusText>
                         </div>
                         <p className="mt-1.5 text-xs text-[var(--gh-57606a)]">
-                          {ad.weeks} week{ad.weeks > 1 ? "s" : ""} · PKR {ad.price.toLocaleString()}
+                          {AD_TIER_LABEL[ad.tier ?? "STANDARD"]}{ad.city ? ` · ${ad.city}` : ""} · {ad.weeks} week{ad.weeks > 1 ? "s" : ""} · PKR {ad.price.toLocaleString()}
                           {ad.startsAt && ad.endsAt ? ` · ${day(ad.startsAt)} to ${day(ad.endsAt)}` : ` · asked ${day(ad.createdAt)}`}
                         </p>
+                        {(state === "RUNNING" || state === "ENDED" || state === "STOPPED") && (
+                          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[var(--gh-0d1117)]">
+                            <span className="inline-flex items-center gap-1"><Eye size={13} className="text-[var(--gh-8c959f)]" /> {(ad.views ?? 0).toLocaleString()} views</span>
+                            <span className="inline-flex items-center gap-1"><MousePointerClick size={13} className="text-[var(--gh-8c959f)]" /> {(ad.taps ?? 0).toLocaleString()} taps</span>
+                            {(ad.views ?? 0) > 0 && <span className="font-normal text-[var(--gh-57606a)]">{(((ad.taps ?? 0) / (ad.views ?? 1)) * 100).toFixed(1)}% tapped</span>}
+                          </p>
+                        )}
                         {ad.reason && (state === "REJECTED" || state === "STOPPED") && <p className="mt-1 text-xs text-[var(--gh-cf222e)]">{ad.reason}</p>}
                         {state === "REQUESTED" && data.canPromote && (
                           <button onClick={() => setCancelling(ad)} className="mt-2 text-xs font-semibold text-[var(--gh-57606a)] hover:text-[var(--gh-cf222e)]">Cancel request</button>

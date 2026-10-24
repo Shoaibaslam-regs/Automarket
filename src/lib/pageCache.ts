@@ -16,6 +16,8 @@ export const businessTag = (slug: string) => `business:${slug}`;
 export const dealTag = (id: string) => `deal:${id}`;
 /** Every list of deals: the public deals page and the home page strip */
 export const DEALS_TAG = "deals";
+/** The running sponsored ads (src/lib/sponsored.ts); cleared when an admin approves or stops one */
+export const SPONSORED_TAG = "sponsored";
 
 // expire: 0 drops the entry now, so the next visit (often the owner checking their change) gets fresh data
 const NOW = { expire: 0 };
@@ -26,6 +28,11 @@ function expire(tag: string) {
   } catch (e) {
     reportError("Cache invalidation failed:", tag, e);
   }
+}
+
+/** After an admin approves or stops a sponsored ad: the running list is read again on the next visit. */
+export function invalidateSponsored() {
+  expire(SPONSORED_TAG);
 }
 
 export function invalidateListingPage(listingId: unknown) {

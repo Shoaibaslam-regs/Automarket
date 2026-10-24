@@ -6,13 +6,14 @@ import { ExternalLink, Rocket, Trash2, X } from "lucide-react";
 import { Badge, ConfirmDialog, PageHeader, Panel, Segmented, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import StatusText from "@/components/ui/StatusText";
-import { SPONSORED_AD } from "@/lib/plans";
+import { SPONSORED_AD, AD_TIER_LABEL, type AdTier } from "@/lib/plans";
 import { AD_KIND_LABEL, AD_STATE_LABEL, AD_STATE_TONE, DAY_MS, adHref, adState, type AdKind } from "@/lib/ads";
 
 type AdminAd = {
   _id: string; kind: AdKind; targetId?: string; targetLabel: string; weeks: number; price: number;
   paymentRef: string; note?: string; status: string; startsAt?: string; endsAt?: string; reason?: string;
   createdAt: string; handledAt?: string;
+  tier?: AdTier; city?: string; views?: number; taps?: number;
   business: { name: string; slug: string; isActive?: boolean } | null;
   requester: { name?: string; email: string } | null;
   handler: { name?: string; email: string } | null;
@@ -83,7 +84,7 @@ export default function AdminAdsPage() {
   return (
     <div>
       <PageHeader title="Ad requests"
-        description={`Businesses pay PKR ${SPONSORED_AD.pricePerWeek.toLocaleString()} a week for a spot in the home page's Sponsored row (${counts.running} of ${SPONSORED_AD.maxRunning} running now). Check the payment arrived, then approve.`} />
+        description={`Businesses pay PKR ${SPONSORED_AD.pricePerWeek.STANDARD.toLocaleString()} (Standard) or ${SPONSORED_AD.pricePerWeek.TOP.toLocaleString()} (Top) a week. Ads are shown in their business's city first; Standard ads rotate, Top ads are first (${SPONSORED_AD.topPerCity} per city). ${counts.running} running now. Check the payment arrived, then approve.`} />
 
       <ConfirmDialog open={clearing} onOpenChange={setClearing} title="Clear ad history?" tone="danger" icon={Trash2}
         description="Removes every finished ad (ended, refused, cancelled or stopped) from the Past tab. Businesses keep their own copy until they clear it, and approvals stay in the activity log."
@@ -140,9 +141,12 @@ export default function AdminAdsPage() {
                     <StatusText className={AD_STATE_TONE[state]}>{AD_STATE_LABEL[state]}</StatusText>
                   </div>
                   <p className="mt-2 text-[13px] text-slate-700">
-                    <strong className="font-semibold">PKR {ad.price.toLocaleString()}</strong> · {ad.weeks} week{ad.weeks > 1 ? "s" : ""}
+                    <strong className="font-semibold">PKR {ad.price.toLocaleString()}</strong> · {AD_TIER_LABEL[ad.tier ?? "STANDARD"]} · {ad.city || "All cities"} · {ad.weeks} week{ad.weeks > 1 ? "s" : ""}
                     {ad.startsAt && ad.endsAt && <> · {fmt(ad.startsAt)} to {fmt(ad.endsAt)}</>}
                   </p>
+                  {(ad.views ?? 0) > 0 && (
+                    <p className="mt-1 text-[13px] text-slate-500">{(ad.views ?? 0).toLocaleString()} views · {(ad.taps ?? 0).toLocaleString()} taps</p>
+                  )}
                   <p className="mt-1 text-[13px] text-slate-700"><span className="text-slate-500">Payment:</span> <span className="font-semibold">{ad.paymentRef}</span></p>
                   {ad.note && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-relaxed text-slate-700">“{ad.note}”</p>}
                   {ad.reason && <p className="mt-2 text-[12px] text-rose-600">{ad.reason}</p>}

@@ -8,7 +8,8 @@ import { Listing } from "@/models/Listing";
 import { Organization } from "@/models/Organization";
 import { getMembership, getOrgUserIds, can } from "@/lib/business";
 import { liveQuery } from "@/lib/publicDeals";
-import { SPONSORED_AD, adPrice } from "@/lib/plans";
+import { SPONSORED_AD, adPrice, type AdTier } from "@/lib/plans";
+import { cityAdLoad, topBlockedUntil } from "@/lib/sponsored";
 import { AD_KIND_LABEL, type AdKind } from "@/lib/ads";
 import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
@@ -28,7 +29,11 @@ async function promotable(orgId: Oid) {
   return { deals, listings };
 }
 
-/** The business's ad requests and ads, plus what it can promote. */
+/**
+ * The business's ad requests and ads, what it can promote, and its city's `reach`: how many Standard and Top ads
+ * run there over the coming week (for "about 1 in N visits") and, when both Top places are taken, the first day one
+ * frees up (`topFreeFrom`).
+ */
 export async function GET() {
   try {
     const session = await auth();
@@ -38,17 +43,22 @@ export async function GET() {
     if (!member) return NextResponse.json({ error: "No business found" }, { status: 403 });
     const [ads, org, options] = await Promise.all([
       Ad.find({ organizationId: member.organizationId, hiddenByBusiness: { $ne: true } }).sort({ createdAt: -1 }).limit(100).lean(),
-      Organization.findById(member.organizationId).select("name slug").lean<{ name: string; slug: string }>(),
+      Organization.findById(member.organizationId).select("name slug city").lean<{ name: string; slug: string; city?: string }>(),
       promotable(member.organizationId),
     ]);
-    return NextResponse.json({ ads, business: org, options, canPromote: can(member.role, "promote") });
+    const city = org?.city?.trim() || "";
+    const [load, topBlocked] = await Promise.all([cityAdLoad(city), topBlockedUntil(city, new Date(), 1)]);
+    return NextResponse.json({
+      ads, business: org, options, canPromote: can(member.role, "promote"),
+      reach: { city, standard: load.standard, top: load.top, topFreeFrom: topBlocked },
+    });
   } catch (error) {
     reportError("Business ads GET error:", error);
     return NextResponse.json({ error: "Failed to load ads" }, { status: 500 });
   }
 }
 
-/** Asks for a sponsored ad. Body: { kind, targetId?, weeks, paymentRef, note? }. Messages the support admin. */
+/** Asks for a sponsored ad. Body: { kind, targetId?, weeks, tier, paymentRef, note? }. Messages the support admin. */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -65,11 +75,12 @@ export async function POST(req: NextRequest) {
     if (!["SHOP", "DEAL", "LISTING"].includes(kind)) return NextResponse.json({ error: "Choose what to promote" }, { status: 400 });
     const weeks = Number(body.weeks);
     if (!(SPONSORED_AD.weeks as readonly number[]).includes(weeks)) return NextResponse.json({ error: "Choose how long the ad runs" }, { status: 400 });
+    const tier: AdTier = body.tier === "TOP" ? "TOP" : "STANDARD";
     const paymentRef = typeof body.paymentRef === "string" ? body.paymentRef.trim().slice(0, 200) : "";
     if (paymentRef.length < 3) return NextResponse.json({ error: "Enter the transaction ID or the number you paid from" }, { status: 400 });
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 500) : "";
 
-    const org = await Organization.findById(member.organizationId).select("name").lean<{ name: string }>();
+    const org = await Organization.findById(member.organizationId).select("name city").lean<{ name: string; city?: string }>();
     if (!org) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
     let targetId: Oid | undefined;
@@ -86,20 +97,21 @@ export async function POST(req: NextRequest) {
     const open = await Ad.countDocuments({ organizationId: member.organizationId, status: "REQUESTED" });
     if (open >= 5) return NextResponse.json({ error: "You already have 5 requests waiting. Wait for the team to answer them first." }, { status: 400 });
 
-    const price = adPrice(weeks);
+    const city = org.city?.trim() || undefined;
+    const price = adPrice(weeks, tier);
     const ad = await Ad.create({
       organizationId: member.organizationId, requestedBy: session.user.id, kind, targetId, targetLabel,
-      weeks, price, paymentRef, note: note || undefined,
+      weeks, tier, city, price, paymentRef, note: note || undefined,
     });
 
     const admin = await getSupportAdmin();
     if (admin && !admin._id.equals(session.user.id)) {
       await sendChatMessage(session.user.id, String(admin._id),
-        `Hi AutoMarket team, "${org.name}" asked for a sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
+        `Hi AutoMarket team, "${org.name}"${city ? ` (${city})` : ""} asked for a ${tier === "TOP" ? "Top" : "Standard"} sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
         session.user.name).catch(e => reportError("Ad request message failed:", e));
     }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.request",
-      { type: "BUSINESS", id: ad._id, label: targetLabel }, { details: `${weeks} week${weeks > 1 ? "s" : ""} · ${paymentRef}`, amount: price });
+      { type: "BUSINESS", id: ad._id, label: targetLabel }, { details: `${tier === "TOP" ? "Top · " : ""}${weeks} week${weeks > 1 ? "s" : ""} · ${paymentRef}`, amount: price });
 
     return NextResponse.json({ ad }, { status: 201 });
   } catch (error) {

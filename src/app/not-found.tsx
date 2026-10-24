@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarCheck, Car, Search, Tag } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarCheck, Search, Tag } from "lucide-react";
+import CrashScene from "@/components/CrashScene";
 
 export const metadata: Metadata = {
   title: { absolute: "Page Not Found — AutoMarket" },
@@ -34,24 +35,19 @@ export default function NotFound() {
           Error 404 · Wrong turn
         </div>
 
-        {/* Big 404 with a car cruising on a road beneath it */}
+        {/* Big 404, and beneath it the splash's car drives along the road and crashes into a rock (CrashScene);
+            the 404 shudders at the moment of impact */}
         <div className="lp-rise relative mx-auto mt-8 [animation-delay:120ms]">
+          {/* The shudder sits on a wrapper: the 404 already runs its own gradient animation */}
+          <div className="crash-shudder">
           <p
             aria-hidden
             className="lp-gradient-text select-none bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-[120px] font-black leading-none tracking-tighter text-transparent drop-shadow-[0_0_60px_rgba(99,102,241,0.35)] sm:text-[180px]"
           >
             404
           </p>
-          <div className="relative mx-auto mt-2 h-14 max-w-md">
-            <div className="absolute inset-x-0 bottom-3 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            <div className="absolute inset-x-8 bottom-[11px] h-[2px] bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.35)_0_14px,transparent_14px_28px)] [mask-image:linear-gradient(90deg,transparent,black_20%,black_80%,transparent)]" />
-            {/* Outer div centers; inner span floats (both use transform, so they can't share an element) */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-              <span className="lp-float flex items-center justify-center text-indigo-100">
-                <Car size={22} strokeWidth={1.8} />
-              </span>
-            </div>
           </div>
+          <CrashScene />
         </div>
 
         <h1 className="lp-rise mt-4 text-3xl font-bold tracking-tight sm:text-5xl [animation-delay:240ms]">

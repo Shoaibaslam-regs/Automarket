@@ -59,7 +59,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
   return (
     <Dialog.Root open={open} onOpenChange={o => { if (!sending) { setOpen(o); if (!o) { setSent(false); setError(""); } } }}>
       <Dialog.Trigger asChild>
-        <button type="button" className={linkCls}><Flag size={13} /> Report this {noun}</button>
+        <button type="button" className={linkCls}><Flag size={14} /> Report {noun}</button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />

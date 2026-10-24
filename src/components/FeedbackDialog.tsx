@@ -35,7 +35,8 @@ export default function FeedbackDialog() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
-  const lock = useRateLock("support");
+  // Its own lock: feedback has a separate limit (two a month), so a full month here doesn't lock Help & support
+  const lock = useRateLock("feedback");
 
   useEffect(() => {
     const show = () => { setSent(false); setError(""); setOpen(true); };
@@ -112,6 +113,7 @@ export default function FeedbackDialog() {
               <button type="submit" disabled={sending || lock.locked} className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
                 {lock.locked ? lock.text : sending ? "Sending…" : "Send feedback"}
               </button>
+              <p className="text-center text-[11px] text-slate-400">You can send 2 feedback messages a month.</p>
             </form>
           )}
         </Dialog.Content>

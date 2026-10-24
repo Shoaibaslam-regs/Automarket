@@ -12,6 +12,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing, IListing } from "@/models/Listing";
 import ListingCard from "@/components/listings/ListingCard";
 import BrandLogos from "@/components/BrandLogos";
+import StepCards from "@/components/ui/StepCards";
+import SectionHeader from "@/components/home/SectionHeader";
 import ProvinceCities from "@/components/ProvinceCities";
 import DealCard from "@/components/deals/DealCard";
 import { getLiveDeals } from "@/lib/publicDeals";
@@ -20,7 +22,7 @@ import LiveStats from "@/components/home/LiveStats";
 import HomeSearchInput from "@/components/home/HomeSearchInput";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import { getPublicStats } from "@/lib/publicStats";
-import SponsoredRow from "@/components/home/SponsoredRow";
+import SponsoredSection from "@/components/home/SponsoredSection";
 import { getSponsored } from "@/lib/sponsored";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
@@ -51,9 +53,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "01", title: "Post your ad", desc: "Add details, upload photos and set your price in about 3 minutes." },
-  { n: "02", title: "Get contacted", desc: "Buyers and renters reach you directly via chat, call or WhatsApp." },
-  { n: "03", title: "Close the deal", desc: "Meet, inspect with AI and complete the transaction with confidence." },
+  { title: "Post your ad", desc: "Add details, upload photos and set your price in about 3 minutes." },
+  { title: "Get contacted", desc: "Buyers and renters reach you directly via chat, call or WhatsApp." },
+  { title: "Close the deal", desc: "Meet, inspect with AI and complete the transaction with confidence." },
 ];
 
 async function getData() {
@@ -70,32 +72,6 @@ async function getData() {
     console.error("Home listings failed:", err);
     return { forSale: [] as ListingWithId[], forRent: [] as ListingWithId[] };
   }
-}
-
-/**
- * A section's heading: the title, then a thin indigo→fuchsia line across (like the menu group headings, so the
- * sections read as clearly divided), and a quiet "View all" when the section has a page of its own.
- */
-function SectionHeader({ title, href, line = true }: { title: string; href?: string; line?: boolean }) {
-  return (
-    <div className="mb-4 flex items-center gap-3">
-      <h2 className="min-w-0 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{title}</h2>
-      {line ? (
-        <span aria-hidden className="h-px min-w-6 flex-1 bg-gradient-to-r from-indigo-500/40 via-fuchsia-500/20 to-transparent" />
-      ) : (
-        <span className="flex-1" />
-      )}
-      {href && (
-        <Link
-          href={href}
-          className="group inline-flex flex-shrink-0 items-center gap-1 text-[13px] font-medium text-slate-500 transition hover:text-slate-900"
-        >
-          View all
-          <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
-        </Link>
-      )}
-    </div>
-  );
 }
 
 function EmptyState({ text }: { text: string }) {
@@ -189,12 +165,13 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-[1180px] space-y-14 px-4 py-10 sm:space-y-20 sm:py-14">
-        {/* ── Where a returning visitor left off ── */}
-        <RecentlyViewed />
+        {/* ── Paid ads from businesses (Business → Promote), first under the hero: rotates, the visitor's city
+            first (Top ads lead); hidden while none run ── */}
+        <SponsoredSection initial={sponsored} />
 
         {/* ── Browse by make ── */}
         <section>
-          <SectionHeader title="Browse by make" href="/listings" line={false} />
+          <SectionHeader title="Explore by brand" href="/listings" line={false} />
           <BrandLogos />
         </section>
 
@@ -208,13 +185,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── Paid ads from businesses (Business → Promote), only while some are running ── */}
-        {sponsored.length > 0 && (
-          <section>
-            <SectionHeader title="Featured businesses" line={false} />
-            <SponsoredRow items={sponsored} />
-          </section>
-        )}
 
         {/* ── Latest for sale ── */}
         <section>
@@ -249,6 +219,9 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+          
+                  {/* ── Where a returning visitor left off ── */}
+                  <RecentlyViewed />
 
         {/* ── Live numbers ── */}
         <LiveStats initial={stats} />
@@ -275,20 +248,7 @@ export default async function HomePage() {
         {/* ── How it works ── */}
         <section>
           <SectionHeader title="How it works" />
-          <ol className="relative grid gap-3 sm:grid-cols-3 sm:gap-5">
-            <div className="pointer-events-none absolute left-[16%] right-[16%] top-[42px] hidden h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent sm:block" />
-            {STEPS.map(step => (
-              <li key={step.n} className="relative flex gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 sm:flex-col sm:items-center sm:p-6 sm:text-center">
-                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white ring-4 ring-slate-50">
-                  {step.n}
-                </span>
-                <div>
-                  <p className="text-[15px] font-semibold text-slate-900">{step.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-500">{step.desc}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <StepCards steps={STEPS} />
         </section>
 
         {/* ── Browse by province ── */}

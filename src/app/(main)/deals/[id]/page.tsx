@@ -43,6 +43,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// The listing page's button styles: one dark main action, quiet outlined ones
+const PRIMARY_BTN = "flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800";
+const OUTLINE_BTN = "flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50";
+
 export default async function DealPage({ params }: Props) {
   const { id } = await params;
   const page = await getPage(id);
@@ -152,27 +156,31 @@ export default async function DealPage({ params }: Props) {
                     <CarFront size={14} /> Package of {cars} cars, booked together
                   </p>
                 )}
-                <div className="grid gap-2 pt-2">
+                {/* Like the listing page: one dark main action, quiet outlined Call and Message beside each other,
+                    and Share and Report as small links */}
+                <div className="space-y-2 pt-2">
                   {rent && live && (
-                    <Link href={`/deals/${deal._id}/book`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/25 transition hover:opacity-90">
+                    <Link href={`/deals/${deal._id}/book`} className={PRIMARY_BTN}>
                       <CalendarCheck size={16} /> Book this deal
                     </Link>
                   )}
                   {!rent && live && (
                     <BuyRequestButton dealId={String(deal._id)} title={deal.title} price={final} businessName={business.name}
-                      className="!bg-gradient-to-r from-rose-600 to-orange-500 shadow-lg shadow-rose-500/25 hover:opacity-90" />
+                      className="!py-2.5 !font-semibold" />
                   )}
-                  <Link href={`/messages?with=${business.ownerId}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                    <MessageSquare size={16} /> Message {business.name}
-                  </Link>
-                  {business.phone && (
-                    <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
-                      <Phone size={16} /> {business.phone}
-                    </a>
-                  )}
+                  <div className={`grid gap-2 ${business.phone ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {business.phone && (
+                      <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className={OUTLINE_BTN} title={business.phone}>
+                        <Phone size={16} className="text-slate-500" /> Call
+                      </a>
+                    )}
+                    <Link href={`/messages?with=${business.ownerId}`} className={OUTLINE_BTN}>
+                      <MessageSquare size={16} className="text-slate-500" /> Message
+                    </Link>
+                  </div>
                 </div>
-                <ShareButton variant="block" path={`/deals/${deal._id}`} title={deal.title} label="Share this deal" />
-                <div className="pt-1 text-center">
+                <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+                  <ShareButton path={`/deals/${deal._id}`} title={deal.title} label="Share this deal" />
                   <ReportButton targetType="DEAL" targetId={String(deal._id)} label={deal.title} />
                 </div>
               </div>

@@ -104,8 +104,9 @@ export function parseDealParams(get: (key: string) => string | null | undefined)
   const sort = get("sort");
   const type = get("type");
   return {
-    make: get("make") || "",
-    city: get("city") || "",
+    // Capped, so endless made-up values can't flood the deal list cache
+    make: (get("make") || "").trim().slice(0, 40),
+    city: (get("city") || "").trim().slice(0, 60),
     type: type === "RENT" || type === "SALE" ? type : "",
     sort: (DEAL_SORTS as readonly string[]).includes(sort ?? "") ? (sort as DealFilters["sort"]) : "ending",
   };

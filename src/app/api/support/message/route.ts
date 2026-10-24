@@ -7,7 +7,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getSupportAdmin, triggerPusher } from "@/lib/support";
 import { supportTopicLabel } from "@/lib/supportTopics";
-import { rateLimitResponse } from "@/lib/rateLimit";
+import { hitRateLimit, isRateLimited, rateLimitResponse, waitText } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
@@ -26,6 +26,17 @@ export async function POST(req: NextRequest) {
     const { topic, message } = await req.json().catch(() => ({}));
     const topicLabel = supportTopicLabel(topic);
     if (!topicLabel) return NextResponse.json({ error: "Choose a topic" }, { status: 400 });
+    // Feedback is limited to two a month per account: refused early here when already used up, counted below
+    const isFeedback = topic === "FEEDBACK";
+    if (isFeedback) {
+      const fb = await isRateLimited("feedback", session.user.id);
+      if (!fb.ok) {
+        return NextResponse.json(
+          { error: `You've already sent 2 feedback messages this month. You can send more in ${waitText(fb.retryAfterSec)}.`, code: "RATE_LIMITED", retryAfter: fb.retryAfterSec },
+          { status: 429, headers: { "Retry-After": String(fb.retryAfterSec) } }
+        );
+      }
+    }
     const text = typeof message === "string" ? message.trim() : "";
     if (text.length < 10 || text.length > 2000) return NextResponse.json({ error: "Please write between 10 and 2000 characters" }, { status: 400 });
 
@@ -45,6 +56,16 @@ export async function POST(req: NextRequest) {
       content,
       createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
     });
+    // Counted atomically just before sending (so two sends at once can't both slip in), and only for new feedback
+    if (isFeedback && !recent) {
+      const fb = await hitRateLimit("feedback", session.user.id);
+      if (!fb.ok) {
+        return NextResponse.json(
+          { error: `You've already sent 2 feedback messages this month. You can send more in ${waitText(fb.retryAfterSec)}.`, code: "RATE_LIMITED", retryAfter: fb.retryAfterSec },
+          { status: 429, headers: { "Retry-After": String(fb.retryAfterSec) } }
+        );
+      }
+    }
     if (!recent) {
       const created = await Message.create({ senderId: session.user.id, receiverId: admin._id, content });
       const populated = await Message.findById(created._id).populate("senderId", "name image").populate("receiverId", "name image").lean();

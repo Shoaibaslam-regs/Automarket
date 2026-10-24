@@ -44,6 +44,10 @@ export const RATE_LIMITS = {
   savedSearches: { limit: 20, windowSec: 60 * 60 },
   /** Browser crash reports sent to the admin Errors page, per IP */
   clientErrors: { limit: 20, windowSec: 60 * 60 },
+  /** Send feedback (topic FEEDBACK), per user: two delivered a month. Counted after sending, so a failed send doesn't use one up */
+  feedback: { limit: 2, windowSec: 30 * 24 * 60 * 60 },
+  /** Sponsored ad views and taps (POST /api/sponsored/track), per IP: generous, since one page shows several ads */
+  adTrack: { limit: 300, windowSec: 60 * 60 },
   /** The daily cron, keyed by Pakistan day, so a repeated call doesn't send the reminders twice */
   cronDaily: { limit: 1, windowSec: 20 * 60 * 60 },
 } as const satisfies Record<string, { limit: number; windowSec: number; lockout?: boolean }>;
@@ -107,14 +111,9 @@ export async function isRateLimited(name: RateLimitName, id: string): Promise<Ra
   }
 }
 
-/** "2 minutes", "1 hour", "45 seconds" */
-export function waitText(sec: number): string {
-  if (sec < 60) return `${sec} second${sec !== 1 ? "s" : ""}`;
-  const min = Math.ceil(sec / 60);
-  if (min < 60) return `${min} minute${min !== 1 ? "s" : ""}`;
-  const h = Math.ceil(min / 60);
-  return `${h} hour${h !== 1 ? "s" : ""}`;
-}
+// Re-exported so server routes keep importing it from here
+export { waitText } from "@/lib/waitText";
+import { waitText } from "@/lib/waitText";
 
 /** The caller's IP address as Vercel and most proxies pass it, for limits on signed-out actions. */
 export function clientIp(req: { headers: Headers }): string {

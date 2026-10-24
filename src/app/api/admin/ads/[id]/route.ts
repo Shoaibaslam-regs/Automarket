@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { invalidateSponsored } from "@/lib/pageCache";
 import mongoose from "mongoose";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { Ad } from "@/models/Ad";
@@ -7,6 +8,7 @@ import { logAdminAction } from "@/lib/adminLog";
 import { sendChatMessage } from "@/lib/support";
 import { SPONSORED_AD } from "@/lib/plans";
 import { AD_KIND_LABEL, DAY_MS, type AdKind } from "@/lib/ads";
+import { topBlockedUntil } from "@/lib/sponsored";
 import { reportError } from "@/lib/errorLog";
 
 const day = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Karachi" });
@@ -45,15 +47,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const start = startFrom(startsAt);
       if (!start) return NextResponse.json({ error: "Pick a valid start date" }, { status: 400 });
       const end = new Date(start.getTime() + ad.weeks * 7 * DAY_MS);
-      // Keep the home page row to SPONSORED_AD.maxRunning ads at any one time
-      const overlapping = await Ad.find({ status: "APPROVED", startsAt: { $lt: end }, endsAt: { $gt: start } })
-        .select("endsAt").sort({ endsAt: 1 }).lean<Array<{ endsAt: Date }>>();
-      if (overlapping.length >= SPONSORED_AD.maxRunning) {
-        const free = overlapping[overlapping.length - SPONSORED_AD.maxRunning].endsAt;
-        return NextResponse.json({ error: `${SPONSORED_AD.maxRunning} ads are already booked for those dates. Start it on ${day(free)} or later.` }, { status: 400 });
+      // Standard ads rotate, so any number can run; Top ads are first in their city, so only a few at once there
+      if (ad.tier === "TOP") {
+        const free = await topBlockedUntil(ad.city, start, ad.weeks, String(ad._id));
+        if (free) return NextResponse.json({ error: `${SPONSORED_AD.topPerCity} Top ads are already booked in ${ad.city} for those dates. Start it on ${day(free)} or later.` }, { status: 400 });
       }
       Object.assign(ad, { status: "APPROVED", startsAt: start, endsAt: end, handledBy: gate.admin._id, handledAt: now });
-      message = `Your sponsored ad for ${what} is approved. It runs on the AutoMarket home page from ${day(start)} to ${day(end)}. Thank you!`;
+      message = `Your ${ad.tier === "TOP" ? "Top " : ""}sponsored ad for ${what} is approved. It runs from ${day(start)} to ${day(end)}${ad.city ? `, shown first to visitors in ${ad.city}` : ""}. You can see its views and taps in Business → Promote. Thank you!`;
     } else if (action === "reject") {
       if (ad.status !== "REQUESTED") return NextResponse.json({ error: "This request was already handled" }, { status: 400 });
       if (reason.length < 3) return NextResponse.json({ error: "Give a reason, e.g. \"Payment not received\"" }, { status: 400 });
@@ -69,12 +69,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     await ad.save();
     revalidatePath("/");
+    invalidateSponsored();
 
     if (!gate.admin._id.equals(ad.requestedBy)) {
       await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoMarket").catch(e => reportError("Ad message failed:", e));
     }
     await logAdminAction(gate.admin, `ad.${action}`, { type: "AD", id: ad._id, label: ad.targetLabel },
-      action === "approve" ? `${ad.weeks} week${ad.weeks > 1 ? "s" : ""}, PKR ${ad.price.toLocaleString()} · ${ad.paymentRef} · ${day(ad.startsAt!)} to ${day(ad.endsAt!)}` : reason);
+      action === "approve" ? `${ad.tier === "TOP" ? "Top, " : ""}${ad.city ? `${ad.city}, ` : ""}${ad.weeks} week${ad.weeks > 1 ? "s" : ""}, PKR ${ad.price.toLocaleString()} · ${ad.paymentRef} · ${day(ad.startsAt!)} to ${day(ad.endsAt!)}` : reason);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

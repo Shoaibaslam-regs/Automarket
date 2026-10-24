@@ -418,12 +418,14 @@ export default function AdminPage() {
               {notice.text}
             </div>
           )}
-          {/* One compact strip instead of six cards; Active and Suspended also filter the list */}
-          <div className="mb-4 grid grid-cols-3 divide-x divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 sm:grid-cols-6 sm:divide-y-0">
+          {/* One compact strip instead of seven cards; Active, Suspended and Verified also filter the list */}
+          <div className="mb-4 grid grid-cols-4 divide-x divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 sm:grid-cols-7 sm:divide-y-0">
             {[
               { label: "Businesses", value: organizations.length, filter: "" },
               { label: "Active", value: organizations.filter(o => o.isActive).length, filter: "Active", color: "text-emerald-600" },
               { label: "Suspended", value: organizations.filter(o => !o.isActive).length, filter: "Suspended", color: "text-rose-600" },
+              // A running badge only: an expired one keeps its verifiedAt, so count with isVerified like the filter does
+              { label: "Verified", value: organizations.filter(o => isVerified(o.verification)).length, filter: "Verified", color: "text-sky-600" },
               { label: "Paid plans", value: organizations.filter(o => o.plan !== "FREE").length, color: "text-amber-600" },
               { label: "Dealers", value: organizations.filter(o => o.type === "DEALER" || o.type === "BOTH").length },
               { label: "Rental co.", value: organizations.filter(o => o.type === "RENTAL" || o.type === "BOTH").length },

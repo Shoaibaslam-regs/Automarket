@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
-/** "14:32" */
-function clock(sec: number) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}:${String(s).padStart(2, "0")}`;
-}
+import { countdownText } from "@/lib/waitText";
 
 /**
  * Locks a form's submit button after the server says an action hit its rate limit (429 / RATE_LIMITED),
@@ -78,7 +73,7 @@ export function useRateLock(action: string) {
     locked: secondsLeft > 0,
     secondsLeft,
     /** "Try again in 14:32" */
-    text: `Try again in ${clock(secondsLeft)}`,
+    text: `Try again in ${countdownText(secondsLeft)}`,
     lock,
     check,
   };

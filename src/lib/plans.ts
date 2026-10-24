@@ -147,18 +147,39 @@ export const VERIFIED_BADGE = {
  * Sponsored ads: a business pays to show its business page, a deal or a vehicle in the "Sponsored" row on
  * the home page. Requested from Business → Promote, paid manually and switched on by an admin (Admin → Ad requests).
  */
+/**
+ * Sponsored ads (Business → Promote). Ads are shown to visitors in the business's city first. A row shows
+ * `slotsShown` ads; Top ads take the first places in their city (at most `topPerCity` running there at once), and
+ * Standard ads share the rest by rotation, so any number can run and each gets a fair share of views.
+ */
+export type AdTier = "STANDARD" | "TOP";
 export const SPONSORED_AD = {
   name: "Sponsored ad",
-  /** PKR per week */
-  pricePerWeek: 1000,
+  /** PKR per week, by tier */
+  pricePerWeek: { STANDARD: 1000, TOP: 2500 } as Record<AdTier, number>,
   /** The lengths a business can pick, in weeks */
   weeks: [1, 2, 4] as const,
-  /** Most ads running on the home page at the same time */
-  maxRunning: 8,
+  /** Ads in the home page row at one time (and so per visit) */
+  slotsShown: 8,
+  /** Top ads running in one city at the same time */
+  topPerCity: 2,
+  /** In Browse results, one sponsored card after this many vehicles */
+  browseEvery: 12,
 };
 
-export function adPrice(weeks: number): number {
-  return SPONSORED_AD.pricePerWeek * weeks;
+export const AD_TIER_LABEL: Record<AdTier, string> = { STANDARD: "Standard", TOP: "Top" };
+
+export function adPrice(weeks: number, tier: AdTier = "STANDARD"): number {
+  return SPONSORED_AD.pricePerWeek[tier] * weeks;
+}
+
+/**
+ * About how many visits in a city show one Standard ad, when `standardAds` Standard ads (including it) share the
+ * places left after `topAds` Top ads: "1 in 3" means it appears in roughly every third visit. 1 means every visit.
+ */
+export function standardShare(standardAds: number, topAds: number): number {
+  const places = Math.max(1, SPONSORED_AD.slotsShown - Math.min(topAds, SPONSORED_AD.topPerCity));
+  return Math.max(1, Math.ceil(Math.max(1, standardAds) / places));
 }
 
 /** The badge fields stored on an Organization. Dates may be strings once sent to the client. */

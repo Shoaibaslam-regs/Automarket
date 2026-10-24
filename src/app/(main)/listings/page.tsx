@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, use } from "react";
+import { Fragment, useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -17,6 +17,9 @@ import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import SearchSuggest from "@/components/SearchSuggest";
 import { CITIES, MY_CITY_KEY } from "@/lib/cities";
 import { MAKES as ALL_MAKES } from "@/lib/vehicleOptions";
+import { SponsoredCard } from "@/components/home/SponsoredRow";
+import { SPONSORED_AD } from "@/lib/plans";
+import type { SponsoredItem } from "@/lib/sponsored";
 
 // The shared makes list, without the Sell form's "Other"
 const MAKES = ALL_MAKES.filter(m => m !== "Other");
@@ -313,6 +316,24 @@ export default function ListingsPage({
   }, [query]);
 
   const hasMore = !loading && page < pagination.pages;
+
+  // Sponsored ads matching what the visitor is looking at (their city first, the make and sale/rent filters), shown
+  // between the results: after the 4th vehicle, then after every SPONSORED_AD.browseEvery, each ad at most once
+  const adCity = filters.location ?? "";
+  const adMake = filters.make ?? "";
+  const adType = filters.type === "SALE" || filters.type === "RENT" ? filters.type : "";
+  const adQuery = `city=${encodeURIComponent(adCity)}&make=${encodeURIComponent(adMake)}&type=${adType}&limit=8`;
+  const [sponsored, setSponsored] = useState<SponsoredItem[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/sponsored?${adQuery}`, { signal: controller.signal })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setSponsored(d?.items ?? []))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [adQuery]);
+  /** The sponsored ad shown after result `i`, if any */
+  const adAfter = (i: number) => (i % SPONSORED_AD.browseEvery === 3 ? sponsored[Math.floor(i / SPONSORED_AD.browseEvery)] : undefined);
 
   /** Adds the next page below the vehicles already shown. */
   function loadMore() {
@@ -934,12 +955,18 @@ export default function ListingsPage({
                 key={`${loadedQuery}-${view}`}
                 className={view === "list" ? "flex flex-col gap-3 sm:gap-4" : "grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3"}
               >
-                {listings.map((listing, i) => (
-                  // Each newly added page staggers in from its own first card
-                  <div key={listing._id} className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i % PAGE_SIZE, 8) * 40}ms` } as React.CSSProperties}>
-                    <ListingCard listing={listing} layout={view} eager={i < (view === "list" ? 1 : 3)} />
-                  </div>
-                ))}
+                {listings.map((listing, i) => {
+                  const ad = adAfter(i);
+                  return (
+                    <Fragment key={listing._id}>
+                      {/* Each newly added page staggers in from its own first card */}
+                      <div className="bl-enter h-full" style={{ "--bl-delay": `${Math.min(i % PAGE_SIZE, 8) * 40}ms` } as React.CSSProperties}>
+                        <ListingCard listing={listing} layout={view} eager={i < (view === "list" ? 1 : 3)} />
+                      </div>
+                      {ad && <div className="h-full"><SponsoredCard item={ad} layout={view} /></div>}
+                    </Fragment>
+                  );
+                })}
               </div>
             )}
 

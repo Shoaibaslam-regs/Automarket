@@ -2,6 +2,9 @@
 
 export type AdKind = "SHOP" | "DEAL" | "LISTING";
 
+/** Cities are compared without case or extra spaces ("lahore " = "Lahore") */
+export const sameCity = (a?: string | null, b?: string | null) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+
 export const AD_KIND_LABEL: Record<AdKind, string> = {
   SHOP: "Business page",
   DEAL: "Deal",
