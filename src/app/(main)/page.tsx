@@ -32,7 +32,7 @@ type ListingWithId = IListing & { _id: string };
 // Re-read listings and counts at most once a minute instead of freezing them at build time
 export const revalidate = 60;
 
-const POPULAR = ["Corolla", "Civic", "Alto", "Cultus", "Yamaha"];
+const POPULAR = ["Corolla", "Haval", "Alto", "BYD"];
 
 const FEATURES = [
   {
@@ -171,7 +171,7 @@ export default async function HomePage() {
 
         {/* ── Browse by make ── */}
         <section>
-          <SectionHeader title="Explore by brand" href="/listings" line={false} />
+          <SectionHeader title="Explore" href="/listings" line={false} />
           <BrandLogos />
         </section>
 

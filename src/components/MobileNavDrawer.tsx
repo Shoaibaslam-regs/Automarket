@@ -172,28 +172,32 @@ export default function MobileNavDrawer({
           </div>
 
           {user ? (
-            <div className="relative mt-3 flex items-center gap-2.5">
-              <span className={`rounded-full p-[2px] ${hasBusiness ? "bg-gradient-to-br from-indigo-400 to-fuchsia-500" : "bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300"}`}>
-                <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold">
-                  {user.image ? <Image src={user.image} alt="" fill sizes="36px" className="object-cover" /> : user.name?.[0]?.toUpperCase() || "?"}
+            <div className="relative mt-4">
+              {/* Who: a larger avatar beside the name and email */}
+              <div className="flex items-center gap-3">
+                <span className={`flex-shrink-0 rounded-full p-[2px] ${hasBusiness ? "bg-gradient-to-br from-indigo-400 to-fuchsia-500" : "bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300"}`}>
+                  <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-base font-bold">
+                    {user.image ? <Image src={user.image} alt="" fill sizes="44px" className="object-cover" /> : user.name?.[0]?.toUpperCase() || "?"}
+                  </span>
                 </span>
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold">{user.name}</p>
-                <p className="truncate text-[11px] text-slate-400">{user.email}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-1">
-                  {plan && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-px text-[10px] font-semibold text-amber-200 ring-1 ring-inset ring-white/15">
-                      <Crown size={11} /> {plan.name}
-                    </span>
-                  )}
-                  {hasBusiness && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/25 px-1.5 py-px text-[10px] font-semibold text-indigo-100 ring-1 ring-inset ring-indigo-300/30">
-                      <Briefcase size={10} /> Business
-                    </span>
-                  )}
-                  <UserIdBadge id={user.id} className="!bg-white/10 !px-1.5 !py-px !text-[10px] !text-slate-300 !ring-white/15" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold leading-tight">{user.name}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-400">{user.email}</p>
                 </div>
+              </div>
+              {/* Plan, business and ID on their own row with room between them (plain text, no chips) */}
+              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-white/10 pt-2.5 text-[11px] font-semibold">
+                {plan && (
+                  <span className="inline-flex items-center gap-1 text-amber-200"><Crown size={12} /> {plan.name}</span>
+                )}
+                {hasBusiness && (
+                  <>
+                    <span aria-hidden className="text-slate-600">·</span>
+                    <span className="inline-flex items-center gap-1 text-indigo-200"><Briefcase size={11} /> Business</span>
+                  </>
+                )}
+                <span aria-hidden className="text-slate-600">·</span>
+                <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
               </div>
             </div>
           ) : (

@@ -10,6 +10,7 @@ import Image from "next/image";
 import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 import { planInfo } from "@/lib/plans";
 import UserIdBadge from "@/components/UserIdBadge";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import TodayCard from "@/components/business/Today";
 import SetupChecklist from "@/components/business/SetupChecklist";
 import { OfficialDashboardCard } from "@/components/business/Official";
@@ -28,6 +29,7 @@ type Organization = {
   plan: string;
   city: string;
   slug?: string;
+  verified?: boolean;
 };
 
 export default function BusinessDashboard() {
@@ -343,6 +345,12 @@ export default function BusinessDashboard() {
           <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[var(--gh-0d1117)] sm:text-lg">Dashboard</h1>
+              {org?.name && (
+                <p className="flex min-w-0 items-center gap-1 text-[13px] font-semibold text-[var(--gh-57606a)]">
+                  <span className="truncate">{org.name}</span>
+                  {org.verified && <VerifiedBadge variant="icon" size={14} />}
+                </p>
+              )}
               <p className="hidden text-xs text-[var(--gh-8c959f)] sm:block">
                 {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </p>

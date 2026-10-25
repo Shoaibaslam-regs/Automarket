@@ -119,21 +119,23 @@ export default function UserMenuDropdown({
             <p className="truncate text-xs text-slate-400">{user.email}</p>
           </div>
         </div>
-        <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-inset ring-white/15">
-            <Crown size={11} /> {plan ? plan.name : "…"}
-          </span>
+        {/* Plan, admin, business and ID on their own row with room between them (plain text, no chips), like MobileNavDrawer */}
+        <div className="relative mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-white/10 pt-2.5 text-[11px] font-semibold">
+          <span className="inline-flex items-center gap-1 text-amber-200"><Crown size={12} /> {plan ? plan.name : "…"}</span>
           {user.role === "ADMIN" && user.adminPortal && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-inset ring-amber-300/25">
-              <ShieldCheck size={11} /> Admin
-            </span>
+            <>
+              <span aria-hidden className="text-slate-600">·</span>
+              <span className="inline-flex items-center gap-1 text-amber-300"><ShieldCheck size={12} /> Admin</span>
+            </>
           )}
           {hasBusiness && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/25 px-2 py-0.5 text-[11px] font-semibold text-indigo-100 ring-1 ring-inset ring-indigo-300/30">
-              <Briefcase size={11} /> Business
-            </span>
+            <>
+              <span aria-hidden className="text-slate-600">·</span>
+              <span className="inline-flex items-center gap-1 text-indigo-200"><Briefcase size={11} /> Business</span>
+            </>
           )}
-          <UserIdBadge id={user.id} className="!bg-white/10 !text-slate-300 !ring-white/15" />
+          <span aria-hidden className="text-slate-600">·</span>
+          <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
         </div>
       </div>
 

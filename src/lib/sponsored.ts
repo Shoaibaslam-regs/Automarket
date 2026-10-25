@@ -23,8 +23,26 @@ export type SponsoredItem = {
   title: string;
   price?: number;
   perDay?: boolean;
+  /** SHOP ads only: what the business is and where ("Car dealer · Lahore"), and a short line about it */
+  caption?: string;
+  blurb?: string;
   business: { name: string; slug: string; logo?: string; verified: boolean };
 };
+
+const SHOP_KIND: Record<string, string> = { DEALER: "Car dealer", RENTAL: "Rent a car", BOTH: "Sales & rentals" };
+/** Used when the business has written no description of its own. */
+const SHOP_BLURB: Record<string, string> = {
+  DEALER: "Browse every vehicle we have for sale.",
+  RENTAL: "Book a car for a day, a week or an event.",
+  BOTH: "Buy or rent from one trusted shop.",
+};
+
+/** The description's first ~90 characters, cut at a word. */
+function shortBlurb(text?: string) {
+  const t = text?.replace(/\s+/g, " ").trim();
+  if (!t) return undefined;
+  return t.length <= 90 ? t : `${t.slice(0, 90).replace(/\s+\S*$/, "")}…`;
+}
 
 /**
  * Who is looking: their `city` (the Browse city picker) puts that city's ads first; `make` and `type` (Browse
@@ -32,7 +50,7 @@ export type SponsoredItem = {
  */
 export type SponsoredQuery = { city?: string; make?: string; type?: "SALE" | "RENT" | ""; limit?: number };
 
-type OrgRow = { _id: Oid; name: string; slug: string; logo?: string; type?: string; verification?: BadgeVerification };
+type OrgRow = { _id: Oid; name: string; slug: string; logo?: string; type?: string; city?: string; description?: string; verification?: BadgeVerification };
 
 /** Exact, case-insensitive match for a stored city ("Lahore" finds "lahore "). */
 export const cityQuery = (city: string) => new RegExp(`^\\s*${city.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
@@ -99,7 +117,7 @@ async function loadCandidates(): Promise<Candidate[]> {
   const ids = (k: string) => ads.filter(a => a.kind === k && a.targetId).map(a => a.targetId!);
   const [orgs, deals, listings] = await Promise.all([
     Organization.find({ _id: { $in: ads.map(a => a.organizationId) }, isActive: { $ne: false } })
-      .select("name slug logo type verification.verifiedAt verification.expiresAt").lean<OrgRow[]>(),
+      .select("name slug logo type city description verification.verifiedAt verification.expiresAt").lean<OrgRow[]>(),
     Deal.find({ _id: { $in: ids("DEAL") }, ...liveQuery(now) }).select("title images price discountType discountValue dealType make")
       .lean<Array<{ _id: Oid; title: string; images: string[]; price: number; discountType: "PERCENT" | "AMOUNT"; discountValue: number; dealType?: string; make?: string }>>(),
     Listing.find({ _id: { $in: ids("LISTING") }, status: "ACTIVE" }).select("title images price type make")
@@ -117,7 +135,10 @@ async function loadCandidates(): Promise<Candidate[]> {
     const base = { adId: String(a._id), tier: a.tier ?? "STANDARD", city: a.city, business } as const;
     if (a.kind === "SHOP") {
       const sells = org.type === "RENTAL" ? "RENT" : org.type === "DEALER" ? "SALE" : "BOTH";
-      candidates.push({ ...base, kind: "SHOP", href: `/dealers/${org.slug}`, image: org.logo, title: org.name, sells });
+      const type = org.type ?? "BOTH";
+      const caption = [SHOP_KIND[type] ?? "Business", org.city?.trim()].filter(Boolean).join(" · ");
+      const blurb = shortBlurb(org.description) ?? SHOP_BLURB[type] ?? SHOP_BLURB.BOTH;
+      candidates.push({ ...base, kind: "SHOP", href: `/dealers/${org.slug}`, image: org.logo, title: org.name, caption, blurb, sells });
     } else if (a.kind === "DEAL") {
       const d = dealById.get(String(a.targetId));
       if (d) candidates.push({ ...base, kind: "DEAL", href: `/deals/${d._id}`, image: d.images[0], title: d.title, price: dealPrice(d.price, d), perDay: d.dealType === "RENT", make: d.make, sells: d.dealType === "RENT" ? "RENT" : "SALE" });
@@ -134,7 +155,8 @@ async function loadCandidates(): Promise<Candidate[]> {
  * makes on the public /api/sponsored can't turn into database reads (only the filtering and shuffling below run
  * per call). Approving or stopping an ad clears it (SPONSORED_TAG).
  */
-const cachedCandidates = unstable_cache(loadCandidates, ["sponsored-candidates"], { revalidate: PUBLIC_CACHE_SECONDS, tags: [SPONSORED_TAG] });
+// Bump the key when the shape of SponsoredItem changes, so a saved list from before is not served
+const cachedCandidates = unstable_cache(loadCandidates, ["sponsored-candidates-v2"], { revalidate: PUBLIC_CACHE_SECONDS, tags: [SPONSORED_TAG] });
 
 export async function getSponsored(q: SponsoredQuery = {}): Promise<SponsoredItem[]> {
   const candidates = await cachedCandidates();
@@ -154,5 +176,5 @@ export async function getSponsored(q: SponsoredQuery = {}): Promise<SponsoredIte
   ];
   return ordered.slice(0, Math.max(1, Math.min(48, q.limit ?? SPONSORED_AD.slotsShown)))
     // Only what a card needs reaches the page
-    .map((c): SponsoredItem => ({ adId: c.adId, kind: c.kind, tier: c.tier, href: c.href, image: c.image, title: c.title, price: c.price, perDay: c.perDay, business: c.business }));
+    .map((c): SponsoredItem => ({ adId: c.adId, kind: c.kind, tier: c.tier, href: c.href, image: c.image, title: c.title, price: c.price, perDay: c.perDay, caption: c.caption, blurb: c.blurb, business: c.business }));
 }

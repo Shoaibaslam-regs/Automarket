@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import {
   ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Rocket, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
@@ -30,6 +31,7 @@ type Organization = {
   city: string;
   slug?: string;
   logo?: string;
+  verified?: boolean;
 };
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -104,7 +106,10 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
           <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-slate-950" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-semibold text-white">{org?.name || "My Business"}</span>
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="truncate text-[13px] font-semibold text-white">{org?.name || "My Business"}</span>
+            {org?.verified && <VerifiedBadge variant="icon" size={14} />}
+          </span>
           <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
             <span className="truncate">{TYPE_LABELS[org?.type ?? ""] ?? "Business"}</span>
             <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-amber-300/10 px-1.5 py-px text-[10px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-200/20">
@@ -118,6 +123,12 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
       {open && (
         <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-2xl bg-slate-900 p-1.5 shadow-2xl shadow-black/50 ring-1 ring-white/10">
           <div className="mb-1 border-b border-white/10 px-2.5 pb-2.5 pt-1.5">
+            {org?.name && (
+              <p className="mb-1.5 flex min-w-0 items-center gap-1 text-[11px] font-semibold text-slate-300">
+                <span className="truncate">{org.name}</span>
+                {org.verified && <><VerifiedBadge variant="icon" size={13} /><span className="flex-shrink-0 text-[10px] font-medium text-sky-300">Verified</span></>}
+              </p>
+            )}
             <p className="truncate text-[13px] font-semibold text-white">{session?.user?.name}</p>
             <p className="truncate text-[11px] text-slate-400">{session?.user?.email}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -392,7 +403,10 @@ export default function BusinessSidebar() {
           <span className="rounded bg-white/10 px-1 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-slate-300">Business</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="hidden truncate text-[11px] font-medium text-slate-400 min-[380px]:block">{org?.name}</span>
+          <span className="hidden min-w-0 items-center gap-1 min-[380px]:flex">
+            <span className="truncate text-[11px] font-medium text-slate-400">{org?.name}</span>
+            {org?.verified && <VerifiedBadge variant="icon" size={12} />}
+          </span>
           <NotificationBell tone="dark" className="!h-9 !w-9" />
           <button
             onClick={() => setMobileOpenOn(pathname)}

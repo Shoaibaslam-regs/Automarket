@@ -41,6 +41,8 @@ export function invalidateListingPage(listingId: unknown) {
 
 export function invalidateBusinessSlug(slug: string) {
   expire(businessTag(slug));
+  // Sponsored cards carry the business's name, logo and Verified tick, and skip suspended businesses
+  expire(SPONSORED_TAG);
 }
 
 export async function invalidateBusinessPage(orgId: unknown) {

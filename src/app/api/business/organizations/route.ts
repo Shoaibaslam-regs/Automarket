@@ -9,6 +9,7 @@ import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { auth } from "@/lib/auth";
 import { getSubscription } from "@/lib/subscription";
+import { isVerified } from "@/lib/plans";
 import { getMembership } from "@/lib/business";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
 import { invalidateBusinessSlug, invalidateDeal } from "@/lib/pageCache";
@@ -36,7 +37,8 @@ export async function GET() {
     const sub = await getSubscription(session.user.id);
     // The caller's role lets the settings page show only what they may change
     const member = await getMembership(session.user.id);
-    return NextResponse.json({ organization: { ...org, plan: sub.planId }, myRole: member?.role ?? null });
+    // verified: the console shows the Verified tick beside the business name
+    return NextResponse.json({ organization: { ...org, plan: sub.planId, verified: isVerified(org.verification) }, myRole: member?.role ?? null });
   } catch (error) {
     reportError("Get org error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
