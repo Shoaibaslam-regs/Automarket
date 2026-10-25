@@ -4,12 +4,12 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, Car, Clock3, FileText, IdCard, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Trash2, TriangleAlert, Undo2, UserRound, Wallet, X } from "lucide-react";
+import { Briefcase, CalendarDays, Car, Clock3, FileText, IdCard, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Trash2, TriangleAlert, Undo2, UserRound, Wallet, X } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import HandoverDialog, { PlateBadge } from "@/components/bookings/HandoverDialog";
 import { DepositTag } from "@/components/bookings/DepositDialog";
-import { LATE_RULE_TEXT, rentalDays } from "@/lib/bookings";
+import { LATE_RULE_TEXT, bookingNumber, rentalDays } from "@/lib/bookings";
 import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { mapsUrl } from "@/lib/address";
@@ -64,6 +64,8 @@ type Booking = {
   rentalId: { _id: string; listingId: ListingInfo; dailyRate: number; plateNumber?: string };
   /** Deal bookings have a deal instead of a listed vehicle */
   dealId?: { _id: string; title: string; images: string[]; make: string; model: string; year: number; location: string; address?: string; vehicleCount?: number } | null;
+  /** A request for the business's rent deal: listed here for the badge, handled in Business → Bookings */
+  managedInBusiness?: boolean;
   owner?: OwnerInfo;
 };
 
@@ -378,6 +380,8 @@ export default function BookingsContent() {
               const listingId = listing?._id;
               const isDeal = !!booking.dealId;
               const received = tab === "received";
+              // Business rent-deal requests are only shown here; their actions live in the business console
+              const viaBusiness = received && !!booking.managedInBusiness;
               const look = cardLook(booking.status, received);
               const busy = updating === booking._id;
               const moreOpen = openMore === booking._id;
@@ -387,12 +391,13 @@ export default function BookingsContent() {
                 : !received && booking.owner && ["CONFIRMED", "ACTIVE", "COMPLETED"].includes(booking.status) ? { role: "Owner", name: booking.owner.name, phone: booking.owner.phone, email: booking.owner.email }
                 : null;
               const primary =
-                received && booking.status === "PENDING" ? { label: busy ? "Confirming…" : "Confirm", onClick: () => updateStatus(booking._id, "CONFIRMED"), cls: "bg-[var(--gh-2da44e)] hover:bg-[var(--gh-2c974b)]" }
+                viaBusiness ? null
+                : received && booking.status === "PENDING" ? { label: busy ? "Confirming…" : "Confirm", onClick: () => updateStatus(booking._id, "CONFIRMED"), cls: "bg-[var(--gh-2da44e)] hover:bg-[var(--gh-2c974b)]" }
                 : received && booking.status === "CONFIRMED" ? { label: "Mark as completed", onClick: () => updateStatus(booking._id, "COMPLETED"), cls: "bg-[var(--gh-0d1117)] hover:bg-[var(--gh-24292f)]" }
                 : null;
               const canSlip = ["CONFIRMED", "COMPLETED"].includes(booking.status);
-              const canRemove = ["COMPLETED", "CANCELLED"].includes(booking.status) || !booking.rentalId;
-              const canCancel = ["PENDING", "CONFIRMED"].includes(booking.status);
+              const canRemove = !viaBusiness && (["COMPLETED", "CANCELLED"].includes(booking.status) || !booking.rentalId);
+              const canCancel = !viaBusiness && ["PENDING", "CONFIRMED"].includes(booking.status);
               const hasHandover = !!(booking.plateNumber || booking.renterCnic);
               const iconBtn = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 text-xs font-semibold transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
               const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
@@ -442,6 +447,11 @@ export default function BookingsContent() {
                     {/* People, pickup, return, handover */}
                     <div className="mt-3 space-y-1.5 text-xs">
                       {look.hint && <p className="font-medium" style={{ color: look.color }}>{look.hint}</p>}
+                      {viaBusiness && (
+                        <p className="flex items-center gap-1.5 text-[var(--gh-57606a)]">
+                          <Briefcase size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" /> A request for your business. Confirm, hand over and take payment in the Business console.
+                        </p>
+                      )}
                       {person && (
                         <p className="flex min-w-0 items-center gap-1.5 text-[var(--gh-57606a)]">
                           <UserRound size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" />
@@ -474,7 +484,7 @@ export default function BookingsContent() {
                     <div className="mt-3">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                         <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">PKR {total.toLocaleString()}</p>
-                        {booking.status !== "CANCELLED" && <PaymentTag booking={booking} onClick={received ? () => setPayFor(booking) : undefined} />}
+                        {booking.status !== "CANCELLED" && <PaymentTag booking={booking} onClick={received && !viaBusiness ? () => setPayFor(booking) : undefined} />}
                       </div>
                       <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">
                         Rent PKR {booking.totalAmount.toLocaleString()} · Deposit PKR {booking.deposit.toLocaleString()}
@@ -492,20 +502,25 @@ export default function BookingsContent() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 border-t border-[var(--gh-e1e4e8)] px-3.5 py-2.5 sm:px-4">
+                    {viaBusiness && (
+                      <Link href={`/business/bookings?q=${bookingNumber(booking._id)}`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-3.5 text-xs font-semibold text-white transition hover:bg-[var(--gh-24292f)] sm:flex-none">
+                        <Briefcase size={13} /> Open in Business console
+                      </Link>
+                    )}
                     {primary && (
                       <button onClick={primary.onClick} disabled={busy} className={`inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3.5 text-xs font-semibold text-white transition disabled:opacity-50 sm:flex-none ${primary.cls}`}>
                         {primary.label}
                       </button>
                     )}
-                    <div className={`flex items-center gap-1.5 ${primary ? "" : "flex-1"}`}>
+                    <div className={`flex items-center gap-1.5 ${primary || viaBusiness ? "" : "flex-1"}`}>
                       {canSlip && (
                         <button onClick={() => generateSlip(booking, tab)} aria-label="Booking slip" className={`${iconBtn} text-[var(--gh-0d1117)]`}>
-                          <FileText size={14} /> <span className={primary ? "hidden sm:inline" : ""}>Slip</span>
+                          <FileText size={14} /> <span className={primary || viaBusiness ? "hidden sm:inline" : ""}>Slip</span>
                         </button>
                       )}
                       {person?.phone && (
                         <a href={`https://wa.me/${person.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${person.name ?? ""}`)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp the ${person.role.toLowerCase()}`} className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
-                          <MessageCircle size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
+                          <MessageCircle size={14} /> <span className={primary || viaBusiness ? "hidden sm:inline" : ""}>WhatsApp</span>
                         </a>
                       )}
                     </div>
@@ -519,10 +534,10 @@ export default function BookingsContent() {
                   {moreOpen && (
                     <div className="space-y-3 border-t border-[var(--gh-e1e4e8)] bg-[var(--gh-fafbfc)] px-3.5 py-3 sm:px-4">
                       <div className="flex flex-wrap gap-1.5">
-                        {received && booking.status !== "CANCELLED" && (
+                        {received && !viaBusiness && booking.status !== "CANCELLED" && (
                           <button onClick={() => setPayFor(booking)} className={trayBtn}><Wallet size={13} /> Update payment</button>
                         )}
-                        {received && booking.status !== "CANCELLED" && (hasHandover || ["CONFIRMED", "COMPLETED"].includes(booking.status)) && (
+                        {received && !viaBusiness && booking.status !== "CANCELLED" && (hasHandover || ["CONFIRMED", "COMPLETED"].includes(booking.status)) && (
                           <button onClick={() => setPlateFor(booking)} className={trayBtn}><Pencil size={13} /> {hasHandover ? "Edit plate & CNIC" : "Add plate & CNIC"}</button>
                         )}
                         {person?.email && (

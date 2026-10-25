@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 /**
  * Web app manifest (served at /manifest.webmanifest): lets phones install AutoGO to the home screen and
- * open it full screen. Icons are in public/icons (made from the red slash mark of the logo).
+ * open it full screen. Icons are in public/icons (the logo's three slashes over its car, in the hero gradient).
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

@@ -61,7 +61,9 @@ export default function DeleteAccount() {
       return;
     }
     // The account is gone, so end the session and leave the signed-in area
-    await signOut({ callbackUrl: "/" });
+    // Same as SignOutDialog: stay on this site instead of NextAuth's NEXTAUTH_URL-based redirect
+    await signOut({ redirect: false });
+    window.location.replace("/");
   }
 
   const blocked = !!check && check.blockers.length > 0;

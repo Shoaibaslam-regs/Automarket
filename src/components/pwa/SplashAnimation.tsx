@@ -66,8 +66,8 @@ export default function SplashAnimation({
           transition={{ duration: DRIVE_S, ease: DRIVE_EASE }}
           style={{ position: "absolute", inset: "0 0 auto 0", textAlign: "center", font: "800 30px/1.15 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif", letterSpacing: "-0.02em", color: "#0f172a", whiteSpace: "nowrap" }}
         >
-          {/* Coloured like the logo: "Auto" dark, "GO" red */}
-          Auto<span style={{ color: "#f20d0d" }}>GO</span>-Pak
+          {/* Coloured like the logo: "Auto" dark, "GO" in the hero's sky → emerald */}
+          Auto<span style={{ background: "linear-gradient(90deg, #0ea5e9, #10b981)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>GO</span>-Pak
         </motion.div>
 
         {/* The road: a hairline with lane dashes that rush past while the car drives, then settle */}
@@ -90,7 +90,7 @@ export default function SplashAnimation({
             animate={{ left: ["0%", "100%", "122%"], opacity: [1, 1, 0] }}
             transition={{ duration: total, times: [0, driveShare, 1], ease: [DRIVE_EASE, "easeIn"] }}
             // The logo car's tyre touches its bottom edge, so 8px puts it on the road's top edge (bottom 6 + 2px tall).
-            // It carries its own red speed lines, so no extra ones are drawn behind it.
+            // It carries its own speed lines, so no extra ones are drawn behind it.
             style={{ position: "absolute", bottom: 8, x: "-100%", display: "flex", alignItems: "center" }}
           >
             <CarIllustration />

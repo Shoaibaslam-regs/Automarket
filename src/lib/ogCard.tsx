@@ -7,7 +7,7 @@ import { join } from "node:path";
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
-/** The red slash mark from the app icon, as a data URL. */
+/** The AutoGO mark from the app icon, as a data URL. */
 export async function brandMark(): Promise<string> {
   const png = await readFile(join(process.cwd(), "public/icons/icon-192.png"));
   return `data:image/png;base64,${png.toString("base64")}`;

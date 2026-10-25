@@ -1,8 +1,9 @@
 import Image from "next/image";
 
-/** Transparent logo files in /public, 1200×119 (about 10:1). The dark one has white ink for dark surfaces. */
-const LIGHT = "/autogo-logo.png";
-const DARK = "/autogo-logo-dark.png";
+/** Transparent logo files in /public, 1200×118 (about 10:1), coloured in the home hero's indigo → sky → emerald.
+ * The dark one has white ink for dark surfaces. */
+const LIGHT = "/autogo-logo-v2.png";
+const DARK = "/autogo-logo-v2-dark.png";
 
 /**
  * The site logo. `tone="auto"` follows the light/dark theme (black ink in light mode, white in dark);
@@ -28,7 +29,7 @@ export default function BrandLogo({
   // The real pixel size goes in the attributes and CSS sets the shown size, so Next's "only one side modified"
   // check never trips on a rounded width (both sides differ from the attributes)
   const size = { "--logo-h": `${height}px`, "--logo-hp": `${phoneHeight ?? height}px`, width: "auto" } as React.CSSProperties;
-  const props = { width: 1200, height: 119, priority, style: { ...size, ...style } };
+  const props = { width: 1200, height: 118, priority, style: { ...size, ...style } };
   const cls = `h-[var(--logo-hp)] sm:h-[var(--logo-h)] ${className}`;
   if (tone === "dark") return <Image src={DARK} alt="AutoGO" {...props} className={cls} />;
   return (

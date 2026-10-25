@@ -18,7 +18,10 @@ export default function SignOutDialog({
     setLoading(true);
     // This phone stops getting the signed-out person's notifications
     await unsubscribeThisDevice();
-    await signOut({ callbackUrl: "/" });
+    // Go home on this same site ourselves: letting NextAuth redirect builds the address from NEXTAUTH_URL,
+    // and a stale value there (an old Vercel deployment) ended sign-out on Vercel's DEPLOYMENT_NOT_FOUND page
+    await signOut({ redirect: false });
+    window.location.replace("/");
   }
 
   return (

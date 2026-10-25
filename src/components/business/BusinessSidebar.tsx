@@ -243,18 +243,15 @@ function SidebarContent({
       <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-600/25 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
 
-      {/* Logo + org */}
-      <div className="relative space-y-4 px-4 pb-4 pt-5">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <BrandLogo tone="dark" height={15} />
-          </Link>
-          {onClose && (
+      {/* The business card on top (no logo); the phone drawer adds its close button above it */}
+      <div className="relative space-y-3 px-4 pb-4 pt-5">
+        {onClose && (
+          <div className="flex justify-end">
             <button onClick={onClose} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
               <X size={16} />
             </button>
-          )}
-        </div>
+          </div>
+        )}
         <OrgCard org={org} counts={counts} onSignOut={onSignOut} />
       </div>
 

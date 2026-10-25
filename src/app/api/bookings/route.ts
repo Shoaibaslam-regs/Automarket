@@ -8,7 +8,8 @@ import { auth } from "@/lib/auth";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
-import { DEAL_BOOKING_FIELDS } from "@/lib/dealBookings";
+import { DEAL_BOOKING_FIELDS, getOrgDealIds } from "@/lib/dealBookings";
+import { can, getMembership } from "@/lib/business";
 import { Organization } from "@/models/Organization";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { triggerPusher } from "@/lib/support";
@@ -41,6 +42,23 @@ export async function GET(req: NextRequest) {
         .populate("renterId", "name email phone")
         .sort({ createdAt: -1 })
         .lean();
+      // Online requests for the business's rent deals, for the members who handle bookings. The badge counts
+      // them (/api/bookings/count), so they must show here too; they are handled in the business console
+      // (managedInBusiness), where the deal's handover, payment and slip live.
+      const member = await getMembership(session.user.id);
+      if (member && can(member.role, "manageBookings")) {
+        const dealIds = await getOrgDealIds(member.organizationId);
+        if (dealIds.length) {
+          const dealBookings = await Booking.find({ dealId: { $in: dealIds }, deletedByOwner: { $ne: true }, source: { $ne: "WALK_IN" } })
+            .populate("dealId", DEAL_BOOKING_FIELDS)
+            .populate("renterId", "name email phone")
+            .sort({ createdAt: -1 })
+            .limit(200)
+            .lean();
+          bookings = [...bookings, ...dealBookings.map(b => ({ ...b, managedInBusiness: true }))]
+            .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime());
+        }
+      }
     } else {
       bookings = await Booking.find({
         renterId: session.user.id,

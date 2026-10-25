@@ -219,7 +219,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
                       business={org?.name}
                       caption={stamp.caption}
                       date={new Date(stamp.at || p.createdAt).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" })}
-                      className="pointer-events-none absolute bottom-[34px] right-0 h-auto w-[200px] max-w-full -rotate-[5deg] opacity-90 mix-blend-multiply"
+                      className="pointer-events-none absolute bottom-[34px] right-0 h-auto w-[160px] max-w-full -rotate-[5deg] opacity-90 mix-blend-multiply"
                     />
                   )}
                 </div>

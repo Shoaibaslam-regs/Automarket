@@ -357,7 +357,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
                   <AutoGOStamp
                     business={org?.name}
                     date={new Date(b.confirmedAt || b.createdAt).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" })}
-                    className="pointer-events-none absolute bottom-[34px] right-0 h-auto w-[200px] max-w-full -rotate-[5deg] opacity-90 mix-blend-multiply"
+                    className="pointer-events-none absolute bottom-[34px] right-0 h-auto w-[160px] max-w-full -rotate-[5deg] opacity-90 mix-blend-multiply"
                   />
                 )}
               </div>

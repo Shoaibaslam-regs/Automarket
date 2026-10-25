@@ -10,7 +10,7 @@
  * It also shows push notifications (sent by src/lib/push.ts) and opens the right page when one is tapped.
  * Bump VERSION when this file changes to clear the old caches.
  */
-const VERSION = "v4";
+const VERSION = "v5";
 const STATIC = `am-static-${VERSION}`;
 const IMAGES = `am-images-${VERSION}`;
 const OFFLINE_URL = "/offline";

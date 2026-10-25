@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- tiny decorative pieces that must line up exactly; the optimiser adds nothing */
 
 /**
- * The AutoGO car: the logo's car (facing right, with its red speed lines), whose front wheel turns in place.
+ * The AutoGO car: the logo's car (facing right, with its speed lines in the hero gradient), whose front wheel turns in place.
  * Shared by the app splash, the launch animation and the 404 page.
  *
  * Drawn from two cut-outs of the logo in /public/car: the body with the wheel cleared, and the wheel disc laid
