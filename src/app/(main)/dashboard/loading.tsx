@@ -31,7 +31,7 @@ export default function DashboardLoading() {
             </div>
           ))}
         </div>
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="grid gap-3 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70">

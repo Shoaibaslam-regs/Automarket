@@ -170,7 +170,7 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Listings: grid / list switch like the browse page */}
           <MyListings
             listings={listings.map(l => ({

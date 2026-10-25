@@ -24,6 +24,14 @@ body {
   color: var(--foreground);
 }
 
+/* Something wider than a phone screen (a grid column sized to a long title) made mobile browsers widen the whole
+   page, which pushed the menu drawer, pinned to the page's right edge, off the screen. Clip sideways overflow at
+   the page so that can't happen; clip (not hidden) makes no scroll box, so sticky bars keep working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* ── GLOBAL RESPONSIVE UTILITIES ── */
 .container {
   width: 100%;
