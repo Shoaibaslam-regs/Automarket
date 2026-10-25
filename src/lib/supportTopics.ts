@@ -1,4 +1,4 @@
-// Client-safe: topics a user can pick when contacting the AutoMarket team.
+// Client-safe: topics a user can pick when contacting the AutoGO team.
 
 export const SUPPORT_TOPICS = [
   { id: "PLAN", label: "Plans & billing" },

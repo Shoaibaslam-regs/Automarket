@@ -13,7 +13,7 @@ import { reportError } from "@/lib/errorLog";
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
 /**
- * Sends a plan upgrade request to the AutoMarket team as a chat message,
+ * Sends a plan upgrade request to the AutoGO team as a chat message,
  * so it lands in the support admin's Messages inbox and they can reply there.
  * Returns the admin's id so the client can open that conversation.
  */

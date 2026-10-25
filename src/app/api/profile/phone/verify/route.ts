@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     // Someone else may have verified the same number in the meantime
     if (await User.exists({ _id: { $ne: me }, verifiedPhone: otp.phone })) {
       await otp.deleteOne();
-      return NextResponse.json({ error: "This number is already verified on another AutoMarket account." }, { status: 409 });
+      return NextResponse.json({ error: "This number is already verified on another AutoGO account." }, { status: 409 });
     }
     const now = new Date();
     await User.updateOne({ _id: me }, { $set: { verifiedPhone: otp.phone, phoneVerifiedAt: now, phone: formatPkMobile(otp.phone) } });

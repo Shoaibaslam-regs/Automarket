@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
 import MessageBadge from "@/components/MessageBadge";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import SignOutDialog from "@/components/SignOutDialog";
 import MobileNavDrawer from "@/components/MobileNavDrawer";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
@@ -59,7 +59,6 @@ export default function Navbar() {
       <style>{`
         .nav-desktop { display: flex; }
         /* The logo artwork is dark; lighten it on the dark theme */
-        .dark .nav-logo { filter: brightness(0.5) invert(1); }
         .nav-mobile-btn { display: none; }
         @media (max-width: 768px) {
           .nav-desktop { display: none !important; }
@@ -102,15 +101,7 @@ export default function Navbar() {
 
           {/* ── LOGO ── */}
           <Link href="/" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            <Image
-              src="/logo-1771205663069.png"
-              alt="AutoMarket"
-              width={140}
-              height={40}
-              className="nav-logo"
-              style={{ width: "auto", height: scrolled ? "30px" : "36px", transition: "height 0.3s" }}
-              priority
-            />
+            <BrandLogo height={scrolled ? 22 : 26} phoneHeight={scrolled ? 15 : 17} priority style={{ transition: "height 0.3s" }} />
           </Link>
 
           {/* ── DESKTOP CENTER LINKS ── */}

@@ -128,7 +128,7 @@ export default function InventoryPage() {
         title={`Delete ${confirmDelete?.title ?? "vehicle"}`}
         description={confirmDelete && (
           <>
-            <strong style={{ color: "var(--gh-0d1117)" }}>{confirmDelete.title}</strong> will be removed from AutoMarket and buyers will no longer
+            <strong style={{ color: "var(--gh-0d1117)" }}>{confirmDelete.title}</strong> will be removed from AutoGO and buyers will no longer
             be able to find it. If it was sold, consider marking it <strong>Sold</strong> instead to keep it in your reports.
             {" "}<strong style={{ color: "var(--gh-cf222e)" }}>This can&apos;t be undone.</strong>
           </>

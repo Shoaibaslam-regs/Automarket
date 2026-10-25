@@ -14,7 +14,7 @@ export interface ICustomer extends Document {
   assignedTo?: mongoose.Types.ObjectId;
   /** Marked by the business as a star (VIP) customer */
   starred: boolean;
-  /** Set when the customer has an AutoMarket account (online bookings, or added by email) */
+  /** Set when the customer has an AutoGO account (online bookings, or added by email) */
   userId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;

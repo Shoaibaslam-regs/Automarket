@@ -6,7 +6,7 @@ import { formatLakh } from "@/lib/format";
 import { OG_CONTENT_TYPE, OG_SIZE, ShareCard, brandMark, photoDataUrl } from "@/lib/ogCard";
 
 // The link preview for a listing: its first photo with the title, price and city
-export const alt = "Vehicle on AutoMarket";
+export const alt = "Vehicle on AutoGO";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
@@ -21,7 +21,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     listing = await Listing.findById(id).select("title make model year price type location images").lean();
   }
   if (!listing) {
-    return new ImageResponse(<ShareCard mark={mark} photo={null} eyebrow="AutoMarket" title="Buy, sell & rent cars and bikes" />, size);
+    return new ImageResponse(<ShareCard mark={mark} photo={null} eyebrow="AutoGO" title="Buy, sell & rent cars and bikes" />, size);
   }
   const photo = await photoDataUrl(listing.images?.[0]);
   return new ImageResponse(

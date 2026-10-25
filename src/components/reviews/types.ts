@@ -28,7 +28,7 @@ export function toReviewView(r: RawReview): ReviewView {
     createdAt: new Date(r.createdAt).toISOString(),
     reviewer: {
       id: r.reviewerId ? String(r.reviewerId._id) : "",
-      name: r.reviewerId?.name || "AutoMarket user",
+      name: r.reviewerId?.name || "AutoGO user",
       image: r.reviewerId?.image,
     },
     ...(r.reply?.text && { reply: { text: r.reply.text, repliedAt: new Date(r.reply.repliedAt).toISOString() } }),

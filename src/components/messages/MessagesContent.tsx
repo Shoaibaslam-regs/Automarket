@@ -379,7 +379,7 @@ export default function MessagesContent() {
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeUser.name}</p>
-                  <p style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>AutoMarket member</p>
+                  <p style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>AutoGO member</p>
                 </div>
                 <button type="button" className="chat-del" aria-label="Delete chat" title="Delete chat"
                   onClick={() => { setDeleteError(""); setDeleteTarget(activeUser); }}>

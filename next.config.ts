@@ -26,7 +26,7 @@ const csp = [
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
-  // No other site may show AutoMarket inside a frame (clickjacking)
+  // No other site may show AutoGO inside a frame (clickjacking)
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

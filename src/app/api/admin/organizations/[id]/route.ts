@@ -21,7 +21,7 @@ async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.T
     const message = await Message.create({ senderId: adminId, receiverId: ownerId, content });
     const populated = await Message.findById(message._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
     await triggerPusher(`chat-${[String(adminId), String(ownerId)].sort().join("-")}`, "new-message", populated);
-    await triggerPusher(`user-${ownerId}`, "new-notification", { type: "message", from: "AutoMarket", preview: content.slice(0, 50) });
+    await triggerPusher(`user-${ownerId}`, "new-notification", { type: "message", from: "AutoGO", preview: content.slice(0, 50) });
   } catch (e) {
     reportError("Suspension notice failed:", e);
   }
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await org.save();
       const count = org.warnings.length;
       await notifyOwner(gate.admin._id, org.ownerId,
-        `Warning ${count > 1 ? `#${count} ` : ""}for your business "${org.name}" on AutoMarket: ${why}. ` +
+        `Warning ${count > 1 ? `#${count} ` : ""}for your business "${org.name}" on AutoGO: ${why}. ` +
         `Please fix this to avoid a suspension. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.warn", { type: "BUSINESS", id: org._id, label: org.name }, why);
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await org.save();
 
       await notifyOwner(gate.admin._id, org.ownerId,
-        `Your business "${org.name}" has been suspended on AutoMarket. Reason: ${why}. ` +
+        `Your business "${org.name}" has been suspended on AutoGO. Reason: ${why}. ` +
         `Its ${live.length} live listing${live.length !== 1 ? "s are" : " is"} hidden and its public page is offline. Reply here if you'd like to appeal.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.suspend", { type: "BUSINESS", id: org._id, label: org.name }, `${why} (${live.length} listing${live.length !== 1 ? "s" : ""} hidden)`);
@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await org.save();
 
       await notifyOwner(gate.admin._id, org.ownerId,
-        `Good news: your business "${org.name}" has been reinstated on AutoMarket. Your public page is back and ${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s are" : " is"} live again.`);
+        `Good news: your business "${org.name}" has been reinstated on AutoGO. Your public page is back and ${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s are" : " is"} live again.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.reinstate", { type: "BUSINESS", id: org._id, label: org.name }, `${restored.modifiedCount} listing${restored.modifiedCount !== 1 ? "s" : ""} restored`);
       return NextResponse.json({ ok: true, restoredListings: restored.modifiedCount });
@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       };
       await org.save();
       await notifyOwner(gate.admin._id, org.ownerId,
-        `Your business "${org.name}" is now Verified on AutoMarket${source === "ADMIN_GRANT" ? " (complimentary)" : ""}. ` +
+        `Your business "${org.name}" is now Verified on AutoGO${source === "ADMIN_GRANT" ? " (complimentary)" : ""}. ` +
         `The Verified badge shows on your business page and listings${expiresAt ? ` until ${fmtDate(expiresAt)}` : ""}.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.verify", { type: "BUSINESS", id: org._id, label: org.name }, `${source === "PAID" ? "Paid" : "Gift"}${expiresAt ? `, until ${fmtDate(expiresAt)}` : ""}`);
@@ -151,7 +151,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       org.verification.by = undefined;
       await org.save();
       await notifyOwner(gate.admin._id, org.ownerId,
-        `The Verified badge has been removed from your business "${org.name}" on AutoMarket${why ? `. Reason: ${why}` : ""}. Reply here if you have questions.`);
+        `The Verified badge has been removed from your business "${org.name}" on AutoGO${why ? `. Reason: ${why}` : ""}. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.unverify", { type: "BUSINESS", id: org._id, label: org.name }, why || undefined);
       return NextResponse.json({ ok: true });

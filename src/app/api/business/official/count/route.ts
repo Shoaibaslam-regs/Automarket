@@ -5,7 +5,7 @@ import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
 import { unreadOfficialCount } from "@/lib/official";
 
-/** Unread AutoMarket Official posts for the nav badge; 0 for people without a following business. */
+/** Unread AutoGO Official posts for the nav badge; 0 for people without a following business. */
 export async function GET() {
   try {
     const session = await auth();

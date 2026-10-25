@@ -22,7 +22,7 @@ const KINDS = [
 ] as const;
 
 /**
- * "Send feedback": a short note to the AutoMarket team. It goes to the support inbox in Messages (topic
+ * "Send feedback": a short note to the AutoGO team. It goes to the support inbox in Messages (topic
  * "Feedback & ideas") with the page it was sent from. Mounted once in Providers; signed-out visitors are asked
  * to sign in.
  */
@@ -73,7 +73,7 @@ export default function FeedbackDialog() {
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-slate-900">{sent ? "Thank you!" : "Send feedback"}</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-slate-500">
-                {sent ? "The AutoMarket team reads every message." : "Tell us what would make AutoMarket easier or better for you."}
+                {sent ? "The AutoGO team reads every message." : "Tell us what would make AutoGO easier or better for you."}
               </Dialog.Description>
             </div>
             <Dialog.Close aria-label="Close" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>

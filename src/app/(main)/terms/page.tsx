@@ -8,7 +8,7 @@ import { TERMS_UPDATED } from "@/lib/terms";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions",
-  description: "The rules for using AutoMarket to buy, sell and rent cars and bikes in Pakistan.",
+  description: "The rules for using AutoGO to buy, sell and rent cars and bikes in Pakistan.",
   alternates: { canonical: "/terms" },
 };
 
@@ -23,12 +23,12 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <p>
-          AutoMarket is an online marketplace where people and businesses in Pakistan list cars and bikes for sale or rent, and
+          AutoGO is an online marketplace where people and businesses in Pakistan list cars and bikes for sale or rent, and
           buyers and renters contact them. By creating an account or using the site, you agree to these terms. If you don&apos;t
-          agree, please don&apos;t use AutoMarket.
+          agree, please don&apos;t use AutoGO.
         </p>
         <p>
-          AutoMarket is <strong>not a party</strong> to any sale or rental. Deals are made directly between the buyer or renter
+          AutoGO is <strong>not a party</strong> to any sale or rental. Deals are made directly between the buyer or renter
           and the seller or owner. We provide the platform, not the vehicles.
         </p>
       </>
@@ -68,7 +68,7 @@ const SECTIONS: Section[] = [
         <ul>
           <li>Inspect the vehicle in person and check the registration book, chassis and engine numbers and the seller&apos;s CNIC before paying anything.</li>
           <li>Do the transfer through the Excise &amp; Taxation department. Don&apos;t pay large amounts in cash without a written receipt.</li>
-          <li>Never send an advance payment for a vehicle you haven&apos;t seen. AutoMarket will never ask you to pay a seller through us.</li>
+          <li>Never send an advance payment for a vehicle you haven&apos;t seen. AutoGO will never ask you to pay a seller through us.</li>
         </ul>
         <p>
           <strong>Rentals.</strong> A booking request becomes a booking only when the owner confirms it. Rates, the security deposit,
@@ -86,7 +86,7 @@ const SECTIONS: Section[] = [
       <ul>
         <li>The owner of a business account is responsible for its team and for every listing, deal, booking and message from its members.</li>
         <li>Business details on your public page (name, picture, phone, address) must be accurate and must not copy another business.</li>
-        <li>Customer records you keep in AutoMarket may only be used to serve those customers. Don&apos;t share or sell them.</li>
+        <li>Customer records you keep in AutoGO may only be used to serve those customers. Don&apos;t share or sell them.</li>
         <li>Deals you publish must be honoured for the vehicles and dates you set.</li>
       </ul>
     ),
@@ -148,7 +148,7 @@ const SECTIONS: Section[] = [
           about your own experience.
         </p>
         <p>
-          You keep ownership of what you post (listings, photos, reviews). You allow AutoMarket to show, store and resize it on the
+          You keep ownership of what you post (listings, photos, reviews). You allow AutoGO to show, store and resize it on the
           site and in search results and promotion of your listing while it is live.
         </p>
       </>
@@ -166,7 +166,7 @@ const SECTIONS: Section[] = [
         </p>
         <p>
           You can appeal by replying to our message or through Help &amp; support. You can delete your business or stop using
-          AutoMarket at any time.
+          AutoGO at any time.
         </p>
       </>
     ),
@@ -177,12 +177,12 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <p>
-          We work to keep AutoMarket safe and available, but the site is provided as it is. We don&apos;t check every listing or
+          We work to keep AutoGO safe and available, but the site is provided as it is. We don&apos;t check every listing or
           user, and we don&apos;t guarantee the condition, ownership or legality of any vehicle, or that a buyer, seller or owner
           will complete a deal.
         </p>
         <p>
-          As far as the law allows, AutoMarket is not responsible for losses that come from deals between users, from content
+          As far as the law allows, AutoGO is not responsible for losses that come from deals between users, from content
           posted by users, or from the site being temporarily unavailable. Our total responsibility to you is limited to the fees
           you paid us in the three months before the claim.
         </p>
@@ -206,7 +206,7 @@ const SECTIONS: Section[] = [
     body: (
       <p>
         We may update these terms. The date at the top shows the latest version, and we&apos;ll tell users about important
-        changes. Using AutoMarket after a change means you accept the new terms. These terms are governed by the laws of the
+        changes. Using AutoGO after a change means you accept the new terms. These terms are governed by the laws of the
         Islamic Republic of Pakistan, and disputes go to the courts of Pakistan.
       </p>
     ),
@@ -225,7 +225,7 @@ export default function TermsPage() {
           </span>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Terms &amp; Conditions</h1>
           <p className="mt-2 max-w-[620px] text-sm leading-relaxed text-slate-400">
-            The rules for buying, selling and renting on AutoMarket. Please read them before you post a listing or make a deal.
+            The rules for buying, selling and renting on AutoGO. Please read them before you post a listing or make a deal.
           </p>
           <p className="mt-4 text-xs text-slate-500">Last updated {TERMS_UPDATED}</p>
         </div>

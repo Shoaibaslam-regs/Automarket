@@ -49,7 +49,7 @@ export function pushForEvent(userId: string, data: EventData) {
   const p = ((): PushPayload | null => {
     switch (data.type) {
       case "message":
-        return { title: data.from ? `New message from ${data.from}` : "New message", body: data.preview || "Open AutoMarket to read it.", url: "/messages", tag: "message" };
+        return { title: data.from ? `New message from ${data.from}` : "New message", body: data.preview || "Open AutoGO to read it.", url: "/messages", tag: "message" };
       case "booking":
         if (data.status === "PENDING") return { title: "New booking request", body: "Someone wants to book your vehicle. Confirm or decline it.", url: "/notifications", tag: "booking-request" };
         if (data.status === "CONFIRMED") return { title: "Booking confirmed ✓", body: "Your booking was confirmed by the owner.", url: "/bookings", tag: "booking" };

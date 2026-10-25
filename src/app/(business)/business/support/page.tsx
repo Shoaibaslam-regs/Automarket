@@ -13,7 +13,7 @@ import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 
 type Org = { _id: string; name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
-/** Business console page for contacting the AutoMarket team about anything, including suspension appeals. */
+/** Business console page for contacting the AutoGO team about anything, including suspension appeals. */
 export default function BusinessSupportPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -52,14 +52,14 @@ export default function BusinessSupportPage() {
   }
 
   const suspended = org?.isActive === false;
-  const wa = whatsappLink(`Hi AutoMarket team, this is ${session?.user?.name ?? "a business user"}${org ? ` from ${org.name} (business ID #${org._id.slice(-6)})` : ""}, my ID #${session?.user?.id?.slice(-6) ?? ""}. `);
+  const wa = whatsappLink(`Hi AutoGO team, this is ${session?.user?.name ?? "a business user"}${org ? ` from ${org.name} (business ID #${org._id.slice(-6)})` : ""}, my ID #${session?.user?.id?.slice(-6) ?? ""}. `);
 
   return (
     <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
       <div className="border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
         <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Help & support</h1>
-        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Reach the AutoMarket team about your plan, listings, bookings, a problem, or anything else</p>
+        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Reach the AutoGO team about your plan, listings, bookings, a problem, or anything else</p>
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">

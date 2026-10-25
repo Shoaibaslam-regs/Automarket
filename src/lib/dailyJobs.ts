@@ -144,7 +144,7 @@ export async function sendMorningDigest(now = new Date()): Promise<{ businesses:
   }
   for (const [userId, c] of byPerson) {
     const body = digestText(c);
-    if (body) pushes.push({ userId, payload: { title: "Today on AutoMarket", body, url: "/bookings", tag: "today" } });
+    if (body) pushes.push({ userId, payload: { title: "Today on AutoGO", body, url: "/bookings", tag: "today" } });
   }
   await inBatches(pushes, 20, p => sendPush([p.userId], p.payload));
   return { businesses: orgs.length, people: pushes.length };

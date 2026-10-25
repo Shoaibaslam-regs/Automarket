@@ -102,16 +102,7 @@ export default function ProvinceCities() {
                 <Flame size={17} className="animate-[pcFlame_1.1s_ease-in-out_infinite]" />
               </span>
               <span className="relative min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <span className="truncate text-[15px] font-bold text-slate-900">{open.capital}</span>
-                  <span className="relative inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-rose-600">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
-                    </span>
-                    Capital
-                  </span>
-                </span>
+                <span className="block truncate text-[15px] font-bold text-slate-900">{open.capital}</span>
                 <span className="block text-[11px] text-slate-500">Provincial capital of {open.name}</span>
               </span>
               <ArrowRight size={16} className="relative flex-shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-slate-900" />

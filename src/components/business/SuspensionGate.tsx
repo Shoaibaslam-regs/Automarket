@@ -31,7 +31,7 @@ function WarningBanner({ warning }: { warning: Warning }) {
         <AlertTriangle size={18} className="flex-shrink-0 text-[var(--gh-9a6700)]" />
         <div className="min-w-0 flex-1 text-[13px] text-[var(--gh-7d4e00)]">
           <p className="font-bold">
-            Warning from AutoMarket{warning.total > 1 ? ` (${warning.total} so far)` : ""} ·{" "}
+            Warning from AutoGO{warning.total > 1 ? ` (${warning.total} so far)` : ""} ·{" "}
             <span className="font-normal">{new Date(warning.at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span>
           </p>
           <p className="mt-0.5">{warning.reason}. Please fix this to avoid your business being suspended.</p>

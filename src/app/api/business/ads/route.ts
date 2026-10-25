@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     const admin = await getSupportAdmin();
     if (admin && !admin._id.equals(session.user.id)) {
       await sendChatMessage(session.user.id, String(admin._id),
-        `Hi AutoMarket team, "${org.name}"${city ? ` (${city})` : ""} asked for a ${tier === "TOP" ? "Top" : "Standard"} sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
+        `Hi AutoGO team, "${org.name}"${city ? ` (${city})` : ""} asked for a ${tier === "TOP" ? "Top" : "Standard"} sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
         session.user.name).catch(e => reportError("Ad request message failed:", e));
     }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.request",

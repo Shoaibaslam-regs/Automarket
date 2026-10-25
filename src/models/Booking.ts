@@ -7,7 +7,7 @@ export interface IBooking extends Document {
   /** Set when a rent deal (package) was booked instead of a rental listing; shown with a DEAL tag */
   dealId?: mongoose.Types.ObjectId;
   /**
-   * A walk-in booking for a vehicle that isn't listed on AutoMarket (typed in by the business).
+   * A walk-in booking for a vehicle that isn't listed on AutoGO (typed in by the business).
    * Such bookings have no rental or deal, so they carry the business in `organizationId`.
    */
   offListVehicle?: { title: string; dailyRate: number; deposit: number };
@@ -16,7 +16,7 @@ export interface IBooking extends Document {
   /** The marketplace user who booked; absent for walk-in bookings made by a business */
   renterId?: mongoose.Types.ObjectId;
   source: "ONLINE" | "WALK_IN";
-  /** Customer details for walk-in bookings, which have no AutoMarket account */
+  /** Customer details for walk-in bookings, which have no AutoGO account */
   walkIn?: { name: string; phone: string; email?: string; cnic?: string };
   /** Business CRM record this booking is for, when chosen */
   customerId?: mongoose.Types.ObjectId;

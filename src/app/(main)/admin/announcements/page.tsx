@@ -16,7 +16,7 @@ const EMPTY = { kind: "ANNOUNCEMENT" as AnnouncementKind, title: "", body: "", l
 const fmt = (d: string) => new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 const field = "w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 
-/** Admin: post announcements, updates and offers to every business that follows AutoMarket Official. */
+/** Admin: post announcements, updates and offers to every business that follows AutoGO Official. */
 export default function AdminAnnouncementsPage() {
   const { canWrite } = useAdminAccess();
   const [posts, setPosts] = useState<Post[] | null>(null);

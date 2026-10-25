@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import CrashScene from "@/components/CrashScene";
 
 export const metadata: Metadata = {
-  title: { absolute: "Page Not Found — AutoMarket" },
+  title: { absolute: "Page Not Found — AutoGO" },
 };
 
 const SHORTCUTS = [

@@ -74,7 +74,7 @@ export async function GET() {
   }
 }
 
-/** Creates a booking for a walk-in customer (no AutoMarket account needed). */
+/** Creates a booking for a walk-in customer (no AutoGO account needed). */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     const customer = body.customer ?? {};
     if (!["PENDING", "CONFIRMED"].includes(status)) return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     // The picker sends a rental id, "deal:<id>" for one of the business's rent deals, or "other" for a
-    // vehicle that isn't listed on AutoMarket, described in `offList`
+    // vehicle that isn't listed on AutoGO, described in `offList`
     const offListPick = rentalId === "other";
     const dealPick = typeof rentalId === "string" && rentalId.startsWith("deal:") ? rentalId.slice(5) : null;
     const targetId = dealPick ?? rentalId;

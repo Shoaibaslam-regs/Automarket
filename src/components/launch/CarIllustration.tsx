@@ -1,5 +1,5 @@
 /**
- * The AutoMarket car: a small side view facing right (slate body, the logo's red stripe, a yellow headlight) with
+ * The AutoGO car: a small side view facing right (slate body, the logo's red stripe, a yellow headlight) with
  * wheels that spin around their own centres. Shared by the app splash, the launch animation and the 404 page.
  * Fixed colours by default, for the splash's always-white screen; `themed` reads the theme's slate shades instead
  * (through `style`, since SVG fill attributes can't read CSS variables), so the car stays visible on a dark-mode

@@ -22,16 +22,23 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  applicationName: "AutoMarket",
-  // iPhone: open full screen from the home screen, under the name "AutoMarket"
-  appleWebApp: { capable: true, title: "AutoMarket", statusBarStyle: "default" },
+  applicationName: "AutoGO",
+  // iPhone: open full screen from the home screen, under the name "AutoGO"
+  appleWebApp: { capable: true, title: "AutoGO", statusBarStyle: "default" },
   title: {
-    default: "AutoMarket — Buy, Sell & Rent Vehicles",
-    template: "%s — AutoMarket",
+    default: "AutoGO — Buy, Sell & Rent Vehicles",
+    template: "%s — AutoGO",
   },
   description: "Pakistan's premier automobile marketplace",
   icons: {
-    icon: "/3+Lines+02.webp",
+    // The AutoGO mark (three slashes over the car), all on transparent: the white-backed icon-192 is for the
+    // installed app only, or high-resolution screens would pick it and show a white box in the tab
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/favicon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icons/favicon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     // iPhone home-screen icon (installed app)
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },

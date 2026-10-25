@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
- * Finds an AutoMarket account to add as a customer, by exact email or full account ID.
+ * Finds an AutoGO account to add as a customer, by exact email or full account ID.
  * Exact matches only, so it can't be used to browse users.
  */
 export async function GET(req: NextRequest) {
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       : await User.findOne({ email: { $regex: `^${escapeRegex(q)}$`, $options: "i" } })
           .select("name email phone")
           .lean<{ _id: mongoose.Types.ObjectId; name?: string; email: string; phone?: string }>();
-    if (!user) return NextResponse.json({ error: "No AutoMarket account found. Check the email, or add them as an outside customer." }, { status: 404 });
+    if (!user) return NextResponse.json({ error: "No AutoGO account found. Check the email, or add them as an outside customer." }, { status: 404 });
 
     return NextResponse.json({ user: { id: user._id.toString(), name: user.name ?? "", email: user.email, phone: user.phone ?? "" } });
   } catch (error) {

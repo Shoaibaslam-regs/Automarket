@@ -1,5 +1,5 @@
 /*
- * AutoMarket service worker. Registered in production by components/pwa/PwaRegister.tsx.
+ * AutoGO service worker. Registered in production by components/pwa/PwaRegister.tsx.
  *
  * What it caches (GET requests to this site only):
  *  - /_next/static/*: build files with hashed names, cache-first (they never change)
@@ -10,7 +10,7 @@
  * It also shows push notifications (sent by src/lib/push.ts) and opens the right page when one is tapped.
  * Bump VERSION when this file changes to clear the old caches.
  */
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC = `am-static-${VERSION}`;
 const IMAGES = `am-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -78,8 +78,8 @@ self.addEventListener("fetch", event => {
 // Phone notifications sent by the server (src/lib/push.ts)
 self.addEventListener("push", event => {
   let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch { data = { title: "AutoMarket", body: event.data ? event.data.text() : "" }; }
-  const title = data.title || "AutoMarket";
+  try { data = event.data ? event.data.json() : {}; } catch { data = { title: "AutoGO", body: event.data ? event.data.text() : "" }; }
+  const title = data.title || "AutoGO";
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || "",
     icon: "/icons/icon-192.png",
@@ -90,13 +90,13 @@ self.addEventListener("push", event => {
     // A recognisable "da-da-daaa" rhythm; the sound itself is the phone's (web apps can't set it)
     vibrate: [90, 50, 90, 50, 220],
   }).then(async () => {
-    // Open AutoMarket pages play the AutoMarket chime (components/pwa/PwaRegister.tsx)
+    // Open AutoGO pages play the AutoGO chime (components/pwa/PwaRegister.tsx)
     const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     wins.forEach(w => w.postMessage({ type: "push", title }));
   }));
 });
 
-// Tapping a notification opens its page, reusing an open AutoMarket window when there is one
+// Tapping a notification opens its page, reusing an open AutoGO window when there is one
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   const target = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;

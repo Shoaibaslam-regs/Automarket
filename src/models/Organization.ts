@@ -16,7 +16,7 @@ export interface IOrganization extends Document {
   planExpiresAt?: Date;
   /** false while suspended by an admin */
   isActive: boolean;
-  /** Follows the AutoMarket Official channel (announcements, updates, offers in Business → Updates) */
+  /** Follows the AutoGO Official channel (announcements, updates, offers in Business → Updates) */
   followsOfficial?: boolean;
   followedOfficialAt?: Date;
   suspension?: {

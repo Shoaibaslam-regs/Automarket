@@ -13,7 +13,7 @@ export interface IPurchase extends Document {
   dealId?: mongoose.Types.ObjectId;
   /** Snapshot of the vehicle when the request was made, so records survive edits and deletes */
   vehicle: { title: string; make?: string; model?: string; year?: number; image?: string };
-  /** The AutoMarket user who asked to buy; absent for walk-in sales */
+  /** The AutoGO user who asked to buy; absent for walk-in sales */
   buyerId?: mongoose.Types.ObjectId;
   /** Buyer's details as given (always stored, also for online buyers) */
   buyer: { name: string; phone: string; email?: string; cnic?: string };

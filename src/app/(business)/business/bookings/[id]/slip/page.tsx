@@ -7,7 +7,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { LATE_RULE_TEXT, bookingNumber, rentalDays, type BookingStatus } from "@/lib/bookings";
 import { bookingCnic } from "@/lib/plates";
 import { dealLabel } from "@/lib/deals";
-import AutoMarketStamp from "@/components/bookings/AutoMarketStamp";
+import AutoGOStamp from "@/components/bookings/AutoGOStamp";
 import { PAYMENT_LABEL, paymentState } from "@/lib/payments";
 
 type SlipData = {
@@ -192,7 +192,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
             <span className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider" style={{ background: status.bg, color: status.color }}>{status.text}</span>
             <span className="text-xs text-slate-500">
               {deal && <span className="mr-2 inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
-              {b.source === "WALK_IN" ? "Walk-in booking" : "Online booking via AutoMarket"} · created {dateTime(b.createdAt)}
+              {b.source === "WALK_IN" ? "Walk-in booking" : "Online booking via AutoGO"} · created {dateTime(b.createdAt)}
               {b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
             </span>
           </div>
@@ -352,9 +352,9 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
               <div key={label} className="relative">
                 <div className="h-10 border-b border-dashed border-slate-300" />
                 <p className="mt-2 text-xs text-slate-500">{label}</p>
-                {/* The business side carries the AutoMarket-Pak stamp, inked over the signature line */}
+                {/* The business side carries the AutoGO-Pak stamp, inked over the signature line */}
                 {i === 1 && (
-                  <AutoMarketStamp
+                  <AutoGOStamp
                     business={org?.name}
                     date={new Date(b.confirmedAt || b.createdAt).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" })}
                     className="pointer-events-none absolute bottom-[34px] right-0 h-auto w-[200px] max-w-full -rotate-[5deg] opacity-90 mix-blend-multiply"
@@ -366,7 +366,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <footer className="border-t border-[var(--gh-e1e4e8)] bg-slate-50 px-6 py-2.5 text-center text-[11px] text-slate-400">
-          {bookingNumber(b._id)} · Generated with AutoMarket Business
+          {bookingNumber(b._id)} · Generated with AutoGO Business
         </footer>
       </article>
       </div>

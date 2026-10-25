@@ -33,7 +33,7 @@ const TONE = {
 
 const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sections: Section[]; help: string; helpLink: string }> = {
   en: {
-    title: "Guide: running your business on AutoMarket",
+    title: "Guide: running your business on AutoGO",
     subtitle: "Simple steps for every page of the console, in the order you'll use them",
     jump: "Jump to",
     help: "Still stuck? Send us a message and we'll help you.",
@@ -74,7 +74,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         icon: CalendarCheck,
         title: "Bookings (rentals)",
         intro:
-          "Bookings are your rental cars going out and coming back. Online requests from AutoMarket land here, and you can add walk-in customers yourself, even for a car you haven't listed.",
+          "Bookings are your rental cars going out and coming back. Online requests from AutoGO land here, and you can add walk-in customers yourself, even for a car you haven't listed.",
         stepsTitle: "From request to return",
         steps: [
           "A new online request shows as “Pending”. Tap “Confirm” (or Decline in More).",
@@ -82,7 +82,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "When the customer collects the car, tap “Hand over”. Write the number plate, check their CNIC card, and set the exact return time. You can also note the odometer, fuel and photos.",
           "When the car comes back, tap “Mark returned”. If it is more than 1 hour late, the late fee is added by itself. Add extra charges (fuel, damage) if needed.",
           "Record money with the payment tag (Pending, Partly paid, Paid), then settle the deposit from More.",
-          "Tap “Slip” to print or share the booking slip with the AutoMarket-Pak stamp.",
+          "Tap “Slip” to print or share the booking slip with the AutoGO-Pak stamp.",
         ],
         termsTitle: "What each status means",
         terms: [
@@ -110,7 +110,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         steps: [
           "An online request shows as “Requested”. Tap “Accept” and write the price you agreed, or Decline with a reason.",
           "For a buyer at your shop, tap “+ New sale”, choose the car (or type it in), the price and the buyer.",
-          "When the deal is done, tap “Mark as sold”. Add the number plate and how much they paid. The car is tagged Sold on AutoMarket by itself.",
+          "When the deal is done, tap “Mark as sold”. Add the number plate and how much they paid. The car is tagged Sold on AutoGO by itself.",
           "For qist, open More → “Set up installments”: down payment, number of months and the first due date. Tap “Received” each month when they pay.",
           "Tap “Slip” for the sale slip, or “Print schedule” for the installment plan to give the buyer.",
         ],
@@ -140,7 +140,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         steps: [
           "Open “Customers” from the menu on the left (on a phone, tap the menu button at the top).",
           "Tap the “+ Add customer” button.",
-          "Choose the type. “Outside customer” is a person who came to your shop or called you and has no AutoMarket account. “AutoMarket user” is a person with an account: type their email or account ID and tap Find, and their details fill in by themselves.",
+          "Choose the type. “Outside customer” is a person who came to your shop or called you and has no AutoGO account. “AutoGO user” is a person with an account: type their email or account ID and tap Find, and their details fill in by themselves.",
           "Write the name and phone number. These two are required. Email and city are optional.",
           "Choose the Source: how this person found you (walk in, online, referral, phone or other).",
           "Choose the Status (see the list below). A new person is usually “Lead”.",
@@ -229,12 +229,12 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "Staff are the people who work in your shop. When you add them, they can use this console from their own phone with their own login. You never need to share your password.",
         stepsTitle: "How to add a staff member",
         steps: [
-          "First, the person must make their own AutoMarket account (Sign up, using their email). Ask them to do this on their phone.",
+          "First, the person must make their own AutoGO account (Sign up, using their email). Ask them to do this on their phone.",
           "Ask them which email they used to sign up.",
           "Open “Staff” from the menu and tap “+ Add staff member”.",
           "Type that email exactly.",
           "Choose a role (see the list below). If you are not sure, choose “Staff”, the safest one.",
-          "Tap Add. Now they sign in to AutoMarket and tap “Business console” in their account menu.",
+          "Tap Add. Now they sign in to AutoGO and tap “Business console” in their account menu.",
         ],
         termsTitle: "What each role can do",
         terms: [
@@ -249,17 +249,17 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "When someone leaves your shop, tap “Remove” next to their name so they lose access straight away.",
           "One person can only belong to one business at a time.",
           "Your plan decides how many people your team can have, and you (the owner) count as one.",
-          "If you see “No AutoMarket account found”, the person hasn't signed up yet or the email is spelt differently.",
+          "If you see “No AutoGO account found”, the person hasn't signed up yet or the email is spelt differently.",
           "The Performance tab (owner and managers) shows this month's bookings, handovers, sales and money collected by each person.",
           "The Activity tab (owner only) lists everything your team did: bookings, payments, sales, expenses and customer changes, with who did it and when.",
-          "Your business has its own “Business ID”, and every person has their own “My ID”. Find the Business ID on the Dashboard, in Business settings, or by tapping your business name in the menu. Tap an ID to copy it, and give the Business ID when you contact AutoMarket about the shop.",
+          "Your business has its own “Business ID”, and every person has their own “My ID”. Find the Business ID on the Dashboard, in Business settings, or by tapping your business name in the menu. Tap an ID to copy it, and give the Business ID when you contact AutoGO about the shop.",
         ],
         open: { href: "/business/staff", label: "Open Staff" },
       },
     ],
   },
   ur: {
-    title: "رہنمائی: AutoMarket پر اپنا بزنس چلائیں",
+    title: "رہنمائی: AutoGO پر اپنا بزنس چلائیں",
     subtitle: "کنسول کے ہر صفحے کا آسان طریقہ، قدم بہ قدم، اسی ترتیب میں جیسے آپ استعمال کریں گے",
     jump: "سیدھا جائیں",
     help: "پھر بھی سمجھ نہ آئے؟ ہمیں پیغام بھیجیں، ہم آپ کی مدد کریں گے۔",
@@ -300,7 +300,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         icon: CalendarCheck,
         title: "بکنگز (کرائے کی گاڑیاں)",
         intro:
-          "بکنگز آپ کی کرائے کی گاڑیوں کا جانا اور واپس آنا ہیں۔ AutoMarket سے آن لائن درخواستیں یہاں آتی ہیں، اور دکان پر آنے والے گاہکوں کی بکنگ آپ خود بنا سکتے ہیں، چاہے گاڑی لسٹ نہ کی ہو۔",
+          "بکنگز آپ کی کرائے کی گاڑیوں کا جانا اور واپس آنا ہیں۔ AutoGO سے آن لائن درخواستیں یہاں آتی ہیں، اور دکان پر آنے والے گاہکوں کی بکنگ آپ خود بنا سکتے ہیں، چاہے گاڑی لسٹ نہ کی ہو۔",
         stepsTitle: "درخواست سے واپسی تک",
         steps: [
           "نئی آن لائن درخواست “Pending” دکھاتی ہے۔ “Confirm” دبائیں (یا More میں Decline)۔",
@@ -308,7 +308,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "جب گاہک گاڑی لے جائے تو “Hand over” دبائیں۔ نمبر پلیٹ لکھیں، اس کا اصل شناختی کارڈ (CNIC) چیک کریں، اور واپسی کا بالکل صحیح وقت لکھیں۔ میٹر ریڈنگ، فیول اور تصاویر بھی لکھ سکتے ہیں۔",
           "گاڑی واپس آئے تو “Mark returned” دبائیں۔ 1 گھنٹے سے زیادہ دیر ہو تو لیٹ فیس خود لگ جاتی ہے۔ ضرورت ہو تو اضافی چارجز (فیول، نقصان) لکھیں۔",
           "پیمنٹ ٹیگ سے رقم لکھیں (Pending، Partly paid، Paid)، پھر More سے ڈپازٹ کا حساب کریں۔",
-          "“Slip” دبا کر AutoMarket-Pak مہر والی بکنگ سلپ پرنٹ کریں یا بھیجیں۔",
+          "“Slip” دبا کر AutoGO-Pak مہر والی بکنگ سلپ پرنٹ کریں یا بھیجیں۔",
         ],
         termsTitle: "ہر اسٹیٹس کا مطلب",
         terms: [
@@ -336,7 +336,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         steps: [
           "آن لائن درخواست “Requested” دکھاتی ہے۔ “Accept” دبا کر طے شدہ قیمت لکھیں، یا وجہ لکھ کر Decline کریں۔",
           "دکان پر آئے خریدار کے لیے “+ New sale” دبائیں، گاڑی چنیں (یا نام لکھیں)، قیمت اور خریدار لکھیں۔",
-          "سودا مکمل ہو تو “Mark as sold” دبائیں۔ نمبر پلیٹ اور ادا شدہ رقم لکھیں۔ AutoMarket پر گاڑی خود Sold ہو جائے گی۔",
+          "سودا مکمل ہو تو “Mark as sold” دبائیں۔ نمبر پلیٹ اور ادا شدہ رقم لکھیں۔ AutoGO پر گاڑی خود Sold ہو جائے گی۔",
           "قسطوں کے لیے More → “Set up installments”: ایڈوانس، مہینوں کی تعداد اور پہلی قسط کی تاریخ۔ ہر مہینے رقم ملنے پر “Received” دبائیں۔",
           "“Slip” سے سیل سلپ، یا “Print schedule” سے خریدار کو دینے کے لیے قسطوں کا شیڈول نکالیں۔",
         ],
@@ -366,7 +366,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         steps: [
           "بائیں طرف کے مینو سے “Customers” کھولیں (موبائل پر اوپر مینو کا بٹن دبائیں)۔",
           "“+ Add customer” کا بٹن دبائیں۔",
-          "قسم چنیں۔ “Outside customer” وہ ہے جو دکان پر آیا یا فون کیا اور اس کا AutoMarket اکاؤنٹ نہیں۔ “AutoMarket user” وہ ہے جس کا اکاؤنٹ ہے: اس کا ای میل یا اکاؤنٹ آئی ڈی لکھ کر Find دبائیں، اس کی تفصیل خود بھر جائے گی۔",
+          "قسم چنیں۔ “Outside customer” وہ ہے جو دکان پر آیا یا فون کیا اور اس کا AutoGO اکاؤنٹ نہیں۔ “AutoGO user” وہ ہے جس کا اکاؤنٹ ہے: اس کا ای میل یا اکاؤنٹ آئی ڈی لکھ کر Find دبائیں، اس کی تفصیل خود بھر جائے گی۔",
           "نام اور فون نمبر لکھیں۔ یہ دونوں ضروری ہیں۔ ای میل اور شہر اختیاری ہیں۔",
           "Source چنیں: یہ شخص آپ تک کیسے پہنچا (خود آیا، آن لائن، کسی کے کہنے پر، فون، یا کچھ اور)۔",
           "Status چنیں (نیچے فہرست دیکھیں)۔ نیا شخص عام طور پر “Lead” ہوتا ہے۔",
@@ -455,12 +455,12 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "اسٹاف وہ لوگ ہیں جو آپ کی دکان پر کام کرتے ہیں۔ شامل کرنے کے بعد وہ اپنے موبائل سے اپنے لاگ اِن کے ساتھ یہ کنسول استعمال کر سکتے ہیں۔ آپ کو اپنا پاس ورڈ کبھی کسی کو دینے کی ضرورت نہیں۔",
         stepsTitle: "نیا اسٹاف ممبر کیسے شامل کریں",
         steps: [
-          "پہلے اس شخص کو اپنا AutoMarket اکاؤنٹ بنانا ہوگا (Sign up، اپنے ای میل سے)۔ اسے کہیں کہ اپنے موبائل پر یہ کر لے۔",
+          "پہلے اس شخص کو اپنا AutoGO اکاؤنٹ بنانا ہوگا (Sign up، اپنے ای میل سے)۔ اسے کہیں کہ اپنے موبائل پر یہ کر لے۔",
           "اس سے پوچھیں کہ سائن اپ کس ای میل سے کیا۔",
           "مینو سے “Staff” کھولیں اور “+ Add staff member” دبائیں۔",
           "وہی ای میل بالکل ویسے ہی لکھیں۔",
           "رول (Role) چنیں (نیچے فہرست دیکھیں)۔ اگر یقین نہ ہو تو “Staff” چنیں، یہ سب سے محفوظ ہے۔",
-          "Add دبائیں۔ اب وہ AutoMarket میں سائن اِن کرے اور اپنے اکاؤنٹ مینو میں “Business console” دبائے۔",
+          "Add دبائیں۔ اب وہ AutoGO میں سائن اِن کرے اور اپنے اکاؤنٹ مینو میں “Business console” دبائے۔",
         ],
         termsTitle: "ہر رول کیا کر سکتا ہے",
         terms: [
@@ -475,10 +475,10 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "جب کوئی دکان چھوڑ دے تو اس کے نام کے ساتھ “Remove” دبائیں، اس کی رسائی فوراً ختم ہو جائے گی۔",
           "ایک شخص ایک وقت میں صرف ایک بزنس کا حصہ ہو سکتا ہے۔",
           "ٹیم میں کتنے لوگ ہو سکتے ہیں، یہ پلان پر ہے، اور آپ (مالک) بھی ان میں گنے جاتے ہیں۔",
-          "اگر “No AutoMarket account found” آئے تو اس شخص نے ابھی سائن اپ نہیں کیا یا ای میل کی اسپیلنگ مختلف ہے۔",
+          "اگر “No AutoGO account found” آئے تو اس شخص نے ابھی سائن اپ نہیں کیا یا ای میل کی اسپیلنگ مختلف ہے۔",
           "Performance ٹیب (مالک اور مینیجر) ہر شخص کی اس مہینے کی بکنگز، گاڑی حوالگی، سیلز اور وصول کی گئی رقم دکھاتا ہے۔",
           "Activity ٹیب (صرف مالک) ٹیم کا ہر کام دکھاتا ہے: بکنگز، ادائیگیاں، سیلز، اخراجات اور کسٹمر کی تبدیلیاں، کس نے اور کب کیں۔",
-          "آپ کے بزنس کی اپنی “Business ID” ہے، اور ہر شخص کی اپنی “My ID”۔ Business ID ڈیش بورڈ پر، Business settings میں، یا مینو میں اپنے بزنس کے نام کو دبا کر ملے گی۔ ID کو دبائیں تو کاپی ہو جاتی ہے۔ دکان کے بارے میں AutoMarket سے رابطہ کریں تو Business ID بتائیں۔",
+          "آپ کے بزنس کی اپنی “Business ID” ہے، اور ہر شخص کی اپنی “My ID”۔ Business ID ڈیش بورڈ پر، Business settings میں، یا مینو میں اپنے بزنس کے نام کو دبا کر ملے گی۔ ID کو دبائیں تو کاپی ہو جاتی ہے۔ دکان کے بارے میں AutoGO سے رابطہ کریں تو Business ID بتائیں۔",
         ],
         open: { href: "/business/staff", label: "Staff کھولیں" },
       },

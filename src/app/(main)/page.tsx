@@ -226,7 +226,7 @@ export default async function HomePage() {
         {/* ── Live numbers ── */}
         <LiveStats initial={stats} />
 
-        {/* ── Why AutoMarket ── */}
+        {/* ── Why AutoGO ── */}
         <section>
           <SectionHeader title="Everything you need, in one place" />
           <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">

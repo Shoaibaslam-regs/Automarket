@@ -16,7 +16,7 @@ const LOGO_EASE = [0.4, 0, 0.2, 1] as const;
 
 /**
  * The moving part of the installed app's splash (loaded only while it shows): a car drives in from the left along
- * a road, "AutoMarket-Pak" appears behind it as it goes, then the car leaves and "Buy · Sell · Rent" fades in.
+ * a road, "AutoGO-Pak" appears behind it as it goes, then the car leaves and "Buy · Sell · Rent" fades in.
  * At the same moment the splash's logo (`logo`, server-rendered large in the centre) shrinks and rises into place
  * above it, so the two read as one movement. Calls onDone when it's time to hand over to the app.
  * With reduced motion the logo settles at once and the finished state shows briefly.
@@ -66,7 +66,8 @@ export default function SplashAnimation({
           transition={{ duration: DRIVE_S, ease: DRIVE_EASE }}
           style={{ position: "absolute", inset: "0 0 auto 0", textAlign: "center", font: "800 30px/1.15 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif", letterSpacing: "-0.02em", color: "#0f172a", whiteSpace: "nowrap" }}
         >
-          AutoMarket<span style={{ color: "#e11d48" }}>-Pak</span>
+          {/* Coloured like the logo: "Auto" dark, "GO" red */}
+          Auto<span style={{ color: "#f20d0d" }}>GO</span>-Pak
         </motion.div>
 
         {/* The road: a hairline with lane dashes that rush past while the car drives, then settle */}

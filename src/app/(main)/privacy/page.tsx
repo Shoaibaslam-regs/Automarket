@@ -7,7 +7,7 @@ import { whatsappLink } from "@/lib/supportContact";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "What personal information AutoMarket collects, who can see it, how long it is kept and how to delete it.",
+  description: "What personal information AutoGO collects, who can see it, how long it is kept and how to delete it.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -19,9 +19,9 @@ const SECTIONS: Section[] = [
     title: "About this policy",
     body: (
       <p>
-        This policy explains what personal information AutoMarket collects when you use the website or the installed app, why we
+        This policy explains what personal information AutoGO collects when you use the website or the installed app, why we
         need it, who can see it and how you can delete it. It works together with our <Link href={TERMS_PATH}>Terms &amp; Conditions</Link>.
-        AutoMarket is for people aged 18 and over.
+        AutoGO is for people aged 18 and over.
       </p>
     ),
   },
@@ -34,7 +34,7 @@ const SECTIONS: Section[] = [
         <li><strong>Phone number:</strong> the number on your profile and, if you verify it, the verified number and when it was verified.</li>
         <li><strong>Listings and deals:</strong> vehicle details, photos, price, city and the address where the vehicle can be seen.</li>
         <li><strong>Bookings and purchases:</strong> dates, prices, payments recorded by the owner or business, and the details needed at handover: your CNIC number, the vehicle&apos;s number plate, odometer and condition photos. A CNIC number is optional when you ask to buy from a business.</li>
-        <li><strong>Messages, reviews and reports</strong> that you send through AutoMarket.</li>
+        <li><strong>Messages, reviews and reports</strong> that you send through AutoGO.</li>
         <li><strong>Business information</strong> if you run a business account: business name, logo, address, staff, customers, sales and cash book entries.</li>
         <li><strong>Technical information:</strong> your IP address (used to stop abuse such as repeated sign-in attempts) and, if you turn on phone notifications, a device address used to deliver them.</li>
         <li><strong>Stored in your browser:</strong> your sign-in cookie and small preferences such as the light or dark theme, a draft listing, recently viewed vehicles and the grid or list view. These stay on your device.</li>
@@ -47,7 +47,7 @@ const SECTIONS: Section[] = [
     body: (
       <ul>
         <li>To run the marketplace: show listings, deliver messages, handle bookings, sales and business tools, and send the notifications and emails you expect (booking requests, password resets, saved-search alerts).</li>
-        <li>To keep AutoMarket safe: check that vehicle photos are real, limit repeated attempts, and investigate reports.</li>
+        <li>To keep AutoGO safe: check that vehicle photos are real, limit repeated attempts, and investigate reports.</li>
         <li>To answer you when you contact our team.</li>
       </ul>
     ),
@@ -60,7 +60,7 @@ const SECTIONS: Section[] = [
         <li><strong>Everyone:</strong> your listings and deals, your name and picture as the seller, business pages, and reviews.</li>
         <li><strong>People you deal with:</strong> when you book, buy or message, the seller, owner or business sees your name and phone number. Your CNIC is seen only by the owner or business you rent or buy from.</li>
         <li><strong>A business&apos;s team:</strong> staff of a business you deal with can see the bookings, sales and customer records they need for their work.</li>
-        <li><strong>AutoMarket admins:</strong> a small team who handle support, reports and plan requests.</li>
+        <li><strong>AutoGO admins:</strong> a small team who handle support, reports and plan requests.</li>
       </ul>
     ),
   },
@@ -70,7 +70,7 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <p>
-          We use trusted services to run AutoMarket. They process data only to provide their service to us: MongoDB Atlas (database),
+          We use trusted services to run AutoGO. They process data only to provide their service to us: MongoDB Atlas (database),
           Vercel (hosting), UploadThing (photo storage), Pusher (live updates), Google (sign-in, and the Gemini AI that checks photos
           and creates inspection reports), our email provider, Twilio (phone verification codes) and the browser push services of
           Google, Apple and Mozilla (phone notifications). Some of these services store data outside Pakistan.
@@ -108,7 +108,7 @@ const SECTIONS: Section[] = [
     title: "How we protect it",
     body: (
       <p>
-        Connections to AutoMarket are encrypted (HTTPS). Passwords, password-reset links and phone codes are stored only as
+        Connections to AutoGO are encrypted (HTTPS). Passwords, password-reset links and phone codes are stored only as
         secure hashes, admin access goes through a separate protected sign-in, and access to personal data is limited to the people who need it. No
         system is perfectly secure, so use a strong password and tell us straight away if you notice anything unusual.
       </p>
@@ -120,14 +120,14 @@ const SECTIONS: Section[] = [
     body: (
       <p>
         We may update this policy. The date at the top shows the latest version, and we&apos;ll tell users about important
-        changes. For any privacy question or request, contact the AutoMarket team through the <Link href="/help">Help &amp; safety</Link> page.
+        changes. For any privacy question or request, contact the AutoGO team through the <Link href="/help">Help &amp; safety</Link> page.
       </p>
     ),
   },
 ];
 
 export default function PrivacyPage() {
-  const wa = whatsappLink("Hi AutoMarket team, I have a privacy question.");
+  const wa = whatsappLink("Hi AutoGO team, I have a privacy question.");
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-14 pt-12 text-white sm:pt-16">

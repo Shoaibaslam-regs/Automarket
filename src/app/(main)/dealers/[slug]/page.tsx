@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!org) return { title: "Business not found" };
   return {
     title: `${org.name}${org.city ? ` · ${org.city}` : ""}`,
-    description: org.description || `${TYPE_LABEL[org.type]} on AutoMarket. See vehicles, deals and customer reviews.`,
+    description: org.description || `${TYPE_LABEL[org.type]} on AutoGO. See vehicles, deals and customer reviews.`,
   };
 }
 
@@ -151,7 +151,7 @@ export default async function DealerPage({ params }: Props) {
               <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
                 <span className="flex items-center gap-1"><Building2 size={14} /> {TYPE_LABEL[org.type]}</span>
                 {org.city && <span className="flex items-center gap-1"><MapPin size={14} /> {org.city}</span>}
-                <span className="flex items-center gap-1"><CalendarDays size={14} /> On AutoMarket since {since}</span>
+                <span className="flex items-center gap-1"><CalendarDays size={14} /> On AutoGO since {since}</span>
               </p>
               <a href="#reviews" className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-sm ring-1 ring-inset ring-white/10 hover:bg-white/10">
                 <StarRating value={average} size={14} />
@@ -223,7 +223,7 @@ export default async function DealerPage({ params }: Props) {
             </div>
             {org.phone && (
               <a
-                href={`https://wa.me/${org.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${org.name}, I found you on AutoMarket.`)}`}
+                href={`https://wa.me/${org.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${org.name}, I found you on AutoGO.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 block rounded-xl bg-[#25D366] py-2.5 text-center text-sm font-semibold text-white hover:bg-[#1ebe5b]"

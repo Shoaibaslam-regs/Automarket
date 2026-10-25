@@ -94,7 +94,7 @@ export default function DeleteAccount() {
               </Dialog.Title>
               <Dialog.Close aria-label="Close" disabled={deleting} className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={18} /></Dialog.Close>
             </div>
-            <Dialog.Description className="sr-only">Permanently delete your AutoMarket account and its data.</Dialog.Description>
+            <Dialog.Description className="sr-only">Permanently delete your AutoGO account and its data.</Dialog.Description>
 
             <div className="px-5 py-5">
               {loadError ? (

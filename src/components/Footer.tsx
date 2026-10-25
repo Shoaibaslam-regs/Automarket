@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-3 md:col-span-1">
             <p className="text-sm font-bold text-gray-900 mb-2">
-              AutoMarket
+              AutoGO
             </p>
 
             <p className="mx-auto max-w-xs text-xs text-gray-600 leading-6 md:mx-0">
@@ -68,7 +68,7 @@ export default function Footer() {
 
         <div className="flex flex-col items-center gap-2 border-t border-gray-200 pt-4 text-center sm:flex-row sm:justify-between">
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} AutoMarket Pakistan.
+            © {new Date().getFullYear()} AutoGO Pakistan.
             All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">

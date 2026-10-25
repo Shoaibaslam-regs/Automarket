@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const me = new mongoose.Types.ObjectId(session.user.id);
     if (await User.exists({ _id: { $ne: me }, verifiedPhone: phone })) {
-      return NextResponse.json({ error: "This number is already verified on another AutoMarket account." }, { status: 409 });
+      return NextResponse.json({ error: "This number is already verified on another AutoGO account." }, { status: 409 });
     }
 
     const [byUser, byNumber] = await Promise.all([hitRateLimit("phoneOtpUser", session.user.id), hitRateLimit("phoneOtpNumber", phone)]);
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       { upsert: true }
     );
     try {
-      await sendSms(phone, `Your AutoMarket verification code is ${code}. It expires in 10 minutes. Don't share it with anyone.`);
+      await sendSms(phone, `Your AutoGO verification code is ${code}. It expires in 10 minutes. Don't share it with anyone.`);
     } catch (e) {
       await PhoneOtp.deleteOne({ userId: me });
       if (e instanceof SmsNotConfiguredError) {

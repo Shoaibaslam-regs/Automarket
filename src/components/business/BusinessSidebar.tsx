@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import SignOutDialog from "@/components/SignOutDialog";
 import UserIdBadge from "@/components/UserIdBadge";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -233,7 +234,7 @@ function SidebarContent({
       <div className="relative space-y-4 px-4 pb-4 pt-5">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo-1771205663069.png" alt="AutoMarket" width={110} height={28} className="h-6 w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
+            <BrandLogo tone="dark" height={19} />
             <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-300 ring-1 ring-inset ring-white/10">
               Business
             </span>
@@ -399,7 +400,7 @@ export default function BusinessSidebar() {
       {/* Mobile top bar: the dark counterpart of the marketplace navbar */}
       <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl">
         <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-          <Image src="/logo-1771205663069.png" alt="AutoMarket" width={100} height={26} className="h-[18px] w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
+          <BrandLogo tone="dark" height={13} />
           <span className="rounded bg-white/10 px-1 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-slate-300">Business</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2">

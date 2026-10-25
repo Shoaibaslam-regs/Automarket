@@ -4,7 +4,7 @@ import { useState } from "react";
 import { OfficialAvatar, OfficialName } from "@/components/business/Official";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import { Building2, Car, KeyRound, Rocket } from "lucide-react";
 import Link from "next/link";
 import Select from "@/components/ui/Select";
@@ -30,7 +30,7 @@ export default function OnboardingPage() {
     city: "",
     address: "",
     description: "",
-    // Follow AutoMarket Official for announcements, updates and offers (on by default; can be changed in Updates)
+    // Follow AutoGO Official for announcements, updates and offers (on by default; can be changed in Updates)
     followOfficial: true,
   });
   // A business runs on its owner's plan, so this is the plan the new business will start on
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
     setLoading(false);
 
     if (!res.ok) { setError(data.error); return; }
-    // No online payments: a paid plan picked here goes to the AutoMarket team as a request in Messages
+    // No online payments: a paid plan picked here goes to the AutoGO team as a request in Messages
     if (requestsPlan) {
       await fetch("/api/support/upgrade-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: chosenPlan.id }) }).catch(() => {});
     }
@@ -76,7 +76,7 @@ export default function OnboardingPage() {
 
       {/* Header */}
       <div style={{ background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", display: "flex", alignItems: "center", gap: "12px" }}>
-        <Image src="/logo-1771205663069.png" alt="AutoMarket" width={120} height={32} className="theme-logo" style={{ width: "auto", height: "30px" }} />
+        <BrandLogo height={24} phoneHeight={18} />
         <div style={{ width: "1px", height: "20px", background: "var(--gh-e1e4e8)" }} />
         <span style={{ fontSize: "13px", color: "var(--gh-57606a)", fontWeight: 500 }}>Business setup</span>
       </div>
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
             </div>
             <p style={{ marginTop: "16px", padding: "12px 14px", borderRadius: "10px", fontSize: "12px", lineHeight: 1.6, background: requestsPlan ? "var(--gh-fff8c5)" : "var(--gh-f6f8fa)", color: requestsPlan ? "var(--gh-7d4e00)" : "var(--gh-57606a)", border: `1px solid ${requestsPlan ? "var(--gh-e3b341)" : "var(--gh-e1e4e8)"}` }}>
               {requestsPlan
-                ? <>When you launch, we&apos;ll send your request for <strong>{chosenPlan.name}</strong> ({formatPlanPrice(chosenPlan.price)}/month) to the AutoMarket team. They&apos;ll reply in Messages to arrange payment and switch it on. Your business starts on {currentPlan.name} until then.</>
+                ? <>When you launch, we&apos;ll send your request for <strong>{chosenPlan.name}</strong> ({formatPlanPrice(chosenPlan.price)}/month) to the AutoGO team. They&apos;ll reply in Messages to arrange payment and switch it on. Your business starts on {currentPlan.name} until then.</>
                 : chosenPlan.id === currentPlan.id
                   ? <>Your business starts on {currentPlan.name}. You can upgrade anytime from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>
                   : <>You already have {currentPlan.name}, so your business keeps it. Plans can be changed later from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>}
@@ -261,7 +261,7 @@ export default function OnboardingPage() {
               ))}
             </div>
 
-            {/* Follow the AutoMarket Official channel */}
+            {/* Follow the AutoGO Official channel */}
             <label style={{ display: "flex", alignItems: "flex-start", gap: "12px", textAlign: "left", background: "var(--gh-ffffff)", border: `1px solid ${form.followOfficial ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", padding: "14px 16px", marginBottom: "28px", cursor: "pointer" }}>
               <input type="checkbox" checked={form.followOfficial} onChange={e => setForm(p => ({ ...p, followOfficial: e.target.checked }))}
                 style={{ width: "18px", height: "18px", marginTop: "2px", accentColor: "var(--gh-0d1117)", flexShrink: 0 }} />

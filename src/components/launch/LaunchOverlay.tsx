@@ -12,7 +12,7 @@ const FAILSAFE_MS = 5000;
 
 /** Wording for each launch, so every place reads alike */
 export const LAUNCH_TEXT = {
-  listing: (title?: string) => ({ title: "Vehicle published!", subtitle: title ? `${title} is live on AutoMarket.` : "It's live on AutoMarket now." }),
+  listing: (title?: string) => ({ title: "Vehicle published!", subtitle: title ? `${title} is live on AutoGO.` : "It's live on AutoGO now." }),
   deal: (title?: string) => ({ title: "Deal published!", subtitle: title ? `${title} is live on the Deals page.` : "Your offer is live on the Deals page." }),
   business: (name?: string) => ({ title: "Your business is live!", subtitle: name ? `${name} is ready. Opening your console…` : "Opening your business console…" }),
 };

@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (!ASSIGNABLE_ROLES.includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
 
     const targetUser = await User.findOne({ email: email.trim() });
-    if (!targetUser) return NextResponse.json({ error: "No AutoMarket account found with this email" }, { status: 404 });
+    if (!targetUser) return NextResponse.json({ error: "No AutoGO account found with this email" }, { status: 404 });
     if (targetUser.organizationId) {
       return NextResponse.json(
         { error: targetUser.organizationId.equals(member.organizationId) ? "This user is already a staff member" : "This user already belongs to another business" },

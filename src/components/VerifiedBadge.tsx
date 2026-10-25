@@ -1,6 +1,6 @@
 import { BadgeCheck } from "lucide-react";
 
-const TITLE = "Verified business: checked by the AutoMarket team";
+const TITLE = "Verified business: checked by the AutoGO team";
 
 /**
  * The blue Verified tick for businesses with the Verified badge add-on.

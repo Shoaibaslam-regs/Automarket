@@ -18,7 +18,7 @@ function WhatsAppIcon({ size = 16 }: { size?: number }) {
 }
 
 /**
- * Ways to reach the AutoMarket team about a plan: an in-app message to the support admin
+ * Ways to reach the AutoGO team about a plan: an in-app message to the support admin
  * (opens the conversation in Messages) and, when a number is configured, WhatsApp.
  */
 export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", className = "" }: {

@@ -52,7 +52,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "UNLIMITED",
     accent: "var(--gh-9a6700)",
     name: "Ultimate",
-    tagline: "Run your whole business on AutoMarket",
+    tagline: "Run your whole business on AutoGO",
     price: 5000,
     limits: { listings: null, staff: null, customers: null },
     features: ["Unlimited listings and deals", "Unlimited staff", "Unlimited customers", "Full business management", "Advanced reports", "Dedicated support"],
@@ -138,7 +138,7 @@ export const VERIFIED_BADGE = {
   features: [
     "Blue Verified tick on your business page",
     "Verified label on every listing your team posts",
-    "Checked by the AutoMarket team, so buyers trust you faster",
+    "Checked by the AutoGO team, so buyers trust you faster",
     "Works with any plan, Free included",
   ],
 };

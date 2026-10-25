@@ -208,7 +208,7 @@ export default async function DealPage({ params }: Props) {
 
             <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-800 ring-1 ring-inset ring-amber-200">
               <Tag size={14} className="mt-0.5 flex-shrink-0" />
-              See the vehicle and its documents in person before paying anything. AutoMarket never asks for advance payments.
+              See the vehicle and its documents in person before paying anything. AutoGO never asks for advance payments.
             </p>
           </div>
           <div className="lg:col-span-2 lg:col-start-1">

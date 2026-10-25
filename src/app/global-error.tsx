@@ -22,10 +22,10 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body className="bg-slate-950 text-white">
-        <title>Something went wrong — AutoMarket</title>
+        <title>Something went wrong — AutoGO</title>
         <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-300">Unexpected error</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">AutoMarket hit a bump</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">AutoGO hit a bump</h1>
           <p className="mt-3 max-w-md text-slate-400">
             Something broke while loading the app. Try again, and if it keeps happening come back in a few minutes.
           </p>

@@ -1,4 +1,4 @@
-// Client-only: the AutoMarket chime played when a notification arrives while the app is open.
+// Client-only: the AutoGO chime played when a notification arrives while the app is open.
 // (When the app is closed the phone plays its own notification sound; websites can't change that.)
 
 const KEY = "notify-sound";

@@ -11,7 +11,7 @@ import Tip from "@/components/ui/Tip";
 
 type Feed = { following: boolean; followers: number; canChange: boolean; announcements: OfficialPost[] };
 
-/** Business → Updates: the AutoMarket Official channel (announcements, updates and offers from the AutoMarket team). */
+/** Business → Updates: the AutoGO Official channel (announcements, updates and offers from the AutoGO team). */
 export default function UpdatesPage() {
   const [feed, setFeed] = useState<Feed | null>(null);
   const [error, setError] = useState("");
@@ -45,7 +45,7 @@ export default function UpdatesPage() {
       <div className="border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-5 sm:px-6">
         <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
         <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Updates</h1>
-        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Announcements, new features and offers from the AutoMarket team</p>
+        <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Announcements, new features and offers from the AutoGO team</p>
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
@@ -60,7 +60,7 @@ export default function UpdatesPage() {
                 <OfficialAvatar size={56} />
                 <div className="min-w-[calc(100%-72px)] flex-1 sm:min-w-0">
                   <OfficialName tone="dark" className="text-base" />
-                  <p className="text-xs text-slate-400">The AutoMarket team · {feed.followers.toLocaleString()} business{feed.followers !== 1 ? "es" : ""} following <Tip id="official" size={12} /></p>
+                  <p className="text-xs text-slate-400">The AutoGO team · {feed.followers.toLocaleString()} business{feed.followers !== 1 ? "es" : ""} following <Tip id="official" size={12} /></p>
                 </div>
                 {feed.following ? (
                   feed.canChange ? (
@@ -79,7 +79,7 @@ export default function UpdatesPage() {
               {!feed.following && (
                 <p className="mt-3 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-300 ring-1 ring-inset ring-white/10">
                   {feed.canChange
-                    ? "Follow to get a notification in your console whenever the AutoMarket team posts something important, a new feature, or an offer for businesses."
+                    ? "Follow to get a notification in your console whenever the AutoGO team posts something important, a new feature, or an offer for businesses."
                     : "Your business doesn't follow this channel yet. Ask your owner or a manager to follow it to get notifications."}
                 </p>
               )}
@@ -89,7 +89,7 @@ export default function UpdatesPage() {
               <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-12 text-center">
                 <Megaphone size={26} strokeWidth={1.5} className="mx-auto mb-2 text-[var(--gh-8c959f)]" />
                 <p className="text-sm font-semibold text-[var(--gh-0d1117)]">No posts yet</p>
-                <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Announcements and offers from the AutoMarket team will appear here.</p>
+                <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Announcements and offers from the AutoGO team will appear here.</p>
               </div>
             ) : (
               <div className="space-y-3">

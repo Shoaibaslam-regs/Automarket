@@ -36,12 +36,12 @@ export default function PushCard({ compact = false }: { compact?: boolean }) {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-900">{on ? "Phone notifications are on" : "Get notifications on this phone"}</p>
           <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-            {status === "needs-install" && <>On iPhone, first add AutoMarket to your home screen: tap <strong>Share</strong> then <strong>Add to Home Screen</strong>. Open it from there and turn notifications on.</>}
-            {status === "denied" && <>Notifications are blocked for AutoMarket. Allow them in your phone&apos;s settings (Settings → Apps → Chrome → Notifications, and the lock icon next to the address → Permissions), then come back.</>}
+            {status === "needs-install" && <>On iPhone, first add AutoGO to your home screen: tap <strong>Share</strong> then <strong>Add to Home Screen</strong>. Open it from there and turn notifications on.</>}
+            {status === "denied" && <>Notifications are blocked for AutoGO. Allow them in your phone&apos;s settings (Settings → Apps → Chrome → Notifications, and the lock icon next to the address → Permissions), then come back.</>}
             {status === "not-configured" && <>Phone notifications aren&apos;t switched on for this website yet. The site owner needs to add the push keys (NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY) and redeploy.</>}
-            {status === "unsupported" && <>This browser can&apos;t show notifications. Open AutoMarket in Chrome (Android) or install it to your home screen.</>}
-            {status === "off" && <>Booking requests, buyers, messages and offers pop up on your phone, even when AutoMarket is closed and the screen is off.</>}
-            {on && <>You&apos;ll get alerts for messages, bookings, sales and updates on this device, with the AutoMarket chime while the app is open.</>}
+            {status === "unsupported" && <>This browser can&apos;t show notifications. Open AutoGO in Chrome (Android) or install it to your home screen.</>}
+            {status === "off" && <>Booking requests, buyers, messages and offers pop up on your phone, even when AutoGO is closed and the screen is off.</>}
+            {on && <>You&apos;ll get alerts for messages, bookings, sales and updates on this device, with the AutoGO chime while the app is open.</>}
           </p>
           {on && (
             <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
@@ -99,7 +99,7 @@ export function PushPrompt({ className = "" }: { className?: string }) {
         <span className="flex flex-shrink-0 items-center justify-center text-slate-900"><BellRing size={18} /></span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-900">Don&apos;t miss a customer</p>
-          <p className="mt-0.5 text-xs text-slate-500">Get a phone alert for booking requests, buyers and messages, even when AutoMarket is closed.</p>
+          <p className="mt-0.5 text-xs text-slate-500">Get a phone alert for booking requests, buyers and messages, even when AutoGO is closed.</p>
         </div>
         <button onClick={later} aria-label="Later" className="rounded-full p-1 text-slate-400 hover:bg-slate-100"><X size={16} /></button>
       </div>

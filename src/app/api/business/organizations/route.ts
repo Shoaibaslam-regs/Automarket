@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       slug: generateSlug(name),
       ownerId: session.user.id,
       isActive: true,
-      // Chosen at registration: follow AutoMarket Official for announcements, updates and offers
+      // Chosen at registration: follow AutoGO Official for announcements, updates and offers
       ...(followOfficial === true ? { followsOfficial: true, followedOfficialAt: new Date() } : {}),
     });
 

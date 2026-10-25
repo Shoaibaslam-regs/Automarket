@@ -287,7 +287,7 @@ export default function SellPage() {
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Published</p>
             <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Your listing is live</h1>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
-              Buyers{published.type !== "SALE" && " and renters"} can now find your vehicle on AutoMarket.
+              Buyers{published.type !== "SALE" && " and renters"} can now find your vehicle on AutoGO.
               {published.type !== "SALE" && " Booking requests will show up in your Bookings."}
             </p>
           </div>
@@ -373,7 +373,7 @@ export default function SellPage() {
         <div className="mx-auto max-w-[1120px] px-4 pb-6 pt-7 sm:px-6 sm:pb-8 sm:pt-10">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sell or rent</p>
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">List your vehicle</h1>
-          <p className="mt-1.5 text-sm text-slate-500">A few details and your listing is live on AutoMarket.</p>
+          <p className="mt-1.5 text-sm text-slate-500">A few details and your listing is live on AutoGO.</p>
           {sub && (
             <p className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-inset ring-slate-200">
               <span className="font-semibold" style={{ color: planInfo(sub.planId).accent }}>{planInfo(sub.planId).name} plan</span>

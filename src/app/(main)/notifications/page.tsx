@@ -26,7 +26,7 @@ function ago(iso: string) {
   return d < 7 ? `${d} day${d !== 1 ? "s" : ""} ago` : new Date(iso).toLocaleDateString("en-PK", { day: "numeric", month: "short" });
 }
 
-/** Everything waiting for you in one list: messages, booking and purchase updates, requests, and AutoMarket Official posts. */
+/** Everything waiting for you in one list: messages, booking and purchase updates, requests, and AutoGO Official posts. */
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [error, setError] = useState("");

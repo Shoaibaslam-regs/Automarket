@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
@@ -165,7 +166,7 @@ export default function MobileNavDrawer({
           <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
 
           <div className="relative flex items-center justify-between">
-            <Image src="/logo-1771205663069.png" alt="AutoMarket" width={120} height={32} className="h-5 w-auto" style={{ filter: "brightness(0.5) invert(1)" }} />
+            <BrandLogo tone="dark" height={16} />
             <button onClick={onClose} aria-label="Close menu" className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
               <X size={14} />
             </button>
@@ -202,7 +203,7 @@ export default function MobileNavDrawer({
             </div>
           ) : (
             <div className="relative mt-3">
-              <p className="text-sm font-semibold">Welcome to AutoMarket</p>
+              <p className="text-sm font-semibold">Welcome to AutoGO</p>
               <p className="mt-0.5 text-xs text-slate-400">Buy, sell and rent cars and bikes across Pakistan.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <Link href="/login" onClick={onClose} className="rounded-lg bg-white/10 py-2 text-center text-xs font-semibold ring-1 ring-inset ring-white/15 transition hover:bg-white/15">

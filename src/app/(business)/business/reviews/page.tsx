@@ -121,7 +121,7 @@ export default function BusinessReviewsPage() {
                   <div className="flex items-center gap-2.5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--gh-0d1117)] text-xs font-bold text-white">{r.reviewerId?.name?.[0]?.toUpperCase() ?? "?"}</span>
                     <div>
-                      <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{r.reviewerId?.name ?? "AutoMarket user"}</p>
+                      <p className="text-sm font-semibold text-[var(--gh-0d1117)]">{r.reviewerId?.name ?? "AutoGO user"}</p>
                       <p className="text-[11px] text-[var(--gh-8c959f)]">{fmt(r.createdAt)}</p>
                     </div>
                   </div>

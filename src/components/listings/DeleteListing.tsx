@@ -60,7 +60,7 @@ export default function DeleteListing({ id }: { id: string }) {
                 Delete this listing?
               </h3>
               <p style={{ fontSize: "14px", color: "var(--gh-57606a)", lineHeight: 1.6, marginBottom: "24px" }}>
-                This action cannot be undone. The listing and all its data will be permanently removed from <span style={{color:"#d71212ec"}}>AutoMarket.</span>
+                This action cannot be undone. The listing and all its data will be permanently removed from <span style={{color:"#d71212ec"}}>AutoGO.</span>
               </p>
 
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>

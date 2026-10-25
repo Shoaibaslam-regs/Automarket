@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     invalidateSponsored();
 
     if (!gate.admin._id.equals(ad.requestedBy)) {
-      await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoMarket").catch(e => reportError("Ad message failed:", e));
+      await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoGO").catch(e => reportError("Ad message failed:", e));
     }
     await logAdminAction(gate.admin, `ad.${action}`, { type: "AD", id: ad._id, label: ad.targetLabel },
       action === "approve" ? `${ad.tier === "TOP" ? "Top, " : ""}${ad.city ? `${ad.city}, ` : ""}${ad.weeks} week${ad.weeks > 1 ? "s" : ""}, PKR ${ad.price.toLocaleString()} · ${ad.paymentRef} · ${day(ad.startsAt!)} to ${day(ad.endsAt!)}` : reason);

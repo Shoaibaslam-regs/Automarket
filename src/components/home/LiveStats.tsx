@@ -37,7 +37,7 @@ function CountUp({ value }: { value: number }) {
 }
 
 /**
- * "Live on AutoMarket": real counts from the database, refreshed every minute while the page is open
+ * "Live on AutoGO": real counts from the database, refreshed every minute while the page is open
  * (and whenever the tab comes back into view), counting up when a number changes.
  */
 export default function LiveStats({ initial }: { initial: PublicStats }) {
@@ -54,7 +54,7 @@ export default function LiveStats({ initial }: { initial: PublicStats }) {
 
   return (
     // A dark glow panel like the closing call to action (bg-slate-950 keeps it dark in both themes)
-    <section aria-label="Live on AutoMarket" className="relative overflow-hidden rounded-3xl bg-slate-950 px-5 py-7 sm:px-10 sm:py-10">
+    <section aria-label="Live on AutoGO" className="relative overflow-hidden rounded-3xl bg-slate-950 px-5 py-7 sm:px-10 sm:py-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.38),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(217,70,239,0.18),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/60 to-transparent" />
 

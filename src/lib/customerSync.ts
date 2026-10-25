@@ -17,7 +17,7 @@ export const normalizePhone = (p?: string | null) => (p ?? "").replace(/\D/g, ""
 
 /**
  * Makes sure the person behind a booking is in the renting business's customer list,
- * and links the booking to that customer. Matches an existing customer by AutoMarket
+ * and links the booking to that customer. Matches an existing customer by AutoGO
  * account first, then by phone; otherwise creates one (within the plan's customer limit).
  * Does nothing if the vehicle's owner isn't part of a business. Safe to call repeatedly.
  */
@@ -61,7 +61,7 @@ export async function ensureBookingCustomer(bookingId: Oid | string): Promise<Oi
   }
   if (!organizationId) return null;
 
-  // Who booked: an AutoMarket account, or walk-in details
+  // Who booked: an AutoGO account, or walk-in details
   let person: { name: string; phone: string; email?: string; userId?: Oid };
   if (booking.renterId) {
     const u = await User.findById(booking.renterId).select("name email phone").lean<{ _id: Oid; name?: string; email: string; phone?: string }>();

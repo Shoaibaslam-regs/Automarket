@@ -12,7 +12,7 @@ import { reportError } from "@/lib/errorLog";
 type OrgFollow = { followsOfficial?: boolean; followedOfficialAt?: Date };
 
 /**
- * The AutoMarket Official feed for business members. Everyone in a business can read it; the posts that are new
+ * The AutoGO Official feed for business members. Everyone in a business can read it; the posts that are new
  * since the user last looked come back flagged `unread`. Opening it with `?seen=1` marks them read.
  */
 export async function GET(req: NextRequest) {
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest) {
       if (follow) org.followedOfficialAt = new Date();
       await org.save();
       await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, follow ? "business.followOfficial" : "business.unfollowOfficial",
-        { type: "BUSINESS", id: new mongoose.Types.ObjectId(String(member.organizationId)), label: "AutoMarket Official" });
+        { type: "BUSINESS", id: new mongoose.Types.ObjectId(String(member.organizationId)), label: "AutoGO Official" });
     }
     return NextResponse.json({ following: follow });
   } catch (error) {

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ModeToggle from "@/components/ModeToggle";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
 import { planInfo } from "@/lib/plans";
 import UserIdBadge from "@/components/UserIdBadge";
@@ -84,18 +84,7 @@ export default function BusinessDashboard() {
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <Image
-          src="/logo-1771205663069.png"
-          alt="AutoMarket"
-          width={110}
-          height={28}
-          style={{
-            width: "auto",
-            height: "26px",
-            filter: "brightness(0) invert(1)",
-            opacity: 0.9,
-          }}
-        />
+        <BrandLogo tone="dark" height={20} />
 
         <div
           style={{

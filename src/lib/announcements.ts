@@ -1,7 +1,7 @@
-// Client-safe names for the AutoMarket Official channel: announcements, updates and offers
+// Client-safe names for the AutoGO Official channel: announcements, updates and offers
 // that admins post and businesses who follow the channel receive in Business → Updates.
 
-export const OFFICIAL_NAME = "AutoMarket Official";
+export const OFFICIAL_NAME = "AutoGO Official";
 
 export const ANNOUNCEMENT_KINDS = ["ANNOUNCEMENT", "UPDATE", "OFFER"] as const;
 export type AnnouncementKind = (typeof ANNOUNCEMENT_KINDS)[number];

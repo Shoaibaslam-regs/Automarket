@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
-import AutoMarketStamp from "@/components/bookings/AutoMarketStamp";
+import AutoGOStamp from "@/components/bookings/AutoGOStamp";
 import { PAYMENT_LABEL } from "@/lib/payments";
 import { PURCHASE_LABEL, PURCHASE_STYLE, purchaseNumber, purchasePayment, salePrice, type PurchaseStatus } from "@/lib/purchases";
 
@@ -123,7 +123,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
             <div className="mb-4 flex items-center justify-between gap-3">
               <span className="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider" style={{ background: st.bg, color: st.color }}>{PURCHASE_LABEL[p.status]}</span>
               <span className="text-xs text-slate-500">
-                {p.source === "WALK_IN" ? "Walk-in sale" : "Online purchase request via AutoMarket"} · {dateTime(p.createdAt)}
+                {p.source === "WALK_IN" ? "Walk-in sale" : "Online purchase request via AutoGO"} · {dateTime(p.createdAt)}
                 {p.createdBy?.name ? ` by ${p.createdBy.name}` : ""}
               </span>
             </div>
@@ -215,7 +215,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
                   <div className="h-10 border-b border-dashed border-slate-300" />
                   <p className="mt-2 text-xs text-slate-500">{label}</p>
                   {i === 1 && stamp && (
-                    <AutoMarketStamp
+                    <AutoGOStamp
                       business={org?.name}
                       caption={stamp.caption}
                       date={new Date(stamp.at || p.createdAt).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" })}
@@ -228,7 +228,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
           </div>
 
           <footer className="border-t border-[var(--gh-e1e4e8)] bg-slate-50 px-6 py-2.5 text-center text-[11px] text-slate-400">
-            {purchaseNumber(p._id)} · Generated with AutoMarket
+            {purchaseNumber(p._id)} · Generated with AutoGO
           </footer>
         </article>
       </div>

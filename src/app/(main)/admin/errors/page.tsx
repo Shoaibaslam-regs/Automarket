@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bug, Check, ChevronDown, RotateCcw, Trash2 } from "lucide-react";
+import { Bug, Check, ChevronDown, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { Badge, ConfirmDialog, PageHeader, Panel, Segmented, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 
@@ -46,6 +46,7 @@ export default function AdminErrorsPage() {
   const [clearOpen, setClearOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [reload, setReload] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams({ status, page: String(page) });
@@ -53,7 +54,8 @@ export default function AdminErrorsPage() {
     fetch(`/api/admin/errors?${params}`)
       .then(r => r.json())
       .then(setData)
-      .catch(() => setData({ errors: [], total: 0, pages: 1, lastDay: { kinds: 0, hits: 0 } }));
+      .catch(() => setData({ errors: [], total: 0, pages: 1, lastDay: { kinds: 0, hits: 0 } }))
+      .finally(() => setRefreshing(false));
   }, [status, source, page, reload]);
 
   async function setResolved(id: string, action: "resolve" | "reopen") {
@@ -88,11 +90,19 @@ export default function AdminErrorsPage() {
       <PageHeader
         title="Errors"
         description="Things that broke for users in production, grouped by kind. Errors not seen for 30 days are removed automatically."
-        actions={canWrite && status === "fixed" && (data?.total ?? 0) > 0 ? (
-          <button type="button" onClick={() => setClearOpen(true)} className={`${btn.base} ${btn.danger} px-3 py-2 text-[13px]`}>
-            <Trash2 size={14} /> Delete fixed
-          </button>
-        ) : undefined}
+        actions={
+          <>
+            {/* Reads the list again, for errors that happened since the page opened */}
+            <button type="button" onClick={() => { setRefreshing(true); setReload(x => x + 1); }} disabled={refreshing} className={`${btn.base} ${btn.secondary} px-3 py-2 text-[13px]`}>
+              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> {refreshing ? "Checking…" : "Refresh"}
+            </button>
+            {canWrite && status === "fixed" && (data?.total ?? 0) > 0 && (
+              <button type="button" onClick={() => setClearOpen(true)} className={`${btn.base} ${btn.danger} px-3 py-2 text-[13px]`}>
+                <Trash2 size={14} /> Delete fixed
+              </button>
+            )}
+          </>
+        }
       />
 
       {data && (

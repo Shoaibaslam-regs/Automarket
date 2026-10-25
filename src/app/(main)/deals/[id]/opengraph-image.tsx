@@ -5,7 +5,7 @@ import { formatLakh } from "@/lib/format";
 import { OG_CONTENT_TYPE, OG_SIZE, ShareCard, brandMark, photoDataUrl } from "@/lib/ogCard";
 
 // The link preview for a deal: its photo with the discount, the deal price and the business
-export const alt = "Hot deal on AutoMarket";
+export const alt = "Hot deal on AutoGO";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 

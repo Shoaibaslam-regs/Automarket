@@ -64,7 +64,7 @@ export default function ShareButton({ path, title, label = "Share", variant = "p
   }, [open]);
 
   const url = () => `${window.location.origin}${path}`;
-  const text = `${title} on AutoMarket`;
+  const text = `${title} on AutoGO`;
 
   async function onClick() {
     // Touch devices: the phone's own share sheet; it rejects when the person cancels, which is fine

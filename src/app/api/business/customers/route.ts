@@ -53,11 +53,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name and phone are required" }, { status: 400 });
     }
 
-    // Optional link to an AutoMarket account (found through /api/business/customers/lookup)
+    // Optional link to an AutoGO account (found through /api/business/customers/lookup)
     let userId: mongoose.Types.ObjectId | undefined;
     if (body?.userId) {
       if (typeof body.userId !== "string" || !mongoose.Types.ObjectId.isValid(body.userId) || !(await User.exists({ _id: body.userId }))) {
-        return NextResponse.json({ error: "That AutoMarket account no longer exists" }, { status: 400 });
+        return NextResponse.json({ error: "That AutoGO account no longer exists" }, { status: 400 });
       }
       userId = new mongoose.Types.ObjectId(body.userId);
     }

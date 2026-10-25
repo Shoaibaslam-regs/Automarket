@@ -48,6 +48,8 @@ export const RATE_LIMITS = {
   feedback: { limit: 2, windowSec: 30 * 24 * 60 * 60 },
   /** Sponsored ad views and taps (POST /api/sponsored/track), per IP: generous, since one page shows several ads */
   adTrack: { limit: 300, windowSec: 60 * 60 },
+  /** Admin System usage "Refresh" (reads the database's size and calls UploadThing), per admin */
+  usageRefresh: { limit: 10, windowSec: 10 * 60 },
   /** The daily cron, keyed by Pakistan day, so a repeated call doesn't send the reminders twice */
   cronDaily: { limit: 1, windowSec: 20 * 60 * 60 },
 } as const satisfies Record<string, { limit: number; windowSec: number; lockout?: boolean }>;

@@ -48,7 +48,7 @@ async function getModeration() {
 }
 
 export const metadata: Metadata = {
-  title: { default: "AutoMarket Business", template: "%s — AutoMarket Business" },
+  title: { default: "AutoGO Business", template: "%s — AutoGO Business" },
   description: "Manage your automobile business",
 };
 

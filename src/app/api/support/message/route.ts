@@ -13,7 +13,7 @@ import { reportError } from "@/lib/errorLog";
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
 /**
- * Sends a support message to the AutoMarket team's inbox, prefixed with the topic and the sender's
+ * Sends a support message to the AutoGO team's inbox, prefixed with the topic and the sender's
  * business and account ID so the admin has context. Works for suspended businesses too, so they can appeal.
  * Returns the support admin's id so the client can open the conversation.
  */

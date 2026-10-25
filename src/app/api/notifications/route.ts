@@ -23,7 +23,7 @@ type Oid = mongoose.Types.ObjectId;
 /**
  * Everything waiting for the signed-in user, newest first: unread messages (one per person), booking requests
  * on their vehicles, updates on bookings and purchases they made, new purchase requests for their business, and
- * unread AutoMarket Official posts. These are the same things the menu badges count, so the bell matches them.
+ * unread AutoGO Official posts. These are the same things the menu badges count, so the bell matches them.
  */
 export async function GET() {
   try {
@@ -104,7 +104,7 @@ export async function GET() {
           });
         }
       }
-      // Unread AutoMarket Official posts
+      // Unread AutoGO Official posts
       const [org, user] = await Promise.all([
         Organization.findById(member.organizationId).select("followsOfficial followedOfficialAt").lean<{ followsOfficial?: boolean; followedOfficialAt?: Date }>(),
         User.findById(me).select("officialSeenAt").lean<{ officialSeenAt?: Date }>(),

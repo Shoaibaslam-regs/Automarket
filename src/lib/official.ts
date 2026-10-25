@@ -29,8 +29,8 @@ export function parseAnnouncement(body: Record<string, unknown>, partial = false
   }
   if (!partial || has("link")) {
     const link = String(body.link ?? "").trim();
-    // Only AutoMarket paths or https links, so a post can't carry javascript: or other schemes
-    if (link && !/^\/[^/]/.test(link) && !/^https:\/\/[^\s]+$/i.test(link)) return { error: "The link must start with / (an AutoMarket page) or https://" };
+    // Only AutoGO paths or https links, so a post can't carry javascript: or other schemes
+    if (link && !/^\/[^/]/.test(link) && !/^https:\/\/[^\s]+$/i.test(link)) return { error: "The link must start with / (an AutoGO page) or https://" };
     data.link = link || undefined;
     data.linkLabel = link ? String(body.linkLabel ?? "").trim().slice(0, 40) || "Open" : undefined;
   }
@@ -60,7 +60,7 @@ export async function notifyFollowers(payload: { title: string; kind: string }) 
     if (!ids.length) return;
     // Phones of followers who turned alerts on
     const { sendPush } = await import("@/lib/push");
-    await sendPush(ids, { title: "AutoMarket Official", body: payload.title, url: "/business/updates", tag: "official" });
+    await sendPush(ids, { title: "AutoGO Official", body: payload.title, url: "/business/updates", tag: "official" });
     if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
     const { pusherServer } = await import("@/lib/pusher");
     const channels = ids.map(id => `user-${id}`);

@@ -73,7 +73,7 @@ export default function PricingPage() {
           </span>
           <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Sell more with{" "}
-            <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoMarket Premium</span>
+            <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoGO Premium</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
             Start free with {PLANS.FREE.limits.listings} listings or deals a month. Upgrade when you need more listings, staff accounts for your team and full showroom management.
@@ -134,7 +134,7 @@ export default function PricingPage() {
           <div className="mx-auto max-w-[560px] text-center">
             <h2 className="text-lg font-bold tracking-tight text-slate-900">How payment works</h2>
             <p className="mt-1 text-sm leading-relaxed text-slate-500">
-              There&apos;s no card checkout yet. You pay the AutoMarket team directly by bank transfer, JazzCash or EasyPaisa.
+              There&apos;s no card checkout yet. You pay the AutoGO team directly by bank transfer, JazzCash or EasyPaisa.
             </p>
           </div>
           <StepCards

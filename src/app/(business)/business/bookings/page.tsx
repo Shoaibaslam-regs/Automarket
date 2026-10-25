@@ -118,7 +118,7 @@ function customerOf(b: Booking) {
 
 const EMPTY_FORM = {
   rentalId: "", customerId: "", name: "", phone: "", email: "", cnic: "", startDate: "", endDate: "", notes: "", status: "CONFIRMED",
-  // A vehicle that isn't listed on AutoMarket (rentalId "other")
+  // A vehicle that isn't listed on AutoGO (rentalId "other")
   offTitle: "", offPlate: "", offRate: "", offDeposit: "",
 };
 const OTHER_VEHICLE = "other";
@@ -220,7 +220,7 @@ function NewBookingDialog({ open, onOpenChange, vehicles, onCreated }: {
                   placeholder="Choose a rental vehicle"
                   options={[
                     ...vehicles.map(v => ({ value: v.rentalId, label: `${v.title} · ${pkr(v.dailyRate)}/day` })),
-                    { value: OTHER_VEHICLE, label: "Other vehicle (not listed on AutoMarket)" },
+                    { value: OTHER_VEHICLE, label: "Other vehicle (not listed on AutoGO)" },
                   ]}
                   className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal"
                 />

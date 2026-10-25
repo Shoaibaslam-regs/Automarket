@@ -33,7 +33,7 @@ function Brand({ mark }: { mark: string }) {
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse needs plain img */}
       <img src={mark} width={44} height={44} style={{ borderRadius: 10 }} alt="" />
-      <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#ffffff" }}>AutoMarket</div>
+      <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#ffffff" }}>AutoGO</div>
     </div>
   );
 }

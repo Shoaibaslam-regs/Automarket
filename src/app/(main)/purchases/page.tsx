@@ -116,7 +116,7 @@ export default function PurchasesPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[var(--gh-0d1117)]">My purchases</h1>
-            <p className="text-sm text-[var(--gh-57606a)]">Vehicles you asked to buy from businesses on AutoMarket</p>
+            <p className="text-sm text-[var(--gh-57606a)]">Vehicles you asked to buy from businesses on AutoGO</p>
           </div>
           <Link href="/listings?type=SALE" className="rounded-lg bg-[var(--gh-0d1117)] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[var(--gh-24292f)]">Browse vehicles</Link>
         </div>

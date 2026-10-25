@@ -12,7 +12,7 @@ const STEPS: { id: StepId; label: string; hint: string; href: string }[] = [
   { id: "team", label: "Invite a team member", hint: "Manager, sales or staff", href: "/business/staff" },
   { id: "customer", label: "Add a customer", hint: "Keep track of people interested in your cars", href: "/business/customers?add=1" },
   { id: "firstDeal", label: "Make your first booking or sale", hint: "Use + New at the bottom right", href: "/business/bookings?new=booking" },
-  { id: "official", label: "Follow AutoMarket Official", hint: "Get news and offers for businesses", href: "/business/updates" },
+  { id: "official", label: "Follow AutoGO Official", hint: "Get news and offers for businesses", href: "/business/updates" },
 ];
 
 /**

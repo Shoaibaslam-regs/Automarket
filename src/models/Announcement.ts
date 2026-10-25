@@ -2,14 +2,14 @@ import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
 
 /**
- * A post on the AutoMarket Official channel, written by an admin. Businesses that follow the channel
+ * A post on the AutoGO Official channel, written by an admin. Businesses that follow the channel
  * (Organization.followsOfficial) see it in Business → Updates and get a live notification.
  */
 export interface IAnnouncement extends Document {
   kind: "ANNOUNCEMENT" | "UPDATE" | "OFFER";
   title: string;
   body: string;
-  /** Optional button: an AutoMarket path ("/pricing") or an https link */
+  /** Optional button: an AutoGO path ("/pricing") or an https link */
   link?: string;
   linkLabel?: string;
   /** Pinned posts stay at the top of the feed */

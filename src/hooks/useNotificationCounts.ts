@@ -20,7 +20,7 @@ type Counts = {
   purchases: number;
   /** New purchase requests waiting for the user's business (for members who handle sales). */
   sales: number;
-  /** AutoMarket Official posts the user's (following) business hasn't seen (from /api/business/official/count). */
+  /** AutoGO Official posts the user's (following) business hasn't seen (from /api/business/official/count). */
   updates: number;
 };
 

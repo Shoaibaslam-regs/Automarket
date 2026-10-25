@@ -68,7 +68,7 @@ function CustomersContent() {
   const [saving, setSaving] = useState(false);
   const [addError, setAddError] = useState<{ message: string; planLimit: boolean } | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
-  // Adding someone with an AutoMarket account links it; outside customers are typed in by hand
+  // Adding someone with an AutoGO account links it; outside customers are typed in by hand
   const [customerType, setCustomerType] = useState<"OUTSIDE" | "APP">("OUTSIDE");
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
@@ -248,7 +248,7 @@ function CustomersContent() {
                 <div role="radiogroup" aria-label="Customer type" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", background: "var(--gh-f6f8fa)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "10px", padding: "4px" }}>
                   {([
                     ["OUTSIDE", "Outside customer", Store],
-                    ["APP", "AutoMarket user", BadgeCheck],
+                    ["APP", "AutoGO user", BadgeCheck],
                   ] as const).map(([type, label, Icon]) => (
                     <button key={type} type="button" role="radio" aria-checked={customerType === type} onClick={() => switchCustomerType(type)}
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", borderRadius: "7px", border: "none", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", background: customerType === type ? "var(--gh-0d1117)" : "transparent", color: customerType === type ? "var(--gh-ffffff)" : "var(--gh-57606a)" }}>
@@ -258,8 +258,8 @@ function CustomersContent() {
                 </div>
                 <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "6px" }}>
                   {customerType === "APP"
-                    ? "Find someone with an AutoMarket account by their email or account ID. Their account is linked to this customer."
-                    : "Walk-ins, phone calls or referrals: anyone without an AutoMarket account."}
+                    ? "Find someone with an AutoGO account by their email or account ID. Their account is linked to this customer."
+                    : "Walk-ins, phone calls or referrals: anyone without an AutoGO account."}
                 </p>
                 {customerType === "APP" && (
                   <div style={{ marginTop: "10px" }}>
@@ -463,7 +463,7 @@ function CustomersContent() {
                     <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold text-[var(--gh-0d1117)]">
                       <span className="truncate">{c.name}</span>
                       {c.starred && <Star size={12} fill="#eac54f" color="#bf8700" className="flex-shrink-0" aria-label="Star customer" />}
-                      {c.userId && <BadgeCheck size={13} className="flex-shrink-0 text-[var(--gh-0550ae)]" aria-label="Has an AutoMarket account" />}
+                      {c.userId && <BadgeCheck size={13} className="flex-shrink-0 text-[var(--gh-0550ae)]" aria-label="Has an AutoGO account" />}
                     </p>
                     <p className="truncate text-[11px] text-[var(--gh-57606a)]">
                       <a href={`tel:${c.phone}`} className="font-medium text-[var(--gh-0d1117)]">{c.phone}</a>
@@ -489,7 +489,7 @@ function CustomersContent() {
                     options={STATUSES.map(s => ({ value: s, label: s.replace("_", " ") }))}
                     style={{ borderColor: statusStyle.color, color: statusStyle.color, background: statusStyle.bg }}
                     className="col-start-2 row-start-2 h-7 w-auto justify-self-start rounded-full px-2.5 text-[11px] font-semibold sm:col-start-auto sm:row-start-auto" />
-                  <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoMarket`}
+                  <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoGO`}
                     target="_blank" rel="noreferrer" aria-label={`WhatsApp ${c.name}`} title="WhatsApp"
                     className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
                     <MessageCircle size={15} />
@@ -504,7 +504,7 @@ function CustomersContent() {
                   <div className="mt-2.5 space-y-2 rounded-xl bg-[var(--gh-f6f8fa)] p-3 sm:ml-12">
                     <p className="text-[11px] text-[var(--gh-57606a)]">
                       {c.email ? <a href={`mailto:${c.email}`} className="font-medium text-[var(--gh-0d1117)]">{c.email}</a> : "No email"}
-                      {c.userId && <span> · has an AutoMarket account</span>}
+                      {c.userId && <span> · has an AutoGO account</span>}
                     </p>
                     {(permissions.canEdit || permissions.canDelete) && (
                       <div className="flex flex-wrap gap-1.5">

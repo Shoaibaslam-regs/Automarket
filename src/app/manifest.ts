@@ -1,14 +1,14 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Web app manifest (served at /manifest.webmanifest): lets phones install AutoMarket to the home screen and
+ * Web app manifest (served at /manifest.webmanifest): lets phones install AutoGO to the home screen and
  * open it full screen. Icons are in public/icons (made from the red slash mark of the logo).
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "AutoMarket: Buy, Sell & Rent Vehicles",
-    short_name: "AutoMarket",
+    name: "AutoGO: Buy, Sell & Rent Vehicles",
+    short_name: "AutoGO",
     description: "Pakistan's marketplace to buy, sell and rent cars and bikes.",
     start_url: "/?source=pwa",
     scope: "/",

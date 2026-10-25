@@ -223,7 +223,7 @@ function NewSaleDialog({ open, onOpenChange, vehicles, onCreated }: {
         <div>
           <label className={label}>Vehicle</label>
           <Select value={f.vehicle} onChange={pickVehicle} placeholder="Choose a vehicle" ariaLabel="Vehicle" size="md"
-            options={[...vehicles.map(v => ({ value: v.value, label: `${v.title} · ${pkr(v.price)}` })), { value: "other", label: "Other vehicle (not listed on AutoMarket)" }]} />
+            options={[...vehicles.map(v => ({ value: v.value, label: `${v.title} · ${pkr(v.price)}` })), { value: "other", label: "Other vehicle (not listed on AutoGO)" }]} />
         </div>
         {f.vehicle === "other" && (
           <input value={f.offTitle} onChange={e => set("offTitle", e.target.value)} placeholder="e.g. Honda Civic 2021 white" className={field} aria-label="Vehicle description" />

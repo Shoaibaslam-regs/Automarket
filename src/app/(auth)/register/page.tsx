@@ -69,7 +69,7 @@ export default function RegisterPage() {
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
         <div style={{ width: "100%", maxWidth: "440px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" }}>
           <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>Create account</h1>
-          <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "24px" }}>Join AutoMarket — buy, sell and rent vehicles</p>
+          <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "24px" }}>Join AutoGO — buy, sell and rent vehicles</p>
 
           {error && (
             <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "16px" }}>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
             <Link key={label} href={href} style={{ fontSize: "12px", color: "var(--gh-57606a)", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>© 2025 AutoMarket Pakistan</p>
+        <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>© 2025 AutoGO Pakistan</p>
       </footer>
     </div>
   );

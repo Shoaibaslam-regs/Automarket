@@ -138,7 +138,7 @@ export default function VerifiedBadgeOffer() {
           </div>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">{VERIFIED_BADGE.name}</h2>
           <p className="mt-1 max-w-[520px] text-sm leading-relaxed text-slate-500">
-            Show buyers your business is real. Our team checks your business, then a blue tick appears next to your name across AutoMarket.
+            Show buyers your business is real. Our team checks your business, then a blue tick appears next to your name across AutoGO.
           </p>
           <div className="mt-4 flex items-baseline gap-1.5">
             <span className="text-sm font-semibold text-slate-500">PKR</span>

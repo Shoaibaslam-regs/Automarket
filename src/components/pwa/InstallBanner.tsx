@@ -29,7 +29,7 @@ const KEY = "pwa-install-dismissed";
 const QUIET_DAYS = 14;
 
 /**
- * A small card on phones offering to install AutoMarket: the real install button on Android, or the
+ * A small card on phones offering to install AutoGO: the real install button on Android, or the
  * "Share → Add to Home Screen" steps on iPhone. It appears a few seconds after the page opens, and "Not now"
  * hides it for two weeks (kept per browser).
  */
@@ -54,12 +54,12 @@ export default function InstallBanner() {
   }
 
   return (
-    <div role="dialog" aria-label="Install the AutoMarket app"
+    <div role="dialog" aria-label="Install the AutoGO app"
       className="fixed inset-x-3 bottom-[calc(0.75rem+var(--am-bottom-bar,0px))] z-[60] mx-auto max-w-md rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-slate-200 sm:hidden">
       <div className="flex items-start gap-3">
         <Image src="/icons/icon-192.png" alt="" width={44} height={44} className="rounded-xl ring-1 ring-slate-200" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-slate-900">Get the AutoMarket app</p>
+          <p className="text-sm font-bold text-slate-900">Get the AutoGO app</p>
           {canPrompt ? (
             <p className="mt-0.5 text-xs text-slate-500">Opens full screen from your home screen. Free, no Play Store, takes a second.</p>
           ) : (
@@ -89,7 +89,7 @@ export function InstallAppRow({ onDone }: { onDone?: () => void }) {
     <div>
       <button onClick={async () => { if (canPrompt) { if (await install()) onDone?.(); } else setShowSteps(s => !s); }}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 py-2 text-[13px] font-semibold text-white">
-        <Download size={14} /> Install AutoMarket app
+        <Download size={14} /> Install AutoGO app
       </button>
       {showSteps && (
         <p className="mt-1.5 px-1 text-[11px] leading-relaxed text-slate-500"><IosSteps browser={iosBrowser} /></p>

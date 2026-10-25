@@ -27,7 +27,7 @@ function CopyValue({ value }: { value: string }) {
 }
 
 /**
- * "How to pay": the AutoMarket bank account and wallet numbers an admin set on the admin Overview.
+ * "How to pay": the AutoGO bank account and wallet numbers an admin set on the admin Overview.
  * Shows nothing until they are set. Used on the pricing page, the upgrade dialog, Business → Promote and support.
  */
 export default function PaymentDetailsCard({ className = "", compact = false }: { className?: string; compact?: boolean }) {

@@ -9,7 +9,7 @@ import { MAX_COMPARE } from "@/lib/compare";
 
 export const metadata: Metadata = {
   title: "Help & safety",
-  description: "How buying, renting and selling work on AutoMarket, and how to stay safe when you deal with sellers in Pakistan.",
+  description: "How buying, renting and selling work on AutoGO, and how to stay safe when you deal with sellers in Pakistan.",
   alternates: { canonical: "/help" },
 };
 
@@ -29,7 +29,7 @@ const SECTIONS: Section[] = [
         </p>
         <ul>
           <li><strong>From a business:</strong> tap &quot;Buy this vehicle&quot; to send a purchase request with your offer. The business agrees the price with you, and you get a sale slip once it&apos;s sold. Follow it in <Link href="/purchases">My purchases</Link>.</li>
-          <li><strong>From a private seller:</strong> call, WhatsApp or message them on AutoMarket and agree the deal directly.</li>
+          <li><strong>From a private seller:</strong> call, WhatsApp or message them on AutoGO and agree the deal directly.</li>
         </ul>
       </>
     ),
@@ -73,7 +73,7 @@ const SECTIONS: Section[] = [
     title: "Stay safe",
     body: (
       <ul>
-        <li><strong>Never pay in advance</strong> before you have seen the vehicle and its documents in person. AutoMarket never asks you to pay a seller.</li>
+        <li><strong>Never pay in advance</strong> before you have seen the vehicle and its documents in person. AutoGO never asks you to pay a seller.</li>
         <li>Meet in a busy public place or at the seller&apos;s shop, in daylight, and take someone with you.</li>
         <li>Check the registration book and the chassis and engine numbers, and verify the vehicle with your province&apos;s Excise &amp; Taxation department.</li>
         <li>Make sure the name on the documents matches the seller&apos;s CNIC, and take a test drive.</li>
@@ -88,20 +88,20 @@ const SECTIONS: Section[] = [
     body: (
       <dl className="space-y-3">
         <div>
-          <dt className="font-semibold text-slate-800">Is AutoMarket free?</dt>
+          <dt className="font-semibold text-slate-800">Is AutoGO free?</dt>
           <dd>Yes. Browsing, buying, renting and up to {free.listings} listings a month are free. Paid plans add more listings and business tools.</dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-800">What does the Verified tick mean?</dt>
-          <dd>The business was checked by the AutoMarket team. It is a paid add-on (PKR {VERIFIED_BADGE.price.toLocaleString()} a month), and it disappears if it isn&apos;t renewed.</dd>
+          <dd>The business was checked by the AutoGO team. It is a paid add-on (PKR {VERIFIED_BADGE.price.toLocaleString()} a month), and it disappears if it isn&apos;t renewed.</dd>
         </div>
         <div>
-          <dt className="font-semibold text-slate-800">Does AutoMarket take part in the deal?</dt>
+          <dt className="font-semibold text-slate-800">Does AutoGO take part in the deal?</dt>
           <dd>No. Deals are made directly between you and the seller or owner. Read the <Link href="/terms">Terms &amp; Conditions</Link> for the full rules.</dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-800">How do I get notified on my phone?</dt>
-          <dd>Install the AutoMarket app from the menu, then turn on phone notifications on the <Link href="/notifications">Notifications</Link> page.</dd>
+          <dd>Install the AutoGO app from the menu, then turn on phone notifications on the <Link href="/notifications">Notifications</Link> page.</dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-800">Can I delete my account?</dt>
@@ -113,7 +113,7 @@ const SECTIONS: Section[] = [
 ];
 
 export default function HelpPage() {
-  const wa = whatsappLink("Hi AutoMarket team, I need some help.");
+  const wa = whatsappLink("Hi AutoGO team, I need some help.");
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-14 pt-12 text-white sm:pt-16">
@@ -125,7 +125,7 @@ export default function HelpPage() {
           </span>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Help &amp; safety</h1>
           <p className="mt-2 max-w-[620px] text-sm leading-relaxed text-slate-400">
-            How buying, renting and selling work on AutoMarket, and how to make every deal a safe one.
+            How buying, renting and selling work on AutoGO, and how to make every deal a safe one.
           </p>
         </div>
       </section>
@@ -164,7 +164,7 @@ export default function HelpPage() {
           <section className="rounded-2xl bg-white p-6 ring-1 ring-slate-200/80 sm:p-7">
             <h2 className="text-lg font-bold tracking-tight text-slate-900">Still need help?</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Message the seller or business directly from their listing, or contact the AutoMarket team.
+              Message the seller or business directly from their listing, or contact the AutoGO team.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {wa && (

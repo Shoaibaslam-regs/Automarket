@@ -30,7 +30,7 @@ export default function ErrorState({
   if (reloading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4 py-16 text-sm text-slate-500">
-        AutoMarket was updated. Loading the new version…
+        AutoGO was updated. Loading the new version…
       </div>
     );
   }

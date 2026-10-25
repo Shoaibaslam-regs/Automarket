@@ -48,7 +48,7 @@ export async function sendBookingRequestEmail({
           
           <!-- Header -->
           <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
             <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">New booking request</p>
           </div>
 
@@ -116,14 +116,14 @@ export async function sendBookingRequestEmail({
             </a>
 
             <p style="font-size: 12px; color: #8c959f; text-align: center; line-height: 1.6;">
-              Log in to AutoMarket to confirm or decline this request.<br/>
+              Log in to AutoGO to confirm or decline this request.<br/>
               The renter will be notified of your decision.
             </p>
           </div>
         </div>
 
         <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">
-          © 2025 AutoMarket Pakistan
+          © 2025 AutoGO Pakistan
         </p>
       </div>
     `,
@@ -157,7 +157,7 @@ export async function sendBookingConfirmedEmail({
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
         <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
           <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
             <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">Booking ${isConfirmed ? "confirmed" : "declined"}</p>
           </div>
           <div style="padding: 28px;">
@@ -189,7 +189,7 @@ export async function sendBookingConfirmedEmail({
             </a>
           </div>
         </div>
-        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© 2025 AutoMarket Pakistan</p>
+        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© 2025 AutoGO Pakistan</p>
       </div>
     `,
   });
@@ -221,7 +221,7 @@ export async function sendSavedSearchAlertEmail({
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
         <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
           <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
             <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">A new vehicle matches your saved search</p>
           </div>
           <div style="padding: 28px;">
@@ -247,7 +247,7 @@ export async function sendSavedSearchAlertEmail({
             </p>
           </div>
         </div>
-        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© ${new Date().getFullYear()} AutoMarket Pakistan</p>
+        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© ${new Date().getFullYear()} AutoGO Pakistan</p>
       </div>
     `,
   });
@@ -258,18 +258,18 @@ export async function sendPasswordResetEmail({ to, name, link }: { to: string; n
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to,
-    subject: "Reset your AutoMarket password",
+    subject: "Reset your AutoGO password",
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
         <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
           <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
             <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">Password reset</p>
           </div>
           <div style="padding: 28px;">
             <p style="font-size: 15px; color: #0d1117; font-weight: 600; margin-bottom: 4px;">Hi ${name ? escapeHtml(name) : "there"},</p>
             <p style="font-size: 14px; color: #57606a; margin-bottom: 24px; line-height: 1.6;">
-              Someone asked to reset the password for your AutoMarket account. Click the button to choose a new one.
+              Someone asked to reset the password for your AutoGO account. Click the button to choose a new one.
               The link works once and expires in 1 hour.
             </p>
             <a href="${link}" style="display: block; text-align: center; padding: 12px; background: #0d1117; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
@@ -292,12 +292,12 @@ export async function sendPlanExpiringEmail({ to, name, planName, endsAt, daysLe
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to,
-    subject: `Your AutoMarket ${planName} plan ends ${left}`,
+    subject: `Your AutoGO ${planName} plan ends ${left}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
         <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
           <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoMarket</h1>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
             <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">Plan reminder</p>
           </div>
           <div style="padding: 28px;">
@@ -312,7 +312,7 @@ export async function sendPlanExpiringEmail({ to, name, planName, endsAt, daysLe
             </a>
           </div>
         </div>
-        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© ${new Date().getFullYear()} AutoMarket Pakistan</p>
+        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© ${new Date().getFullYear()} AutoGO Pakistan</p>
       </div>
     `,
   });

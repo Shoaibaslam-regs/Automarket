@@ -18,8 +18,6 @@
   background-color: rgb(var(--tw-c-white));
 }
 
-/* The AutoMarket logo artwork is dark; add .theme-logo where it sits on a themed (not always-dark) surface */
-.dark .theme-logo { filter: brightness(0.5) invert(1); }
 
 body {
   background: var(--background);

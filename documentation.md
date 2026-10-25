@@ -1,4 +1,4 @@
-# AutoMarket — Complete Project Documentation
+# AutoGO — Complete Project Documentation
 
 > Pakistan's trusted automobile marketplace for buying, selling, and renting vehicles — built with Next.js 16, MongoDB, and AI-powered inspection.
 
@@ -26,7 +26,7 @@
 
 ## 1. Project Overview
 
-**AutoMarket** is a full-stack web application that serves as Pakistan's automobile marketplace. It allows users to:
+**AutoGO** is a full-stack web application that serves as Pakistan's automobile marketplace. It allows users to:
 
 - **Buy** cars and bikes by browsing verified listings
 - **Sell** vehicles by posting detailed listings with photos
@@ -573,7 +573,7 @@ NEXT_PUBLIC_PUSHER_CLUSTER="ap1"
 # Email notifications
 EMAIL_USER="your-gmail@gmail.com"
 EMAIL_PASS="your-gmail-app-password"
-EMAIL_FROM="AutoMarket <your-gmail@gmail.com>"
+EMAIL_FROM="AutoGO <your-gmail@gmail.com>"
 
 # Admin
 ADMIN_SECRET="your-admin-secret"

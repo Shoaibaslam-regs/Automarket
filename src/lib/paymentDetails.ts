@@ -1,4 +1,4 @@
-// Client-safe: the AutoMarket account people pay into for plans, the Verified badge and sponsored ads.
+// Client-safe: the AutoGO account people pay into for plans, the Verified badge and sponsored ads.
 // Admins set it on the admin Overview (stored as the "payment" SiteSetting); /api/payment-details reads it.
 
 export type PaymentDetails = {
@@ -13,7 +13,7 @@ export type PaymentDetails = {
 };
 
 export const PAYMENT_FIELDS: { key: keyof PaymentDetails; label: string; placeholder: string; max: number }[] = [
-  { key: "accountTitle", label: "Account title", placeholder: "AutoMarket Pvt Ltd", max: 100 },
+  { key: "accountTitle", label: "Account title", placeholder: "AutoGO Pvt Ltd", max: 100 },
   { key: "bankName", label: "Bank", placeholder: "Meezan Bank", max: 100 },
   { key: "iban", label: "IBAN", placeholder: "PK36MEZN0000000000000000", max: 40 },
   { key: "accountNumber", label: "Account number", placeholder: "0123456789", max: 40 },

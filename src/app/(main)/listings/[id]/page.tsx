@@ -390,7 +390,7 @@ export default async function ListingDetailPage({ params }: Props) {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-900">{l.sellerId.name ?? "Unknown"}</p>
                         <p className="text-xs text-slate-400">
-                          Individual seller{l.sellerId.createdAt ? ` · on AutoMarket since ${new Date(l.sellerId.createdAt).getFullYear()}` : ""}
+                          Individual seller{l.sellerId.createdAt ? ` · on AutoGO since ${new Date(l.sellerId.createdAt).getFullYear()}` : ""}
                         </p>
                       </div>
                     </div>

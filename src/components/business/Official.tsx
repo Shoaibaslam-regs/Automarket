@@ -14,7 +14,7 @@ export type OfficialPost = {
 
 const day = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 
-/** "AutoMarket Official" with the blue Verified tick, the same tick verified businesses carry. `tone="dark"` for dark cards. */
+/** "AutoGO Official" with the blue Verified tick, the same tick verified businesses carry. `tone="dark"` for dark cards. */
 export function OfficialName({ tone = "light", className = "" }: { tone?: "light" | "dark"; className?: string }) {
   return (
     <span className={`inline-flex min-w-0 items-center gap-1 font-bold ${tone === "dark" ? "text-white" : "text-[var(--gh-0d1117)]"} ${className}`}>
@@ -24,7 +24,7 @@ export function OfficialName({ tone = "light", className = "" }: { tone?: "light
   );
 }
 
-/** The channel's round avatar: the AutoMarket gradient with a megaphone. */
+/** The channel's round avatar: the AutoGO gradient with a megaphone. */
 export function OfficialAvatar({ size = 44 }: { size?: number }) {
   return (
     <span className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-400 text-white shadow-md"
@@ -34,7 +34,7 @@ export function OfficialAvatar({ size = 44 }: { size?: number }) {
   );
 }
 
-/** One post on the AutoMarket Official channel. */
+/** One post on the AutoGO Official channel. */
 export function OfficialPostCard({ post }: { post: OfficialPost }) {
   const st = ANNOUNCEMENT_STYLE[post.kind] ?? ANNOUNCEMENT_STYLE.ANNOUNCEMENT;
   const [now] = useState(() => Date.now());
@@ -80,7 +80,7 @@ export async function setFollowOfficial(follow: boolean): Promise<string | null>
 }
 
 /**
- * Dashboard card, shown to every business: the newest post from AutoMarket Official (with a "new" count),
+ * Dashboard card, shown to every business: the newest post from AutoGO Official (with a "new" count),
  * a Follow button for the owner or a manager when the business doesn't follow yet, and a link to Updates.
  */
 export function OfficialDashboardCard() {

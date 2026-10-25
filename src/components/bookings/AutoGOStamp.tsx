@@ -1,4 +1,4 @@
-export default function AutoMarketStamp({ business, date, className, caption = "BOOKING CONFIRMED" }: { business?: string; date?: string; className?: string; /** Bottom line, e.g. "SALE COMPLETED" */ caption?: string }) {
+export default function AutoGOStamp({ business, date, className, caption = "BOOKING CONFIRMED" }: { business?: string; date?: string; className?: string; /** Bottom line, e.g. "SALE COMPLETED" */ caption?: string }) {
   const ink = "#056aef6c";
   const name = (business || "").trim().toUpperCase();
   const shortName = name.length > 28 ? `${name.slice(0, 27)}…` : name;
@@ -7,7 +7,7 @@ export default function AutoMarketStamp({ business, date, className, caption = "
     <svg
       viewBox="0 0 240 96"
       role="img"
-      aria-label={`AutoMarket-Pak stamp${business ? `, ${business}` : ""}${date ? `, ${date}` : ""}`}
+      aria-label={`AutoGO-Pak stamp${business ? `, ${business}` : ""}${date ? `, ${date}` : ""}`}
       className={className}
       style={{ printColorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
     >
@@ -25,7 +25,7 @@ export default function AutoMarketStamp({ business, date, className, caption = "
 
         {/* Main mark */}
         <text x="120" y="52" fontSize="25" fontWeight="900" textLength="200" lengthAdjust="spacingAndGlyphs">
-          AUTOMARKET-PAK
+          AUTOGO-PAK
         </text>
 
         {/* Business band */}

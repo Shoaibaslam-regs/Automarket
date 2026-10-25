@@ -31,7 +31,7 @@ export async function unsubscribeThisDevice() {
 
 /**
  * Phone notifications (Web Push) for the signed-in user on this device.
- * iPhone/iPad only allow it once AutoMarket is added to the home screen ("needs-install").
+ * iPhone/iPad only allow it once AutoGO is added to the home screen ("needs-install").
  */
 export function usePushNotifications() {
   const [status, setStatus] = useState<PushStatus>("loading");

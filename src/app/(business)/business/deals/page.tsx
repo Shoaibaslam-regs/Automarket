@@ -91,7 +91,7 @@ export default function BusinessDealsPage() {
         open={confirmDelete !== null}
         onOpenChange={o => !o && setConfirmDelete(null)}
         title={`Delete "${confirmDelete?.title ?? "deal"}"`}
-        description="The deal and its page disappear from AutoMarket straight away. This can't be undone."
+        description="The deal and its page disappear from AutoGO straight away. This can't be undone."
         confirmLabel="Delete deal"
         loading={confirmDelete !== null && busy === confirmDelete._id}
         onConfirm={remove}
@@ -180,7 +180,7 @@ export default function BusinessDealsPage() {
                       <MapPin size={12} className="flex-shrink-0" />
                       <span className="truncate">{d.location} · {fmt(d.startsAt)} → {fmt(d.endsAt)}{d.createdBy?.name ? ` · by ${d.createdBy.name}` : ""}</span>
                     </p>
-                    {state === "DISABLED" && <p className="mt-2 text-xs font-semibold text-[var(--gh-cf222e)]">An AutoMarket admin switched this deal off. Contact the team if you think that&apos;s a mistake.</p>}
+                    {state === "DISABLED" && <p className="mt-2 text-xs font-semibold text-[var(--gh-cf222e)]">An AutoGO admin switched this deal off. Contact the team if you think that&apos;s a mistake.</p>}
                     <div className="mt-auto flex items-center gap-1.5 pt-3">
                       {canManage ? (
                         <>

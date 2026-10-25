@@ -125,7 +125,7 @@ export default function StaffPage() {
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required
                   placeholder="staff@example.com"
                   style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
-                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>The user must already have an AutoMarket account</p>
+                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>The user must already have an AutoGO account</p>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Role</label>
@@ -165,7 +165,7 @@ export default function StaffPage() {
         description={confirmRemove && (
           <>
             <strong style={{ color: "var(--gh-0d1117)" }}>{confirmRemove.userId?.name || confirmRemove.userId?.email}</strong> will lose access to
-            this business straight away. Their AutoMarket account and their own listings are not deleted, and you can add them again later.
+            this business straight away. Their AutoGO account and their own listings are not deleted, and you can add them again later.
           </>
         )}
         confirmLabel="Remove from team"
