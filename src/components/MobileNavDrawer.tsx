@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import BrandLogo from "@/components/BrandLogo";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
@@ -165,8 +164,7 @@ export default function MobileNavDrawer({
           <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
 
-          <div className="relative flex items-center justify-between">
-            <BrandLogo tone="dark" height={16} />
+          <div className="relative flex items-center justify-end">
             <button onClick={onClose} aria-label="Close menu" className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
               <X size={14} />
             </button>

@@ -101,7 +101,7 @@ export default function Navbar() {
 
           {/* ── LOGO ── */}
           <Link href="/" style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            <BrandLogo height={scrolled ? 22 : 26} phoneHeight={scrolled ? 15 : 17} priority style={{ transition: "height 0.3s" }} />
+            <BrandLogo height={scrolled ? 18 : 21} phoneHeight={scrolled ? 13 : 14} priority style={{ transition: "height 0.3s" }} />
           </Link>
 
           {/* ── DESKTOP CENTER LINKS ── */}
