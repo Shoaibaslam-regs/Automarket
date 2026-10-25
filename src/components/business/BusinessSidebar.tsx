@@ -123,18 +123,31 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
 
       {open && (
         <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-2xl bg-slate-900 p-1.5 shadow-2xl shadow-black/50 ring-1 ring-white/10">
-          <div className="mb-1 border-b border-white/10 px-2.5 pb-2.5 pt-1.5">
-            {org?.name && (
-              <p className="mb-1.5 flex min-w-0 items-center gap-1 text-[11px] font-semibold text-slate-300">
-                <span className="truncate">{org.name}</span>
-                {org.verified && <><VerifiedBadge variant="icon" size={13} /><span className="flex-shrink-0 text-[10px] font-medium text-sky-300">Verified</span></>}
-              </p>
-            )}
-            <p className="truncate text-[13px] font-semibold text-white">{session?.user?.name}</p>
-            <p className="truncate text-[11px] text-slate-400">{session?.user?.email}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <UserIdBadge id={org?._id} kind="business" className="!bg-white/5 !px-1.5 !text-[10px] !text-slate-300 !ring-white/10" />
-              <UserIdBadge id={session?.user?.id} kind="me" className="!bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
+          {/* Who is signed in, then the business and both IDs on their own rows, like the marketplace menus */}
+          <div className="mb-1 border-b border-white/10 px-2.5 pb-3 pt-2">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-sm font-bold text-white ring-1 ring-inset ring-white/15">
+                {session?.user?.image
+                  ? <Image src={session.user.image} alt="" fill sizes="36px" className="object-cover" />
+                  : session?.user?.name?.[0]?.toUpperCase() || "?"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold leading-tight text-white">{session?.user?.name}</p>
+                <p className="mt-0.5 truncate text-[11px] text-slate-400">{session?.user?.email}</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5 border-t border-white/10 pt-2.5">
+              {org?.name && (
+                <p className="flex min-w-0 items-center gap-1 text-[12px] font-semibold text-slate-200">
+                  <span className="truncate">{org.name}</span>
+                  {org.verified && <VerifiedBadge variant="icon" size={13} />}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+                <UserIdBadge id={org?._id} kind="business" className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
+                <span aria-hidden className="text-slate-600">·</span>
+                <UserIdBadge id={session?.user?.id} kind="me" className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-400 !ring-0 hover:!text-white" />
+              </div>
             </div>
           </div>
           {[
@@ -234,10 +247,7 @@ function SidebarContent({
       <div className="relative space-y-4 px-4 pb-4 pt-5">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <BrandLogo tone="dark" height={19} />
-            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-300 ring-1 ring-inset ring-white/10">
-              Business
-            </span>
+            <BrandLogo tone="dark" height={15} />
           </Link>
           {onClose && (
             <button onClick={onClose} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
@@ -401,13 +411,8 @@ export default function BusinessSidebar() {
       <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl">
         <Link href="/" className="flex flex-shrink-0 items-center gap-2">
           <BrandLogo tone="dark" height={13} />
-          <span className="rounded bg-white/10 px-1 py-px text-[8px] font-bold uppercase tracking-[0.12em] text-slate-300">Business</span>
         </Link>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="hidden min-w-0 items-center gap-1 min-[380px]:flex">
-            <span className="truncate text-[11px] font-medium text-slate-400">{org?.name}</span>
-            {org?.verified && <VerifiedBadge variant="icon" size={12} />}
-          </span>
           <NotificationBell tone="dark" className="!h-9 !w-9" />
           <button
             onClick={() => setMobileOpenOn(pathname)}
