@@ -89,20 +89,10 @@ export default function SplashAnimation({
             initial={{ left: "0%", opacity: 1 }}
             animate={{ left: ["0%", "100%", "122%"], opacity: [1, 1, 0] }}
             transition={{ duration: total, times: [0, driveShare, 1], ease: [DRIVE_EASE, "easeIn"] }}
-            // The SVG has 3px below the wheels, so 5px puts the tyres on the road's top edge (bottom 6 + 2px tall)
-            style={{ position: "absolute", bottom: 5, x: "-100%", display: "flex", alignItems: "center" }}
+            // The logo car's tyre touches its bottom edge, so 8px puts it on the road's top edge (bottom 6 + 2px tall).
+            // It carries its own red speed lines, so no extra ones are drawn behind it.
+            style={{ position: "absolute", bottom: 8, x: "-100%", display: "flex", alignItems: "center" }}
           >
-            {/* Speed lines behind the car */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, marginRight: 4 }}>
-              {[22, 14, 18].map((w, i) => (
-                <motion.span
-                  key={i}
-                  animate={{ opacity: [0, 0.7, 0], x: [6, -4] }}
-                  transition={{ duration: 0.45, repeat: Infinity, delay: i * 0.12, ease: "easeOut" }}
-                  style={{ display: "block", width: w, height: 2, borderRadius: 2, background: "linear-gradient(90deg, transparent, #94a3b8)" }}
-                />
-              ))}
-            </div>
             <CarIllustration />
           </motion.div>
         )}

@@ -113,7 +113,7 @@ export default function LaunchAnimation({ title, subtitle, onDone }: { title: st
             {!reduce && <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(90deg, rgb(var(--tw-c-slate-400)) 0 12px, transparent 12px 24px)", animation: "am-launch-road 0.35s linear infinite" }} />}
           </div>
           <motion.div
-            className="absolute bottom-[7px]"
+            className="absolute bottom-[10px]"
             style={{ x: "-50%" }}
             initial={reduce ? false : { left: "-25%" }}
             animate={reduce ? { left: "50%" } : { left: ["-25%", "50%", "50%", "130%"] }}
