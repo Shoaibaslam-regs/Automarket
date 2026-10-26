@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
+import { holdsDatesQuery } from "@/lib/bookings";
 
 export async function GET(
   req: NextRequest, 
@@ -12,7 +13,8 @@ export async function GET(
 
     const bookings = await Booking.find({
       rentalId: id,
-      status: { $in: ["PENDING", "CONFIRMED", "ACTIVE"] },
+      // The same bookings that refuse a new request (an unanswered one stops holding its dates after a while)
+      ...holdsDatesQuery(),
     }).select("startDate endDate").lean();
 
     return NextResponse.json({ bookedDates: bookings });

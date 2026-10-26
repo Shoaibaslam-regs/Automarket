@@ -240,7 +240,7 @@ export default async function DealerPage({ params }: Props) {
           )}
           <div className="flex items-start gap-3 rounded-[22px] bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
             <Star size={16} className="mt-0.5 flex-shrink-0 text-amber-500" fill="currentColor" />
-            <p>Reviews come only from people who booked, bought from or messaged this business. <Link href="#reviews" className="font-semibold underline">Read them</Link>.</p>
+            <p>Reviews come only from people this business has rented to, sold to or agreed a deal with. <Link href="#reviews" className="font-semibold underline">Read them</Link>.</p>
           </div>
         </aside>
       </div>

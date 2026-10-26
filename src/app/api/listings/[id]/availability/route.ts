@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     await connectDB();
 
-    const listing = await Listing.findById(id).select("sellerId status type title").lean<{ sellerId: mongoose.Types.ObjectId; status: string; type: string; title: string }>();
+    const listing = await Listing.findById(id).select("sellerId status type title removedByAdmin").lean<{ sellerId: mongoose.Types.ObjectId; status: string; type: string; title: string; removedByAdmin?: boolean }>();
     if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
     const sellerId = String(listing.sellerId);
@@ -47,6 +47,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     const next = status as Availability;
     if (listing.status === next) return NextResponse.json({ ok: true, status: next });
+    if (listing.removedByAdmin) {
+      return NextResponse.json({ error: "This listing was taken down by the AutoGO team. Contact support to have it reviewed." }, { status: 403 });
+    }
     if (listing.status === "INACTIVE" && next !== "ACTIVE") {
       return NextResponse.json({ error: "Switch the listing back on before marking it sold or rented" }, { status: 400 });
     }

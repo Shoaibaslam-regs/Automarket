@@ -36,6 +36,10 @@ export const RATE_LIMITS = {
   vehicleImages: { limit: 30, windowSec: 60 * 60 },
   /** Handover and return condition photos (no AI check), per file */
   checkPhotos: { limit: 60, windowSec: 60 * 60 },
+  /** Picture uploads (no AI check, but each is stored), per user: stops storage from being filled. Saving a new
+   *  profile picture is limited further by src/lib/profilePicture.ts (30 days, then 6 months between changes). */
+  profileImage: { limit: 10, windowSec: 60 * 60 },
+  businessLogo: { limit: 10, windowSec: 60 * 60 },
   messages: { limit: 30, windowSec: 60 },
   support: { limit: 5, windowSec: 60 * 60 },
   reviews: { limit: 5, windowSec: 60 * 60 },

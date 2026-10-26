@@ -69,7 +69,7 @@ export default function BusinessProfileCard({ name, slug, logo, canEditLogo, onL
           {canEditLogo ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <UploadButton
-                endpoint="profileImage"
+                endpoint="businessLogo"
                 onUploadBegin={() => { setUploading(true); setError(""); }}
                 onClientUploadComplete={res => {
                   setUploading(false);

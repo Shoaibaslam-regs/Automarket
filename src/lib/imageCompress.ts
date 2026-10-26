@@ -18,6 +18,7 @@ export const COMPRESS_PRESETS: Record<string, CompressPreset> = {
   checkPhotos: { maxSide: 1600, quality: 0.8 },
   // Profile pictures and business logos are shown small
   profileImage: { maxSide: 512, quality: 0.85, keepAlpha: true },
+  businessLogo: { maxSide: 512, quality: 0.85, keepAlpha: true },
 };
 
 /**

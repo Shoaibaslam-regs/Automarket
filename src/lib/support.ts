@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { Message } from "@/models/Message";
 import { reportError } from "@/lib/errorLog";
+import { privateName } from "@/lib/pusherChannels";
 
 type SupportAdmin = { _id: mongoose.Types.ObjectId; name?: string };
 
@@ -31,7 +32,8 @@ export async function triggerPusher(channel: string, event: string, data: unknow
   try {
     if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
     const { pusherServer } = await import("@/lib/pusher");
-    await pusherServer.trigger(channel, event, data);
+    // Callers name channels "user-…"/"chat-…"; they live as private channels, joined only through /api/pusher/auth
+    await pusherServer.trigger(privateName(channel), event, data);
   } catch (e) {
     reportError("Pusher error:", e);
   }

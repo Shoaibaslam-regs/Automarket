@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UTApi, UploadThingError } from "uploadthing/server";
 import { hitRateLimit, waitText } from "@/lib/rateLimit";
+import { nextPictureChangeAt, pictureWaitText } from "@/lib/profilePicture";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { VehicleImage } from "@/models/VehicleImage";
@@ -67,14 +68,39 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
 
-  // Profile avatars: no vehicle check.
+  // Profile avatars: no vehicle check. A new picture can only be saved as often as src/lib/profilePicture.ts
+  // allows, so the upload is refused up front while the person still has to wait (nothing is stored for nothing).
   profileImage: f({
     image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
-    .middleware(requireUser)
+    .middleware(async () => {
+      const { userId } = await requireUser();
+      const { User } = await import("@/models/User");
+      const user = await User.findById(userId).select("pictureChanges pictureChangedAt").lean<{ pictureChanges?: number; pictureChangedAt?: Date }>();
+      const waitUntil = nextPictureChangeAt(user?.pictureChanges, user?.pictureChangedAt);
+      if (waitUntil) throw new UploadThingError(pictureWaitText(waitUntil));
+      const r = await hitRateLimit("profileImage", userId!, 1);
+      if (!r.ok) throw new UploadThingError(`Too many picture uploads. Please try again in ${waitText(r.retryAfterSec)}.`);
+      return { userId };
+    })
     .onUploadComplete(async ({ file }) => {
       return { url: file.ufsUrl };
     }),
+
+  // Business logos (Business settings): owners and managers only, counted per hour like other uploads
+  businessLogo: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(async () => {
+      const { userId } = await requireUser();
+      const { getMembership } = await import("@/lib/business");
+      const member = await getMembership(userId!);
+      if (!member || !["OWNER", "MANAGER"].includes(member.role)) throw new UploadThingError("Only the owner or a manager can change the business picture.");
+      const r = await hitRateLimit("businessLogo", userId!, 1);
+      if (!r.ok) throw new UploadThingError(`Too many picture uploads. Please try again in ${waitText(r.retryAfterSec)}.`);
+      return { userId };
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

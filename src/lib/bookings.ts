@@ -57,6 +57,36 @@ export function bookingClashQuery(start: Date, end: Date) {
   };
 }
 
+/**
+ * Limits on online booking requests, so one renter can't hold a vehicle for months or many vehicles at once:
+ * a request covers at most MAX_BOOKING_DAYS, a renter has at most MAX_OPEN_REQUESTS waiting, and a request the
+ * owner hasn't answered within REQUEST_EXPIRY_HOURS stops holding the dates (the daily job then cancels it).
+ * Walk-ins entered by a business aren't limited.
+ */
+export const MAX_BOOKING_DAYS = 30;
+export const MAX_OPEN_REQUESTS = 3;
+export const REQUEST_EXPIRY_HOURS = 48;
+
+/** Why an online request's dates are refused, or null when they're fine (dates already parsed and in order). */
+export function bookingLengthError(start: Date | string, end: Date | string): string | null {
+  return rentalDays(start, end) > MAX_BOOKING_DAYS ? `A booking can be at most ${MAX_BOOKING_DAYS} days. Book again for a longer trip.` : null;
+}
+
+/** When a still-unanswered request made before this moment no longer holds its dates. */
+export function requestExpiryCutoff(now = new Date()): Date {
+  return new Date(now.getTime() - REQUEST_EXPIRY_HOURS * 60 * 60 * 1000);
+}
+
+/**
+ * Bookings that hold their dates: confirmed or handed over, or requests still within REQUEST_EXPIRY_HOURS.
+ * Use with bookingClashQuery (inside `$and`, so its `$or` isn't overwritten).
+ */
+export function holdsDatesQuery(now = new Date()) {
+  return {
+    $and: [{ $or: [{ status: { $in: ["CONFIRMED", "ACTIVE"] } }, { status: "PENDING", createdAt: { $gte: requestExpiryCutoff(now) } }] }],
+  };
+}
+
 /** A renter may bring the vehicle back this late without charge. */
 export const LATE_GRACE_MINUTES = 60;
 

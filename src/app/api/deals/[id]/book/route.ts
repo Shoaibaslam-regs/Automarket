@@ -7,7 +7,7 @@ import { Deal } from "@/models/Deal";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getOrgUserIds } from "@/lib/business";
-import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
+import { MAX_OPEN_REQUESTS, bookingClashQuery, bookingLengthError, holdsDatesQuery, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 import { dealPrice, dealState } from "@/lib/deals";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { sendBookingRequestEmail } from "@/lib/email";
@@ -48,6 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const end = new Date(endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return NextResponse.json({ error: "Choose pickup and return dates" }, { status: 400 });
     if (!validBookingDates(start, end)) return NextResponse.json({ error: "The return date can't be before the pickup date" }, { status: 400 });
+    const tooLong = bookingLengthError(start, end);
+    if (tooLong) return NextResponse.json({ error: tooLong }, { status: 400 });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (start < today) return NextResponse.json({ error: "Pickup can't be in the past" }, { status: 400 });
@@ -57,10 +59,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const conflict = await Booking.exists({
       dealId: deal._id,
-      status: { $in: ["PENDING", "CONFIRMED", "ACTIVE"] },
+      ...holdsDatesQuery(),
       ...bookingClashQuery(start, end),
     });
     if (conflict) return NextResponse.json({ error: "This deal is already booked for some of those dates. Try other dates." }, { status: 409 });
+
+    // One renter can't hold many vehicles at once with unanswered requests
+    const waiting = await Booking.countDocuments({ renterId: session.user.id, status: "PENDING", createdAt: { $gte: requestExpiryCutoff() } });
+    if (waiting >= MAX_OPEN_REQUESTS) {
+      return NextResponse.json({ error: `You have ${waiting} booking requests waiting for an answer. Wait for one, or cancel one in My bookings, before sending another.` }, { status: 429 });
+    }
 
     const days = rentalDays(start, end);
     const totalAmount = days * dealPrice(deal.price, deal);

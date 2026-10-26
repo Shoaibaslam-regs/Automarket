@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse, after } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
-import { ListingLog } from "@/models/ListingLog";
 import { cleanAddress } from "@/lib/address";
 // Registers the model for the seller → business populate below
 import "@/models/Organization";
 import { auth } from "@/lib/auth";
 import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
-import { checkPlanLimit } from "@/lib/subscription";
+import { reserveListingSlot } from "@/lib/subscription";
+import { parseListingFields, parseRentalFields } from "@/lib/listingInput";
 import { isUserBusinessSuspended } from "@/lib/business";
 import { PUBLIC_CACHE_SECONDS, invalidateListingAndSeller } from "@/lib/pageCache";
 import { logBusinessAction } from "@/lib/businessLog";
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    // Capped: a huge page number would only make the database skip through everything
+    const page = Math.min(500, Math.max(1, parseInt(searchParams.get("page") || "1") || 1));
     const limit = Math.min(48, Math.max(1, parseInt(searchParams.get("limit") || "12") || 12));
     const sort = searchParams.get("sort") || "createdAt";
 
@@ -84,37 +86,26 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
-    const {
-      title, description, price, type, condition,
-      make, model, year, mileage, color, fuelType,
-      transmission, location, images, address,
-      dailyRate, weeklyRate, monthlyRate, deposit,
-      availableFrom, availableTo,
-    } = body;
-
-    if (!title || !description || !price || !type || !condition || !make || !model || !year || !location) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    // Every field is checked for type, length and range (src/lib/listingInput.ts)
+    const fields = parseListingFields(body);
+    if (!fields.ok) return NextResponse.json({ error: fields.error }, { status: 400 });
+    const f = fields.value;
+    const rental = f.type === "RENT" || f.type === "BOTH" ? parseRentalFields(body) : null;
+    if (rental && !rental.ok) return NextResponse.json({ error: rental.error }, { status: 400 });
 
     if (await isUserBusinessSuspended(session.user.id)) {
       return NextResponse.json({ error: "Your business is suspended, so new listings can't be posted. Contact support from your business console." }, { status: 403 });
     }
 
-    // Free and premium plans cap how many listings can be live at once
-    const overLimit = await checkPlanLimit(session.user.id, "listings");
-    if (overLimit) return NextResponse.json(overLimit, { status: 403 });
-
     // Every image must have passed the AI vehicle check at upload time (see lib/uploadthing.ts)
-    const imageUrls: string[] = Array.isArray(images) ? images.filter((u: unknown) => typeof u === "string") : [];
+    const imageUrls = f.images ?? [];
     if (imageUrls.length > 0) {
       const { VehicleImage } = await import("@/models/VehicleImage");
       const verified = await VehicleImage.countDocuments({ url: { $in: imageUrls }, userId: session.user.id });
-      if (verified !== new Set(imageUrls).size) {
+      if (verified !== imageUrls.length) {
         return NextResponse.json(
           { error: "Some images were not verified as vehicle photos. Please re-upload them." },
           { status: 400 }
@@ -122,30 +113,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const listing = await Listing.create({
-      title, description, price, type, condition,
-      make, model, year, mileage, color, fuelType,
-      transmission, location,
-      address: cleanAddress(address) || undefined,
-      images: imageUrls,
-      sellerId: session.user.id,
-      status: "ACTIVE",
-    });
-    // Counts toward the monthly quota for good, even if the listing is deleted later
-    await ListingLog.create({ sellerId: session.user.id, listingId: listing._id });
+    // The plan's monthly quota: the slot is taken before saving (reserveListingSlot), so sending many requests
+    // at once can't post past the limit. It counts for good, even if the listing is deleted later.
+    const listingId = new mongoose.Types.ObjectId();
+    const slot = await reserveListingSlot(session.user.id, { listingId });
+    if (!slot.ok) return NextResponse.json(slot.error, { status: 403 });
 
-    if ((type === "RENT" || type === "BOTH") && dailyRate) {
-      const { Rental } = await import("@/models/Rental");
-      await Rental.create({
-        listingId: listing._id,
-        dailyRate,
-        weeklyRate,
-        monthlyRate,
-        deposit: deposit || 0,
-        availableFrom: availableFrom ? new Date(availableFrom) : new Date(),
-        availableTo: availableTo ? new Date(availableTo) : undefined,
-        ownerId: session.user.id,
+    let listing;
+    try {
+      listing = await Listing.create({
+        _id: listingId,
+        title: f.title, description: f.description, price: f.price, type: f.type, condition: f.condition,
+        make: f.make, model: f.model, year: f.year, mileage: f.mileage, color: f.color, fuelType: f.fuelType,
+        transmission: f.transmission, location: f.location,
+        address: cleanAddress(body.address) || undefined,
+        images: imageUrls,
+        sellerId: session.user.id,
+        status: "ACTIVE",
       });
+    } catch (e) {
+      await slot.release();
+      throw e;
+    }
+
+    if (rental?.ok) {
+      const { Rental } = await import("@/models/Rental");
+      await Rental.create({ listingId: listing._id, ...rental.value, ownerId: session.user.id });
     }
 
     // Email users whose saved searches match, without delaying the seller's response

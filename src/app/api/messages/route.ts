@@ -7,6 +7,8 @@ import { triggerPusher } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
@@ -90,8 +92,12 @@ export async function POST(req: NextRequest) {
 
     const { receiverId, content, listingId } = body;
 
-    if (!receiverId || !content?.trim()) {
+    if (typeof receiverId !== "string" || !/^[0-9a-f]{24}$/i.test(receiverId) || typeof content !== "string" || !content.trim()) {
       return NextResponse.json({ error: "Receiver and content required" }, { status: 400 });
+    }
+    // Messages are kept to chat size, so a few huge ones can't fill the database
+    if (content.trim().length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json({ error: `A message can be at most ${MAX_MESSAGE_LENGTH.toLocaleString("en-PK")} characters` }, { status: 400 });
     }
 
     if (receiverId === session.user.id) {

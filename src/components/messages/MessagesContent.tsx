@@ -9,6 +9,7 @@ import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import Image from "next/image";
 import { Hand, MessageSquare, Trash2 } from "lucide-react";
 import { useRateLock } from "@/hooks/useRateLock";
+import { chatChannel, userChannel } from "@/lib/pusherChannels";
 
 type User = {
   _id: string;
@@ -88,7 +89,7 @@ export default function MessagesContent() {
     let live = false;
     let unbind = () => {};
     try {
-      const channel = getPusherClient().subscribe(`user-${session.user.id}`);
+      const channel = getPusherClient().subscribe(userChannel(session.user.id));
       const onNotify = (data: { type?: string }) => { if (data?.type === "message") fetchConversations(); };
       channel.bind("new-notification", onNotify);
       // Only unbind: the badge counter shares this channel and keeps it subscribed
@@ -140,7 +141,7 @@ export default function MessagesContent() {
     try {
       const client = getPusherClient();
       if (client) {
-        channelName = `chat-${[session.user.id, activeUser._id].sort().join("-")}`;
+        channelName = chatChannel(session.user.id, activeUser._id);
         const channel = client.subscribe(channelName);
         channel.bind("new-message", (msg: Message) => {
           setMessages(prev => {
@@ -426,7 +427,7 @@ export default function MessagesContent() {
               </div>
 
               <form onSubmit={sendMessage} style={{ padding: "12px 16px", background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", display: "flex", gap: "8px", flexShrink: 0 }}>
-                <input ref={inputRef} value={content} onChange={e => setContent(e.target.value)}
+                <input ref={inputRef} value={content} maxLength={2000} onChange={e => setContent(e.target.value)}
                   placeholder="Type a message..."
                   style={{ flex: 1, padding: "10px 14px", border: "1px solid var(--gh-d0d7de)", borderRadius: "24px", fontSize: "14px", outline: "none", background: "var(--gh-f6f8fa)", minWidth: 0 }} />
                 <button type="submit" disabled={!content.trim() || sending || msgLock.locked} title={msgLock.locked ? msgLock.text : "Send"}

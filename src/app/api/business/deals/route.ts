@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Deal } from "@/models/Deal";
 import { can, getMembership, getOrgUserIds } from "@/lib/business";
 import { parseDealInput } from "@/lib/dealInput";
 import { invalidateDeal } from "@/lib/pageCache";
-import { checkPlanLimit } from "@/lib/subscription";
-import { ListingLog } from "@/models/ListingLog";
+import { reserveListingSlot } from "@/lib/subscription";
 import { logBusinessAction } from "@/lib/businessLog";
 import { reportError } from "@/lib/errorLog";
 
@@ -40,12 +40,18 @@ export async function POST(req: NextRequest) {
 
     const parsed = await parseDealInput(await req.json().catch(() => null), { memberIds: await getOrgUserIds(member.organizationId) });
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
-    // Deals share the plan's monthly listing quota
-    const overLimit = await checkPlanLimit(session.user.id, "listings");
-    if (overLimit) return NextResponse.json(overLimit, { status: 403 });
-    const deal = await Deal.create({ ...parsed.data, organizationId: member.organizationId, createdBy: session.user.id });
-    // Counts toward the quota for good, even if the deal is deleted later
-    await ListingLog.create({ sellerId: session.user.id, dealId: deal._id });
+    // Deals share the plan's monthly listing quota; the slot is taken before the deal is saved (see reserveListingSlot)
+    // and counts for good, even if the deal is deleted later
+    const dealId = new mongoose.Types.ObjectId();
+    const slot = await reserveListingSlot(session.user.id, { dealId });
+    if (!slot.ok) return NextResponse.json(slot.error, { status: 403 });
+    let deal;
+    try {
+      deal = await Deal.create({ ...parsed.data, _id: dealId, organizationId: member.organizationId, createdBy: session.user.id });
+    } catch (e) {
+      await slot.release();
+      throw e;
+    }
     await invalidateDeal(deal._id, member.organizationId);
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "deal.create",
       { type: "DEAL", id: deal._id, label: deal.title });

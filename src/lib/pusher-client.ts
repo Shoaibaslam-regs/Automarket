@@ -18,6 +18,8 @@ let pusherClient: PusherClient | null = null;
       process.env.NEXT_PUBLIC_PUSHER_KEY,
       {
         cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "ap1",
+        // Every channel is private (src/lib/pusherChannels.ts); the server signs only the user's own ones
+        channelAuthorization: { endpoint: "/api/pusher/auth", transport: "ajax" },
       }
     );
   }

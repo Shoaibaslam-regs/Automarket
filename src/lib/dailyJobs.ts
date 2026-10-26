@@ -15,6 +15,7 @@ import { planInfo } from "@/lib/plans";
 import { pkDay, pkRange } from "@/lib/money";
 import { digestText, type DigestCounts as Counts } from "@/lib/today";
 import { reportError } from "@/lib/errorLog";
+import { requestExpiryCutoff } from "@/lib/bookings";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** How many days before a paid plan ends its owner is reminded */
@@ -151,6 +152,18 @@ export async function sendMorningDigest(now = new Date()): Promise<{ businesses:
 }
 
 /** Everything the daily cron does. Each job is separate, so one failing doesn't stop the others. */
+/**
+ * Cancels online booking requests nobody answered within REQUEST_EXPIRY_HOURS. They already stopped holding their
+ * dates (holdsDatesQuery); this tidies them away, and the renter sees "Cancelled" in My bookings (badge included).
+ */
+async function expireStaleRequests(now: Date) {
+  const { modifiedCount } = await Booking.updateMany(
+    { status: "PENDING", source: { $ne: "WALK_IN" }, createdAt: { $lt: requestExpiryCutoff(now) } },
+    { $set: { status: "CANCELLED", cancelledAt: now, seenByRenter: false } }
+  );
+  return { expired: modifiedCount };
+}
+
 export async function runDailyJobs(now = new Date()) {
   await connectDB();
   const result: Record<string, unknown> = {};
@@ -159,6 +172,12 @@ export async function runDailyJobs(now = new Date()) {
   } catch (e) {
     reportError("Daily job plan reminders failed:", e);
     result.planReminders = "failed";
+  }
+  try {
+    result.staleRequests = await expireStaleRequests(now);
+  } catch (e) {
+    reportError("Daily job stale requests failed:", e);
+    result.staleRequests = "failed";
   }
   try {
     result.digest = await sendMorningDigest(now);

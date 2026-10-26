@@ -6,7 +6,7 @@ import { Booking } from "@/models/Booking";
 import { Listing } from "@/models/Listing";
 import { Customer } from "@/models/Customer";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
-import { bookingClashQuery, rentalDays, validBookingDates, bookingNumber } from "@/lib/bookings";
+import { bookingClashQuery, holdsDatesQuery, rentalDays, validBookingDates, bookingNumber } from "@/lib/bookings";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { normalizeCnic, normalizePlate, samePlatePattern } from "@/lib/plates";
 import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       : null;
     const conflict = clashOn && await Booking.exists({
       ...clashOn,
-      status: { $in: ["PENDING", "CONFIRMED", "ACTIVE"] },
+      ...holdsDatesQuery(),
       ...bookingClashQuery(start, end),
     });
     if (conflict) return NextResponse.json({ error: target.dealId ? "This deal is already booked for some of those dates" : target.offList ? `${target.plateNumber} is already booked for some of those dates` : "This vehicle is already booked for some of those dates" }, { status: 409 });

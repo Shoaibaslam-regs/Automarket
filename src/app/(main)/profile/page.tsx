@@ -7,6 +7,7 @@ import Image from "next/image";
 import UserIdBadge from "@/components/UserIdBadge";
 import DeleteAccount from "@/components/profile/DeleteAccount";
 import PhoneVerification from "@/components/profile/PhoneVerification";
+import { pictureHint, pictureWaitText } from "@/lib/profilePicture";
 
 type UserProfile = {
   name?: string;
@@ -17,6 +18,9 @@ type UserProfile = {
   createdAt: string;
   verifiedPhone?: string;
   phoneVerifiedAt?: string;
+  /** When a new picture can be saved again; null or missing means now (src/lib/profilePicture.ts) */
+  pictureNextChangeAt?: string | null;
+  pictureChanges?: number;
 };
 
 export default function ProfilePage() {
@@ -165,6 +169,10 @@ export default function ProfilePage() {
                     <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--gh-ffffff)" }}>{profile?.name?.[0]?.toUpperCase()}</span>
                   )}
                 </div>
+                {profile?.pictureNextChangeAt ? (
+                  // Waiting: say when, instead of offering an upload the server would refuse
+                  <p style={{ fontSize: "12px", color: "var(--gh-57606a)", margin: 0, lineHeight: 1.5 }}>{pictureWaitText(profile.pictureNextChangeAt)}</p>
+                ) : (
                 <UploadButton
                   endpoint="profileImage"
                   onClientUploadComplete={(res) => {
@@ -178,13 +186,19 @@ export default function ProfilePage() {
                   }}
                   content={{ button: "Upload photo" }}
                 />
+                )}
                 {form.image && (
-                  <button onClick={() => setForm(prev => ({ ...prev, image: "" }))}
+                  <button type="button" onClick={() => setForm(prev => ({ ...prev, image: "" }))}
                     style={{ fontSize: "12px", color: "var(--gh-cf222e)", background: "none", border: "none", cursor: "pointer" }}>
                     Remove
                   </button>
                 )}
               </div>
+              {!profile?.pictureNextChangeAt && (
+                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                  {pictureHint(profile?.pictureChanges ?? 0)}
+                </p>
+              )}
             </div>
 
             <form onSubmit={saveProfile} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

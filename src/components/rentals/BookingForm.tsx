@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, Info, Phone, UserRound } from "lucide-react";
 import { normalizePkMobile } from "@/lib/phone";
-import { LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
+import { MAX_BOOKING_DAYS, LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
 import { useRateLock } from "@/hooks/useRateLock";
 import RequestSent from "@/components/launch/RequestSent";
 import { bookingSteps } from "@/lib/requestSteps";
@@ -175,6 +175,8 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
                 type="date"
                 value={endDate}
                 min={startDate || minDate}
+                // Online requests are at most MAX_BOOKING_DAYS long (checked again on the server)
+                max={startDate ? addDays(startDate, MAX_BOOKING_DAYS) : undefined}
                 onChange={(e) => setEndDate(e.target.value)}
                 required
                 className={dateInputClass}

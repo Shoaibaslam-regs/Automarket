@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { BusinessReview } from "@/models/BusinessReview";
 import { Booking } from "@/models/Booking";
 import { Customer } from "@/models/Customer";
-import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
+import { Purchase } from "@/models/Purchase";
 import { User } from "@/models/User";
 import { getBusinessRentals, getOrgUserIds } from "@/lib/business";
 import { getOrgDealIds } from "@/lib/dealBookings";
@@ -44,21 +44,18 @@ export async function getSellerBusinesses(sellerIds: string[]): Promise<Map<stri
 }
 
 /**
- * Only people who have actually dealt with a business may review it: they booked one of its
- * rentals, messaged one of its team, or are in its customer list. Team members can't review their own business.
+ * Only people the business has really dealt with may review it, so throwaway accounts can't pile on:
+ * the business confirmed their booking (a rental, rent deal or off-list walk-in), agreed a price with them or sold
+ * to them, or moved them to Test drive or Sold in its customer list. Sending a message or a request isn't enough
+ * (a request adds an "Interested" or "Negotiating" customer automatically). Team members can't review their own business.
  */
 export async function canReviewBusiness(reviewerId: string, orgId: string): Promise<boolean> {
   const memberIds = await getOrgUserIds(orgId);
   if (memberIds.some(id => String(id) === reviewerId)) return false;
 
   const reviewer = new mongoose.Types.ObjectId(reviewerId);
-  if (await Customer.exists({ organizationId: orgId, userId: reviewer })) return true;
-  if (await Message.exists({
-    $or: [
-      { senderId: reviewer, receiverId: { $in: memberIds } },
-      { senderId: { $in: memberIds }, receiverId: reviewer },
-    ],
-  })) return true;
+  if (await Customer.exists({ organizationId: orgId, userId: reviewer, status: { $in: ["TEST_DRIVE", "SOLD"] } })) return true;
+  if (await Purchase.exists({ organizationId: orgId, buyerId: reviewer, status: { $in: ["ACCEPTED", "COMPLETED"] } })) return true;
 
   const owner = await Organization.findById(orgId).select("ownerId").lean<{ ownerId: Oid }>();
   if (!owner) return false;

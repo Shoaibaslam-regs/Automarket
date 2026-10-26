@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingClashQuery, bookingDailyRate, canTransition, lateCharge, rentalDays, validBookingDates } from "@/lib/bookings";
+import { MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, holdsDatesQuery, lateCharge, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 
 const d = (s: string) => new Date(s);
 
@@ -74,5 +74,25 @@ describe("bookingClashQuery", () => {
     expect(clashes(["2026-10-23", "2026-10-23"], ["2026-10-23", "2026-10-23"])).toBe(true);
     expect(clashes(["2026-10-23", "2026-10-23"], ["2026-10-24", "2026-10-24"])).toBe(false);
     expect(clashes(["2026-10-22", "2026-10-25"], ["2026-10-23", "2026-10-23"])).toBe(true);
+  });
+});
+
+describe("online request limits", () => {
+  it("allows up to MAX_BOOKING_DAYS and refuses longer", () => {
+    expect(bookingLengthError("2026-11-01", "2026-12-01")).toBeNull(); // 30 days
+    expect(bookingLengthError("2026-11-01", "2026-12-02")).toMatch(String(MAX_BOOKING_DAYS));
+    expect(bookingLengthError("2026-11-01", "2099-01-01")).not.toBeNull();
+  });
+  it("lets an unanswered request hold dates only for REQUEST_EXPIRY_HOURS", () => {
+    const now = d("2026-11-03T12:00:00Z");
+    expect(requestExpiryCutoff(now).getTime()).toBe(now.getTime() - REQUEST_EXPIRY_HOURS * 3600_000);
+    const q = holdsDatesQuery(now).$and[0].$or;
+    expect(q[0]).toEqual({ status: { $in: ["CONFIRMED", "ACTIVE"] } });
+    expect(q[1]).toEqual({ status: "PENDING", createdAt: { $gte: requestExpiryCutoff(now) } });
+  });
+  it("combines with the clash query without overwriting its $or", () => {
+    const merged = { ...bookingClashQuery(d("2026-11-01"), d("2026-11-03")), ...holdsDatesQuery() };
+    expect(merged.$or).toHaveLength(2);
+    expect(merged.$and).toHaveLength(1);
   });
 });

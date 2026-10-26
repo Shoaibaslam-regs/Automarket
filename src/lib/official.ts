@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { userChannel } from "@/lib/pusherChannels";
 import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { Announcement } from "@/models/Announcement";
@@ -63,7 +64,7 @@ export async function notifyFollowers(payload: { title: string; kind: string }) 
     await sendPush(ids, { title: "AutoGO Official", body: payload.title, url: "/business/updates", tag: "official" });
     if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET) return;
     const { pusherServer } = await import("@/lib/pusher");
-    const channels = ids.map(id => `user-${id}`);
+    const channels = ids.map(id => userChannel(String(id)));
     // Pusher accepts up to 100 channels per trigger
     for (let i = 0; i < channels.length; i += 100) {
       await pusherServer.trigger(channels.slice(i, i + 100), "new-notification", { type: "official", ...payload });

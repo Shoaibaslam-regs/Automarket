@@ -22,6 +22,8 @@ export async function PATCH(
       if (!LISTING_STATUSES.includes(body.status)) return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       update.status = body.status;
       update.statusChangedAt = new Date();
+      // Taking a listing down sticks: the seller can't switch it back on until an admin does
+      update.removedByAdmin = body.status === "INACTIVE" || body.status === "PENDING";
     }
     if (body.featured !== undefined) {
       if (typeof body.featured !== "boolean") return NextResponse.json({ error: "Invalid value" }, { status: 400 });

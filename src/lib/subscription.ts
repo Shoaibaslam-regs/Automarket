@@ -99,12 +99,7 @@ const LIMIT_NOUNS: Record<LimitKind, string> = {
  * Checks whether adding one more `kind` stays within the plan.
  * Returns null when allowed, otherwise a 403 payload the client can show with an upgrade link.
  */
-export async function checkPlanLimit(userId: string, kind: LimitKind) {
-  const sub = await getSubscription(userId);
-  const limit = sub.plan.limits[kind];
-  if (limit === null) return null;
-  const used = (await getUsage(userId, sub))[kind];
-  if (used < limit) return null;
+function limitReached(sub: Subscription, kind: LimitKind, limit: number, used: number) {
   const resets = kind === "listings"
     ? ` Your quota resets on ${quotaResetsAt().toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}.`
     : "";
@@ -116,4 +111,32 @@ export async function checkPlanLimit(userId: string, kind: LimitKind) {
     used,
     plan: sub.planId,
   };
+}
+
+export async function checkPlanLimit(userId: string, kind: LimitKind) {
+  const sub = await getSubscription(userId);
+  const limit = sub.plan.limits[kind];
+  if (limit === null) return null;
+  const used = (await getUsage(userId, sub))[kind];
+  if (used < limit) return null;
+  return limitReached(sub, kind, limit, used);
+}
+
+/**
+ * Takes one slot of the monthly listing quota for a listing or deal that is about to be created (pass the id it
+ * will be created with). The ListingLog entry is written first and the month counted after, so requests sent at
+ * the same moment can't all pass a count taken before any of them was logged; whoever ends up over the limit
+ * removes its own entry and is refused. Call `release()` if the listing or deal then fails to save, so a failed
+ * attempt doesn't use up quota. (Entries are otherwise never deleted.)
+ */
+export async function reserveListingSlot(userId: string, target: { listingId: mongoose.Types.ObjectId } | { dealId: mongoose.Types.ObjectId }) {
+  const sub = await getSubscription(userId);
+  const limit = sub.plan.limits.listings;
+  const log = await ListingLog.create({ sellerId: userId, ...target });
+  const release = () => ListingLog.deleteOne({ _id: log._id }).then(() => undefined, () => undefined);
+  if (limit === null) return { ok: true as const, release };
+  const used = (await getUsage(userId, sub)).listings;
+  if (used <= limit) return { ok: true as const, release };
+  await release();
+  return { ok: false as const, error: limitReached(sub, "listings", limit, used - 1) };
 }

@@ -24,6 +24,21 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
 }
 
+/** Business details as sent, trimmed and kept to the sizes the dealer page, slips and cards can show. */
+const ORG_TEXT_LIMITS = { name: 80, phone: 20, email: 120, city: 60, address: 200, description: 1000 } as const;
+function orgTextFields(body: Record<string, unknown>): { error: string } | Partial<Record<keyof typeof ORG_TEXT_LIMITS, string>> {
+  const out: Partial<Record<keyof typeof ORG_TEXT_LIMITS, string>> = {};
+  for (const [key, max] of Object.entries(ORG_TEXT_LIMITS) as [keyof typeof ORG_TEXT_LIMITS, number][]) {
+    const v = body[key];
+    if (v === undefined || v === null) continue;
+    if (typeof v !== "string") return { error: `The business ${key} must be text` };
+    if (v.trim().length > max) return { error: `The business ${key} can be at most ${max} characters` };
+    out[key] = v.trim();
+  }
+  if (out.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email)) return { error: "Enter a valid business email" };
+  return out;
+}
+
 export async function GET() {
   try {
     const session = await auth();
@@ -51,8 +66,13 @@ export async function POST(req: NextRequest) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
 
-    const { name, type, phone, email, city, address, description, followOfficial } = await req.json();
+    const body = (await req.json().catch(() => null)) ?? {};
+    const { type, followOfficial } = body;
+    const fields = orgTextFields(body);
+    if ("error" in fields) return NextResponse.json({ error: fields.error }, { status: 400 });
+    const { name, phone, email, city, address, description } = fields;
     if (!name || !type || !city) return NextResponse.json({ error: "Name, type and city are required" }, { status: 400 });
+    if (!["DEALER", "RENTAL", "BOTH"].includes(type)) return NextResponse.json({ error: "Choose the type of business" }, { status: 400 });
 
     const existing = await User.findById(session.user.id);
     if (existing?.organizationId) return NextResponse.json({ error: "You already have a business" }, { status: 400 });
@@ -92,19 +112,20 @@ export async function PATCH(req: NextRequest) {
     const user = await User.findById(session.user.id);
     if (!user?.organizationId) return NextResponse.json({ error: "No organization" }, { status: 404 });
     const body = (await req.json().catch(() => null)) ?? {};
-    // Only fields actually sent are changed, so the logo can be saved on its own
-    const update: Record<string, unknown> = {};
-    for (const key of ["name", "phone", "email", "city", "address", "description"] as const) {
-      if (typeof body[key] === "string") update[key] = body[key];
+    // Business settings are the owner's and managers'; other team members can only look
+    const member = await getMembership(session.user.id);
+    if (!member || !["OWNER", "MANAGER"].includes(member.role)) {
+      return NextResponse.json({ error: "Only the owner or a manager can change the business details" }, { status: 403 });
     }
-    if (update.name !== undefined && !String(update.name).trim()) {
+    // Only fields actually sent are changed, so the logo can be saved on its own
+    const fields = orgTextFields(body);
+    if ("error" in fields) return NextResponse.json({ error: fields.error }, { status: 400 });
+    const update: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) if (value !== undefined) update[key] = value;
+    if ("name" in body && !update.name) {
       return NextResponse.json({ error: "Business name is required" }, { status: 400 });
     }
     if (body.logo !== undefined) {
-      const member = await getMembership(session.user.id);
-      if (!member || !["OWNER", "MANAGER"].includes(member.role)) {
-        return NextResponse.json({ error: "Only the owner or a manager can change the business picture" }, { status: 403 });
-      }
       if (body.logo !== "" && !isUploadedImageUrl(body.logo)) {
         return NextResponse.json({ error: "Upload the picture here first" }, { status: 400 });
       }

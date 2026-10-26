@@ -7,7 +7,7 @@ import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { ensureBookingCustomer } from "@/lib/customerSync";
-import { bookingClashQuery, rentalDays, validBookingDates } from "@/lib/bookings";
+import { MAX_OPEN_REQUESTS, bookingClashQuery, bookingLengthError, holdsDatesQuery, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 import { DEAL_BOOKING_FIELDS, getOrgDealIds } from "@/lib/dealBookings";
 import { can, getMembership } from "@/lib/business";
 import { Organization } from "@/models/Organization";
@@ -117,6 +117,8 @@ export async function POST(req: NextRequest) {
     if (!validBookingDates(start, end)) {
       return NextResponse.json({ error: "The return date can't be before the pickup date" }, { status: 400 });
     }
+    const tooLong = bookingLengthError(start, end);
+    if (tooLong) return NextResponse.json({ error: tooLong }, { status: 400 });
 
     if (start < new Date()) {
       return NextResponse.json({ error: "Start date cannot be in the past" }, { status: 400 });
@@ -133,12 +135,18 @@ export async function POST(req: NextRequest) {
 
     const conflict = await Booking.findOne({
       rentalId,
-      status: { $in: ["PENDING", "CONFIRMED", "ACTIVE"] },
+      ...holdsDatesQuery(),
       ...bookingClashQuery(start, end),
     });
 
     if (conflict) {
       return NextResponse.json({ error: "Vehicle is not available for selected dates" }, { status: 400 });
+    }
+
+    // One renter can't hold many vehicles at once with unanswered requests
+    const waiting = await Booking.countDocuments({ renterId: session.user.id, status: "PENDING", createdAt: { $gte: requestExpiryCutoff() } });
+    if (waiting >= MAX_OPEN_REQUESTS) {
+      return NextResponse.json({ error: `You have ${waiting} booking requests waiting for an answer. Wait for one, or cancel one in My bookings, before sending another.` }, { status: 429 });
     }
 
     const days = rentalDays(start, end);

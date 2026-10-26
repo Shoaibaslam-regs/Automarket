@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { create } from "zustand";
 import { getPusherClient } from "@/lib/pusher-client";
 import { playChime } from "@/lib/notifySound";
+import { userChannel } from "@/lib/pusherChannels";
 
 type Counts = {
   /** Unread messages received (from /api/messages/unread). */
@@ -73,7 +74,7 @@ function start(userId: string) {
   let unbind = () => {};
   try {
     const pusher = getPusherClient();
-    const channelName = `user-${userId}`;
+    const channelName = userChannel(userId);
     const channel = pusher.subscribe(channelName);
     const handler = () => { refreshNotificationCounts(); playChime(); };
     channel.bind("new-notification", handler);
