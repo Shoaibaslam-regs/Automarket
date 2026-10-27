@@ -22,6 +22,7 @@ import UserIdBadge from "@/components/UserIdBadge";
 import "@/models/Deal";
 import StatusText, { textTone } from "@/components/ui/StatusText";
 import TeamInvites from "@/components/business/TeamInvites";
+import AddPhoneCard from "@/components/profile/AddPhoneCard";
 
 type Oid = mongoose.Types.ObjectId;
 type MyListing = {
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
       .populate({ path: "rentalId", select: "listingId", populate: { path: "listingId", select: "title images" } })
       .populate("dealId", "title images")
       .lean<UpcomingBooking[]>(),
-    User.findById(userId).select("createdAt organizationId image").lean<{ createdAt: Date; organizationId?: Oid; image?: string }>(),
+    User.findById(userId).select("createdAt organizationId image phone password").lean<{ createdAt: Date; organizationId?: Oid; image?: string; phone?: string; password?: string }>(),
     getSubscription(userId),
   ]);
   const usage = await getUsage(userId, sub);
@@ -104,6 +105,8 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Invitations to join a business team, answered here (nothing shows when there are none) */}
         <TeamInvites />
+        {/* Accounts without a phone (Google sign-ups) are asked for one; nothing shows once it's saved or snoozed */}
+        {user && !user.phone?.trim() && <AddPhoneCard userId={userId} hasPassword={!!user.password} />}
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_20px_50px_-32px_rgba(79,70,229,0.35)] ring-1 ring-slate-200/80 sm:p-8">
           <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-200/60 to-fuchsia-100/50 blur-3xl" />

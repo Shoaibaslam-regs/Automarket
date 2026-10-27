@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
+import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import type { CodeChannel } from "@/lib/signupCode";
 import Navbar from "@/components/Navbar";
 import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
@@ -111,6 +112,10 @@ export default function RegisterPage() {
               onBack={() => setSent(null)}
             />
           ) : (
+          <>
+          {/* Google confirms the email itself, so this skips the code step */}
+          <GoogleButton />
+          <OrDivider text="or sign up with email" />
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {[
               { label: "Full name", name: "name", type: "text", placeholder: "Full Name" },
@@ -166,6 +171,7 @@ export default function RegisterPage() {
               {regLock.locked ? regLock.text : loading ? "Creating account..." : "Create account"}
             </button>
           </form>
+          </>
           )}
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
