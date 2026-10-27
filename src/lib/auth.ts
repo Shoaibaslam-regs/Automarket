@@ -56,7 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
-        // The field takes an email or a verified phone number (the admin form only an email)
+        // The field takes an email or the account's phone number (the admin form only an email)
         const id = parseLoginIdentifier(String(credentials.email));
         if (!id || (id.kind === "phone" && credentials.portal === "admin")) return null;
         const password = String(credentials.password);
@@ -78,10 +78,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await connectDB();
         // Emails are stored lower-case now; older accounts kept the capitals they signed up with
-        const user = await User.findOne(id.kind === "email" ? emailQuery(id.email) : { verifiedPhone: id.phone });
-
-        // The same work and the same answer whether the email is unknown or the password is wrong
-        const isValid = await bcrypt.compare(password, user?.password || DUMMY_HASH);
+        let user;
+        let isValid = false;
+        if (id.kind === "email") {
+          user = await User.findOne(emailQuery(id.email));
+          // The same work and the same answer whether the email is unknown or the password is wrong
+          isValid = await bcrypt.compare(password, user?.password || DUMMY_HASH);
+        } else {
+          // Phones typed at sign-up aren't proven, so several accounts may give the same number: the one whose
+          // password matches signs in (an SMS-verified number first). At most 5 are tried.
+          // Oldest accounts first, so accounts made later with someone else's number can't push theirs out
+          const found = await User.find({ $or: [{ verifiedPhone: id.phone }, { loginPhone: id.phone }] }).sort({ createdAt: 1, _id: 1 }).limit(5);
+          found.sort((a, b) => Number(b.verifiedPhone === id.phone) - Number(a.verifiedPhone === id.phone));
+          if (!found.length) await bcrypt.compare(password, DUMMY_HASH);
+          for (const candidate of found) {
+            if (candidate.password && (await bcrypt.compare(password, candidate.password))) {
+              user = candidate;
+              isValid = true;
+              break;
+            }
+          }
+          user ??= found[0];
+        }
         // On the admin form a correct password for a non-admin account is still a refusal
         if (!user || !user.password || !isValid || (adminPortal && user.role !== "ADMIN")) {
           if (adminPortal) {
@@ -110,8 +128,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
+        // Accounts are matched by email, so only an email Google has confirmed may open one
+        if (profile?.email_verified !== true || !user.email) return false;
         await connectDB();
         const existing = await User.findOne(emailQuery(String(user.email ?? "")));
         if (!existing) {
@@ -126,8 +146,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             sessionKey: newSessionKey(),
           });
         } else if (existing.emailVerifyRequired) {
-          // Google has confirmed the email, so a pending email sign-up is confirmed too
-          await User.updateOne({ _id: existing._id }, { $set: { emailVerified: new Date() }, $unset: { emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" } });
+          // Google has confirmed the email, so a pending email sign-up is confirmed too. Its password was never
+          // proven to belong to this person (anyone can sign up with any email), so it's dropped; Forgot password
+          // sets a new one
+          await User.updateOne({ _id: existing._id }, { $set: { emailVerified: new Date(), sessionKey: newSessionKey() }, $unset: { password: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" } });
         }
       }
       return true;

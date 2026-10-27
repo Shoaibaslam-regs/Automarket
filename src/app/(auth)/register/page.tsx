@@ -103,6 +103,7 @@ export default function RegisterPage() {
           {sent ? (
             <VerifyCodeForm
               email={form.email.trim()}
+              password={form.password}
               sentTo={sent.sentTo}
               channel={sent.channel}
               smsOption={smsAvailable}

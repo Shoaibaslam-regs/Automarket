@@ -6,6 +6,8 @@ import { useRateLock } from "@/hooks/useRateLock";
 
 type Props = {
   email: string;
+  /** The password just typed: confirming needs it, so only the person who set it can confirm */
+  password: string;
   /** Where the current code went, masked ("a***r@gmail.com", "+92 30* *** 4567") */
   sentTo: string;
   channel: CodeChannel;
@@ -23,7 +25,7 @@ const linkBtn = { padding: 0, background: "none", border: "none", color: "var(--
  * "Enter the 6-digit code" step after sign-up (and on sign-in for an account that hasn't confirmed yet):
  * Verify, "Send a new code" after RESEND_AFTER_SECONDS, and a switch between email and SMS.
  */
-export default function VerifyCodeForm({ email, sentTo: firstSentTo, channel: firstChannel, smsOption, onVerified, onBack }: Props) {
+export default function VerifyCodeForm({ email, password, sentTo: firstSentTo, channel: firstChannel, smsOption, onVerified, onBack }: Props) {
   const [code, setCode] = useState("");
   const [sentTo, setSentTo] = useState(firstSentTo);
   const [channel, setChannel] = useState(firstChannel);
@@ -46,7 +48,7 @@ export default function VerifyCodeForm({ email, sentTo: firstSentTo, channel: fi
     if (!clean) { setError(`Enter the ${SIGNUP_CODE_LENGTH}-digit code`); return; }
     setBusy("verify");
     setError("");
-    const res = await fetch("/api/auth/verify-code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, code: clean }) }).catch(() => null);
+    const res = await fetch("/api/auth/verify-code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, code: clean, password }) }).catch(() => null);
     const data = await res?.json().catch(() => ({}));
     if (res && verifyLock.check(res, data)) { setBusy(null); return; }
     if (!res?.ok) {

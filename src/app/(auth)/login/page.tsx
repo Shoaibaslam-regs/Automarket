@@ -30,13 +30,12 @@ export default function LoginPage() {
   const looksLikeKey = !email.includes("@") && !parseLoginIdentifier(email);
   const adminLock = useRateLock("login:admin");
 
-  // ?verified=1 after confirming (link or code), ?verify=invalid for an old link, ?email= to fill the field
+  // ?verified=1 after confirming with a code, ?email= to fill the field
   useEffect(() => {
     queueMicrotask(() => {
       const q = new URLSearchParams(window.location.search);
       if (q.get("email")) setEmail(q.get("email") ?? "");
       if (q.get("verified") === "1") setNotice("Email confirmed. Sign in to continue.");
-      else if (q.get("verify") === "invalid") setError("That confirmation link has expired or was already used. Sign in and we'll send you a code instead.");
     });
   }, []);
 
@@ -124,6 +123,9 @@ export default function LoginPage() {
       if (limited) {
         lock.lock(Number(limited[1]) || 15 * 60);
         setError("");
+      } else if (res.code === "email_unverified" && !value.includes("@")) {
+        // The code is sent to the email, so it's asked for with the email
+        setError("Confirm your account first: sign in once with your email address and we'll send you a code.");
       } else if (res.code === "email_unverified") {
         setLoading(true);
         await startCodeStep(value);
@@ -215,7 +217,7 @@ export default function LoginPage() {
           )}
 
           {code ? (
-            <VerifyCodeForm email={email.trim()} sentTo={code.sentTo} channel={code.channel} smsOption={code.sms}
+            <VerifyCodeForm email={email.trim()} password={password} sentTo={code.sentTo} channel={code.channel} smsOption={code.sms}
               onVerified={signInAfterCode} onBack={() => setCode(null)} />
           ) : (
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -223,7 +225,7 @@ export default function LoginPage() {
               <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Email or phone</label>
               {/* type="text": it takes an email, a verified phone number, or (neither) the hidden admin key */}
               <input type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} required
-                placeholder="you@example.com or 0300 1234567"
+                placeholder="AutoGO@email.com"
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>

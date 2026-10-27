@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       // A new session key signs out every device (the page then signs in here); opening the emailed link also
       // proves the email, so a pending confirmation is done too
       { $set: { password: await bcrypt.hash(password, 12), sessionKey: newSessionKey(), emailVerified: new Date() },
-        $unset: { resetTokenHash: "", resetTokenExpires: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "" } }
+        $unset: { resetTokenHash: "", resetTokenExpires: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" } }
     );
     // The owner proved they control the email, so a sign-in lock from wrong guesses no longer applies
     await RateLimit.deleteOne({ key: `loginEmail:${user.email.toLowerCase()}` });

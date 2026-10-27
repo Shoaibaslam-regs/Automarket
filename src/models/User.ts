@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { defineModel } from "./defineModel";
 import { PLAN_IDS, type PlanId, type PlanSource } from "../lib/plans";
+import { normalizePkMobile } from "../lib/phone";
 
 export interface IUser extends Document {
   name?: string;
@@ -37,6 +38,8 @@ export interface IUser extends Document {
   pictureChanges?: number;
   pictureChangedAt?: Date;
   /** Forgot-password link: only a SHA-256 hash of the token is stored, and it expires (see /api/auth/forgot-password) */
+  /** The profile phone as E.164 (+92…), kept in step with `phone` on save; it signs in with the password, unverified */
+  loginPhone?: string;
   /** Mobile number confirmed by SMS code (E.164, +92…), and when; cleared if the profile phone changes */
   verifiedPhone?: string;
   phoneVerifiedAt?: Date;
@@ -81,6 +84,7 @@ const UserSchema = new Schema<IUser>(
     planReminderFor: { type: Date },
     pictureChanges: { type: Number, default: 0 },
     pictureChangedAt: { type: Date },
+    loginPhone: { type: String, index: true, sparse: true },
     verifiedPhone: { type: String, index: true, sparse: true },
     phoneVerifiedAt: { type: Date },
     trialPhone: { type: String, index: true, sparse: true },
@@ -93,5 +97,10 @@ const UserSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
+
+// Sign-in by phone looks accounts up by loginPhone, so it follows every saved change of the profile phone
+UserSchema.pre("save", function () {
+  if (this.isModified("phone")) this.loginPhone = normalizePkMobile(this.phone) ?? undefined;
+});
 
 export const User = defineModel<IUser>("User", UserSchema);

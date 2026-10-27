@@ -59,20 +59,36 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
     await hitRateLimit("register", ip);
 
-    const existing = await User.findOne(emailQuery(email)).select("name email emailVerifyRequired");
-    // Signed up before but never typed the code: send a new one (the first password stays)
+    // Emails to one address are capped (shared with "send a new code"), so sign-up can't flood an inbox from many
+    // connections; over the cap nothing is sent and the answer stays the same
+    const mailOk = (await hitRateLimit("verifyEmailResend", email)).ok;
+    // Where a code would go, for answers that send none
+    const phoneTo = wanted === "phone" && phoneCodesAvailable() ? normalizePkMobile(phone) : null;
+    const noCodeSent = () => (phoneTo ? codeSent("phone", phoneTo) : codeSent("email", email));
+
+    const existing = await User.findOne(emailQuery(email)).select("name email phone emailVerifyRequired");
+    // Signed up before but never typed the code. Anyone can type any email here, so the details of the latest
+    // sign-up replace the old ones: only the person reading the inbox gets the code, and confirming needs this
+    // password too (verify-code), so nobody can leave a password of their own on someone else's email.
     if (existing?.emailVerifyRequired) {
+      existing.name = name;
+      existing.password = hashedPassword;
+      existing.phone = phone;
+      existing.sessionKey = newSessionKey();
+      await existing.save();
+      if (!mailOk) return noCodeSent();
       const sent = await issueSignupCode(String(existing._id), wanted);
       return codeSent(sent.channel, sent.to);
     }
     if (existing) {
-      try {
-        await sendAccountExistsEmail({ to: existing.email, name: existing.name, loginLink: `${SITE_URL}/login`, resetLink: `${SITE_URL}/forgot-password` });
-      } catch (e) {
-        reportError("Account-exists email failed:", e);
+      if (mailOk) {
+        try {
+          await sendAccountExistsEmail({ to: existing.email, name: existing.name, loginLink: `${SITE_URL}/login`, resetLink: `${SITE_URL}/forgot-password` });
+        } catch (e) {
+          reportError("Account-exists email failed:", e);
+        }
       }
-      const phoneTo = wanted === "phone" ? normalizePkMobile(phone) : null;
-      return phoneTo && phoneCodesAvailable() ? codeSent("phone", phoneTo) : codeSent("email", email);
+      return noCodeSent();
     }
 
     const user = await User.create({
@@ -86,6 +102,7 @@ export async function POST(req: NextRequest) {
       sessionKey: newSessionKey(),
     });
     // Sending problems are logged inside; the page offers "send a new code"
+    if (!mailOk) return noCodeSent();
     const sent = await issueSignupCode(String(user._id), wanted);
     return codeSent(sent.channel, sent.to);
   } catch (error) {
