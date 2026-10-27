@@ -79,8 +79,8 @@ export function recordError(o: Occurrence): Promise<void> {
 }
 
 /**
- * A drop-in for console.error in server code: prints the same thing and also records it in the admin
- * Errors page (/admin/errors), grouped by label and message.
+ * A drop-in for console.error in server code: prints the same thing and also records it in the ErrorLog
+ * collection, grouped by label and message (the admin Errors page that showed it was removed).
  *   reportError("Create listing error:", error);
  * The first string is the label; the first non-string is the error.
  */

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MessageSquareText, Star, Store } from "lucide-react";
 import StarRating from "./StarRating";
 import { toReviewView, type ReviewSummary, type ReviewView } from "./types";
 import { useRateLock } from "@/hooks/useRateLock";
 
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 /** anon: signed out · member: works at this business · eligible: may review · ineligible: hasn't dealt with it */
 export type ReviewViewer = "anon" | "member" | "eligible" | "ineligible";
 
@@ -79,6 +81,10 @@ export default function BusinessReviews({
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState(myReview?.comment ?? "");
   const revLock = useRateLock("reviews");
+  // A first review is kept as a draft per business; editing a posted one isn't
+  const draftValue = useMemo(() => ({ rating, comment }), [rating, comment]);
+  const draft = useFormDraft(`review:${slug}`, draftValue, d => { setRating(d.rating); setComment(d.comment); },
+    { isEmpty: d => !d.rating && !d.comment.trim(), enabled: !mine });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -121,6 +127,7 @@ export default function BusinessReviews({
     setSubmitting(false);
     revLock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't save your review"); return; }
+    draft.clear();
     const saved = toReviewView(data.review);
     // Keep the star breakdown in step without a reload
     setDist(prev => {
@@ -227,6 +234,7 @@ export default function BusinessReviews({
               placeholder="Tell others about the vehicle, the service and how they treated you…"
               className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
             />
+            {!mine && <DraftNote className="mt-1" restoredAt={draft.restoredAt} savedAt={draft.savedAt} onDiscard={() => { draft.clear(); setRating(0); setComment(""); }} />}
             {mine?.reply && <p className="mt-1 text-xs text-amber-700">Editing your review removes the business&apos;s current reply.</p>}
             {error && <p role="alert" className="mt-2 text-sm text-rose-600">{error}</p>}
             <div className="mt-3 flex gap-2">

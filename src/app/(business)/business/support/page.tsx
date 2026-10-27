@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -10,6 +10,8 @@ import { SUPPORT_TOPICS, type SupportTopicId } from "@/lib/supportTopics";
 import { SUPPORT_WHATSAPP, whatsappLink } from "@/lib/supportContact";
 import { useRateLock } from "@/hooks/useRateLock";
 import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 
 type Org = { _id: string; name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
@@ -20,6 +22,8 @@ export default function BusinessSupportPage() {
   const [org, setOrg] = useState<Org | null>(null);
   const [topic, setTopic] = useState<SupportTopicId | "">("");
   const [message, setMessage] = useState("");
+  const draftValue = useMemo(() => ({ topic, message }), [topic, message]);
+  const draft = useFormDraft("support", draftValue, d => { setTopic(d.topic); setMessage(d.message); }, { isEmpty: d => !d.message.trim() });
   const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -48,6 +52,7 @@ export default function BusinessSupportPage() {
     const data = await res.json().catch(() => ({}));
     supLock.check(res, data);
     if (!res.ok) { setSending(false); setError(data.error || "Couldn't send your message"); return; }
+    draft.clear();
     router.push(`/messages?with=${data.supportUserId}`);
   }
 
@@ -105,7 +110,10 @@ export default function BusinessSupportPage() {
               placeholder={suspended ? "Explain what happened and why your business should be reinstated…" : "Tell us what you need. Include listing titles or booking numbers if relevant."}
               className="w-full resize-none rounded-lg border border-[var(--gh-d0d7de)] px-3 py-2.5 text-[13px] outline-none focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10"
             />
-            <p className="mt-1 text-right text-[11px] text-[var(--gh-8c959f)]">{message.trim().length}/2000</p>
+            <div className="mt-1 flex items-start justify-between gap-3">
+              <DraftNote restoredAt={draft.restoredAt} savedAt={draft.savedAt} onDiscard={() => { draft.clear(); setMessage(""); setTopic(""); }} />
+              <p className="ml-auto flex-shrink-0 text-[11px] text-[var(--gh-8c959f)]">{message.trim().length}/2000</p>
+            </div>
 
             {error && <div role="alert" className="mt-2 rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-3 py-2.5 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
 

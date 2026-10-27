@@ -8,7 +8,7 @@ import { Rental } from "@/models/Rental";
 import { Purchase } from "@/models/Purchase";
 import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
-import { Announcement } from "@/models/Announcement";
+import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
 import { can, getMembership } from "@/lib/business";
 import { getOrgDealIds } from "@/lib/dealBookings";
 import { bookingNumber } from "@/lib/bookings";
@@ -111,7 +111,7 @@ export async function GET() {
       ]);
       if (org?.followsOfficial) {
         const since = new Date(Math.max(user?.officialSeenAt?.getTime() ?? 0, org.followedOfficialAt?.getTime() ?? 0));
-        const posts = await Announcement.find({ createdAt: { $gt: since } }).sort({ createdAt: -1 }).limit(5).select("title body createdAt")
+        const posts = await Announcement.find({ ...PUBLISHED_POSTS, createdAt: { $gt: since } }).sort({ createdAt: -1 }).limit(5).select("title body createdAt")
           .lean<Array<{ _id: Oid; title: string; body: string; createdAt: Date }>>();
         for (const a of posts) {
           items.push({ kind: "official", id: String(a._id), title: `${OFFICIAL_NAME}: ${a.title}`, body: a.body.slice(0, 120), at: a.createdAt.toISOString(), href: "/business/updates" });

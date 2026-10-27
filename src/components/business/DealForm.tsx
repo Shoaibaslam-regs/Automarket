@@ -14,6 +14,8 @@ import { CONDITIONS, FUEL_TYPES, MAKES, TRANSMISSIONS, conditionLabel } from "@/
 import { FEDERAL_CAPITAL, PROVINCES } from "@/lib/provinces";
 import { MAX_ADDRESS } from "@/lib/address";
 
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 export const CITIES = [...new Set([FEDERAL_CAPITAL, ...PROVINCES.flatMap(p => [p.capital, ...p.cities])])].sort((a, b) => a.localeCompare(b));
 
 export type DealFormValues = {
@@ -97,6 +99,11 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
   const [launched, setLaunched] = useState(false);
   const [error, setError] = useState("");
   const set = <K extends keyof DealFormValues>(k: K, v: DealFormValues[K]) => setForm(p => ({ ...p, [k]: v }));
+  // A new deal is kept as a draft in this browser (photos included, they're already uploaded); edits aren't
+  const draft = useFormDraft("deal", form, d => setForm(prev => ({ ...prev, ...d, address: d.address || prev.address, location: d.location || prev.location })), {
+    isEmpty: d => !d.title.trim() && !d.description.trim() && !d.images.length && !d.price && !d.make && !d.model,
+    enabled: !dealId,
+  });
 
   const rent = form.dealType === "RENT";
   const price = Number(form.price) || 0;
@@ -117,7 +124,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setSaving(false); setError(data.error || "Failed to save the deal"); return; }
     // A new deal gets the launch animation first; saving an edit goes straight back
-    if (!dealId) { setLaunched(true); return; }
+    if (!dealId) { draft.clear(); setLaunched(true); return; }
     backToDeals();
   }
 
@@ -278,6 +285,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
 
         {error && <div role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-[13px] text-rose-700">{error}</div>}
 
+        {!dealId && <DraftNote className="mt-3" restoredAt={draft.restoredAt} savedAt={draft.savedAt} onDiscard={() => { draft.clear(); setForm(initial); }} />}
         <div className="mt-3 grid gap-2">
           <button type="submit" disabled={saving || photosUploading} className="h-11 rounded-xl bg-rose-600 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
             {photosUploading ? "Uploading photos…" : saving ? "Saving…" : dealId ? "Save changes" : "Publish deal"}

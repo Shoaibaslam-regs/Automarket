@@ -25,17 +25,22 @@ export async function GET() {
   }
 }
 
-/** Posts to the channel and notifies following businesses. */
+/**
+ * Posts to the channel and notifies following businesses. With `draft: true` it's saved for the admins only
+ * (status DRAFT, nobody notified) and published later with PATCH `{ publish: true }`.
+ */
 export async function POST(req: NextRequest) {
   const gate = await requireAdminApi("write");
   if (!gate.ok) return gate.response;
   try {
     await connectDB();
-    const parsed = parseAnnouncement((await req.json().catch(() => ({}))) ?? {});
+    const body = (await req.json().catch(() => ({}))) ?? {};
+    const draft = body.draft === true;
+    const parsed = parseAnnouncement(body);
     if (!parsed.data) return NextResponse.json({ error: parsed.error }, { status: 400 });
-    const announcement = await Announcement.create({ ...parsed.data, createdBy: gate.admin._id });
-    await logAdminAction(gate.admin, "announcement.create", { type: "ANNOUNCEMENT", id: announcement._id, label: announcement.title }, announcement.kind);
-    await notifyFollowers({ title: announcement.title, kind: announcement.kind });
+    const announcement = await Announcement.create({ ...parsed.data, status: draft ? "DRAFT" : "PUBLISHED", createdBy: gate.admin._id });
+    await logAdminAction(gate.admin, draft ? "announcement.draft" : "announcement.create", { type: "ANNOUNCEMENT", id: announcement._id, label: announcement.title }, announcement.kind);
+    if (!draft) await notifyFollowers({ title: announcement.title, kind: announcement.kind });
     return NextResponse.json({ announcement }, { status: 201 });
   } catch (error) {
     reportError("Admin announcements POST error:", error);

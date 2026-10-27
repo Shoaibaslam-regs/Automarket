@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { can, getMembership } from "@/lib/business";
-import { Announcement } from "@/models/Announcement";
+import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { logBusinessAction } from "@/lib/businessLog";
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const [org, user, announcements, followers] = await Promise.all([
       Organization.findById(member.organizationId).select("followsOfficial followedOfficialAt").lean<OrgFollow>(),
       User.findById(session.user.id).select("officialSeenAt").lean<{ officialSeenAt?: Date }>(),
-      Announcement.find().sort({ pinned: -1, createdAt: -1 }).limit(100).select("-createdBy").lean<Array<{ createdAt: Date }>>(),
+      Announcement.find(PUBLISHED_POSTS).sort({ pinned: -1, createdAt: -1 }).limit(100).select("-createdBy").lean<Array<{ createdAt: Date }>>(),
       Organization.countDocuments({ followsOfficial: true }),
     ]);
     const following = !!org?.followsOfficial;

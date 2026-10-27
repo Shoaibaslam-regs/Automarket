@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { OfficialAvatar, OfficialName } from "@/components/business/Official";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -12,6 +12,8 @@ import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 import { PLAN_LIST, formatLimit, formatPlanPrice, planInfo } from "@/lib/plans";
 import { useSubscription } from "@/components/subscription/useSubscription";
 
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 
 export default function OnboardingPage() {
@@ -33,6 +35,10 @@ export default function OnboardingPage() {
     // Follow AutoGO Official for announcements, updates and offers (on by default; can be changed in Updates)
     followOfficial: true,
   });
+  // The details and the step reached are kept in this browser until the business is created
+  const draftValue = useMemo(() => ({ form, step }), [form, step]);
+  const draft = useFormDraft("onboarding", draftValue, d => { setForm(prev => ({ ...prev, ...d.form })); setStep(Math.min(3, Math.max(1, d.step || 1))); },
+    { isEmpty: d => !d.form.name.trim() && !d.form.phone.trim() && !d.form.city.trim() && !d.form.address.trim() && !d.form.description.trim() });
   // A business runs on its owner's plan, so this is the plan the new business will start on
   const { data: sub } = useSubscription(!!session?.user);
   const currentPlan = planInfo(sub?.planId);
@@ -64,6 +70,7 @@ export default function OnboardingPage() {
     if (requestsPlan) {
       await fetch("/api/support/upgrade-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: chosenPlan.id }) }).catch(() => {});
     }
+    draft.clear();
     // The launch animation, then the console
     setLaunched(true);
   }
@@ -277,6 +284,9 @@ export default function OnboardingPage() {
             </label>
           </div>
         )}
+
+        <DraftNote className="mt-5" restoredAt={draft.restoredAt} savedAt={draft.savedAt}
+          onDiscard={() => { draft.clear(); setForm(f => ({ ...f, name: "", phone: "", email: "", city: "", address: "", description: "" })); setStep(1); }} />
 
         {/* Navigation buttons */}
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "28px" }}>

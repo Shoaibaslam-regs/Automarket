@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, MessageSquareHeart, X } from "lucide-react";
 import { useRateLock } from "@/hooks/useRateLock";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 
 const OPEN_EVENT = "am:open-feedback";
 
@@ -32,6 +34,9 @@ export default function FeedbackDialog() {
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<(typeof KINDS)[number]["id"]>("Idea");
   const [text, setText] = useState("");
+  // Closing the dialog keeps what was written for next time
+  const draftValue = useMemo(() => ({ kind, text }), [kind, text]);
+  const draft = useFormDraft("feedback", draftValue, d => { setKind(d.kind); setText(d.text); }, { isEmpty: d => !d.text.trim() });
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -59,6 +64,7 @@ export default function FeedbackDialog() {
     setSending(false);
     lock.check(res, data);
     if (!res.ok) { setError(data.error || "Couldn't send your feedback"); return; }
+    draft.clear();
     setText("");
     setSent(true);
   }
@@ -109,6 +115,7 @@ export default function FeedbackDialog() {
               <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} rows={4} maxLength={1800} autoFocus
                 placeholder="What would you change, add or fix?" aria-label="Your feedback"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+              <DraftNote restoredAt={draft.restoredAt} savedAt={draft.savedAt} onDiscard={() => { draft.clear(); setText(""); }} />
               {error && <p role="alert" className="text-xs font-medium text-rose-600">{error}</p>}
               <button type="submit" disabled={sending || lock.locked} className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
                 {lock.locked ? lock.text : sending ? "Sending…" : "Send feedback"}

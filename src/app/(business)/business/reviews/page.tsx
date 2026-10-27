@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ExternalLink, MessageSquareText, Reply, Star } from "lucide-react";
 import StarRating from "@/components/reviews/StarRating";
 
+import { useFormDraft } from "@/hooks/useFormDraft";
+import DraftNote from "@/components/ui/DraftNote";
 type Review = {
   _id: string;
   rating: number;
@@ -27,6 +29,8 @@ export default function BusinessReviewsPage() {
   const [replying, setReplying] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  // An unsent reply is kept per review, so a reload doesn't lose it; Cancel and posting drop it
+  const replyDraft = useFormDraft(`reply:${replying ?? "none"}`, draft, setDraft, { isEmpty: t => !t.trim(), enabled: !!replying });
 
   const load = () =>
     fetch("/api/business/reviews")
@@ -53,6 +57,7 @@ export default function BusinessReviewsPage() {
     });
     setSaving(false);
     if (!res.ok) { setError((await res.json().catch(() => ({}))).error || "Failed to save reply"); return; }
+    replyDraft.clear();
     setReplying(null);
     setDraft("");
     load();
@@ -134,11 +139,12 @@ export default function BusinessReviewsPage() {
                     <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} maxLength={1000} autoFocus
                       placeholder="Thank them, or explain how you'll make it right. Your reply is public."
                       className="w-full resize-none rounded-lg border border-[var(--gh-d0d7de)] px-3 py-2 text-[13px] outline-none focus:border-[var(--gh-0d1117)] focus:ring-2 focus:ring-[var(--gh-0d1117)]/10" />
+                    <DraftNote className="mt-1" restoredAt={replyDraft.restoredAt} savedAt={replyDraft.savedAt} onDiscard={() => { replyDraft.clear(); setDraft(r.reply?.text ?? ""); }} />
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => saveReply(r._id, draft)} disabled={saving || !draft.trim()} className="rounded-lg bg-[var(--gh-0d1117)] px-3.5 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
                         {saving ? "Saving…" : "Post reply"}
                       </button>
-                      <button onClick={() => { setReplying(null); setDraft(""); }} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--gh-57606a)] hover:bg-[var(--gh-f6f8fa)]">Cancel</button>
+                      <button onClick={() => { replyDraft.clear(); setReplying(null); setDraft(""); }} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--gh-57606a)] hover:bg-[var(--gh-f6f8fa)]">Cancel</button>
                     </div>
                   </div>
                 ) : r.reply ? (

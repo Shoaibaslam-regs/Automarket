@@ -22,6 +22,8 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "report.dismiss": "Dismissed report",
   "announcement.create": "Posted announcement",
   "announcement.update": "Edited announcement",
+  "announcement.draft": "Saved announcement draft",
+  "announcement.publish": "Published announcement draft",
   "announcement.delete": "Deleted announcement",
   "activity.clear": "Deleted activity history",
   "ad.approve": "Approved sponsored ad",

@@ -12,6 +12,7 @@ import { useRateLock } from "@/hooks/useRateLock";
 import { chatChannel, userChannel } from "@/lib/pusherChannels";
 
 import AdminBadge from "@/components/AdminBadge";
+import { useFormDraft } from "@/hooks/useFormDraft";
 type User = {
   _id: string;
   name: string;
@@ -53,6 +54,8 @@ export default function MessagesContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeUser, setActiveUser] = useState<User | null>(null);
   const [content, setContent] = useState("");
+  // A half-typed message is kept per chat and put back quietly when that chat opens again
+  const chatDraft = useFormDraft(`chat:${activeUser?._id ?? "none"}`, content, setContent, { isEmpty: t => !t.trim(), enabled: !!activeUser });
   const msgLock = useRateLock("messages");
   const [sending, setSending] = useState(false);
   const [loadingConvs, setLoadingConvs] = useState(true);
@@ -173,6 +176,8 @@ export default function MessagesContent() {
   }, [session?.user?.id, activeUser, fetchConversations]);
 
   async function selectUser(userId: string, user: User) {
+    // Each chat has its own draft
+    if (user._id !== activeUser?._id) setContent("");
     setActiveUser(user);
     setShowChat(true);
     await fetchMessages(userId);
@@ -192,6 +197,7 @@ export default function MessagesContent() {
       const data = await res.json();
       msgLock.check(res, data);
       if (res.ok) {
+        chatDraft.clear();
         setContent("");
         setMessages(prev => prev.find(m => m._id === data.message._id) ? prev : [...prev, data.message]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);

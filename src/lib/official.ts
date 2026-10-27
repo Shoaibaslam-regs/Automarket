@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { userChannel } from "@/lib/pusherChannels";
 import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
-import { Announcement } from "@/models/Announcement";
+import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
 import { ANNOUNCEMENT_KINDS, MAX_BODY, MAX_TITLE, type AnnouncementKind } from "@/lib/announcements";
 import { reportError } from "@/lib/errorLog";
 
@@ -78,5 +78,5 @@ export async function notifyFollowers(payload: { title: string; kind: string }) 
 export async function unreadOfficialCount(user: { officialSeenAt?: Date | null }, org: { followsOfficial?: boolean; followedOfficialAt?: Date | null }) {
   if (!org.followsOfficial) return 0;
   const since = new Date(Math.max(user.officialSeenAt?.getTime() ?? 0, org.followedOfficialAt?.getTime() ?? 0));
-  return Announcement.countDocuments({ createdAt: { $gt: since } });
+  return Announcement.countDocuments({ ...PUBLISHED_POSTS, createdAt: { $gt: since } });
 }

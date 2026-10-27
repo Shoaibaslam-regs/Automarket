@@ -16,6 +16,8 @@ export interface IAnnouncement extends Document {
   pinned: boolean;
   /** Offers can end; expired ones stay in the feed marked as ended */
   endsAt?: Date;
+  /** DRAFT posts are seen only by admins and notify no one; posts made before drafts have no status and are published */
+  status?: "DRAFT" | "PUBLISHED";
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -30,11 +32,15 @@ const AnnouncementSchema = new Schema<IAnnouncement>(
     linkLabel: { type: String, trim: true, maxlength: 40 },
     pinned: { type: Boolean, default: false },
     endsAt: Date,
+    status: { type: String, enum: ["DRAFT", "PUBLISHED"] },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
 
 AnnouncementSchema.index({ pinned: -1, createdAt: -1 });
+
+/** Add to every query businesses read: drafts stay with the admins */
+export const PUBLISHED_POSTS = { status: { $ne: "DRAFT" } } as const;
 
 export const Announcement = defineModel<IAnnouncement>("Announcement", AnnouncementSchema);
