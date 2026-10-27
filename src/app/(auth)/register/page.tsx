@@ -11,6 +11,16 @@ import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 import { useRateLock } from "@/hooks/useRateLock";
 
+type Field = { label: string; name: "name" | "email" | "phone" | "password" | "confirm"; type: string; placeholder: string; autoComplete: string; hint?: string };
+
+const FIELDS: Field[] = [
+  { label: "Full name", name: "name", type: "text", placeholder: "Your full name", autoComplete: "name" },
+  { label: "Email", name: "email", type: "email", placeholder: "you@example.com", autoComplete: "email" },
+  { label: "Phone number", name: "phone", type: "tel", placeholder: "0300 1234567", autoComplete: "tel", hint: "You can sign in with this number too" },
+  { label: "Password", name: "password", type: "password", placeholder: `At least ${PASSWORD_MIN} characters`, autoComplete: "new-password" },
+  { label: "Confirm password", name: "confirm", type: "password", placeholder: "Repeat password", autoComplete: "new-password" },
+];
+
 export default function RegisterPage() {
   // After sign-up: where the 6-digit code went (the account can only sign in once it's confirmed)
   const [sent, setSent] = useState<{ channel: CodeChannel; sentTo: string } | null>(null);
@@ -37,6 +47,29 @@ export default function RegisterPage() {
       return;
     }
     window.location.assign("/dashboard");
+  }
+
+  function renderField(field: Field) {
+    return (
+      <div key={field.name}>
+        <label htmlFor={`reg-${field.name}`} style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>
+          {field.label}
+          <span style={{ color: "var(--gh-cf222e)", marginLeft: "2px" }}>*</span>
+        </label>
+        <input
+          id={`reg-${field.name}`}
+          type={field.type}
+          name={field.name}
+          value={form[field.name]}
+          onChange={handleChange}
+          required
+          autoComplete={field.autoComplete}
+          placeholder={field.placeholder}
+          style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", background: "var(--gh-ffffff)", outline: "none", boxSizing: "border-box" }}
+        />
+        {field.hint && <p style={{ fontSize: "12px", color: "var(--gh-8c959f)", marginTop: "5px" }}>{field.hint}</p>}
+      </div>
+    );
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -90,8 +123,8 @@ export default function RegisterPage() {
 
 
       {/* Form */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
-        <div style={{ width: "100%", maxWidth: "440px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(24px, 6vw, 40px) clamp(16px, 4vw, 24px)" }}>
+        <div style={{ width: "100%", maxWidth: "440px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "clamp(20px, 5vw, 32px)", boxSizing: "border-box" }}>
           <h1 style={{ fontSize: "20px", fontWeight: 700, color: "var(--gh-0d1117)", marginBottom: "4px" }}>Create account</h1>
           <p style={{ fontSize: "13px", color: "var(--gh-57606a)", marginBottom: "24px" }}>Join AutoGO — buy, sell and rent vehicles</p>
 
@@ -113,33 +146,12 @@ export default function RegisterPage() {
             />
           ) : (
           <>
-          {/* Google confirms the email itself, so this skips the code step */}
-          <GoogleButton />
-          <OrDivider text="or sign up with email" />
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {[
-              { label: "Full name", name: "name", type: "text", placeholder: "Full Name" },
-              { label: "Email", name: "email", type: "email", placeholder: "you@example.com" },
-              { label: "Phone number", name: "phone", type: "tel", placeholder: "+92 300 0000000" },
-              { label: "Password", name: "password", type: "password", placeholder: `At least ${PASSWORD_MIN} characters` },
-              { label: "Confirm password", name: "confirm", type: "password", placeholder: "Repeat password" },
-            ].map((field) => (
-              <div key={field.name}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>
-                  {field.label}
-                  <span style={{ color: "var(--gh-cf222e)", marginLeft: "2px" }}>*</span>
-                </label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  value={form[field.name as keyof typeof form]}
-                  onChange={handleChange}
-                  required
-                  placeholder={field.placeholder}
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }}
-                />
-              </div>
-            ))}
+            {FIELDS.slice(0, 3).map(renderField)}
+            {/* The two passwords side by side when there's room, stacked on phones */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "14px" }}>
+              {FIELDS.slice(3).map(renderField)}
+            </div>
 
             {smsAvailable && (
               <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
@@ -171,6 +183,14 @@ export default function RegisterPage() {
               {regLock.locked ? regLock.text : loading ? "Creating account..." : "Create account"}
             </button>
           </form>
+          {/* Google confirms the email itself, so this skips the code step; the terms checkbox above covers it too */}
+          <OrDivider />
+          <GoogleButton note={false} canStart={() => {
+            if (acceptTerms) return true;
+            setError("Please accept the Terms & Conditions to continue");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return false;
+          }} />
           </>
           )}
 

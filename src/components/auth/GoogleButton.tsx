@@ -5,13 +5,14 @@ import { signIn } from "next-auth/react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 
 /**
- * "Continue with Google" on /login and /register, with the line saying it means agreeing to the Terms and
- * Privacy Policy (that's how Google sign-ups accept them). A first Google sign-in creates the account.
+ * "Continue with Google" on /login and /register. A first Google sign-in creates the account, so it says that
+ * continuing means agreeing to the Terms and Privacy Policy; /register passes `note={false}` and `canStart`,
+ * because its own terms checkbox covers Google too and must be ticked first.
  */
-export default function GoogleButton() {
+export default function GoogleButton({ note = true, canStart }: { note?: boolean; canStart?: () => boolean }) {
   return (
     <>
-      <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+      <button type="button" onClick={() => { if (!canStart || canStart()) signIn("google", { callbackUrl: "/dashboard" }); }}
         style={{ width: "100%", padding: "10px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "var(--gh-0d1117)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -21,11 +22,11 @@ export default function GoogleButton() {
         </svg>
         Continue with Google
       </button>
-      <p style={{ textAlign: "center", fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "8px", lineHeight: 1.5 }}>
+      {note && <p style={{ textAlign: "center", fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "8px", lineHeight: 1.5 }}>
         New here? Continuing with Google means you agree to our{" "}
         <Link href={TERMS_PATH} style={{ color: "var(--gh-57606a)", textDecoration: "underline" }}>Terms &amp; Conditions</Link> and{" "}
         <Link href={PRIVACY_PATH} style={{ color: "var(--gh-57606a)", textDecoration: "underline" }}>Privacy Policy</Link>.
-      </p>
+      </p>}
     </>
   );
 }
