@@ -6,6 +6,17 @@ export interface IUser extends Document {
   name?: string;
   email: string;
   emailVerified?: Date;
+  /** Set on new email sign-ups until the link in the confirmation email is opened; sign-in is refused while true */
+  emailVerifyRequired?: boolean;
+  emailVerifyTokenHash?: string;
+  emailVerifyExpires?: Date;
+  /** Random key every session carries; replacing it (password change, reset, role change) signs out other devices */
+  sessionKey?: string;
+  /** The 6-digit sign-up code (hash only), when it expires, wrong guesses so far and where it was sent */
+  signupCodeHash?: string;
+  signupCodeExpires?: Date;
+  signupCodeTries?: number;
+  signupCodeChannel?: "email" | "phone";
   image?: string;
   password?: string;
   phone?: string;
@@ -48,6 +59,14 @@ const UserSchema = new Schema<IUser>(
     name: { type: String },
     email: { type: String, required: true, unique: true },
     emailVerified: { type: Date },
+    emailVerifyRequired: { type: Boolean },
+    emailVerifyTokenHash: { type: String, index: true, sparse: true },
+    emailVerifyExpires: { type: Date },
+    sessionKey: { type: String },
+    signupCodeHash: { type: String },
+    signupCodeExpires: { type: Date },
+    signupCodeTries: { type: Number },
+    signupCodeChannel: { type: String, enum: ["email", "phone"] },
     image: { type: String },
     password: { type: String },
     phone: { type: String },

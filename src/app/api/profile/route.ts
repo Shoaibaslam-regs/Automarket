@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { normalizePkMobile } from "@/lib/phone";
 import { isUploadedImageUrl } from "@/lib/uploadUrls";
 import { nextPictureChangeAt, pictureWaitText } from "@/lib/profilePicture";
+import { passwordProblem } from "@/lib/password";
+import { newSessionKey } from "@/lib/accountTokens";
 
 export async function GET() {
   try {
@@ -49,8 +51,11 @@ export async function PATCH(req: NextRequest) {
       if (!user.password) return NextResponse.json({ error: "No password set (OAuth account)" }, { status: 400 });
       const valid = await bcrypt.compare(currentPassword, user.password);
       if (!valid) return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
-      if (newPassword.length < 6) return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+      const weak = passwordProblem(newPassword, { email: user.email, name: user.name });
+      if (weak) return NextResponse.json({ error: weak }, { status: 400 });
       user.password = await bcrypt.hash(newPassword, 12);
+      // A new session key signs out every other device; this one gets it back below and keeps going
+      user.sessionKey = newSessionKey();
     }
 
     if (name) user.name = name.trim();
@@ -88,6 +93,8 @@ export async function PATCH(req: NextRequest) {
         image: user.image,
         role: user.role,
         pictureNextChangeAt: nextPictureChangeAt(user.pictureChanges, user.pictureChangedAt),
+        // Only after a password change: the page passes it to useSession().update() to stay signed in here
+        ...(newPassword ? { sessionKey: user.sessionKey } : {}),
       }
     });
   } catch {

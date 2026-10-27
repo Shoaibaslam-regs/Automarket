@@ -3,6 +3,7 @@
 // formats are skipped and the card falls back to text.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fetchUploadedImage } from "@/lib/safeFetch";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
@@ -17,12 +18,10 @@ export async function brandMark(): Promise<string> {
 export async function photoDataUrl(url?: string | null): Promise<string | null> {
   if (!url) return null;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-    const type = res.headers.get("content-type")?.split(";")[0] ?? "";
-    if (!res.ok || !["image/jpeg", "image/png"].includes(type)) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > 4_000_000) return null;
-    return `data:${type};base64,${buf.toString("base64")}`;
+    // Only our UploadThing files (older listings may hold other addresses), small and quick (src/lib/safeFetch.ts)
+    const { buffer, type } = await fetchUploadedImage(url, { maxBytes: 4_000_000, timeoutMs: 4000 });
+    if (!["image/jpeg", "image/png"].includes(type)) return null;
+    return `data:${type};base64,${buffer.toString("base64")}`;
   } catch {
     return null;
   }

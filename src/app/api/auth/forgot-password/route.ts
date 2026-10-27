@@ -42,11 +42,13 @@ export async function POST(req: NextRequest) {
     await user.save();
 
     const link = `${SITE_URL}/reset-password?token=${token}`;
+    if (process.env.NODE_ENV !== "production") console.log(`[dev] Reset password: ${link}`);
     try {
       await sendPasswordResetEmail({ to: user.email, name: user.name, link });
     } catch (e) {
+      // Logged for the admin Errors page, but answered like every other request: an error here only for
+      // registered emails would tell anyone which emails have accounts
       reportError("Password reset email failed:", e);
-      return NextResponse.json({ error: "We couldn't send the email right now. Please try again in a few minutes." }, { status: 502 });
     }
     return done;
   } catch (error) {

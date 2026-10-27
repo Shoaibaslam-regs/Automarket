@@ -4,6 +4,7 @@ import { User } from "@/models/User";
 import { isPlatformOwner, requireAdminApi } from "@/lib/adminAuth";
 import { checkAccountDeletion, deleteAccount } from "@/lib/accountDeletion";
 import { logAdminAction } from "@/lib/adminLog";
+import { newSessionKey } from "@/lib/accountTokens";
 
 const ROLES = ["USER", "SELLER", "ADMIN"] as const;
 const ACCESS_LEVELS = ["FULL", "READ_ONLY"] as const;
@@ -40,7 +41,8 @@ export async function PATCH(
 
     const user = await User.findByIdAndUpdate(
       id,
-      role === "ADMIN" ? { $set: { role, adminAccess } } : { $set: { role }, $unset: { adminAccess: "" } },
+      // A new session key signs the person out within minutes, so a removed admin loses the panel straight away
+      role === "ADMIN" ? { $set: { role, adminAccess, sessionKey: newSessionKey() } } : { $set: { role, sessionKey: newSessionKey() }, $unset: { adminAccess: "" } },
       { new: true }
     ).select("name email role adminAccess");
     await logAdminAction(gate.admin, "user.role", { type: "USER", id, label: target.name || target.email },

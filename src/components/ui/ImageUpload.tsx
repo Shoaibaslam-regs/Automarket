@@ -9,14 +9,23 @@ interface Props {
   images: string[];
   onChange: (urls: string[]) => void;
   maxImages?: number;
+  /** Told when an upload starts and ends, so the form can hold Continue/Publish until the photos are in */
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
-export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
-  const [uploading, setUploading] = useState(false);
+export default function ImageUpload({ images, onChange, maxImages = 8, onUploadingChange }: Props) {
+  const [uploading, setUploadingState] = useState(false);
+  const setUploading = (v: boolean) => { setUploadingState(v); onUploadingChange?.(v); };
   const [rejected, setRejected] = useState<RejectedUpload[]>([]);
 
   function removeImage(index: number) {
     onChange(images.filter((_, i) => i !== index));
+  }
+
+  /** The first photo is the main one (cards, the listing page, share previews), so this moves the chosen one to the front. */
+  function makeMain(index: number) {
+    if (index === 0) return;
+    onChange([images[index], ...images.filter((_, i) => i !== index)]);
   }
 
   return (
@@ -26,10 +35,16 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
           {images.map((url, i) => (
             <div key={url} style={{ position: "relative", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--gh-e1e4e8)" }}>
               <Image src={url} alt={`Vehicle image ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 200px" className="object-cover" />
-              {i === 0 && (
+              {i === 0 ? (
                 <span style={{ position: "absolute", top: "6px", left: "6px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", fontSize: "10px", padding: "2px 7px", borderRadius: "20px", fontWeight: 600 }}>
                   Main
                 </span>
+              ) : (
+                <button type="button" onClick={() => makeMain(i)} aria-label={`Set photo ${i + 1} as the main photo`}
+                  className="theme-static"
+                  style={{ position: "absolute", left: "6px", bottom: "6px", background: "rgba(255,255,255,0.92)", color: "#0d1117", border: "none", borderRadius: "20px", fontSize: "10px", fontWeight: 700, padding: "3px 8px", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }}>
+                  Set as main
+                </button>
               )}
               <button type="button" onClick={() => removeImage(i)}
                 style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", background: "var(--gh-cf222e)", color: "var(--gh-ffffff)", border: "none", borderRadius: "50%", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
@@ -64,7 +79,8 @@ export default function ImageUpload({ images, onChange, maxImages = 8 }: Props) 
             button: "bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-700 transition",
           }}
           content={{
-            label: uploading ? "Uploading & checking photos with AI…" : "Drop vehicle photos here or click to upload",
+            // Photos upload as soon as they're chosen (no second tap), so the label says just that
+            label: uploading ? "Uploading & checking photos with AI…" : "Tap to choose photos, or drop them here. They upload straight away.",
             allowedContent: `Car or bike photos only · Up to ${maxImages - images.length} more · Max 4MB each`,
           }}
         />

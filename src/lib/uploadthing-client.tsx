@@ -18,11 +18,14 @@ function compressThen(endpoint: Endpoint, own: BeforeUpload) {
   };
 }
 
-// Every upload in the app goes through these two, so each photo is compressed before it leaves the phone
+// Every upload in the app goes through these two, so each photo is compressed before it leaves the phone.
+// They also upload as soon as files are chosen (mode "auto"): UploadThing's dropzone otherwise waits for a second
+// "Upload" tap, which most people missed, moving on with photos that were never sent. A caller can still pass
+// config={{ mode: "manual" }}.
 export const UploadButton = ((props: Parameters<typeof BaseUploadButton>[0]) => (
-  <BaseUploadButton {...props} onBeforeUploadBegin={compressThen(props.endpoint as Endpoint, props.onBeforeUploadBegin)} />
+  <BaseUploadButton {...props} config={{ mode: "auto", ...props.config }} onBeforeUploadBegin={compressThen(props.endpoint as Endpoint, props.onBeforeUploadBegin)} />
 )) as typeof BaseUploadButton;
 
 export const UploadDropzone = ((props: Parameters<typeof BaseUploadDropzone>[0]) => (
-  <BaseUploadDropzone {...props} onBeforeUploadBegin={compressThen(props.endpoint as Endpoint, props.onBeforeUploadBegin)} />
+  <BaseUploadDropzone {...props} config={{ mode: "auto", ...props.config }} onBeforeUploadBegin={compressThen(props.endpoint as Endpoint, props.onBeforeUploadBegin)} />
 )) as typeof BaseUploadDropzone;

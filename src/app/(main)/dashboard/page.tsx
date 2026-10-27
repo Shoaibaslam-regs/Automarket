@@ -21,6 +21,7 @@ import UserIdBadge from "@/components/UserIdBadge";
 // Registers the model for the deal bookings populate below
 import "@/models/Deal";
 import StatusText, { textTone } from "@/components/ui/StatusText";
+import TeamInvites from "@/components/business/TeamInvites";
 
 type Oid = mongoose.Types.ObjectId;
 type MyListing = {
@@ -101,6 +102,8 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        {/* Invitations to join a business team, answered here (nothing shows when there are none) */}
+        <TeamInvites />
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_20px_50px_-32px_rgba(79,70,229,0.35)] ring-1 ring-slate-200/80 sm:p-8">
           <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-200/60 to-fuchsia-100/50 blur-3xl" />

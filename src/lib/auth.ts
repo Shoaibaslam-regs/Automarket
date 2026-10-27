@@ -6,6 +6,24 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
 import { hasAdminGate } from "@/lib/adminGate";
+import { emailQuery, newSessionKey } from "@/lib/accountTokens";
+import { parseLoginIdentifier } from "@/lib/signupCode";
+
+/** Signed up with a password but hasn't typed the sign-up code yet; the login page asks for it (and can resend it). */
+class EmailUnverified extends CredentialsSignin {
+  code = "email_unverified";
+}
+
+/** How often a session is checked against the account (session key, role); in between, the cookie is trusted. */
+const RECHECK_MS = 5 * 60 * 1000;
+
+/** The account's session key, creating one for accounts made before keys existed. */
+async function sessionKeyOf(user: { _id: unknown; sessionKey?: string }) {
+  if (user.sessionKey) return user.sessionKey;
+  const key = newSessionKey();
+  await User.updateOne({ _id: user._id, sessionKey: { $exists: false } }, { $set: { sessionKey: key } });
+  return (await User.findById(user._id).select("sessionKey").lean<{ sessionKey?: string }>())?.sessionKey ?? key;
+}
 
 /**
  * Too many failed sign-ins for this email or IP. The code carries the seconds left ("rate_limited_840"),
@@ -31,14 +49,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email or phone", type: "text" },
         password: { label: "Password", type: "password" },
         // "admin" from the hidden admin form on /login (see src/lib/adminGate.ts)
         portal: { label: "Portal", type: "text" },
       },
       async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
-        const email = String(credentials.email).trim();
+        // The field takes an email or a verified phone number (the admin form only an email)
+        const id = parseLoginIdentifier(String(credentials.email));
+        if (!id || (id.kind === "phone" && credentials.portal === "admin")) return null;
         const password = String(credentials.password);
         const adminPortal = credentials.portal === "admin";
         const ip = clientIp(request);
@@ -52,12 +72,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // Only failed attempts count: 5 per email and 30 per IP; reaching the limit locks sign-in for 15 minutes
-        const emailKey = email.toLowerCase();
+        const emailKey = id.kind === "email" ? id.email : id.phone;
         const [byEmail, byIp] = await Promise.all([isRateLimited("loginEmail", emailKey), isRateLimited("loginIp", ip)]);
         if (!byEmail.ok || !byIp.ok) throw new RateLimitedSignin(Math.max(byEmail.ok ? 0 : byEmail.retryAfterSec, byIp.ok ? 0 : byIp.retryAfterSec));
 
         await connectDB();
-        const user = await User.findOne({ email });
+        // Emails are stored lower-case now; older accounts kept the capitals they signed up with
+        const user = await User.findOne(id.kind === "email" ? emailQuery(id.email) : { verifiedPhone: id.phone });
 
         // The same work and the same answer whether the email is unknown or the password is wrong
         const isValid = await bcrypt.compare(password, user?.password || DUMMY_HASH);
@@ -73,6 +94,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        // Right password, but the email was never confirmed (new sign-ups only; older accounts have no flag)
+        if (user.emailVerifyRequired) throw new EmailUnverified();
+
         return {
           id: user._id.toString(),
           name: user.name,
@@ -80,6 +104,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
           role: user.role,
           adminPortal,
+          sessionKey: await sessionKeyOf(user),
         };
       },
     }),
@@ -88,27 +113,68 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await connectDB();
-        const existing = await User.findOne({ email: user.email });
+        const existing = await User.findOne(emailQuery(String(user.email ?? "")));
         if (!existing) {
           await User.create({
             name: user.name,
-            email: user.email,
+            email: String(user.email ?? "").toLowerCase(),
             image: user.image,
             emailVerified: new Date(),
             // The sign-in page says continuing with Google means agreeing to the terms
             termsAcceptedAt: new Date(),
             role: "USER",
+            sessionKey: newSessionKey(),
           });
+        } else if (existing.emailVerifyRequired) {
+          // Google has confirmed the email, so a pending email sign-up is confirmed too
+          await User.updateOne({ _id: existing._id }, { $set: { emailVerified: new Date() }, $unset: { emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" } });
         }
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, trigger, session }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        // Only a sign-in through the hidden admin form opens the admin panel (proxy.ts, requireAdminApi)
-        token.adminPortal = user.adminPortal === true && user.role === "ADMIN";
+        if (account?.provider === "google") {
+          // Google's user.id is Google's own id, not the account's: every route looks the account up by
+          // session.user.id, so use the account that signIn found or created
+          await connectDB();
+          const dbUser = await User.findOne(emailQuery(String(user.email ?? ""))).select("role sessionKey");
+          if (!dbUser) return null;
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role;
+          token.adminPortal = false;
+          token.sk = await sessionKeyOf(dbUser);
+        } else {
+          token.id = user.id;
+          token.role = user.role;
+          // Only a sign-in through the hidden admin form opens the admin panel (proxy.ts, requireAdminApi)
+          token.adminPortal = user.adminPortal === true && user.role === "ADMIN";
+          token.sk = (user as { sessionKey?: string }).sessionKey;
+        }
+        token.checkedAt = Date.now();
+        return token;
+      }
+      // After a password change the page sends the account's new key (from PATCH /api/profile), so this device
+      // stays signed in while every other one is signed out. Only the current key is accepted.
+      const sent = (session as { sessionKey?: unknown } | undefined)?.sessionKey;
+      if (trigger === "update" && typeof sent === "string") {
+        await connectDB();
+        const current = await User.findById(token.id).select("sessionKey").lean<{ sessionKey?: string }>();
+        if (current?.sessionKey === sent) {
+          token.sk = current.sessionKey;
+          token.checkedAt = Date.now();
+        }
+        return token;
+      }
+      // Every few minutes, check the account still exists and its session key still matches (it's replaced when
+      // the password is changed or reset, or an admin changes the role), and pick up the current role
+      if (token.id && Date.now() - Number(token.checkedAt ?? 0) > RECHECK_MS) {
+        await connectDB();
+        const current = await User.findById(token.id).select("role sessionKey").lean<{ role: string; sessionKey?: string }>();
+        if (!current || (current.sessionKey ?? undefined) !== (token.sk ?? undefined)) return null;
+        token.role = current.role;
+        if (current.role !== "ADMIN") token.adminPortal = false;
+        token.checkedAt = Date.now();
       }
       return token;
     },

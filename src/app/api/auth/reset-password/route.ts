@@ -6,6 +6,8 @@ import { User } from "@/models/User";
 import { RateLimit } from "@/models/RateLimit";
 import { clientIp, rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
+import { passwordProblem } from "@/lib/password";
+import { newSessionKey } from "@/lib/accountTokens";
 
 /**
  * Sets a new password from a forgot-password link. Body: { token, password }.
@@ -21,8 +23,9 @@ export async function POST(req: NextRequest) {
     if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) {
       return NextResponse.json({ error: "This reset link isn't valid. Ask for a new one." }, { status: 400 });
     }
-    if (typeof password !== "string" || password.length < 6) {
-      return NextResponse.json({ error: "Use at least 6 characters for your password" }, { status: 400 });
+    const weak = passwordProblem(password);
+    if (weak) {
+      return NextResponse.json({ error: weak }, { status: 400 });
     }
 
     await connectDB();
@@ -32,7 +35,10 @@ export async function POST(req: NextRequest) {
 
     await User.updateOne(
       { _id: user._id },
-      { $set: { password: await bcrypt.hash(password, 12) }, $unset: { resetTokenHash: "", resetTokenExpires: "" } }
+      // A new session key signs out every device (the page then signs in here); opening the emailed link also
+      // proves the email, so a pending confirmation is done too
+      { $set: { password: await bcrypt.hash(password, 12), sessionKey: newSessionKey(), emailVerified: new Date() },
+        $unset: { resetTokenHash: "", resetTokenExpires: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "" } }
     );
     // The owner proved they control the email, so a sign-in lock from wrong guesses no longer applies
     await RateLimit.deleteOne({ key: `loginEmail:${user.email.toLowerCase()}` });

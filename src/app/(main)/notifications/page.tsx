@@ -6,6 +6,7 @@ import { BadgeDollarSign, Bell, CalendarCheck, CalendarPlus, ChevronRight, Megap
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 import PushCard from "@/components/pwa/PushCard";
+import TeamInvites from "@/components/business/TeamInvites";
 
 const ICON: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   message: { icon: MessageCircle, tone: "text-indigo-600" },
@@ -43,6 +44,8 @@ export default function NotificationsPage() {
         <p className="mt-1 text-sm text-slate-500">Everything waiting for you. Open one to deal with it; it leaves this list once it&apos;s handled or read.</p>
 
         <div className="mt-5"><PushCard /></div>
+        {/* Team invitations wait for an answer here and on the dashboard */}
+        <div className="mt-5"><TeamInvites /></div>
 
         <div className="mt-6">
           {error ? (

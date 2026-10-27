@@ -11,9 +11,10 @@ const ASSIGNABLE_ROLES = ["MANAGER", "SALES", "STAFF"];
 
 /**
  * Loads a team member of the caller's own business that the caller may manage.
- * The owner can never be changed or removed here, and nobody can change their own record.
+ * The owner can never be changed or removed here, nobody can change their own record, and only the owner
+ * makes, changes or removes managers.
  */
-async function loadManageable(sessionUserId: string, id: string) {
+async function loadManageable(sessionUserId: string, id: string, newRole?: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) return { error: NextResponse.json({ error: "Team member not found" }, { status: 404 }) };
   await connectDB();
   const member = await getMembership(sessionUserId);
@@ -27,6 +28,11 @@ async function loadManageable(sessionUserId: string, id: string) {
   if (String(employee.userId) === sessionUserId) {
     return { error: NextResponse.json({ error: "You can't change your own role" }, { status: 400 }) };
   }
+  // Managers run the team below them; only the owner makes, changes or removes managers, so one manager
+  // can't promote friends or push the other managers out
+  if (member.role !== "OWNER" && (employee.role === "MANAGER" || newRole === "MANAGER")) {
+    return { error: NextResponse.json({ error: "Only the owner can add, change or remove managers" }, { status: 403 }) };
+  }
   return { employee };
 }
 
@@ -37,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
     const { role } = await req.json().catch(() => ({}));
     if (!ASSIGNABLE_ROLES.includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-    const found = await loadManageable(session.user.id, id);
+    const found = await loadManageable(session.user.id, id, role);
     if (found.error) return found.error;
     const before = found.employee.role;
     found.employee.role = role;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
 
 const card = { width: "100%", maxWidth: "400px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" } as const;
 const input = { width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" } as const;
@@ -20,7 +21,8 @@ function ResetForm() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 6) { setError("Use at least 6 characters for your password"); return; }
+    const weak = passwordProblem(password);
+    if (weak) { setError(weak); return; }
     if (password !== confirm) { setError("The passwords don't match"); return; }
     setSaving(true);
     setError("");
@@ -55,7 +57,7 @@ function ResetForm() {
       )}
       <div>
         <label htmlFor="rp-pass" style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>New password</label>
-        <input id="rp-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" autoComplete="new-password" style={input} />
+        <input id="rp-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={PASSWORD_MIN} placeholder={`At least ${PASSWORD_MIN} characters`} autoComplete="new-password" style={input} />
       </div>
       <div>
         <label htmlFor="rp-confirm" style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Confirm new password</label>

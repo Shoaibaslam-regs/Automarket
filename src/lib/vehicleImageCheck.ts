@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
+import { fetchUploadedImage } from "@/lib/safeFetch";
 
 export type VehicleCheck = {
   isVehicle: boolean;
@@ -66,8 +67,6 @@ export async function checkVehicleImage(data: ArrayBuffer, mimeType: string): Pr
 
 /** Downloads an image by URL and checks it. */
 export async function checkVehicleImageUrl(url: string): Promise<VehicleCheck> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
-  const mimeType = res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
-  return checkVehicleImage(await res.arrayBuffer(), mimeType);
+  const { buffer, type } = await fetchUploadedImage(url);
+  return checkVehicleImage(new Uint8Array(buffer).buffer, type);
 }

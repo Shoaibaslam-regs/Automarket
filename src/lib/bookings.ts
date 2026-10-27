@@ -15,6 +15,21 @@ export const BOOKING_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   CANCELLED: [],
 };
 
+/**
+ * Moves on the personal Bookings page (PATCH /api/bookings/[id]), for owners renting out their own vehicle (they
+ * may mark a confirmed booking completed without the console's handover step) and for renters, who may only
+ * cancel before the vehicle is handed over.
+ */
+export const PERSONAL_OWNER_MOVES: Record<string, string[]> = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["COMPLETED", "CANCELLED"],
+  ACTIVE: ["COMPLETED"],
+};
+export const RENTER_MOVES: Record<string, string[]> = {
+  PENDING: ["CANCELLED"],
+  CONFIRMED: ["CANCELLED"],
+};
+
 export function canTransition(from: string, to: string): boolean {
   return (BOOKING_TRANSITIONS[from as BookingStatus] ?? []).includes(to as BookingStatus);
 }

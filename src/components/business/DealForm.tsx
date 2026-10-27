@@ -91,6 +91,8 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  // Photos still uploading: Publish waits, or the deal would be saved without them
+  const [photosUploading, setPhotosUploading] = useState(false);
   // A new deal plays the launch animation, then goes to the deals list
   const [launched, setLaunched] = useState(false);
   const [error, setError] = useState("");
@@ -103,6 +105,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (photosUploading) return;
     if (form.images.length === 0) { setError("Add at least one photo of the vehicle"); return; }
     setSaving(true);
     setError("");
@@ -127,8 +130,8 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
     <form onSubmit={save} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
       <LaunchOverlay show={launched} {...LAUNCH_TEXT.deal(form.title || undefined)} onDone={backToDeals} />
       <div className="space-y-5">
-        <Section icon={Camera} title="Photos" hint={`Real photos of the vehicle on offer. The first is the main photo. Up to ${MAX_DEAL_IMAGES}.`}>
-          <ImageUpload images={form.images} onChange={urls => set("images", urls)} maxImages={MAX_DEAL_IMAGES} />
+        <Section icon={Camera} title="Photos" hint={`Real photos of the vehicle on offer, up to ${MAX_DEAL_IMAGES}. Tap “Set as main” on any photo to make it the main one.`}>
+          <ImageUpload images={form.images} onChange={urls => set("images", urls)} maxImages={MAX_DEAL_IMAGES} onUploadingChange={setPhotosUploading} />
         </Section>
 
         <Section icon={Car} title="Vehicle">
@@ -276,8 +279,8 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
         {error && <div role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-[13px] text-rose-700">{error}</div>}
 
         <div className="mt-3 grid gap-2">
-          <button type="submit" disabled={saving} className="h-11 rounded-xl bg-rose-600 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
-            {saving ? "Saving…" : dealId ? "Save changes" : "Publish deal"}
+          <button type="submit" disabled={saving || photosUploading} className="h-11 rounded-xl bg-rose-600 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
+            {photosUploading ? "Uploading photos…" : saving ? "Saving…" : dealId ? "Save changes" : "Publish deal"}
           </button>
           <Link href="/business/deals" className="flex h-11 items-center justify-center rounded-xl text-sm font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
             Cancel

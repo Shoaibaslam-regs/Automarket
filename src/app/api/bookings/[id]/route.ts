@@ -7,6 +7,7 @@ import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { reportError } from "@/lib/errorLog";
+import { PERSONAL_OWNER_MOVES, RENTER_MOVES } from "@/lib/bookings";
 
 export async function PATCH(
   req: NextRequest,
@@ -34,8 +35,16 @@ export async function PATCH(
     if (!isOwner && !isRenter) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    if (isRenter && status !== "CANCELLED") {
+    if (isRenter && !isOwner && status !== "CANCELLED") {
       return NextResponse.json({ error: "Renters can only cancel" }, { status: 403 });
+    }
+    // Each side may only make the moves that fit where the booking is (src/lib/bookings.ts): a renter could
+    // otherwise cancel a booking after the car was handed over or returned, rewriting the owner's records
+    const allowed = isOwner ? PERSONAL_OWNER_MOVES[booking.status] ?? [] : RENTER_MOVES[booking.status] ?? [];
+    if (!allowed.includes(status)) {
+      return NextResponse.json({ error: booking.status === "ACTIVE" || booking.status === "COMPLETED"
+        ? "This booking can't be cancelled any more: the vehicle has already been handed over."
+        : "That change isn't possible for this booking." }, { status: 400 });
     }
     booking.status = status;
     if (status === "CONFIRMED") booking.confirmedAt = new Date();

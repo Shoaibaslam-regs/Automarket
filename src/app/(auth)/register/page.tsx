@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
+import type { CodeChannel } from "@/lib/signupCode";
 import Navbar from "@/components/Navbar";
+import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 import { useRateLock } from "@/hooks/useRateLock";
 
 export default function RegisterPage() {
-  const router = useRouter();
+  // After sign-up: where the 6-digit code went (the account can only sign in once it's confirmed)
+  const [sent, setSent] = useState<{ channel: CodeChannel; sentTo: string } | null>(null);
+  // Codes by SMS, when SMS is set up on the server
+  const [smsAvailable, setSmsAvailable] = useState(false);
+  const [channel, setChannel] = useState<CodeChannel>("email");
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirm: "",
   });
@@ -18,6 +24,20 @@ export default function RegisterPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/auth/verify-code").then(r => r.json()).then(d => setSmsAvailable(d?.phone === true)).catch(() => {});
+  }, []);
+
+  /** The code was right: sign in with the details just typed. A full load, so menus pick up the session. */
+  async function signInAfterCode() {
+    const res = await signIn("credentials", { email: form.email.trim(), password: form.password, redirect: false });
+    if (res?.error) {
+      window.location.assign(`/login?verified=1&email=${encodeURIComponent(form.email.trim())}`);
+      return;
+    }
+    window.location.assign("/dashboard");
+  }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -25,6 +45,11 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const weak = passwordProblem(form.password, { email: form.email, name: form.name });
+    if (weak) {
+      setError(weak);
+      return;
+    }
     if (form.password !== form.confirm) {
       setError("Passwords do not match");
       return;
@@ -47,17 +72,15 @@ export default function RegisterPage() {
         phone: form.phone,
         password: form.password,
         acceptTerms,
+        channel: smsAvailable ? channel : "email",
       }),
     });
     const data = await res.json();
     setLoading(false);
     regLock.check(res, data);
     if (!res.ok) { setError(data.error); return; }
-    await signIn("credentials", {
-      email: form.email,
-      password: form.password,
-      callbackUrl: "/dashboard",
-    });
+    // The same answer comes back whether the email is new or already has an account (it's never revealed)
+    setSent({ channel: data.channel, sentTo: data.sentTo });
   }
 
   return (
@@ -77,12 +100,22 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {sent ? (
+            <VerifyCodeForm
+              email={form.email.trim()}
+              sentTo={sent.sentTo}
+              channel={sent.channel}
+              smsOption={smsAvailable}
+              onVerified={signInAfterCode}
+              onBack={() => setSent(null)}
+            />
+          ) : (
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {[
               { label: "Full name", name: "name", type: "text", placeholder: "Full Name" },
               { label: "Email", name: "email", type: "email", placeholder: "you@example.com" },
               { label: "Phone number", name: "phone", type: "tel", placeholder: "+92 300 0000000" },
-              { label: "Password", name: "password", type: "password", placeholder: "Min 6 characters" },
+              { label: "Password", name: "password", type: "password", placeholder: `At least ${PASSWORD_MIN} characters` },
               { label: "Confirm password", name: "confirm", type: "password", placeholder: "Repeat password" },
             ].map((field) => (
               <div key={field.name}>
@@ -102,6 +135,20 @@ export default function RegisterPage() {
               </div>
             ))}
 
+            {smsAvailable && (
+              <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
+                <legend style={{ fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Send my code by</legend>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {(["email", "phone"] as const).map(c => (
+                    <label key={c} style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", border: `1px solid ${channel === c ? "var(--gh-0d1117)" : "var(--gh-d0d7de)"}`, borderRadius: "8px", fontSize: "13px", color: "var(--gh-0d1117)", cursor: "pointer" }}>
+                      <input type="radio" name="channel" checked={channel === c} onChange={() => setChannel(c)} style={{ accentColor: "var(--gh-0d1117)" }} />
+                      {c === "email" ? "Email" : "SMS to my phone"}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
             <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "var(--gh-57606a)", lineHeight: 1.5, cursor: "pointer" }}>
               <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)} required
                 style={{ marginTop: "3px", width: "15px", height: "15px", accentColor: "var(--gh-0d1117)", flexShrink: 0 }} />
@@ -118,6 +165,7 @@ export default function RegisterPage() {
               {regLock.locked ? regLock.text : loading ? "Creating account..." : "Create account"}
             </button>
           </form>
+          )}
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Already have an account?{" "}

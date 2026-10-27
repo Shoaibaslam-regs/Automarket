@@ -8,6 +8,7 @@ import UserIdBadge from "@/components/UserIdBadge";
 import DeleteAccount from "@/components/profile/DeleteAccount";
 import PhoneVerification from "@/components/profile/PhoneVerification";
 import { pictureHint, pictureWaitText } from "@/lib/profilePicture";
+import { PASSWORD_MIN } from "@/lib/password";
 
 type UserProfile = {
   name?: string;
@@ -93,7 +94,9 @@ export default function ProfilePage() {
     setSaving(false);
 
     if (!res.ok) { setError(data.error); return; }
-    setSuccess("Password changed successfully!");
+    // The change gave the account a new session key (other devices are signed out); keep this one signed in
+    if (data.user?.sessionKey) await update({ sessionKey: data.user.sessionKey });
+    setSuccess("Password changed. Your other devices are being signed out.");
     setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     setTimeout(() => setSuccess(""), 3000);
   }
@@ -249,7 +252,7 @@ export default function ProfilePage() {
             <form onSubmit={savePassword} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {[
                 { label: "Current password", key: "currentPassword", placeholder: "Enter current password" },
-                { label: "New password", key: "newPassword", placeholder: "Min 6 characters" },
+                { label: "New password", key: "newPassword", placeholder: `At least ${PASSWORD_MIN} characters` },
                 { label: "Confirm new password", key: "confirmPassword", placeholder: "Repeat new password" },
               ].map(field => (
                 <div key={field.key}>

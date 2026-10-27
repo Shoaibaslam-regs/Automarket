@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 import { useRateLock } from "@/hooks/useRateLock";
+import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
+import { parseLoginIdentifier, type CodeChannel } from "@/lib/signupCode";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +16,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // New accounts confirm with a 6-digit code before the first sign-in; a right password on one that hasn't
+  // sends a fresh code and shows the code step (`code`)
+  const [notice, setNotice] = useState("");
+  const [code, setCode] = useState<{ channel: CodeChannel; sentTo: string; sms: boolean } | null>(null);
   // Locked per email after too many wrong passwords, matching the server's lock
   const lock = useRateLock(`login:${email.trim().toLowerCase()}`);
   // Hidden admin entry: a value without "@" in the email field is checked on the server as ADMIN_ACCESS_KEY
@@ -21,7 +27,44 @@ export default function LoginPage() {
   // normal credentials provider (portal "admin"), which requires the ADMIN role. See src/lib/adminGate.ts.
   const [mode, setMode] = useState<"user" | "admin">("user");
   const keyLock = useRateLock("login:access");
+  const looksLikeKey = !email.includes("@") && !parseLoginIdentifier(email);
   const adminLock = useRateLock("login:admin");
+
+  // ?verified=1 after confirming (link or code), ?verify=invalid for an old link, ?email= to fill the field
+  useEffect(() => {
+    queueMicrotask(() => {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("email")) setEmail(q.get("email") ?? "");
+      if (q.get("verified") === "1") setNotice("Email confirmed. Sign in to continue.");
+      else if (q.get("verify") === "invalid") setError("That confirmation link has expired or was already used. Sign in and we'll send you a code instead.");
+    });
+  }, []);
+
+  /** Sends a new sign-up code for an account that hasn't confirmed yet, then shows the code step. */
+  async function startCodeStep(value: string) {
+    const [res, options] = await Promise.all([
+      fetch("/api/auth/verify-code/resend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: value }) }).catch(() => null),
+      fetch("/api/auth/verify-code").then(r => r.json()).catch(() => ({})),
+    ]);
+    const data = await res?.json().catch(() => ({}));
+    if (!res?.ok) {
+      setError(data?.error ?? "Confirm your account first. We couldn't send a code just now, so try again in a moment.");
+      return;
+    }
+    setCode({ channel: data.channel, sentTo: data.sentTo, sms: options?.phone === true });
+  }
+
+  /** The code was right: sign in with the password already typed. */
+  async function signInAfterCode() {
+    const res = await signIn("credentials", { email: email.trim(), password, redirect: false });
+    if (res?.error) {
+      setCode(null);
+      setNotice("Account confirmed. Sign in to continue.");
+      return;
+    }
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   async function checkAccessKey(key: string) {
     setLoading(true);
@@ -63,8 +106,9 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = email.trim();
-    // Key attempts have their own lock, so a locked key check never blocks normal email sign-in
-    if (!value.includes("@")) {
+    // Neither an email nor a phone number: checked as the admin key. Key attempts have their own lock, so a
+    // locked key check never blocks normal sign-in
+    if (!value.includes("@") && !parseLoginIdentifier(value)) {
       if (keyLock.locked) return;
       await checkAccessKey(value);
       return;
@@ -72,6 +116,7 @@ export default function LoginPage() {
     if (!password) { setError("Enter your password"); return; }
     setLoading(true);
     setError("");
+    setNotice("");
     const res = await signIn("credentials", { email: value, password, redirect: false });
     setLoading(false);
     if (res?.error) {
@@ -79,8 +124,12 @@ export default function LoginPage() {
       if (limited) {
         lock.lock(Number(limited[1]) || 15 * 60);
         setError("");
+      } else if (res.code === "email_unverified") {
+        setLoading(true);
+        await startCodeStep(value);
+        setLoading(false);
       } else {
-        setError("Invalid email or password");
+        setError("Invalid email, phone or password");
       }
     } else {
       router.push("/dashboard");
@@ -146,26 +195,35 @@ export default function LoginPage() {
 
           {lock.locked && (
             <div role="alert" style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-7d4e00)", marginBottom: "16px" }}>
-              Too many wrong passwords for this email, so sign-in is paused. {lock.text}.
+              Too many wrong passwords for this account, so sign-in is paused. {lock.text}.
             </div>
           )}
-          {keyLock.locked && !lock.locked && !email.includes("@") && (
+          {keyLock.locked && !lock.locked && looksLikeKey && (
             <div role="alert" style={{ background: "var(--gh-fff8c5)", border: "1px solid var(--gh-e3b341)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-7d4e00)", marginBottom: "16px" }}>
               Too many attempts, so sign-in is paused. {keyLock.text}.
             </div>
           )}
-          {error && !lock.locked && !(keyLock.locked && !email.includes("@")) && (
+          {notice && !error && (
+            <div role="status" style={{ background: "var(--gh-dafbe1)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-1a7f37)", marginBottom: "16px" }}>
+              {notice}
+            </div>
+          )}
+          {error && !lock.locked && !(keyLock.locked && looksLikeKey) && (
             <div style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "16px" }}>
               {error}
             </div>
           )}
 
+          {code ? (
+            <VerifyCodeForm email={email.trim()} sentTo={code.sentTo} channel={code.channel} smsOption={code.sms}
+              onVerified={signInAfterCode} onBack={() => setCode(null)} />
+          ) : (
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Email</label>
-              {/* type="text" so the browser doesn't reject a value without "@" (the hidden admin key); the server checks emails */}
-              <input type="text" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} required
-                placeholder="you@example.com"
+              <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Email or phone</label>
+              {/* type="text": it takes an email, a verified phone number, or (neither) the hidden admin key */}
+              <input type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} required
+                placeholder="you@example.com or 0300 1234567"
                 style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>
@@ -182,6 +240,7 @@ export default function LoginPage() {
               {lock.locked ? lock.text : loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "20px 0" }}>
             <div style={{ flex: 1, height: "1px", background: "var(--gh-e1e4e8)" }} />

@@ -19,6 +19,8 @@ type StaffMember = {
   joinedAt: string;
 };
 
+type PendingInvite = { _id: string; role: string; createdAt: string; userId?: { name?: string; email: string } | null };
+
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   OWNER:   { bg: "var(--gh-fff8c5)", color: "var(--gh-7d4e00)" },
   MANAGER: { bg: "var(--gh-ddf4ff)", color: "var(--gh-0550ae)" },
@@ -36,6 +38,10 @@ export default function StaffPage() {
   const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string; planLimit?: boolean } | null>(null);
 
   const [canManage, setCanManage] = useState(false);
+  // Invitations sent but not accepted yet, and the viewer's own role (only the owner can invite managers)
+  const [invites, setInvites] = useState<PendingInvite[]>([]);
+  const [myRole, setMyRole] = useState("");
+  const [cancelling, setCancelling] = useState<string | null>(null);
   // Performance (owner, managers) and Activity (owner) tabs
   const [tab, setTab] = useState<"team" | "performance" | "activity">("team");
   const [canViewActivity, setCanViewActivity] = useState(false);
@@ -52,6 +58,8 @@ export default function StaffPage() {
       .then(res => res.json())
       .then(data => {
         setStaff(data.staff || []);
+        setInvites(data.invites || []);
+        setMyRole(data.permissions?.role || "");
         setCanManage(!!data.permissions?.canManage);
         setCanViewActivity(!!data.permissions?.canViewActivity);
         setCanViewPerformance(!!data.permissions?.canViewPerformance);
@@ -72,11 +80,11 @@ export default function StaffPage() {
     const data = await res.json();
     setInviting(false);
     if (res.ok) {
-      setInviteResult({ ok: true, message: "Staff member added successfully!" });
+      setInviteResult({ ok: true, message: "Invitation sent. They join your team once they accept it on their dashboard." });
       setInviteEmail("");
       fetchStaff();
       refreshSub();
-      setTimeout(() => { setInviteResult(null); setShowInvite(false); }, 2000);
+      setTimeout(() => { setInviteResult(null); setShowInvite(false); }, 3000);
     } else {
       setInviteResult({ ok: false, message: data.error, planLimit: data.code === "PLAN_LIMIT_REACHED" });
     }
@@ -125,13 +133,14 @@ export default function StaffPage() {
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required
                   placeholder="staff@example.com"
                   style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
-                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>The user must already have an AutoGO account</p>
+                <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", marginTop: "4px" }}>They need an AutoGO account, and join once they accept the invitation</p>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Role</label>
                 <Select value={inviteRole} onChange={setInviteRole} ariaLabel="Role"
                   options={[
-                    { value: "MANAGER", label: "Manager — full access except billing" },
+                    // Only the owner makes managers (the server refuses it for anyone else)
+                    ...(myRole === "OWNER" ? [{ value: "MANAGER", label: "Manager — full access except billing" }] : []),
                     { value: "SALES", label: "Sales — manage customers & listings" },
                     { value: "STAFF", label: "Staff — view only" },
                   ]}
@@ -150,7 +159,7 @@ export default function StaffPage() {
                 </button>
                 <button type="submit" disabled={inviting}
                   style={{ padding: "9px 18px", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                  {inviting ? "Adding..." : "Add member"}
+                  {inviting ? "Sending..." : "Send invitation"}
                 </button>
               </div>
             </form>
@@ -221,6 +230,33 @@ export default function StaffPage() {
         {pageError && (
           <div role="alert" style={{ background: "var(--gh-fff0f0)", border: "1px solid var(--gh-ffcdd2)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-cf222e)", marginBottom: "14px" }}>
             {pageError}
+          </div>
+        )}
+
+        {/* Invitations waiting for an answer (they expire after 14 days) */}
+        {invites.length > 0 && (
+          <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "14px 18px", marginBottom: "20px" }}>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "8px" }}>Waiting to accept</p>
+            {invites.map(inv => (
+              <div key={inv._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "8px 0", borderTop: "1px solid var(--gh-f0f2f4)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: "13px", color: "var(--gh-0d1117)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inv.userId?.name || inv.userId?.email || "Invited person"}</p>
+                  <p style={{ fontSize: "11px", color: "var(--gh-8c959f)" }}>{inv.role.charAt(0) + inv.role.slice(1).toLowerCase()} · invited {new Date(inv.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</p>
+                </div>
+                {canManage && (
+                  <button type="button" disabled={cancelling === inv._id}
+                    onClick={async () => {
+                      setCancelling(inv._id);
+                      const res = await fetch(`/api/business/staff/invites/${inv._id}`, { method: "DELETE" }).catch(() => null);
+                      setCancelling(null);
+                      if (res?.ok) setInvites(list => list.filter(i => i._id !== inv._id));
+                    }}
+                    style={{ fontSize: "12px", color: "var(--gh-cf222e)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+                    {cancelling === inv._id ? "Cancelling…" : "Cancel"}
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
 

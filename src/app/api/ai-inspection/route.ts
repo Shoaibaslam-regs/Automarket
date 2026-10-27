@@ -9,6 +9,8 @@ import { Inspection } from "@/models/Inspection";
 import { Listing } from "@/models/Listing";
 import { invalidateListingPage } from "@/lib/pageCache";
 import { rateLimitResponse } from "@/lib/rateLimit";
+import { fetchUploadedImage } from "@/lib/safeFetch";
+import { isUploadedImageUrl } from "@/lib/uploadUrls";
 
 type GeminiReport = {
   make: string;
@@ -39,22 +41,13 @@ async function analyzeWithGemini(
 
   const imageParts = await Promise.all(
     images.slice(0, 4).map(async (url: string) => {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch image");
-      }
-
-      const buffer = await response.arrayBuffer();
-
-      const mimeType =
-        response.headers.get("content-type") ||
-        "image/jpeg";
+      // Only our UploadThing files, with a size and time limit (src/lib/safeFetch.ts)
+      const { buffer, type } = await fetchUploadedImage(url);
 
       return {
         inlineData: {
-          data: Buffer.from(buffer).toString("base64"),
-          mimeType,
+          data: buffer.toString("base64"),
+          mimeType: type,
         },
       };
     })
@@ -266,7 +259,9 @@ export async function POST(req: NextRequest) {
     if (
       !listingId ||
       !Array.isArray(images) ||
-      images.length === 0
+      images.length === 0 ||
+      images.length > 4 ||
+      !images.every(isUploadedImageUrl)
     ) {
       return NextResponse.json(
         {
@@ -296,6 +291,13 @@ export async function POST(req: NextRequest) {
         { error: "Forbidden" },
         { status: 403 }
       );
+    }
+
+    // The photos must be this user's own uploads that passed the vehicle check, like a listing's photos
+    const { VehicleImage } = await import("@/models/VehicleImage");
+    const uniqueImages = [...new Set(images as string[])];
+    if ((await VehicleImage.countDocuments({ url: { $in: uniqueImages }, userId: session.user.id })) !== uniqueImages.length) {
+      return NextResponse.json({ error: "Upload the photos from this page first" }, { status: 400 });
     }
 
     let report;

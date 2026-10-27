@@ -114,6 +114,8 @@ export default function SellPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Photos still uploading: Continue and Publish wait, or they'd move on without them
+  const [photosUploading, setPhotosUploading] = useState(false);
   const [error, setError] = useState("");
   // Set when the API refused the listing because the plan is full, so the error can link to /pricing
   const [limitError, setLimitError] = useState(false);
@@ -195,6 +197,7 @@ export default function SellPage() {
 
   // Only the current step's fields are mounted, so this validates just that step
   function goNext() {
+    if (photosUploading) return;
     if (formRef.current && !formRef.current.reportValidity()) return;
     setError("");
     setStep((s) => Math.min(3, s + 1));
@@ -210,6 +213,7 @@ export default function SellPage() {
     e.preventDefault();
     // Enter key on steps 1–2 advances instead of publishing a half-filled listing
     if (step < 3) { goNext(); return; }
+    if (photosUploading) return;
     if (!session?.user) { router.push("/login"); return; }
 
     setLoading(true);
@@ -560,10 +564,11 @@ export default function SellPage() {
                 {step === 2 && (
                   <>
                     <div className="space-y-3">
-                      <SectionTitle title="Photos" hint="The first image is your main photo. Upload up to 8 images." />
+                      <SectionTitle title="Photos" hint="Upload up to 8 images. The first is the main photo; tap “Set as main” on another to change it." />
                       <ImageUpload
                         images={form.images}
                         onChange={(urls) => setForm((prev) => ({ ...prev, images: urls }))}
+                        onUploadingChange={setPhotosUploading}
                       />
                     </div>
 
@@ -665,12 +670,12 @@ export default function SellPage() {
                   </button>
                 ) : <span className="hidden sm:block" />}
                 {step < 3 ? (
-                  <button type="button" onClick={goNext}
-                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-800">
-                    Continue <ArrowRight size={15} strokeWidth={2} />
+                  <button type="button" onClick={goNext} disabled={photosUploading}
+                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+                    {photosUploading ? "Uploading photos…" : <>Continue <ArrowRight size={15} strokeWidth={2} /></>}
                   </button>
                 ) : (
-                  <button type="submit" disabled={loading}
+                  <button type="submit" disabled={loading || photosUploading}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
                     {loading && <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
                     {loading ? "Publishing..." : "Publish listing"}

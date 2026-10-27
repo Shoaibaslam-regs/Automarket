@@ -2,7 +2,8 @@ import nodemailer from "nodemailer";
 
 // Gmail only allows about 500 emails a day. For real traffic, set SMTP_HOST (and SMTP_PORT, default 587) to a
 // transactional email service such as Amazon SES, Brevo or Resend; EMAIL_USER/EMAIL_PASS are then its SMTP login.
-const auth = { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS };
+// Google shows app passwords in groups of four ("abcd efgh ijkl mnop"); spaces are never part of them
+const auth = { user: process.env.EMAIL_USER, pass: (process.env.EMAIL_PASS ?? "").replace(/\s+/g, "") };
 const smtpPort = Number(process.env.SMTP_PORT) || 587;
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({ host: process.env.SMTP_HOST, port: smtpPort, secure: smtpPort === 465, pool: true, auth })
@@ -282,6 +283,50 @@ export async function sendPasswordResetEmail({ to, name, link }: { to: string; n
         </div>
       </div>
     `,
+  });
+}
+
+function simpleEmail({ to, subject, kicker, name, body, button }: { to: string; subject: string; kicker: string; name?: string; body: string; button?: { href: string; label: string } }) {
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
+        <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
+          <div style="background: #0d1117; padding: 24px; text-align: center;">
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
+            <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">${kicker}</p>
+          </div>
+          <div style="padding: 28px;">
+            <p style="font-size: 15px; color: #0d1117; font-weight: 600; margin-bottom: 4px;">Hi ${name ? escapeHtml(name) : "there"},</p>
+            <p style="font-size: 14px; color: #57606a; margin-bottom: 24px; line-height: 1.6;">${body}</p>
+            ${button ? `<a href="${button.href}" style="display: block; text-align: center; padding: 12px; background: #0d1117; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">${button.label}</a>` : ""}
+            <p style="font-size: 12px; color: #8c959f; margin-top: 20px; line-height: 1.6;">If this wasn't you, ignore this email. Nothing changes on your account.</p>
+          </div>
+        </div>
+      </div>
+    `,
+  });
+}
+
+/** The 6-digit code that confirms a new account (typed on the sign-up or sign-in page). */
+export async function sendSignupCodeEmail({ to, name, code, minutes }: { to: string; name?: string; code: string; minutes: number }) {
+  await simpleEmail({
+    to, name, subject: `${code} is your AutoGO code`, kicker: "Confirm your account",
+    body: `Welcome to AutoGO! Enter this code to finish creating your account:<br><br><span style="display:inline-block;font-size:28px;font-weight:700;letter-spacing:6px;color:#0d1117;background:#f6f8fa;border:1px solid #e1e4e8;border-radius:8px;padding:10px 16px">${code}</span><br><br>It works for ${minutes} minutes. Never share it with anyone, AutoGO will never ask you for it.`,
+  });
+}
+
+/**
+ * Sent instead of a confirmation when someone signs up with an email that already has an account, so the sign-up
+ * page can answer the same way for both and doesn't reveal which emails are registered.
+ */
+export async function sendAccountExistsEmail({ to, name, loginLink, resetLink }: { to: string; name?: string; loginLink: string; resetLink: string }) {
+  await simpleEmail({
+    to, name, subject: "You already have an AutoGO account", kicker: "Sign-up attempt",
+    body: `Someone (hopefully you) tried to create an AutoGO account with this email, but you already have one. <a href="${loginLink}">Sign in here</a>, or if you've forgotten your password, <a href="${resetLink}">reset it</a>.`,
+    button: { href: loginLink, label: "Sign in" },
   });
 }
 

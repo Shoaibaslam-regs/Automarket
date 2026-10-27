@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, holdsDatesQuery, lateCharge, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
+import { PERSONAL_OWNER_MOVES, RENTER_MOVES, MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, holdsDatesQuery, lateCharge, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 
 const d = (s: string) => new Date(s);
 
@@ -94,5 +94,20 @@ describe("online request limits", () => {
     const merged = { ...bookingClashQuery(d("2026-11-01"), d("2026-11-03")), ...holdsDatesQuery() };
     expect(merged.$or).toHaveLength(2);
     expect(merged.$and).toHaveLength(1);
+  });
+});
+
+describe("personal booking moves", () => {
+  it("lets renters cancel only before handover", () => {
+    expect(RENTER_MOVES.PENDING).toEqual(["CANCELLED"]);
+    expect(RENTER_MOVES.CONFIRMED).toEqual(["CANCELLED"]);
+    expect(RENTER_MOVES.ACTIVE).toBeUndefined();
+    expect(RENTER_MOVES.COMPLETED).toBeUndefined();
+  });
+  it("lets owners move forward one step, never back", () => {
+    expect(PERSONAL_OWNER_MOVES.PENDING).toContain("CONFIRMED");
+    expect(PERSONAL_OWNER_MOVES.PENDING).not.toContain("COMPLETED");
+    expect(PERSONAL_OWNER_MOVES.COMPLETED).toBeUndefined();
+    expect(PERSONAL_OWNER_MOVES.CANCELLED).toBeUndefined();
   });
 });
