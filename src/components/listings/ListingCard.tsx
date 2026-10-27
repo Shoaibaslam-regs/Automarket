@@ -9,6 +9,7 @@ import { formatLakh } from "@/lib/format";
 import FavoriteButton from "./FavoriteButton";
 import CompareButton from "./CompareButton";
 
+import AdminBadge from "@/components/AdminBadge";
 interface Props {
   listing: IListing & { _id: string };
   /** "list" renders a horizontal row with a large photo, for the browse page's list view */
@@ -28,7 +29,7 @@ const TYPE_BADGE: Record<IListing["type"], { label: string; className: string }>
   BOTH: { label: "Sale & Rent", className: "bg-indigo-500/90 text-white" },
 };
 
-type CardSeller = { name?: string; image?: string; phoneVerifiedAt?: string | Date | null; organizationId?: { name?: string; verification?: BadgeVerification } | null };
+type CardSeller = { name?: string; image?: string; phoneVerifiedAt?: string | Date | null; role?: string; adminAccess?: string; organizationId?: { name?: string; verification?: BadgeVerification } | null };
 
 /** Small green tick for sellers who verified their phone number by SMS. */
 function PhoneTick() {
@@ -66,6 +67,7 @@ function SellerTag({ seller, compact }: { seller: CardSeller; compact?: boolean 
         {seller.name[0]?.toUpperCase()}
       </span>
       <span className="truncate">{compact ? seller.name.split(" ")[0] : seller.name}</span>
+      <AdminBadge user={seller} size={13} />
       {seller.phoneVerifiedAt && <PhoneTick />}
     </span>
   );

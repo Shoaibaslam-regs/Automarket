@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
         ],
         deletedFor: { $ne: session.user.id },
       })
-        .populate("senderId", "name image")
-        .populate("receiverId", "name image")
+        .populate("senderId", "name image role adminAccess")
+        .populate("receiverId", "name image role adminAccess")
         .sort({ createdAt: 1 })
         .lean();
 
@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
       ],
       deletedFor: { $ne: session.user.id },
     })
-      .populate("senderId", "name image")
-      .populate("receiverId", "name image")
+      .populate("senderId", "name image role adminAccess")
+      .populate("receiverId", "name image role adminAccess")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -122,8 +122,8 @@ export async function POST(req: NextRequest) {
     const message = await Message.create(messageData);
 
     const populated = await Message.findById(message._id)
-      .populate("senderId", "name image")
-      .populate("receiverId", "name image")
+      .populate("senderId", "name image role adminAccess")
+      .populate("receiverId", "name image role adminAccess")
       .lean();
 
     const channelId = [session.user.id, receiverId].sort().join("-");

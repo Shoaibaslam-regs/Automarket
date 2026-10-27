@@ -16,6 +16,7 @@ import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { openFeedback } from "@/components/FeedbackDialog";
 
+import AdminBadge from "@/components/AdminBadge";
 /** `action` makes the row a button (e.g. opening a dialog) instead of a link */
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; action?: () => void };
 
@@ -115,7 +116,7 @@ export default function UserMenuDropdown({
         <div className="relative flex items-center gap-3">
           <RingAvatar name={user.name} image={user.image} size={42} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user.name}</p>
+            <p className="flex min-w-0 items-center gap-1 text-sm font-semibold"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
             <p className="truncate text-xs text-slate-400">{user.email}</p>
           </div>
         </div>

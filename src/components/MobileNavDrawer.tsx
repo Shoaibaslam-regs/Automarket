@@ -20,6 +20,7 @@ import { InstallAppRow } from "@/components/pwa/InstallBanner";
 import PushCard from "@/components/pwa/PushCard";
 import { openFeedback } from "@/components/FeedbackDialog";
 
+import AdminBadge from "@/components/AdminBadge";
 /** `action` makes the row a button (e.g. opening a dialog) instead of a link */
 type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string; action?: () => void };
 
@@ -180,7 +181,7 @@ export default function MobileNavDrawer({
                   </span>
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold leading-tight">{user.name}</p>
+                  <p className="flex min-w-0 items-center gap-1 text-sm font-semibold leading-tight"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
                   <p className="mt-0.5 truncate text-[11px] text-slate-400">{user.email}</p>
                 </div>
               </div>

@@ -121,6 +121,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           image: user.image,
           role: user.role,
+          adminAccess: user.adminAccess,
           adminPortal,
           sessionKey: await sessionKeyOf(user),
         };
@@ -160,15 +161,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Google's user.id is Google's own id, not the account's: every route looks the account up by
           // session.user.id, so use the account that signIn found or created
           await connectDB();
-          const dbUser = await User.findOne(emailQuery(String(user.email ?? ""))).select("role sessionKey");
+          const dbUser = await User.findOne(emailQuery(String(user.email ?? ""))).select("role adminAccess sessionKey");
           if (!dbUser) return null;
           token.id = dbUser._id.toString();
           token.role = dbUser.role;
+          token.adminAccess = dbUser.adminAccess;
           token.adminPortal = false;
           token.sk = await sessionKeyOf(dbUser);
         } else {
           token.id = user.id;
           token.role = user.role;
+          token.adminAccess = (user as { adminAccess?: string }).adminAccess;
           // Only a sign-in through the hidden admin form opens the admin panel (proxy.ts, requireAdminApi)
           token.adminPortal = user.adminPortal === true && user.role === "ADMIN";
           token.sk = (user as { sessionKey?: string }).sessionKey;
@@ -192,9 +195,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // the password is changed or reset, or an admin changes the role), and pick up the current role
       if (token.id && Date.now() - Number(token.checkedAt ?? 0) > RECHECK_MS) {
         await connectDB();
-        const current = await User.findById(token.id).select("role sessionKey").lean<{ role: string; sessionKey?: string }>();
+        const current = await User.findById(token.id).select("role adminAccess sessionKey").lean<{ role: string; adminAccess?: string; sessionKey?: string }>();
         if (!current || (current.sessionKey ?? undefined) !== (token.sk ?? undefined)) return null;
         token.role = current.role;
+        token.adminAccess = current.adminAccess;
         if (current.role !== "ADMIN") token.adminPortal = false;
         token.checkedAt = Date.now();
       }
@@ -204,6 +208,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.adminAccess = token.adminAccess;
         session.user.adminPortal = token.adminPortal === true && token.role === "ADMIN";
       }
       return session;

@@ -40,6 +40,7 @@ import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 import { whatsappUrl } from "@/lib/phone";
 import ContactBar from "@/components/listings/ContactBar";
 
+import AdminBadge from "@/components/AdminBadge";
 type Props = { params: Promise<{ id: string }> };
 
 /**
@@ -54,7 +55,7 @@ const loadListingPage = (id: string) =>
   unstable_cache(
     async () => {
       await connectDB();
-      const listing = await Listing.findById(id).populate("sellerId", "name image phone createdAt phoneVerifiedAt").lean<{
+      const listing = await Listing.findById(id).populate("sellerId", "name image phone createdAt phoneVerifiedAt role adminAccess").lean<{
         price: number; type: string; sellerId?: { _id?: mongoose.Types.ObjectId } | null;
       }>();
       if (!listing) return null;
@@ -160,6 +161,8 @@ export default async function ListingDetailPage({ params }: Props) {
       image?: string;
       phone?: string;
       phoneVerifiedAt?: string;
+      role?: string;
+      adminAccess?: string;
       createdAt?: Date;
     } | null;
   };
@@ -388,7 +391,7 @@ export default async function ListingDetailPage({ params }: Props) {
                     <div className="flex items-center gap-3">
                       <RingAvatar name={l.sellerId.name} image={l.sellerId.image} size={38} />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900">{l.sellerId.name ?? "Unknown"}</p>
+                        <p className="flex min-w-0 items-center gap-1 text-sm font-medium text-slate-900"><span className="truncate">{l.sellerId.name ?? "Unknown"}</span><AdminBadge user={l.sellerId} /></p>
                         <p className="text-xs text-slate-400">
                           Individual seller{l.sellerId.createdAt ? ` · on AutoGO since ${new Date(l.sellerId.createdAt).getFullYear()}` : ""}
                         </p>

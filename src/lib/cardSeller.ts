@@ -2,12 +2,13 @@
 import "@/models/Organization";
 
 /**
- * What a ListingCard needs about the seller: name and picture, whether their phone is verified, and their
+ * What a ListingCard needs about the seller: name and picture, whether their phone is verified, the AutoGO team
+ * tick (role, adminAccess), and their
  * business (name, page and Verified badge). Use it on every query whose listings are shown as cards:
  *   Listing.find(q).populate(CARD_SELLER_POPULATE)
  */
 export const CARD_SELLER_POPULATE = {
   path: "sellerId",
-  select: "name image organizationId phoneVerifiedAt",
+  select: "name image organizationId phoneVerifiedAt role adminAccess",
   populate: { path: "organizationId", select: "name slug verification.verifiedAt verification.expiresAt" },
 };

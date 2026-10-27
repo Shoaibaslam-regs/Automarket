@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
+import { adminBadgeKind } from "@/lib/adminBadge";
 
 export async function GET(
   req: NextRequest,
@@ -14,10 +15,12 @@ export async function GET(
     }
     const { id } = await params;
     await connectDB();
-    const user = await User.findById(id).select("name image").lean() as {
+    const user = await User.findById(id).select("name image role adminAccess").lean() as {
       _id: { toString: () => string };
       name?: string;
       image?: string;
+      role?: string;
+      adminAccess?: string;
     } | null;
 
     if (!user) {
@@ -29,6 +32,8 @@ export async function GET(
         _id: user._id.toString(),
         name: user.name || "User",
         image: user.image,
+        // Only for the AutoGO team tick (src/lib/adminBadge.ts)
+        ...(adminBadgeKind(user) ? { badge: adminBadgeKind(user) } : {}),
       }
     });
   } catch {
