@@ -7,7 +7,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { getPusherClient } from "@/lib/pusher-client";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import Image from "next/image";
-import { Hand, MessageSquare, Trash2 } from "lucide-react";
+import { Ban, Hand, MessageSquare, Trash2 } from "lucide-react";
 import { useRateLock } from "@/hooks/useRateLock";
 import { chatChannel, userChannel } from "@/lib/pusherChannels";
 
@@ -70,6 +70,9 @@ export default function MessagesContent({ embedded = false, basePath = "/message
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  // Blocks between you and the open chat's person: either way, nobody can send in this chat
+  const [block, setBlock] = useState<{ blockedByMe: boolean; blockedMe: boolean } | null>(null);
+  const [blocking, setBlocking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -123,6 +126,24 @@ export default function MessagesContent({ embedded = false, basePath = "/message
       unbind();
     };
   }, [session?.user?.id, fetchConversations]);
+
+  useEffect(() => {
+    if (!activeUser?._id || activeUser.isSupportAccount) { queueMicrotask(() => setBlock(null)); return; }
+    fetch(`/api/blocks?with=${activeUser._id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setBlock(d ? { blockedByMe: !!d.blockedByMe, blockedMe: !!d.blockedMe } : null))
+      .catch(() => {});
+  }, [activeUser?._id, activeUser?.isSupportAccount]);
+
+  async function toggleBlock() {
+    if (!activeUser) return;
+    setBlocking(true);
+    const res = block?.blockedByMe
+      ? await fetch(`/api/blocks?userId=${activeUser._id}`, { method: "DELETE" }).catch(() => null)
+      : await fetch("/api/blocks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: activeUser._id }) }).catch(() => null);
+    setBlocking(false);
+    if (res?.ok) setBlock(b => ({ blockedMe: b?.blockedMe ?? false, blockedByMe: !b?.blockedByMe }));
+  }
 
   useEffect(() => {
     if (!withUserId || !session?.user) return;
@@ -202,6 +223,7 @@ export default function MessagesContent({ embedded = false, basePath = "/message
       });
       const data = await res.json();
       msgLock.check(res, data);
+      if (data?.code === "BLOCKED") fetch(`/api/blocks?with=${activeUser._id}`).then(r => r.json()).then(d => setBlock({ blockedByMe: !!d.blockedByMe, blockedMe: !!d.blockedMe })).catch(() => {});
       if (res.ok) {
         chatDraft.clear();
         setContent("");
@@ -405,7 +427,16 @@ export default function MessagesContent({ embedded = false, basePath = "/message
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)", display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeUser.name}</span><AdminBadge user={badgeUser(activeUser)} /></p>
                   <p style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>{badgeUser(activeUser)?.role === "ADMIN" || activeUser.isSupportAccount ? "AutoGO team" : "AutoGO member"}</p>
                 </div>
+                {!activeUser.isSupportAccount && block && (
+                  <button type="button" className="chat-del" onClick={toggleBlock} disabled={blocking}
+                    aria-label={block.blockedByMe ? "Unblock" : "Block"} title={block.blockedByMe ? "Unblock this person" : "Block: neither of you can send messages in this chat"}
+                    style={{ marginLeft: "auto" }}>
+                    <Ban size={14} strokeWidth={1.75} />
+                    <span className="chat-del-label">{block.blockedByMe ? "Unblock" : "Block"}</span>
+                  </button>
+                )}
                 <button type="button" className="chat-del" aria-label="Delete chat" title="Delete chat"
+                  style={!activeUser.isSupportAccount && block ? { marginLeft: 0 } : undefined}
                   onClick={() => { setDeleteError(""); setDeleteTarget(activeUser); }}>
                   <Trash2 size={14} strokeWidth={1.75} />
                   <span className="chat-del-label">Delete chat</span>
@@ -449,6 +480,13 @@ export default function MessagesContent({ embedded = false, basePath = "/message
                 <div ref={bottomRef} />
               </div>
 
+              {block?.blockedByMe || block?.blockedMe ? (
+                <p role="status" style={{ padding: "14px 16px", background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", fontSize: "13px", color: "var(--gh-57606a)", textAlign: "center", flexShrink: 0 }}>
+                  {block.blockedByMe
+                    ? <>You blocked {activeUser.name}. <button type="button" onClick={toggleBlock} disabled={blocking} style={{ background: "none", border: "none", padding: 0, fontWeight: 600, color: "var(--gh-0d1117)", textDecoration: "underline", cursor: "pointer" }}>Unblock</button> to send messages.</>
+                    : <>You can&apos;t send messages in this chat.</>}
+                </p>
+              ) : (
               <form onSubmit={sendMessage} style={{ padding: "12px 16px", background: "var(--gh-ffffff)", borderTop: "1px solid var(--gh-e1e4e8)", display: "flex", gap: "8px", flexShrink: 0 }}>
                 <input ref={inputRef} value={content} maxLength={2000} onChange={e => setContent(e.target.value)}
                   placeholder="Type a message..."
@@ -461,6 +499,7 @@ export default function MessagesContent({ embedded = false, basePath = "/message
                   </svg>
                 </button>
               </form>
+              )}
               {msgLock.locked && (
                 <p role="status" style={{ padding: "6px 16px 10px", background: "var(--gh-ffffff)", fontSize: "12px", color: "var(--gh-7d4e00)", flexShrink: 0 }}>
                   You&apos;re sending messages too fast. {msgLock.text}.

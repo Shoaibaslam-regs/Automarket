@@ -5,10 +5,11 @@ import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
 import { ADMIN_GATE_COOKIE, ADMIN_GATE_TTL_SEC, newGateValue } from "@/lib/adminGate";
 import { checkAdminAccessKey } from "@/lib/adminKey";
 import { adminForPersonalKey } from "@/lib/adminPersonalKey";
-import { issueAdminCode } from "@/lib/adminCode";
+import { adminCodeWait, issueAdminCode } from "@/lib/adminCode";
 import { maskDestination } from "@/lib/signupCode";
 import { reportError } from "@/lib/errorLog";
 
+import { turnstileRefusal, verifyTurnstile } from "@/lib/turnstile";
 // Same wording as a wrong password on /login, so a wrong key gives nothing away
 const GENERIC = "Invalid email or password";
 
@@ -39,7 +40,8 @@ export async function POST(req: NextRequest) {
     const before = await isRateLimited("adminKey", ip);
     if (!before.ok) return limited(before.retryAfterSec);
 
-    const { key } = await req.json().catch(() => ({}));
+    const { key, cf } = await req.json().catch(() => ({}));
+    if (!(await verifyTurnstile(cf, ip))) return turnstileRefusal();
     await connectDB();
     const adminId = typeof key === "string" ? await adminForKey(key.trim()) : null;
     if (!adminId) {
@@ -48,9 +50,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: GENERIC }, { status: 401 });
     }
 
-    const send = await hitRateLimit("adminCodeSend", adminId);
-    const email = send.ok ? await issueAdminCode(adminId) : (await User.findById(adminId).select("email").lean<{ email: string }>())?.email;
-    const res = NextResponse.json({ ok: true, sentTo: email ? maskDestination("email", email) : null, sent: send.ok });
+    // A code sent a moment ago still works: only a new send counts toward the hourly cap
+    const early = await adminCodeWait(adminId);
+    const cap = early > 0 ? null : await hitRateLimit("adminCodeSend", adminId);
+    const issued = cap?.ok ? await issueAdminCode(adminId) : null;
+    const email = issued?.email ?? (await User.findById(adminId).select("email").lean<{ email: string }>())?.email;
+    const res = NextResponse.json({
+      ok: true,
+      sentTo: email ? maskDestination("email", email) : null,
+      sent: !!issued?.sent,
+      resendIn: issued?.resendIn ?? (early || cap?.retryAfterSec || 0),
+    });
     res.cookies.set(ADMIN_GATE_COOKIE, newGateValue(adminId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

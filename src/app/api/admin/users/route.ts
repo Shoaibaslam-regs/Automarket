@@ -14,7 +14,7 @@ export async function GET() {
     await connectDB();
     // The shared AutoGO Support account isn't a person to manage
     const users = await User.find({ isSupportAccount: { $ne: true } }).sort({ createdAt: -1 })
-      .select("name email phone role adminAccess plan planExpiresAt planSource createdAt emailVerified")
+      .select("name email phone role adminAccess plan planExpiresAt planSource createdAt emailVerified bannedAt banReason")
       .lean<Array<{ email: string; role: string; adminAccess?: string; plan?: string; planExpiresAt?: Date; planSource?: string }>>();
     return NextResponse.json({
       viewer: { access: gate.admin.adminAccess },

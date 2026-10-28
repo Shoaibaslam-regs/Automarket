@@ -29,6 +29,17 @@ export interface IUser extends Document {
   adminAccess?: "FULL" | "MANAGER" | "READ_ONLY";
   /** The shared "AutoGO Support" account (src/lib/supportAccount.ts): it can't sign in; admins write as it from the Support inbox */
   isSupportAccount?: boolean;
+  /** Banned by an admin (src/app/api/admin/users/[id]/ban): can't sign in; `banListingIds` are the live listings it hid */
+  bannedAt?: Date;
+  banReason?: string;
+  bannedBy?: mongoose.Types.ObjectId;
+  banListingIds?: mongoose.Types.ObjectId[];
+  /** When the last sign-up code was sent and how many in a row, for the growing resend wait (src/lib/resendWait.ts) */
+  signupCodeSentAt?: Date;
+  signupCodeSends?: number;
+  /** The same for admin sign-in codes */
+  adminCodeSentAt?: Date;
+  adminCodeSends?: number;
   /** SHA-256 of this admin's personal key for the hidden admin entry on /login (src/lib/adminPersonalKey.ts) */
   adminKeyHash?: string;
   adminKeyCreatedAt?: Date;
@@ -88,6 +99,14 @@ const UserSchema = new Schema<IUser>(
     organizationRole: { type: String, enum: ["OWNER", "MANAGER", "SALES", "STAFF"] },
     adminAccess: { type: String, enum: ["FULL", "MANAGER", "READ_ONLY"] },
     isSupportAccount: { type: Boolean, index: { sparse: true } },
+    bannedAt: { type: Date },
+    banReason: { type: String, maxlength: 500 },
+    bannedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    banListingIds: [{ type: Schema.Types.ObjectId, ref: "Listing" }],
+    signupCodeSentAt: { type: Date },
+    signupCodeSends: { type: Number },
+    adminCodeSentAt: { type: Date },
+    adminCodeSends: { type: Number },
     adminKeyHash: { type: String, index: { unique: true, sparse: true } },
     adminKeyCreatedAt: { type: Date },
     adminCodeHash: { type: String },

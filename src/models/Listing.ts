@@ -22,6 +22,8 @@ export interface IListing extends Omit<Document, "model"> {
   /** When the owner last marked it available, sold or rented; sold and rented listings stay visible (tagged) for a while after this */
   statusChangedAt?: Date;
   removedByAdmin?: boolean;
+  /** Hidden automatically after REPORTS_TO_HIDE people reported it (src/lib/reportAutoHide.ts); dismissing the reports brings it back */
+  autoHiddenAt?: Date;
   featured: boolean;
   sellerId: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -57,6 +59,7 @@ const ListingSchema = new Schema<IListing>(
     statusChangedAt: { type: Date },
     /** Taken down by an admin (status INACTIVE or PENDING from the admin Listings page): the seller can't switch it back on */
     removedByAdmin: { type: Boolean },
+    autoHiddenAt: { type: Date },
     featured: { type: Boolean, default: false },
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },

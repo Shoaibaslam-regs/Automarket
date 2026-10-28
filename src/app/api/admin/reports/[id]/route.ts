@@ -6,6 +6,7 @@ import { logAdminAction } from "@/lib/adminLog";
 import { REPORT_REASON_LABEL } from "@/lib/reports";
 import { reportError } from "@/lib/errorLog";
 
+import { keepHidden, maybeRestore } from "@/lib/reportAutoHide";
 /**
  * Closes a report. Body: { action: "resolve" | "dismiss", note? }.
  * "resolve" means action was taken (e.g. the listing was removed); "dismiss" means nothing was wrong.
@@ -32,6 +33,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ? { targetType: report.targetType, targetId: report.targetId, status: "OPEN" }
       : { _id: report._id };
     const res = await Report.updateMany(filter, { $set: set });
+    // An item hidden by reports comes back when they're dismissed, and stays hidden when they're resolved
+    if (action === "dismiss") await maybeRestore(report.targetType, report.targetId);
+    else await keepHidden(report.targetType, report.targetId);
 
     await logAdminAction(gate.admin, action === "resolve" ? "report.resolve" : "report.dismiss",
       { type: "REPORT", id: report._id, label: `${report.targetType.toLowerCase()} "${report.targetLabel}"` },

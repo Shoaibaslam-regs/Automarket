@@ -10,6 +10,11 @@ import { useRateLock } from "@/hooks/useRateLock";
 import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
 import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import { parseLoginIdentifier, type CodeChannel } from "@/lib/signupCode";
+import { countdownText } from "@/lib/waitText";
+import { useTurnstile } from "@/components/ui/Turnstile";
+import { SUPPORT_WHATSAPP } from "@/lib/supportContact";
+
+const BANNED_TEXT = `This account has been suspended by the AutoGO team.${SUPPORT_WHATSAPP ? " If you think this is a mistake, contact us on WhatsApp." : ""}`;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,7 +25,7 @@ export default function LoginPage() {
   // New accounts confirm with a 6-digit code before the first sign-in; a right password on one that hasn't
   // sends a fresh code and shows the code step (`code`)
   const [notice, setNotice] = useState("");
-  const [code, setCode] = useState<{ channel: CodeChannel; sentTo: string; sms: boolean } | null>(null);
+  const [code, setCode] = useState<{ channel: CodeChannel; sentTo: string; sms: boolean; resendIn?: number } | null>(null);
   // Locked per email after too many wrong passwords, matching the server's lock
   const lock = useRateLock(`login:${email.trim().toLowerCase()}`);
   // Hidden admin entry: a value without "@" in the email field is checked on the server as ADMIN_ACCESS_KEY
@@ -28,12 +33,21 @@ export default function LoginPage() {
   // normal credentials provider (portal "admin"), which requires the ADMIN role. See src/lib/adminGate.ts.
   const [mode, setMode] = useState<"user" | "admin">("user");
   const keyLock = useRateLock("login:access");
+  // The human check (Cloudflare Turnstile) for sign-in and the admin key
+  const human = useTurnstile("login");
   const looksLikeKey = !email.includes("@") && !parseLoginIdentifier(email);
   const adminLock = useRateLock("login:admin");
   // Admin form: where the 6-digit code went, the code typed, and a notice after "Send a new code"
   const [adminSentTo, setAdminSentTo] = useState<string | null>(null);
   const [adminCode, setAdminCode] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
+  // Seconds before "Send a new code" works: the server makes each code in a row wait longer (src/lib/resendWait.ts)
+  const [adminWait, setAdminWait] = useState(0);
+  useEffect(() => {
+    if (adminWait <= 0) return;
+    const t = setTimeout(() => setAdminWait(w => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [adminWait]);
 
   // ?verified=1 after confirming with a code, ?email= to fill the field
   useEffect(() => {
@@ -41,6 +55,7 @@ export default function LoginPage() {
       const q = new URLSearchParams(window.location.search);
       if (q.get("email")) setEmail(q.get("email") ?? "");
       if (q.get("verified") === "1") setNotice("Email confirmed. Sign in to continue.");
+      if (q.get("error") === "banned") setError(BANNED_TEXT);
     });
   }, []);
 
@@ -51,16 +66,21 @@ export default function LoginPage() {
       fetch("/api/auth/verify-code").then(r => r.json()).catch(() => ({})),
     ]);
     const data = await res?.json().catch(() => ({}));
+    // A code was sent a moment ago: it still works, so show the code step with the time left before another
+    if (res?.status === 429 && data?.sentTo) {
+      setCode({ channel: data.channel, sentTo: data.sentTo, sms: options?.phone === true, resendIn: Number(data.retryAfter) || undefined });
+      return;
+    }
     if (!res?.ok) {
       setError(data?.error ?? "Confirm your account first. We couldn't send a code just now, so try again in a moment.");
       return;
     }
-    setCode({ channel: data.channel, sentTo: data.sentTo, sms: options?.phone === true });
+    setCode({ channel: data.channel, sentTo: data.sentTo, sms: options?.phone === true, resendIn: data.resendIn });
   }
 
   /** The code was right: sign in with the password already typed. */
   async function signInAfterCode() {
-    const res = await signIn("credentials", { email: email.trim(), password, redirect: false });
+    const res = await signIn("credentials", { email: email.trim(), password, cf: await human.take(), redirect: false });
     if (res?.error) {
       setCode(null);
       setNotice("Account confirmed. Sign in to continue.");
@@ -73,7 +93,7 @@ export default function LoginPage() {
   async function checkAccessKey(key: string) {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/auth/admin-key", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
+    const res = await fetch("/api/auth/admin-key", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, cf: await human.take() }) });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (keyLock.check(res, data)) return;
@@ -82,7 +102,8 @@ export default function LoginPage() {
     setPassword("");
     setAdminCode("");
     setAdminSentTo(data.sentTo ?? null);
-    setAdminNotice(data.sent === false ? "We sent you a code a moment ago. Use the latest one, or wait to send another." : "");
+    setAdminWait(Number(data.resendIn) || 0);
+    setAdminNotice(data.sent === false ? "We sent you a code a moment ago. It still works; use that one, or wait to send another." : "");
     setMode("admin");
   }
 
@@ -91,10 +112,16 @@ export default function LoginPage() {
     setError("");
     const res = await fetch("/api/auth/admin-key/code", { method: "POST" }).catch(() => null);
     const data = await res?.json().catch(() => ({}));
-    if (res && adminLock.check(res, data)) return;
+    // Too soon: show the time left (it doesn't lock signing in with the code already sent)
+    if (res?.status === 429) {
+      setAdminWait(Number(data?.retryAfter) || 60);
+      setAdminNotice(data?.error ?? "");
+      return;
+    }
     if (!res?.ok) { setError(data?.error ?? "Couldn't send a new code"); return; }
     setAdminSentTo(data.sentTo);
     setAdminCode("");
+    setAdminWait(Number(data.resendIn) || 60);
     setAdminNotice("New code sent.");
   }
 
@@ -136,13 +163,17 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     setNotice("");
-    const res = await signIn("credentials", { email: value, password, redirect: false });
+    const res = await signIn("credentials", { email: value, password, cf: await human.take(), redirect: false });
     setLoading(false);
     if (res?.error) {
       const limited = res.code?.match(/^rate_limited(?:_(\d+))?$/);
       if (limited) {
         lock.lock(Number(limited[1]) || 15 * 60);
         setError("");
+      } else if (res.code === "banned") {
+        setError(BANNED_TEXT);
+      } else if (res.code === "captcha") {
+        setError("We couldn't confirm you're a person. Please try again.");
       } else if (res.code === "email_unverified" && !value.includes("@")) {
         // The code is sent to the email, so it's asked for with the email
         setError("Confirm your account first: sign in once with your email address and we'll send you a code.");
@@ -201,10 +232,14 @@ export default function LoginPage() {
                   style={{ padding: "11px", background: loading || adminLock.locked || adminCode.length !== 6 ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading || adminLock.locked ? "not-allowed" : "pointer" }}>
                   {adminLock.locked ? adminLock.text : loading ? "Signing in..." : "Sign in as admin"}
                 </button>
-                <button type="button" onClick={resendAdminCode} disabled={loading || adminLock.locked}
-                  style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", cursor: "pointer", textDecoration: "underline" }}>
-                  Send a new code
-                </button>
+                {adminWait > 0 ? (
+                  <span style={{ fontSize: "13px", color: "var(--gh-57606a)" }}>Send a new code in {countdownText(adminWait)}</span>
+                ) : (
+                  <button type="button" onClick={resendAdminCode} disabled={loading || adminLock.locked}
+                    style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", cursor: "pointer", textDecoration: "underline" }}>
+                    Send a new code
+                  </button>
+                )}
               </form>
 
               <button type="button" onClick={backToUserLogin}
@@ -239,7 +274,7 @@ export default function LoginPage() {
           )}
 
           {code ? (
-            <VerifyCodeForm email={email.trim()} password={password} sentTo={code.sentTo} channel={code.channel} smsOption={code.sms}
+            <VerifyCodeForm email={email.trim()} password={password} sentTo={code.sentTo} channel={code.channel} resendIn={code.resendIn} smsOption={code.sms}
               onVerified={signInAfterCode} onBack={() => setCode(null)} />
           ) : (
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -265,6 +300,8 @@ export default function LoginPage() {
             </button>
           </form>
           )}
+          {/* Outside the form so it keeps working through the code step (signing in after the code needs a token too) */}
+          <div style={{ marginTop: "12px" }}>{human.widget}</div>
 
           <OrDivider />
           <GoogleButton />

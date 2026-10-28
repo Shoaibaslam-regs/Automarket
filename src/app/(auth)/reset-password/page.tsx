@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
+import { useTurnstile } from "@/components/ui/Turnstile";
 
 const card = { width: "100%", maxWidth: "400px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" } as const;
 const input = { width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" } as const;
@@ -17,6 +18,8 @@ function ResetForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+  // Signing in with the new password needs the human check like the sign-in page
+  const human = useTurnstile("reset-password");
   const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
@@ -34,7 +37,7 @@ function ResetForm() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { setSaving(false); setError(data.error || "Something went wrong. Please try again."); return; }
     // Sign straight in with the new password
-    const signed = await signIn("credentials", { email: data.email, password, redirect: false });
+    const signed = await signIn("credentials", { email: data.email, password, cf: await human.take(), redirect: false });
     router.push(signed?.error ? "/login" : "/dashboard");
     router.refresh();
   }
@@ -67,6 +70,7 @@ function ResetForm() {
         style={{ padding: "11px", background: saving ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
         {saving ? "Saving..." : "Save new password"}
       </button>
+      {human.widget}
     </form>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RESEND_AFTER_SECONDS, SIGNUP_CODE_LENGTH, SIGNUP_CODE_MINUTES, cleanCode, type CodeChannel } from "@/lib/signupCode";
+import { countdownText } from "@/lib/waitText";
 import { useRateLock } from "@/hooks/useRateLock";
 
 type Props = {
@@ -11,6 +12,8 @@ type Props = {
   /** Where the current code went, masked ("a***r@gmail.com", "+92 30* *** 4567") */
   sentTo: string;
   channel: CodeChannel;
+  /** Seconds before "Send a new code" works, from the server (each code in a row waits longer; src/lib/resendWait.ts) */
+  resendIn?: number;
   /** Offer "send it by SMS instead" (SMS is set up and the account has a phone) */
   smsOption?: boolean;
   /** Runs once the code is right; the page then signs in with the password it holds */
@@ -23,18 +26,18 @@ const linkBtn = { padding: 0, background: "none", border: "none", color: "var(--
 
 /**
  * "Enter the 6-digit code" step after sign-up (and on sign-in for an account that hasn't confirmed yet):
- * Verify, "Send a new code" after RESEND_AFTER_SECONDS, and a switch between email and SMS.
+ * Verify, "Send a new code" once the server's wait is over (1, 2, 5, then 10 minutes for codes in a row), and a
+ * switch between email and SMS.
  */
-export default function VerifyCodeForm({ email, password, sentTo: firstSentTo, channel: firstChannel, smsOption, onVerified, onBack }: Props) {
+export default function VerifyCodeForm({ email, password, sentTo: firstSentTo, channel: firstChannel, resendIn, smsOption, onVerified, onBack }: Props) {
   const [code, setCode] = useState("");
   const [sentTo, setSentTo] = useState(firstSentTo);
   const [channel, setChannel] = useState(firstChannel);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<"verify" | "resend" | null>(null);
-  const [wait, setWait] = useState(RESEND_AFTER_SECONDS);
+  const [wait, setWait] = useState(resendIn ?? RESEND_AFTER_SECONDS);
   const verifyLock = useRateLock("signup-code");
-  const resendLock = useRateLock("signup-code-resend");
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -67,12 +70,17 @@ export default function VerifyCodeForm({ email, password, sentTo: firstSentTo, c
     const res = await fetch("/api/auth/verify-code/resend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, channel: to }) }).catch(() => null);
     const data = await res?.json().catch(() => ({}));
     setBusy(null);
-    if (res && resendLock.check(res, data)) return;
+    // Too soon: the server says how long is left, and the earlier code still works
+    if (res?.status === 429 && data?.retryAfter) {
+      setWait(Number(data.retryAfter));
+      setNotice(data.error ?? "");
+      return;
+    }
     if (!res?.ok) { setError(data?.error ?? "Couldn't send a new code. Try again in a moment."); return; }
     setCode("");
     setChannel(data.channel);
     setSentTo(data.sentTo);
-    setWait(RESEND_AFTER_SECONDS);
+    setWait(Number(data.resendIn) || RESEND_AFTER_SECONDS);
     setNotice(to === "phone" && data.channel !== "phone" ? "We couldn't text that number, so we sent the code by email." : "New code sent.");
   }
 
@@ -112,16 +120,14 @@ export default function VerifyCodeForm({ email, password, sentTo: firstSentTo, c
       </button>
 
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: "8px", fontSize: "13px", color: "var(--gh-57606a)" }}>
-        {resendLock.locked ? (
-          <span>New code in {resendLock.text}</span>
-        ) : wait > 0 ? (
-          <span>Send a new code in {wait}s</span>
+        {wait > 0 ? (
+          <span>Send a new code in {countdownText(wait)}</span>
         ) : (
           <button type="button" onClick={() => resend(channel)} disabled={busy !== null} style={linkBtn}>
             {busy === "resend" ? "Sending…" : "Send a new code"}
           </button>
         )}
-        {smsOption && wait <= 0 && !resendLock.locked && (
+        {smsOption && wait <= 0 && (
           <button type="button" onClick={() => resend(other)} disabled={busy !== null} style={linkBtn}>
             {other === "phone" ? "Send by SMS instead" : "Send by email instead"}
           </button>

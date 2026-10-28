@@ -12,6 +12,7 @@ import { useRateLock } from "@/hooks/useRateLock";
 import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
+import { useTurnstile } from "@/components/ui/Turnstile";
 
 type Org = { _id: string; name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
@@ -26,6 +27,7 @@ export default function BusinessSupportPage() {
   const draft = useFormDraft("support", draftValue, d => { setTopic(d.topic); setMessage(d.message); }, { isEmpty: d => !d.message.trim() });
   const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
+  const human = useTurnstile("support");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function BusinessSupportPage() {
     const res = await fetch("/api/support/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic, message }),
+      body: JSON.stringify({ topic, message, cf: await human.take() }),
     });
     const data = await res.json().catch(() => ({}));
     supLock.check(res, data);
@@ -115,6 +117,7 @@ export default function BusinessSupportPage() {
               <p className="ml-auto flex-shrink-0 text-[11px] text-[var(--gh-8c959f)]">{message.trim().length}/2000</p>
             </div>
 
+            <div className="mt-2">{human.widget}</div>
             {error && <div role="alert" className="mt-2 rounded-lg border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-3 py-2.5 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
 
             <button type="submit" disabled={sending || supLock.locked} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:opacity-50 sm:w-auto sm:px-5">

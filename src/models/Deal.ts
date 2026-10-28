@@ -41,6 +41,8 @@ export interface IDeal extends Omit<Document, "model"> {
   paused: boolean;
   /** Switched off by an admin; the business can't turn it back on */
   disabledByAdmin: boolean;
+  /** Switched off automatically after REPORTS_TO_HIDE people reported it; dismissing the reports switches it back on */
+  autoHiddenAt?: Date;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +74,7 @@ const DealSchema = new Schema<IDeal>(
     endsAt: { type: Date, required: true },
     paused: { type: Boolean, default: false },
     disabledByAdmin: { type: Boolean, default: false },
+    autoHiddenAt: { type: Date },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }

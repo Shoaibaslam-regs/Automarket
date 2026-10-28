@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BriefcaseBusiness, Check, Copy, Crown, Gift, KeyRound, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
+import { Ban, BriefcaseBusiness, Check, Copy, Crown, Gift, KeyRound, UserCheck, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
 import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
@@ -20,6 +20,9 @@ type User = {
   /** FULL or MANAGER (older view-only admins come back as MANAGER) */
   adminAccess?: AdminAccess | "READ_ONLY";
   isOwner: boolean;
+  /** Banned by an admin: can't sign in, listings hidden */
+  bannedAt?: string;
+  banReason?: string;
   effectivePlan: PlanId;
   planExpiresAt?: string;
   planSource?: PlanSource;
@@ -169,6 +172,10 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [pending, setPending] = useState<{ action: "demote" | "delete" | "revoke"; user: User } | null>(null);
+  // Banning asks for a reason (sent to them by email and kept in Activity)
+  const [banFor, setBanFor] = useState<User | null>(null);
+  const [banReason, setBanReason] = useState("");
+  const [banning, setBanning] = useState(false);
   const [accessFor, setAccessFor] = useState<User | null>(null);
   // A personal admin key just made, shown once to pass on
   const [shownKey, setShownKey] = useState<{ name: string; key: string } | null>(null);
@@ -206,6 +213,20 @@ export default function AdminUsersPage() {
   });
 
   // Runs the demote/delete action the admin confirmed in the dialog
+  async function ban() {
+    if (!banFor || banReason.trim().length < 5) return;
+    setBanning(true);
+    await send(`/api/admin/users/${banFor._id}/ban`, json("POST", { reason: banReason }), `${displayName(banFor)} is banned. They've been signed out and emailed the reason.`);
+    setBanning(false);
+    setBanFor(null);
+  }
+
+  async function unban(user: User) {
+    setUpdating(user._id);
+    await send(`/api/admin/users/${user._id}/ban`, { method: "DELETE" }, `${displayName(user)} can sign in again, and their listings are back.`);
+    setUpdating(null);
+  }
+
   async function runPending() {
     if (!pending) return;
     const { action, user } = pending;
@@ -323,6 +344,7 @@ export default function AdminUsersPage() {
             cell: user => (
               <div className="flex flex-wrap gap-1">
                 {user.isOwner ? <Badge tone="amber">OWNER</Badge> : <StatusBadge status={user.role} />}
+                {user.bannedAt && <span title={user.banReason}><Badge tone="red">BANNED</Badge></span>}
                 {user.role === "ADMIN" && !user.isOwner && (
                   <Badge tone={normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "neutral" : "violet"}>
                     {normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "MANAGER" : "FULL"}
@@ -370,6 +392,17 @@ export default function AdminUsersPage() {
                       </button>
                     </>
                   ))}
+                  {can("users") && !locked && user.role !== "ADMIN" && (
+                    user.bannedAt ? (
+                      <button onClick={() => unban(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title={user.banReason ? `Banned: ${user.banReason}` : "Lift the ban"}>
+                        <UserCheck size={13} /> Unban
+                      </button>
+                    ) : (
+                      <button onClick={() => { setBanReason(""); setBanFor(user); }} disabled={busy} aria-label="Ban account" title="Ban: they can't sign in, and their listings are hidden" className={`${btn.base} ${btn.danger}`}>
+                        <Ban size={13} />
+                      </button>
+                    )
+                  )}
                   {can("users") && !locked && (
                     <button onClick={() => setPending({ action: "delete", user })} disabled={busy} aria-label="Delete user" title="Delete user" className={`${btn.base} ${btn.danger}`}>
                       <Trash2 size={13} />
@@ -396,6 +429,24 @@ export default function AdminUsersPage() {
         onSave={savePlan}
       />
 
+      <ConfirmDialog
+        open={banFor !== null}
+        onOpenChange={open => !open && setBanFor(null)}
+        onConfirm={ban}
+        loading={banning}
+        tone="danger"
+        icon={Ban}
+        title={`Ban ${banFor ? displayName(banFor) : "this account"}?`}
+        description={
+          <div className="space-y-3">
+            <p>They&apos;re signed out within minutes and can&apos;t sign in again, by password or Google. Their live listings are hidden, and they get an email with your reason. You can lift the ban later.</p>
+            <textarea value={banReason} onChange={e => setBanReason(e.target.value)} rows={3} maxLength={500} placeholder="Reason (at least 5 characters), e.g. Scam listings reported by several buyers"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+          </div>
+        }
+        confirmLabel="Ban account"
+        loadingLabel="Banning…"
+      />
       <ConfirmDialog
         open={pending !== null}
         onOpenChange={open => !open && setPending(null)}

@@ -9,15 +9,17 @@ import { sendAccountExistsEmail } from "@/lib/email";
 import { maskDestination, type CodeChannel } from "@/lib/signupCode";
 import { issueSignupCode, phoneCodesAvailable } from "@/lib/signupCodes";
 import { normalizePkMobile } from "@/lib/phone";
+import { RESEND_WAITS } from "@/lib/resendWait";
 import { SITE_URL } from "@/lib/site";
 import { reportError } from "@/lib/errorLog";
 
+import { turnstileRefusal, verifyTurnstile } from "@/lib/turnstile";
 /**
  * Same answer whether the email is new or already registered, so sign-up can't be used to find out which is which:
  * where the code went, masked. An existing account gets no code, so no code typed for it is ever right.
  */
-function codeSent(channel: CodeChannel, to: string) {
-  return NextResponse.json({ ok: true, channel, sentTo: maskDestination(channel, to) }, { status: 201 });
+function codeSent(channel: CodeChannel, to: string, resendIn: number = RESEND_WAITS[0]) {
+  return NextResponse.json({ ok: true, channel, sentTo: maskDestination(channel, to), resendIn }, { status: 201 });
 }
 
 /**
@@ -39,6 +41,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json().catch(() => null)) ?? {};
+    // A person, not a script (Cloudflare Turnstile; skipped until its keys are set)
+    if (!(await verifyTurnstile(body.cf, ip))) return turnstileRefusal();
     const { password, acceptTerms } = body;
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -78,7 +82,7 @@ export async function POST(req: NextRequest) {
       await existing.save();
       if (!mailOk) return noCodeSent();
       const sent = await issueSignupCode(String(existing._id), wanted);
-      return codeSent(sent.channel, sent.to);
+      return codeSent(sent.channel, sent.to, sent.resendIn);
     }
     if (existing) {
       if (mailOk) {
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest) {
     // Sending problems are logged inside; the page offers "send a new code"
     if (!mailOk) return noCodeSent();
     const sent = await issueSignupCode(String(user._id), wanted);
-    return codeSent(sent.channel, sent.to);
+    return codeSent(sent.channel, sent.to, sent.resendIn);
   } catch (error) {
     reportError("Register error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

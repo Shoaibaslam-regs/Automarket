@@ -7,6 +7,7 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
 import { reportError } from "@/lib/errorLog";
 
+import { turnstileRefusal, verifyTurnstile } from "@/lib/turnstile";
 /** How long a reset link works. */
 const RESET_TTL_MS = 60 * 60 * 1000;
 
@@ -18,9 +19,10 @@ const RESET_TTL_MS = 60 * 60 * 1000;
 export async function POST(req: NextRequest) {
   const done = NextResponse.json({ ok: true, message: "If an account uses that email, we've sent a link to reset the password. Check your inbox and spam folder." });
   try {
-    const { email: raw } = await req.json().catch(() => ({}));
+    const { email: raw, cf } = await req.json().catch(() => ({}));
     const email = typeof raw === "string" ? raw.trim().toLowerCase() : "";
     if (!email || !email.includes("@")) return NextResponse.json({ error: "Enter your email address" }, { status: 400 });
+    if (!(await verifyTurnstile(cf, clientIp(req)))) return turnstileRefusal();
 
     const [byIp, byEmail] = await Promise.all([hitRateLimit("passwordResetIp", clientIp(req)), hitRateLimit("passwordResetEmail", email)]);
     if (!byIp.ok || !byEmail.ok) {

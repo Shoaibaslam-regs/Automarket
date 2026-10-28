@@ -7,11 +7,13 @@ import { Listing } from "@/models/Listing";
 import { Deal } from "@/models/Deal";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
+import { maybeAutoHide } from "@/lib/reportAutoHide";
 import { REPORT_REASONS } from "@/lib/reports";
-import { rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitResponse, clientIp } from "@/lib/rateLimit";
 import { triggerPusher } from "@/lib/support";
 import { reportError } from "@/lib/errorLog";
 
+import { turnstileRefusal, verifyTurnstile } from "@/lib/turnstile";
 type Oid = mongoose.Types.ObjectId;
 
 /**
@@ -25,7 +27,8 @@ export async function POST(req: NextRequest) {
     const limited = await rateLimitResponse("reports", session.user.id, "reports");
     if (limited) return limited;
 
-    const { targetType, targetId, reason, details } = await req.json().catch(() => ({}));
+    const { targetType, targetId, reason, details, cf } = await req.json().catch(() => ({}));
+    if (!(await verifyTurnstile(cf, clientIp(req)))) return turnstileRefusal();
     if (!["LISTING", "DEAL", "BUSINESS"].includes(targetType) || !mongoose.Types.ObjectId.isValid(String(targetId))) {
       return NextResponse.json({ error: "Nothing to report" }, { status: 400 });
     }
@@ -67,6 +70,8 @@ export async function POST(req: NextRequest) {
     }
 
     await Report.create({ targetType, targetId, targetLabel: label, organizationId, reporterId: me, reason, details: text || undefined });
+    // Enough different people reported it: hide it until the team looks
+    await maybeAutoHide(targetType, String(targetId));
 
     // Every admin's Reports badge (and phones that turned alerts on)
     try {

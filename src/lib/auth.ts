@@ -7,12 +7,23 @@ import { User } from "@/models/User";
 import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
 import { adminGateUser } from "@/lib/adminGate";
 import { consumeAdminCode } from "@/lib/adminCode";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { emailQuery, newSessionKey } from "@/lib/accountTokens";
 import { parseLoginIdentifier } from "@/lib/signupCode";
 
 /** Signed up with a password but hasn't typed the sign-up code yet; the login page asks for it (and can resend it). */
 class EmailUnverified extends CredentialsSignin {
   code = "email_unverified";
+}
+
+/** An admin banned this account; the login page says so (only after the right password, so it reveals nothing). */
+class AccountBanned extends CredentialsSignin {
+  code = "banned";
+}
+
+/** The human check (Turnstile) failed; the login page resets it and asks to try again. */
+class CaptchaFailed extends CredentialsSignin {
+  code = "captcha";
 }
 
 /** How often a session is checked against the account (session key, role); in between, the cookie is trusted. */
@@ -55,6 +66,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // "admin" from the hidden admin form on /login (see src/lib/adminGate.ts), with the emailed `code`
         portal: { label: "Portal", type: "text" },
         code: { label: "Code", type: "text" },
+        // Cloudflare Turnstile token from the form
+        cf: { label: "Check", type: "text" },
       },
       async authorize(credentials, request) {
         const ip = clientIp(request);
@@ -86,6 +99,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         if (!credentials?.email || !credentials?.password) return null;
+        // A person, not a script (Cloudflare Turnstile; skipped until its keys are set). Refused like a wrong password,
+        // without counting toward the account's sign-in lock
+        if (!(await verifyTurnstile(credentials.cf, ip))) throw new CaptchaFailed();
         // The field takes an email or the account's phone number
         const id = parseLoginIdentifier(String(credentials.email));
         if (!id) return null;
@@ -131,6 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // Right password, but the email was never confirmed (new sign-ups only; older accounts have no flag)
+        if (user.bannedAt) throw new AccountBanned();
         if (user.emailVerifyRequired) throw new EmailUnverified();
 
         return {
@@ -153,6 +170,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (profile?.email_verified !== true || !user.email) return false;
         await connectDB();
         const existing = await User.findOne(emailQuery(String(user.email ?? "")));
+        // A banned account can't come back in through Google either
+        if (existing?.bannedAt) return "/login?error=banned";
         if (!existing) {
           await User.create({
             name: user.name,
@@ -168,7 +187,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Google has confirmed the email, so a pending email sign-up is confirmed too. Its password was never
           // proven to belong to this person (anyone can sign up with any email), so it's dropped; Forgot password
           // sets a new one
-          await User.updateOne({ _id: existing._id }, { $set: { emailVerified: new Date(), sessionKey: newSessionKey() }, $unset: { password: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" } });
+          await User.updateOne({ _id: existing._id }, { $set: { emailVerified: new Date(), sessionKey: newSessionKey() }, $unset: { password: "", emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "", signupCodeSentAt: "", signupCodeSends: "" } });
         }
       }
       return true;
@@ -213,8 +232,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // the password is changed or reset, or an admin changes the role), and pick up the current role
       if (token.id && Date.now() - Number(token.checkedAt ?? 0) > RECHECK_MS) {
         await connectDB();
-        const current = await User.findById(token.id).select("role adminAccess sessionKey").lean<{ role: string; adminAccess?: string; sessionKey?: string }>();
-        if (!current || (current.sessionKey ?? undefined) !== (token.sk ?? undefined)) return null;
+        const current = await User.findById(token.id).select("role adminAccess sessionKey bannedAt").lean<{ role: string; adminAccess?: string; sessionKey?: string; bannedAt?: Date }>();
+        if (!current || current.bannedAt || (current.sessionKey ?? undefined) !== (token.sk ?? undefined)) return null;
         token.role = current.role;
         token.adminAccess = current.adminAccess;
         if (current.role !== "ADMIN") token.adminPortal = false;

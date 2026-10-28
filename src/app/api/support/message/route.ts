@@ -7,9 +7,10 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/support";
 import { supportTopicLabel } from "@/lib/supportTopics";
-import { hitRateLimit, isRateLimited, rateLimitResponse, waitText } from "@/lib/rateLimit";
+import { hitRateLimit, isRateLimited, rateLimitResponse, waitText, clientIp } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
+import { turnstileRefusal, verifyTurnstile } from "@/lib/turnstile";
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
 /**
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Sign in to contact the team" }, { status: 401 });
     const limited = await rateLimitResponse("support", session.user.id, "messages to the team");
     if (limited) return limited;
-    const { topic, message } = await req.json().catch(() => ({}));
+    const { topic, message, cf } = await req.json().catch(() => ({}));
+    if (!(await verifyTurnstile(cf, clientIp(req)))) return turnstileRefusal();
     const topicLabel = supportTopicLabel(topic);
     if (!topicLabel) return NextResponse.json({ error: "Choose a topic" }, { status: 400 });
     // Feedback is limited to two a month per account: refused early here when already used up, counted below

@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       { _id: user._id, signupCodeHash: user.signupCodeHash, password: user.password },
       {
         $set: set,
-        $unset: { emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "" },
+        $unset: { emailVerifyRequired: "", emailVerifyTokenHash: "", emailVerifyExpires: "", signupCodeHash: "", signupCodeExpires: "", signupCodeTries: "", signupCodeChannel: "", signupCodeSentAt: "", signupCodeSends: "" },
       }
     );
     if (!done.modifiedCount) return NextResponse.json(WRONG, { status: 400 });

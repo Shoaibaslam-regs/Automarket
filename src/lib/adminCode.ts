@@ -6,28 +6,50 @@ import mongoose from "mongoose";
 import { User } from "@/models/User";
 import { sendAdminCodeEmail } from "@/lib/email";
 import { reportError } from "@/lib/errorLog";
+import { resendWaitAfter, secondsUntilResend, streakCount } from "@/lib/resendWait";
 
 export const ADMIN_CODE_MINUTES = 10;
 export const ADMIN_CODE_TRIES = 5;
 
 const hashCode = (userId: string, code: string) => crypto.createHash("sha256").update(`admin:${userId}:${code}`).digest("hex");
 
-/** Makes and emails a new code for this admin, replacing any earlier one. Returns the address it went to. */
-export async function issueAdminCode(userId: string): Promise<string | null> {
-  const user = await User.findOne({ _id: userId, role: "ADMIN" }).select("name email");
+/** Seconds before this admin can be sent another code (0 = now), checked before the hourly cap so waiting costs nothing. */
+export async function adminCodeWait(userId: string): Promise<number> {
+  const user = await User.findById(userId).select("adminCodeSentAt adminCodeSends").lean<{ adminCodeSentAt?: Date; adminCodeSends?: number }>();
+  return user ? secondsUntilResend(user.adminCodeSends, user.adminCodeSentAt) : 0;
+}
+
+/**
+ * Makes and emails a new code for this admin, replacing any earlier one. Codes in a row wait longer (1, 2, 5, then
+ * 10 minutes; src/lib/resendWait.ts): asked too soon, nothing is sent, the earlier code stays valid, `sent` is false
+ * and `resendIn` is the time left. Returns null for an unknown admin.
+ */
+export async function issueAdminCode(userId: string): Promise<{ email: string; sent: boolean; resendIn: number } | null> {
+  const user = await User.findOne({ _id: userId, role: "ADMIN" }).select("name email adminCodeSentAt adminCodeSends");
   if (!user) return null;
+  const wait = secondsUntilResend(user.adminCodeSends, user.adminCodeSentAt);
+  if (wait > 0) return { email: user.email, sent: false, resendIn: wait };
+  const streak = streakCount(user.adminCodeSends, user.adminCodeSentAt) + 1;
   const code = crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
-  user.adminCodeHash = hashCode(String(user._id), code);
-  user.adminCodeExpires = new Date(Date.now() + ADMIN_CODE_MINUTES * 60 * 1000);
-  user.adminCodeTries = 0;
-  await user.save();
+  // Only one request gets to send: the last send time must still be the one read above
+  const claimed = await User.updateOne(
+    { _id: user._id, adminCodeSentAt: user.adminCodeSentAt ?? null },
+    { $set: {
+      adminCodeHash: hashCode(String(user._id), code),
+      adminCodeExpires: new Date(Date.now() + ADMIN_CODE_MINUTES * 60 * 1000),
+      adminCodeTries: 0,
+      adminCodeSentAt: new Date(),
+      adminCodeSends: streak,
+    } }
+  );
+  if (!claimed.modifiedCount) return { email: user.email, sent: false, resendIn: resendWaitAfter(streak) };
   if (process.env.NODE_ENV !== "production") console.log(`[dev] Admin sign-in code for ${user.email}: ${code}`);
   try {
     await sendAdminCodeEmail({ to: user.email, name: user.name, code, minutes: ADMIN_CODE_MINUTES });
   } catch (e) {
     reportError("Admin code email failed:", e);
   }
-  return user.email;
+  return { email: user.email, sent: true, resendIn: resendWaitAfter(streak) };
 }
 
 /**
@@ -47,7 +69,8 @@ export async function consumeAdminCode(userId: string, code: string) {
   if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) return null;
   const done = await User.updateOne(
     { _id: user._id, adminCodeHash: user.adminCodeHash },
-    { $unset: { adminCodeHash: "", adminCodeExpires: "", adminCodeTries: "" } }
+    // Signed in: the next sign-in starts the resend count again
+    { $unset: { adminCodeHash: "", adminCodeExpires: "", adminCodeTries: "", adminCodeSentAt: "", adminCodeSends: "" } }
   );
   return done.modifiedCount ? user : null;
 }

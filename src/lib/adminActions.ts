@@ -33,6 +33,8 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "settings.payment": "Changed payment details",
   "settings.adminKey": "Changed the admin access key",
   "user.adminKey": "Made a new admin key",
+  "user.ban": "Banned an account",
+  "user.unban": "Lifted a ban",
   "request.take": "Took a request",
   "request.refuse": "Refused a request",
   "business.message": "Messaged a business",

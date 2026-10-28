@@ -7,6 +7,7 @@ import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/sup
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
+import { Block } from "@/models/Block";
 const MAX_MESSAGE_LENGTH = 2000;
 
 export async function GET(req: NextRequest) {
@@ -105,6 +106,13 @@ export async function POST(req: NextRequest) {
     if (receiverId === session.user.id) {
       return NextResponse.json({ error: "Cannot message yourself" }, { status: 400 });
     }
+    // A block either way stops the chat (AutoGO Support can't be blocked)
+    const [iBlocked, theyBlocked] = await Promise.all([
+      Block.exists({ blockerId: session.user.id, blockedId: receiverId }),
+      Block.exists({ blockerId: receiverId, blockedId: session.user.id }),
+    ]);
+    if (iBlocked) return NextResponse.json({ error: "You blocked this person. Unblock them to send a message.", code: "BLOCKED" }, { status: 403 });
+    if (theyBlocked) return NextResponse.json({ error: "You can't send messages to this person.", code: "BLOCKED" }, { status: 403 });
 
     const messageData: {
       senderId: string;

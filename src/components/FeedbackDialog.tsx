@@ -9,6 +9,7 @@ import { CheckCircle2, MessageSquareHeart, X } from "lucide-react";
 import { useRateLock } from "@/hooks/useRateLock";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
+import { useTurnstile } from "@/components/ui/Turnstile";
 
 const OPEN_EVENT = "am:open-feedback";
 
@@ -38,6 +39,7 @@ export default function FeedbackDialog() {
   const draftValue = useMemo(() => ({ kind, text }), [kind, text]);
   const draft = useFormDraft("feedback", draftValue, d => { setKind(d.kind); setText(d.text); }, { isEmpty: d => !d.text.trim() });
   const [sending, setSending] = useState(false);
+  const human = useTurnstile("feedback");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   // Its own lock: feedback has a separate limit (two a month), so a full month here doesn't lock Help & support
@@ -58,7 +60,7 @@ export default function FeedbackDialog() {
     const res = await fetch("/api/support/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: "FEEDBACK", message: `${kind}: ${note}\n\nSent from ${pathname}` }),
+      body: JSON.stringify({ topic: "FEEDBACK", message: `${kind}: ${note}\n\nSent from ${pathname}`, cf: await human.take() }),
     });
     const data = await res.json().catch(() => ({}));
     setSending(false);
@@ -115,6 +117,7 @@ export default function FeedbackDialog() {
               <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} rows={4} maxLength={1800} autoFocus
                 placeholder="What would you change, add or fix?" aria-label="Your feedback"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+              {human.widget}
               <DraftNote restoredAt={draft.restoredAt} savedAt={draft.savedAt} onDiscard={() => { draft.clear(); setText(""); }} />
               {error && <p role="alert" className="text-xs font-medium text-rose-600">{error}</p>}
               <button type="submit" disabled={sending || lock.locked} className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">

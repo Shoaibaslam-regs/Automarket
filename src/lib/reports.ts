@@ -21,3 +21,9 @@ export function reportTargetHref(r: { targetType: string; targetId: string; slug
   if (r.targetType === "DEAL") return `/deals/${r.targetId}`;
   return r.slug ? `/dealers/${r.slug}` : null;
 }
+
+/**
+ * A listing or deal is hidden automatically once this many different people have open reports on it, until an admin
+ * looks (dismissing the reports brings it back). Businesses are never hidden automatically.
+ */
+export const REPORTS_TO_HIDE = 3;

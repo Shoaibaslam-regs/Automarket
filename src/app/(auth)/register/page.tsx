@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
 import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
+import { useTurnstile } from "@/components/ui/Turnstile";
 import type { CodeChannel } from "@/lib/signupCode";
 import Navbar from "@/components/Navbar";
 import { PASSWORD_MIN, passwordProblem } from "@/lib/password";
@@ -23,7 +24,7 @@ const FIELDS: Field[] = [
 
 export default function RegisterPage() {
   // After sign-up: where the 6-digit code went (the account can only sign in once it's confirmed)
-  const [sent, setSent] = useState<{ channel: CodeChannel; sentTo: string } | null>(null);
+  const [sent, setSent] = useState<{ channel: CodeChannel; sentTo: string; resendIn?: number } | null>(null);
   // Codes by SMS, when SMS is set up on the server
   const [smsAvailable, setSmsAvailable] = useState(false);
   const [channel, setChannel] = useState<CodeChannel>("email");
@@ -31,6 +32,8 @@ export default function RegisterPage() {
     name: "", email: "", phone: "", password: "", confirm: "",
   });
   const regLock = useRateLock("register");
+  // The human check (Cloudflare Turnstile): sign-up, and the sign-in right after the code
+  const human = useTurnstile("register");
   const [error, setError] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +44,7 @@ export default function RegisterPage() {
 
   /** The code was right: sign in with the details just typed. A full load, so menus pick up the session. */
   async function signInAfterCode() {
-    const res = await signIn("credentials", { email: form.email.trim(), password: form.password, redirect: false });
+    const res = await signIn("credentials", { email: form.email.trim(), password: form.password, cf: await human.take(), redirect: false });
     if (res?.error) {
       window.location.assign(`/login?verified=1&email=${encodeURIComponent(form.email.trim())}`);
       return;
@@ -107,6 +110,7 @@ export default function RegisterPage() {
         password: form.password,
         acceptTerms,
         channel: smsAvailable ? channel : "email",
+        cf: await human.take(),
       }),
     });
     const data = await res.json();
@@ -114,7 +118,7 @@ export default function RegisterPage() {
     regLock.check(res, data);
     if (!res.ok) { setError(data.error); return; }
     // The same answer comes back whether the email is new or already has an account (it's never revealed)
-    setSent({ channel: data.channel, sentTo: data.sentTo });
+    setSent({ channel: data.channel, sentTo: data.sentTo, resendIn: data.resendIn });
   }
 
   return (
@@ -139,6 +143,7 @@ export default function RegisterPage() {
               email={form.email.trim()}
               password={form.password}
               sentTo={sent.sentTo}
+              resendIn={sent.resendIn}
               channel={sent.channel}
               smsOption={smsAvailable}
               onVerified={signInAfterCode}
@@ -193,6 +198,9 @@ export default function RegisterPage() {
           }} />
           </>
           )}
+
+          {/* Outside the form so it keeps working through the code step */}
+          <div style={{ marginTop: "12px" }}>{human.widget}</div>
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Already have an account?{" "}

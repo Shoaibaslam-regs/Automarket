@@ -9,14 +9,15 @@ const isDev = process.env.NODE_ENV !== "production";
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  // Cloudflare Turnstile (the human check on sign-up, sign-in and public forms)
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   // Photos (UploadThing), Google profile pictures, and data/blob previews of photos being uploaded
   "img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://lh3.googleusercontent.com",
   "font-src 'self' data:",
   // UploadThing uploads, Pusher realtime (websocket and fallback), and hot reload in development
-  `connect-src 'self' https://*.uploadthing.com https://utfs.io https://*.ufs.sh wss://*.pusher.com https://*.pusher.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
-  "frame-src 'none'",
+  `connect-src 'self' https://*.uploadthing.com https://utfs.io https://*.ufs.sh wss://*.pusher.com https://*.pusher.com https://challenges.cloudflare.com${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
+  "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

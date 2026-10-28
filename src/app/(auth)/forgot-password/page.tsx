@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useRateLock } from "@/hooks/useRateLock";
+import { useTurnstile } from "@/components/ui/Turnstile";
 
 const card = { width: "100%", maxWidth: "400px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "32px" } as const;
 const input = { width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" } as const;
@@ -12,6 +13,7 @@ const input = { width: "100%", padding: "10px 12px", border: "1px solid var(--gh
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const human = useTurnstile("forgot-password");
   const [error, setError] = useState("");
   const [sent, setSent] = useState("");
   const lock = useRateLock("passwordReset");
@@ -23,7 +25,7 @@ export default function ForgotPasswordPage() {
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, cf: await human.take() }),
     });
     const data = await res.json().catch(() => ({}));
     setSending(false);
@@ -58,6 +60,7 @@ export default function ForgotPasswordPage() {
                 style={{ padding: "11px", background: blocked ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: blocked ? "not-allowed" : "pointer" }}>
                 {lock.locked ? lock.text : sending ? "Sending link..." : "Send reset link"}
               </button>
+              {human.widget}
             </form>
           )}
 

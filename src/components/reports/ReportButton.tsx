@@ -7,6 +7,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, Flag, X } from "lucide-react";
 import { REPORT_REASONS, type ReportReason } from "@/lib/reports";
 import { useRateLock } from "@/hooks/useRateLock";
+import { useTurnstile } from "@/components/ui/Turnstile";
 
 /**
  * Small "Report" link that opens a dialog to report a listing, deal or business to the admins.
@@ -27,6 +28,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
   const [reason, setReason] = useState<ReportReason | "">("");
   const [details, setDetails] = useState("");
   const [sending, setSending] = useState(false);
+  const human = useTurnstile("report");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const lock = useRateLock("reports");
@@ -47,7 +49,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
     const res = await fetch("/api/reports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ targetType, targetId, reason, details }),
+      body: JSON.stringify({ targetType, targetId, reason, details, cf: await human.take() }),
     });
     const data = await res.json().catch(() => ({}));
     setSending(false);
@@ -100,6 +102,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
               <textarea value={details} onChange={e => setDetails(e.target.value)} rows={3} maxLength={1000}
                 placeholder={reason === "OTHER" ? "Tell us what's wrong (required)" : "Anything else we should know? (optional)"} aria-label="Details"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+              {human.widget}
               {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
               <button type="submit" disabled={sending || lock.locked} className="w-full rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
                 {lock.locked ? lock.text : sending ? "Sending…" : "Send report"}

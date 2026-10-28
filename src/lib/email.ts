@@ -310,6 +310,14 @@ function simpleEmail({ to, subject, kicker, name, body, button }: { to: string; 
   });
 }
 
+/** Sent when an admin bans an account. They can't sign in, so the reason comes by email. */
+export async function sendAccountBannedEmail({ to, name, reason }: { to: string; name?: string; reason: string }) {
+  await simpleEmail({
+    to, name, subject: "Your AutoGO account has been suspended", kicker: "Account suspended",
+    body: `The AutoGO team has suspended your account, so you can no longer sign in, post or send messages, and your listings are hidden.<br><br><strong>Reason:</strong> ${reason.replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[c]!)}<br><br>If you think this is a mistake, reply to this email.`,
+  });
+}
+
 /** Sent when an account made with Google gets its first password in Profile, so a stranger adding one is noticed. */
 export async function sendPasswordAddedEmail({ to, name, resetLink }: { to: string; name?: string; resetLink: string }) {
   await simpleEmail({
