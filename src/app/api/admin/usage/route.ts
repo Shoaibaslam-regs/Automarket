@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * Database and UploadThing storage against their limits (src/lib/systemUsage.ts), saved for 10 minutes.
  * `?count=1` returns only `{ alerts }`, the services at or past 80%, for the sidebar badge.
  * `?refresh=1` reads both now (rate limit `usageRefresh`) and replaces the saved copy.
- * Read-only, so view-only admins can see it; no keys or connection details are ever sent.
+ * Read-only, so every admin (managers too) can see it; no keys or connection details are ever sent.
  */
 export async function GET(req: NextRequest) {
   const gate = await requireAdminApi("read");

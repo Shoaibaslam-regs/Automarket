@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { clientIp, hitRateLimit, isRateLimited } from "@/lib/rateLimit";
-import { hasAdminGate } from "@/lib/adminGate";
+import { adminGateUser } from "@/lib/adminGate";
+import { consumeAdminCode } from "@/lib/adminCode";
 import { emailQuery, newSessionKey } from "@/lib/accountTokens";
 import { parseLoginIdentifier } from "@/lib/signupCode";
 
@@ -51,25 +52,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email or phone", type: "text" },
         password: { label: "Password", type: "password" },
-        // "admin" from the hidden admin form on /login (see src/lib/adminGate.ts)
+        // "admin" from the hidden admin form on /login (see src/lib/adminGate.ts), with the emailed `code`
         portal: { label: "Portal", type: "text" },
+        code: { label: "Code", type: "text" },
       },
       async authorize(credentials, request) {
-        if (!credentials?.email || !credentials?.password) return null;
-        // The field takes an email or the account's phone number (the admin form only an email)
-        const id = parseLoginIdentifier(String(credentials.email));
-        if (!id || (id.kind === "phone" && credentials.portal === "admin")) return null;
-        const password = String(credentials.password);
-        const adminPortal = credentials.portal === "admin";
         const ip = clientIp(request);
 
-        // The admin form only works after the access key opened it (signed, short-lived cookie), and failed admin
-        // sign-ins are also limited per IP. Every refusal looks the same as a wrong password.
-        if (adminPortal) {
-          if (!hasAdminGate(request.headers.get("cookie"))) return null;
+        // The admin form: an admin key opened it (a signed, short-lived cookie naming that admin) and a 6-digit code
+        // was emailed to them. No email or password is typed; failures are limited per IP and look like any other.
+        if (credentials?.portal === "admin") {
+          const adminId = adminGateUser(request.headers.get("cookie"));
+          if (!adminId) return null;
           const adminLimit = await isRateLimited("adminLogin", ip);
           if (!adminLimit.ok) throw new RateLimitedSignin(adminLimit.retryAfterSec);
+          await connectDB();
+          const admin = await consumeAdminCode(adminId, String(credentials.code ?? "").replace(/\D/g, ""));
+          if (!admin || admin.role !== "ADMIN") {
+            const a = await hitRateLimit("adminLogin", ip);
+            if (a.remaining === 0) throw new RateLimitedSignin(a.retryAfterSec);
+            return null;
+          }
+          return {
+            id: admin._id.toString(),
+            name: admin.name,
+            email: admin.email,
+            image: admin.image,
+            role: admin.role,
+            adminAccess: admin.adminAccess,
+            adminPortal: true,
+            sessionKey: await sessionKeyOf(admin),
+          };
         }
+
+        if (!credentials?.email || !credentials?.password) return null;
+        // The field takes an email or the account's phone number
+        const id = parseLoginIdentifier(String(credentials.email));
+        if (!id) return null;
+        const password = String(credentials.password);
+        const adminPortal = false;
 
         // Only failed attempts count: 5 per email and 30 per IP; reaching the limit locks sign-in for 15 minutes
         const emailKey = id.kind === "email" ? id.email : id.phone;
@@ -101,11 +122,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user ??= found[0];
         }
         // On the admin form a correct password for a non-admin account is still a refusal
-        if (!user || !user.password || !isValid || (adminPortal && user.role !== "ADMIN")) {
-          if (adminPortal) {
-            const a = await hitRateLimit("adminLogin", ip);
-            if (a.remaining === 0) throw new RateLimitedSignin(a.retryAfterSec);
-          }
+        // The shared AutoGO Support account has no password, but refuse it outright anyway
+        if (!user || !user.password || !isValid || user.isSupportAccount) {
           const [e, i] = await Promise.all([hitRateLimit("loginEmail", emailKey), hitRateLimit("loginIp", ip)]);
           // The failure that reaches the limit already locks, so the button locks straight away
           if (e.remaining === 0 || i.remaining === 0) throw new RateLimitedSignin(Math.max(e.remaining === 0 ? e.retryAfterSec : 0, i.remaining === 0 ? i.retryAfterSec : 0));

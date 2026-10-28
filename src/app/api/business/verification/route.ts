@@ -10,6 +10,7 @@ import { VERIFIED_BADGE, badgeState, type BadgeVerification } from "@/lib/plans"
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
+import { openTeamRequest } from "@/lib/teamRequests";
 type OrgBadge = {
   _id: { toString(): string };
   name: string;
@@ -84,11 +85,12 @@ export async function POST() {
       { _id: member.organizationId },
       { $set: { "verification.requestedAt": new Date(), "verification.requestedBy": session.user.id } }
     );
+    await openTeamRequest({ kind: "BADGE", userId: session.user.id, organizationId: member.organizationId, price: VERIFIED_BADGE.price });
     const me = await User.findById(session.user.id).select("email").lean<{ email: string }>();
     await sendChatMessage(
       session.user.id,
       supportUserId,
-      badgeRequestText(org.name, VERIFIED_BADGE.price, { id: session.user.id, email: me?.email }),
+      badgeRequestText(org.name, VERIFIED_BADGE.price, { id: session.user.id, email: me?.email, business: { id: String(member.organizationId), name: org.name } }),
       session.user.name
     );
     return NextResponse.json({ supportUserId }, { status: 201 });

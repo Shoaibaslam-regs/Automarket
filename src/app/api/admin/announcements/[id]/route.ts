@@ -13,7 +13,7 @@ import { reportError } from "@/lib/errorLog";
  * followers are notified.
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("announcements");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("announcements");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;

@@ -15,12 +15,13 @@ export async function GET(
     }
     const { id } = await params;
     await connectDB();
-    const user = await User.findById(id).select("name image role adminAccess").lean() as {
+    const user = await User.findById(id).select("name image role adminAccess isSupportAccount").lean() as {
       _id: { toString: () => string };
       name?: string;
       image?: string;
       role?: string;
       adminAccess?: string;
+      isSupportAccount?: boolean;
     } | null;
 
     if (!user) {

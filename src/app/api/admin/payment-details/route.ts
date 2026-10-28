@@ -7,7 +7,7 @@ import { reportError } from "@/lib/errorLog";
 
 /** Saves the payment account people pay into. An empty form clears it, which hides the payment card everywhere. */
 export async function PUT(req: NextRequest) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
   try {
     const details = cleanPaymentDetails(await req.json().catch(() => ({})));

@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { Ad } from "@/models/Ad";
 import { logAdminAction } from "@/lib/adminLog";
-import { sendChatMessage } from "@/lib/support";
+import { sendAsSupport } from "@/lib/support";
 import { SPONSORED_AD } from "@/lib/plans";
 import { AD_KIND_LABEL, DAY_MS, type AdKind } from "@/lib/ads";
 import { topBlockedUntil } from "@/lib/sponsored";
@@ -28,7 +28,7 @@ function startFrom(value: unknown): Date | null {
  * or { action: "stop", reason } for an approved ad that hasn't ended. The business is told in Messages.
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("ads");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     invalidateSponsored();
 
     if (!gate.admin._id.equals(ad.requestedBy)) {
-      await sendChatMessage(String(gate.admin._id), String(ad.requestedBy), message, "AutoGO").catch(e => reportError("Ad message failed:", e));
+      await sendAsSupport(gate.admin._id, ad.requestedBy, message).catch(e => reportError("Ad message failed:", e));
     }
     await logAdminAction(gate.admin, `ad.${action}`, { type: "AD", id: ad._id, label: ad.targetLabel },
       action === "approve" ? `${ad.tier === "TOP" ? "Top, " : ""}${ad.city ? `${ad.city}, ` : ""}${ad.weeks} week${ad.weeks > 1 ? "s" : ""}, PKR ${ad.price.toLocaleString()} · ${ad.paymentRef} · ${day(ad.startsAt!)} to ${day(ad.endsAt!)}` : reason);

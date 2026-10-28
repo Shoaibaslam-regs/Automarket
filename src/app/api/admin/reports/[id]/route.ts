@@ -12,7 +12,7 @@ import { reportError } from "@/lib/errorLog";
  * `alsoSimilar: true` closes every other open report about the same item with the same note.
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("reports");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;

@@ -27,7 +27,8 @@ const todayPk = () => new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().sl
 
 /** Admin queue of sponsored ad requests: check the payment, then approve, refuse, or stop a running ad. */
 export default function AdminAdsPage() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("ads");
   const [tab, setTab] = useState<Tab>("REQUESTED");
   const [ads, setAds] = useState<AdminAd[] | null>(null);
   const [counts, setCounts] = useState({ waiting: 0, running: 0 });

@@ -32,6 +32,13 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "ad.clearHistory": "Cleared ad history",
   "settings.payment": "Changed payment details",
   "settings.adminKey": "Changed the admin access key",
+  "user.adminKey": "Made a new admin key",
+  "request.take": "Took a request",
+  "request.refuse": "Refused a request",
+  "business.message": "Messaged a business",
+  "support.reply": "Replied as AutoGO Support",
+  "support.delete": "Deleted a support conversation",
+  "support.clear": "Deleted done support conversations",
   "errors.resolve": "Marked errors fixed",
   "errors.clear": "Cleared fixed errors",
 };

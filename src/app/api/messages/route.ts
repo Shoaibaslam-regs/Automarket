@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
-import { triggerPusher } from "@/lib/support";
+import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/support";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 
@@ -28,8 +28,9 @@ export async function GET(req: NextRequest) {
         ],
         deletedFor: { $ne: session.user.id },
       })
-        .populate("senderId", "name image role adminAccess")
-        .populate("receiverId", "name image role adminAccess")
+        .select("-sentBy")
+        .populate("senderId", "name image role adminAccess isSupportAccount")
+        .populate("receiverId", "name image role adminAccess isSupportAccount")
         .sort({ createdAt: 1 })
         .lean();
 
@@ -48,8 +49,9 @@ export async function GET(req: NextRequest) {
       ],
       deletedFor: { $ne: session.user.id },
     })
-      .populate("senderId", "name image role adminAccess")
-      .populate("receiverId", "name image role adminAccess")
+      .select("-sentBy")
+        .populate("senderId", "name image role adminAccess isSupportAccount")
+      .populate("receiverId", "name image role adminAccess isSupportAccount")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -122,17 +124,24 @@ export async function POST(req: NextRequest) {
     const message = await Message.create(messageData);
 
     const populated = await Message.findById(message._id)
-      .populate("senderId", "name image role adminAccess")
-      .populate("receiverId", "name image role adminAccess")
+      .select("-sentBy")
+        .populate("senderId", "name image role adminAccess isSupportAccount")
+      .populate("receiverId", "name image role adminAccess isSupportAccount")
       .lean();
 
     const channelId = [session.user.id, receiverId].sort().join("-");
     await triggerPusher(`chat-${channelId}`, "new-message", populated);
-    await triggerPusher(`user-${receiverId}`, "new-notification", {
-      type: "message",
-      from: session.user.name,
-      preview: content.slice(0, 50),
-    });
+    // A reply to AutoGO Support goes to every admin's Support inbox, not to the (unattended) account itself
+    const support = await getSupportAdmin();
+    if (receiverId === String(support._id)) {
+      await notifyAdminsOfSupport(session.user.name, content);
+    } else {
+      await triggerPusher(`user-${receiverId}`, "new-notification", {
+        type: "message",
+        from: session.user.name,
+        preview: content.slice(0, 50),
+      });
+    }
 
     return NextResponse.json({ message: populated }, { status: 201 });
   } catch (error) {

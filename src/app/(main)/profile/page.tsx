@@ -22,6 +22,8 @@ type UserProfile = {
   /** When a new picture can be saved again; null or missing means now (src/lib/profilePicture.ts) */
   pictureNextChangeAt?: string | null;
   pictureChanges?: number;
+  /** False for accounts made with Google, which set a first password here instead of changing one */
+  hasPassword?: boolean;
 };
 
 export default function ProfilePage() {
@@ -37,6 +39,8 @@ export default function ProfilePage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
 
   useEffect(() => {
+    // ?tab=password opens the password tab (the dashboard's phone card links here to set a first password)
+    queueMicrotask(() => { if (new URLSearchParams(window.location.search).get("tab") === "password") setActiveTab("password"); });
     fetch("/api/profile")
       .then(r => r.json())
       .then(d => {
@@ -70,6 +74,9 @@ export default function ProfilePage() {
     setTimeout(() => setSuccess(""), 3000);
   }
 
+  // Accounts made with Google have no password yet; only an explicit false (older data has none) counts
+  const settingFirst = profile?.hasPassword === false;
+
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -85,7 +92,7 @@ export default function ProfilePage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        currentPassword: passwordForm.currentPassword,
+        ...(settingFirst ? {} : { currentPassword: passwordForm.currentPassword }),
         newPassword: passwordForm.newPassword,
       }),
     });
@@ -96,7 +103,10 @@ export default function ProfilePage() {
     if (!res.ok) { setError(data.error); return; }
     // The change gave the account a new session key (other devices are signed out); keep this one signed in
     if (data.user?.sessionKey) await update({ sessionKey: data.user.sessionKey });
-    setSuccess("Password changed. Your other devices are being signed out.");
+    setSuccess(settingFirst
+      ? "Password set. You can now sign in with your email or phone and this password, as well as with Google."
+      : "Password changed. Your other devices are being signed out.");
+    if (settingFirst) setProfile(prev => (prev ? { ...prev, hasPassword: true } : prev));
     setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     setTimeout(() => setSuccess(""), 3000);
   }
@@ -139,7 +149,7 @@ export default function ProfilePage() {
           {(["profile", "password"] as const).map(tab => (
             <button key={tab} onClick={() => { setActiveTab(tab); setError(""); setSuccess(""); }}
               style={{ padding: "7px 20px", borderRadius: "7px", border: "none", fontSize: "13px", fontWeight: 500, cursor: "pointer", background: activeTab === tab ? "var(--gh-0d1117)" : "transparent", color: activeTab === tab ? "var(--gh-ffffff)" : "var(--gh-57606a)", textTransform: "capitalize" }}>
-              {tab === "profile" ? "Profile info" : "Change password"}
+              {tab === "profile" ? "Profile info" : settingFirst ? "Set a password" : "Change password"}
             </button>
           ))}
         </div>
@@ -248,10 +258,15 @@ export default function ProfilePage() {
 
         {activeTab === "password" && (
           <div style={{ background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "12px", padding: "24px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: "20px" }}>Change password</h2>
+            <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--gh-0d1117)", marginBottom: settingFirst ? "6px" : "20px" }}>{settingFirst ? "Set a password" : "Change password"}</h2>
+            {settingFirst && (
+              <p style={{ fontSize: "13px", color: "var(--gh-57606a)", lineHeight: 1.6, marginBottom: "18px" }}>
+                You signed up with Google, so your account has no password. Add one to also sign in with your email or phone number. We&apos;ll email you to confirm.
+              </p>
+            )}
             <form onSubmit={savePassword} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {[
-                { label: "Current password", key: "currentPassword", placeholder: "Enter current password" },
+                ...(settingFirst ? [] : [{ label: "Current password", key: "currentPassword", placeholder: "Enter current password" }]),
                 { label: "New password", key: "newPassword", placeholder: `At least ${PASSWORD_MIN} characters` },
                 { label: "Confirm new password", key: "confirmPassword", placeholder: "Repeat new password" },
               ].map(field => (
@@ -268,7 +283,7 @@ export default function ProfilePage() {
               ))}
               <button type="submit" disabled={saving}
                 style={{ padding: "11px", background: saving ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
-                {saving ? "Updating..." : "Update password"}
+                {saving ? "Saving..." : settingFirst ? "Set password" : "Update password"}
               </button>
             </form>
           </div>

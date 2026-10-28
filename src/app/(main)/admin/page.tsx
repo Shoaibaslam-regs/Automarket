@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Calendar, Car, CircleCheck, Crown, Flag, Gift, MoreHorizontal, ShieldCheck, Store, Undo2, Users, Wallet, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Calendar, Car, CircleCheck, Crown, Flag, Gift, MessageSquare, MoreHorizontal, ShieldCheck, Store, Undo2, Users, Wallet, type LucideIcon } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate, type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import PaymentSettings from "@/components/admin/PaymentSettings";
@@ -11,6 +11,7 @@ import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, isVerified, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
 import VerifyBadgeDialog, { type BadgeAction } from "@/components/admin/VerifyBadgeDialog";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import MessageBusinessDialog from "@/components/admin/MessageBusinessDialog";
 import {
   Badge,
   ConfirmDialog,
@@ -147,7 +148,8 @@ export default function AdminPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "businesses">("overview");
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("businesses");
   const [giftFor, setGiftFor] = useState<Organization | null>(null);
   const [revokeFor, setRevokeFor] = useState<Organization | null>(null);
   const [revoking, setRevoking] = useState(false);
@@ -183,6 +185,7 @@ export default function AdminPage() {
   const [suspendReason, setSuspendReason] = useState("");
   const [reinstateFor, setReinstateFor] = useState<Organization | null>(null);
   const [warnFor, setWarnFor] = useState<Organization | null>(null);
+  const [messageFor, setMessageFor] = useState<Organization | null>(null);
   const [warnReason, setWarnReason] = useState("");
   const [suspending, setSuspending] = useState(false);
 
@@ -556,6 +559,7 @@ export default function AdminPage() {
                   const items: MenuItem[] = [];
                   if (org.slug && org.isActive) items.push({ label: "Open shop page", icon: Store, href: `/dealers/${org.slug}` });
                   if (canWrite && org.ownerId?._id) {
+                    items.push({ label: "Message business", icon: MessageSquare, onClick: () => setMessageFor(org) });
                     items.push({ label: org.verification?.requestedAt ? "Review badge request" : "Verified badge", icon: BadgeCheck, onClick: () => setBadgeFor(org), dot: !!org.verification?.requestedAt });
                     if (isFreeGrant(org.planSource) && org.plan !== "FREE") items.push({ label: "Revoke gifted plan", icon: Undo2, onClick: () => setRevokeFor(org), tone: "danger" });
                     if (org.isActive) items.push({ label: "Send a warning", icon: AlertTriangle, onClick: () => { setWarnReason(""); setWarnFor(org); }, tone: "warn" });
@@ -688,6 +692,7 @@ export default function AdminPage() {
             }
           />
 
+          <MessageBusinessDialog business={messageFor} onClose={() => setMessageFor(null)} />
           <VerifyBadgeDialog
             target={badgeFor && { name: badgeFor.name, ownerLabel: badgeFor.ownerId?.name || badgeFor.ownerId?.email, verification: badgeFor.verification }}
             onClose={() => setBadgeFor(null)}

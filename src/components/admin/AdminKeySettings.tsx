@@ -67,8 +67,8 @@ export default function AdminKeySettings() {
 
   return (
     <Panel
-      title="Admin access key"
-      description="The key you type into the email field on the login page to open the admin sign-in. Only you (the platform owner) can change it."
+      title="Your admin key (platform owner)"
+      description="Your own key for the hidden admin sign-in: type it into the email field on the login page, then enter the code emailed to you. It opens only your account; other admins get their own key from Users."
       className="mb-4 lg:mb-6"
     >
       <form onSubmit={save} className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">

@@ -30,7 +30,7 @@ export async function GET() {
  * (status DRAFT, nobody notified) and published later with PATCH `{ publish: true }`.
  */
 export async function POST(req: NextRequest) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("announcements");
   if (!gate.ok) return gate.response;
   try {
     await connectDB();

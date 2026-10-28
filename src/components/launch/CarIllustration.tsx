@@ -4,8 +4,9 @@
  * The AutoGO car: the logo's car (facing right, with its speed lines in the hero gradient), whose front wheel turns in place.
  * Shared by the app splash, the launch animation and the 404 page.
  *
- * Drawn from two cut-outs of the logo in /public/car: the body with the wheel cleared, and the wheel disc laid
- * over its arch and rotated (`am-wheel-spin`). Black ink by default, for the splash's always-white screen;
+ * Drawn from the logo's body cut out in /public/car (with its wheel cleared) and a perfectly round wheel
+ * (`wheel-round.png`: a disc with a broken inner ring, so the turning shows) laid over the arch and rotated
+ * (`am-wheel-spin`). The logo's own wheel is a slanted oval, which wobbled when it turned, so it isn't used. Black ink by default, for the splash's always-white screen;
  * `themed` swaps to the white-ink pair in dark mode, so the car stays visible on a dark card. `wheelTurns` stops
  * the wheel after that many turns (the 404 car stops when it crashes); by default it turns while the car shows.
  */
@@ -41,7 +42,7 @@ export default function CarIllustration({ spin = true, width = 72, themed = fals
     <span aria-hidden className="relative block select-none" style={{ width, height: width * ASPECT }}>
       <style>{`@keyframes am-wheel-spin { to { transform: rotate(360deg); } }`}</style>
       {pair("/car/body.png", "/car/body-light.png", { width, height: width * ASPECT }, "block")}
-      {pair("/car/wheel.png", "/car/wheel-light.png", wheelStyle, "")}
+      {pair("/car/wheel-round.png", "/car/wheel-round-light.png", wheelStyle, "")}
     </span>
   );
 }

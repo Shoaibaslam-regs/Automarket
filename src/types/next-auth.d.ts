@@ -6,7 +6,7 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
-      /** FULL or READ_ONLY for admins (missing means FULL); picks the tick beside their name (src/lib/adminBadge.ts) */
+      /** FULL or MANAGER for admins (missing means FULL, old READ_ONLY reads as MANAGER); picks the tick beside their name (src/lib/adminBadge.ts) */
       adminAccess?: string;
       /** An ADMIN who signed in through the hidden admin form on /login (src/lib/adminGate.ts); needed for the admin panel */
       adminPortal?: boolean;

@@ -22,6 +22,8 @@ export const RATE_LIMITS = {
   /** "Send a new code" for a new account's sign-up code, per email and per IP */
   verifyEmailResend: { limit: 5, windowSec: 60 * 60 },
   verifyEmailResendIp: { limit: 15, windowSec: 60 * 60 },
+  /** Admin sign-in codes emailed per admin (each one also allows only ADMIN_CODE_TRIES guesses) */
+  adminCodeSend: { limit: 5, windowSec: 15 * 60 },
   /** Wrong sign-up codes per IP (each code also allows only SIGNUP_CODE_TRIES guesses) */
   signupCodeIp: { limit: 30, windowSec: 15 * 60, lockout: true },
   /** Phone verification codes: sends per user and per number, and wrong codes per user */

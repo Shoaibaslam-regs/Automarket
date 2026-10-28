@@ -65,6 +65,8 @@ export function pushForEvent(userId: string, data: EventData) {
         return { title: "New review", body: data.rating ? `Someone gave your business ${data.rating}★` : "Your business got a new review.", url: "/business/reviews", tag: "review" };
       case "report":
         return { title: "New report", body: "A listing, deal or business was reported.", url: "/admin/reports", tag: "report" };
+      case "support":
+        return { title: data.from ? `Support: ${data.from}` : "New support message", body: data.preview || "Someone wrote to AutoGO Support.", url: "/admin/support", tag: "support" };
       default:
         return null;
     }

@@ -10,6 +10,7 @@
     "make-admin": "tsx --env-file-if-exists=.env src/scripts/make-admin.ts",
     "reset-admin-key": "tsx --env-file-if-exists=.env src/scripts/reset-admin-key.ts",
     "backfill-login-phones": "tsx --env-file-if-exists=.env src/scripts/backfill-login-phones.ts",
+    "move-support-messages": "tsx --env-file-if-exists=.env src/scripts/move-support-messages.ts",
     "test": "vitest run"
   },
   "dependencies": {

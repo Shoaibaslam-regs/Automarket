@@ -3,11 +3,14 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { User } from "@/models/User";
-import { getSupportAdmin, triggerPusher } from "@/lib/support";
+import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/support";
 import { isPlanId, PLANS } from "@/lib/plans";
 import { upgradeRequestText } from "@/lib/supportContact";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
+import { getMembership } from "@/lib/business";
+import { Organization } from "@/models/Organization";
+import { openTeamRequest } from "@/lib/teamRequests";
 
 /** Don't post the same request twice if the user clicks again within this window. */
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
@@ -28,13 +31,18 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     const admin = await getSupportAdmin();
-    if (!admin) return NextResponse.json({ error: "The support team isn't available right now. Please try again later." }, { status: 503 });
-    if (admin._id.equals(session.user.id)) {
-      return NextResponse.json({ error: "You're the support admin; use the admin panel to change plans." }, { status: 400 });
-    }
+
 
     const me = await User.findById(session.user.id).select("email").lean<{ email: string }>();
-    const content = upgradeRequestText(PLANS[plan].name, PLANS[plan].price, { id: session.user.id, email: me?.email });
+    // A business runs on its owner's plan, so the request names the business too
+    const member = await getMembership(session.user.id);
+    const org = member ? await Organization.findById(member.organizationId).select("name").lean<{ _id: unknown; name: string }>() : null;
+    const content = upgradeRequestText(PLANS[plan].name, PLANS[plan].price, {
+      id: session.user.id, email: me?.email, business: org ? { id: String(org._id), name: org.name } : null,
+    });
+
+    // The team's to-do list (Admin → Requests); the chat message below is for the receipt and questions
+    await openTeamRequest({ kind: "PLAN", userId: session.user.id, organizationId: org ? String(org._id) : null, plan, price: PLANS[plan].price });
 
     const recent = await Message.exists({
       senderId: session.user.id,
@@ -47,7 +55,7 @@ export async function POST(req: NextRequest) {
       const populated = await Message.findById(message._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
       const adminId = admin._id.toString();
       await triggerPusher(`chat-${[session.user.id, adminId].sort().join("-")}`, "new-message", populated);
-      await triggerPusher(`user-${adminId}`, "new-notification", { type: "message", from: session.user.name, preview: content.slice(0, 50) });
+      await notifyAdminsOfSupport(session.user.name, content);
     }
 
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });

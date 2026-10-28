@@ -8,6 +8,7 @@ import { MessageSquare } from "lucide-react";
 import { PLANS, type Plan } from "@/lib/plans";
 import { upgradeRequestText, whatsappLink } from "@/lib/supportContact";
 import { useRateLock } from "@/hooks/useRateLock";
+import { useMyBusiness } from "@/hooks/useMyBusiness";
 
 function WhatsAppIcon({ size = 16 }: { size?: number }) {
   return (
@@ -31,7 +32,9 @@ export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", clas
   const supLock = useRateLock("support");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const wa = whatsappLink(upgradeRequestText(plan.name, plan.price, { id: session?.user?.id, email: session?.user?.email }));
+  // The WhatsApp text names the business too, like the in-app request
+  const business = useMyBusiness(status === "authenticated");
+  const wa = whatsappLink(upgradeRequestText(plan.name, plan.price, { id: session?.user?.id, email: session?.user?.email, business }));
   const dark = tone === "dark";
 
   async function messageTeam() {

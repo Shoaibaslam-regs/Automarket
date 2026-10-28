@@ -2,7 +2,7 @@ import { BadgeCheck } from "lucide-react";
 import { ADMIN_BADGE_TITLE, adminBadgeKind } from "@/lib/adminBadge";
 
 /**
- * The AutoGO team tick beside a name: blue for admins, grey for view-only admins, nothing for anyone else.
+ * The AutoGO team tick beside a name: blue for full admins, grey for managers, nothing for anyone else.
  * Pass the person's `role` and `adminAccess` (or nothing renders). Business Verified ticks are `VerifiedBadge`.
  */
 export default function AdminBadge({
@@ -10,7 +10,7 @@ export default function AdminBadge({
   size = 14,
   className = "",
 }: {
-  user?: { role?: string | null; adminAccess?: string | null } | null;
+  user?: { role?: string | null; adminAccess?: string | null; isSupportAccount?: boolean | null } | null;
   size?: number;
   className?: string;
 }) {

@@ -9,6 +9,8 @@ import { User } from "@/models/User";
 import { logBusinessAction } from "@/lib/businessLog";
 import { reportError } from "@/lib/errorLog";
 
+import { ownSitePath } from "@/lib/announcements";
+import { SITE_URL } from "@/lib/site";
 type OrgFollow = { followsOfficial?: boolean; followedOfficialAt?: Date };
 
 /**
@@ -31,7 +33,12 @@ export async function GET(req: NextRequest) {
     ]);
     const following = !!org?.followsOfficial;
     const since = Math.max(user?.officialSeenAt?.getTime() ?? 0, org?.followedOfficialAt?.getTime() ?? 0);
-    const feed = announcements.map(a => ({ ...a, unread: following && new Date(a.createdAt).getTime() > since }));
+    // Posts saved before links to AutoGO were stored as paths: open those in the same window too
+    const hosts = [req.headers.get("x-forwarded-host"), req.headers.get("host"), (() => { try { return new URL(SITE_URL).host; } catch { return null; } })()];
+    const feed = announcements.map(a => {
+      const link = (a as { link?: string }).link;
+      return { ...a, ...(link ? { link: ownSitePath(link, hosts) } : {}), unread: following && new Date(a.createdAt).getTime() > since };
+    });
     if (req.nextUrl.searchParams.get("seen") === "1" && following) {
       await User.updateOne({ _id: session.user.id }, { $set: { officialSeenAt: new Date() } });
     }

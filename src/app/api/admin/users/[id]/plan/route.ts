@@ -6,6 +6,7 @@ import { TrialClaim } from "@/models/TrialClaim";
 import { PLANS, TRIAL_MONTHS, addPlanPeriods, effectivePlanId, isFreeGrant, isPlanId } from "@/lib/plans";
 import { logAdminAction } from "@/lib/adminLog";
 
+import { closeTeamRequests } from "@/lib/teamRequests";
 /** Gift lengths, in 30-day plan periods */
 const DURATIONS = [1, 3, 6, 12];
 
@@ -23,7 +24,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireAdminApi("write");
+    const gate = await requireAdminApi("plans");
     if (!gate.ok) return gate.response;
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -101,6 +102,10 @@ export async function PATCH(
     const until = user.planExpiresAt ? ` until ${new Date(user.planExpiresAt).toLocaleDateString("en-PK")}` : "";
     await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email },
       plan === "FREE" ? "Set to Free" : `${source === "PAID" ? "Activated paid" : `Gifted (${months} × 30 days)`} ${PLANS[plan].name}${until}`);
+    // However it was done (Requests, Users, Plan lookup), a waiting plan request for this person is now dealt with
+    if (plan !== "FREE") {
+      await closeTeamRequests({ kind: "PLAN", userId: id }, { adminId: gate.admin._id, status: "DONE", outcome: `${source === "PAID" ? "Paid" : "Gift"}: ${PLANS[plan].name}${until}` });
+    }
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ error: "Failed to update plan" }, { status: 500 });
@@ -117,7 +122,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireAdminApi("write");
+    const gate = await requireAdminApi("plans");
     if (!gate.ok) return gate.response;
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "User not found" }, { status: 404 });

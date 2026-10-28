@@ -34,7 +34,8 @@ const STATE_TONE: Record<DealState, Tone> = { LIVE: "green", SCHEDULED: "blue", 
 const fmt = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 
 export default function AdminDealsPage() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("deals");
   const [deals, setDeals] = useState<AdminDeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);

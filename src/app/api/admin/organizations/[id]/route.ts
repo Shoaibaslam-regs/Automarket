@@ -3,27 +3,23 @@ import mongoose from "mongoose";
 import { requireAdminApi } from "@/lib/adminAuth";
 import { Organization } from "@/models/Organization";
 import { Listing } from "@/models/Listing";
-import { Message } from "@/models/Message";
 import { getOrgUserIds } from "@/lib/business";
-import { triggerPusher } from "@/lib/support";
+import { sendAsSupport } from "@/lib/support";
 import { isVerified } from "@/lib/plans";
 import { invalidateBusinessSlug, invalidateListingPage } from "@/lib/pageCache";
 import { logAdminAction } from "@/lib/adminLog";
 import { reportError } from "@/lib/errorLog";
+import { closeTeamRequests } from "@/lib/teamRequests";
 
 const BADGE_MONTHS = [1, 3, 6, 12];
 const fmtDate = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 
-/** Tells the owner in Messages, from the acting admin, so they can reply there to appeal. */
+/** Tells the owner in Messages, from AutoGO Support (written by the acting admin), so they can reply there to appeal. */
 async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.Types.ObjectId, content: string) {
-  if (adminId.equals(ownerId)) return;
   try {
-    const message = await Message.create({ senderId: adminId, receiverId: ownerId, content });
-    const populated = await Message.findById(message._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
-    await triggerPusher(`chat-${[String(adminId), String(ownerId)].sort().join("-")}`, "new-message", populated);
-    await triggerPusher(`user-${ownerId}`, "new-notification", { type: "message", from: "AutoGO", preview: content.slice(0, 50) });
+    await sendAsSupport(adminId, ownerId, content);
   } catch (e) {
-    reportError("Suspension notice failed:", e);
+    reportError("Business notice failed:", e);
   }
 }
 
@@ -37,7 +33,7 @@ async function notifyOwner(adminId: mongoose.Types.ObjectId, ownerId: mongoose.T
  * those), takes its public page offline and locks its console apart from Help & support.
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("businesses");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
@@ -123,6 +119,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         `The Verified badge shows on your business page and listings${expiresAt ? ` until ${fmtDate(expiresAt)}` : ""}.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.verify", { type: "BUSINESS", id: org._id, label: org.name }, `${source === "PAID" ? "Paid" : "Gift"}${expiresAt ? `, until ${fmtDate(expiresAt)}` : ""}`);
+      await closeTeamRequests({ kind: "BADGE", organizationId: org._id }, { adminId: gate.admin._id, status: "DONE", outcome: `${source === "PAID" ? "Paid" : "Gift"}${expiresAt ? `, until ${fmtDate(expiresAt)}` : ""}` });
       return NextResponse.json({ ok: true, expiresAt: expiresAt ?? null });
     }
 
@@ -139,6 +136,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         `Your Verified badge request for "${org.name}" wasn't approved. Reason: ${why}. You can request it again once that's sorted. Reply here if you have questions.`);
       invalidateBusinessSlug(org.slug);
       await logAdminAction(gate.admin, "business.rejectVerification", { type: "BUSINESS", id: org._id, label: org.name }, why);
+      await closeTeamRequests({ kind: "BADGE", organizationId: org._id }, { adminId: gate.admin._id, status: "REFUSED", outcome: why });
       return NextResponse.json({ ok: true });
     }
 

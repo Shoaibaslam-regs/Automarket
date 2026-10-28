@@ -27,7 +27,8 @@ const PAID = PLAN_LIST.filter(p => p.id !== "FREE");
  * then activate a paid plan or gift one, start their one-time free trial, or revoke a free plan.
  */
 export default function PlanLookup() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("plans");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [searching, setSearching] = useState(false);

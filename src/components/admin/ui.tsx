@@ -44,6 +44,7 @@ export const STATUS_TONE: Record<string, Tone> = {
   UNLIMITED: "amber",
   FULL: "violet",
   READ_ONLY: "neutral",
+  MANAGER: "neutral",
 };
 
 export function PageHeader({

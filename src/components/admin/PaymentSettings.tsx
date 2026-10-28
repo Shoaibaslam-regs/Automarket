@@ -12,7 +12,8 @@ const EMPTY = Object.fromEntries(PAYMENT_FIELDS.map(f => [f.key, ""])) as Paymen
  * Shown as "How to pay" on the pricing page, the upgrade dialog, Business → Promote and Business → Help & support.
  */
 export default function PaymentSettings() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("settings");
   const [form, setForm] = useState<PaymentDetails>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");

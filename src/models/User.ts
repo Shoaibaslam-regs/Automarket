@@ -25,7 +25,17 @@ export interface IUser extends Document {
   organizationId?: mongoose.Types.ObjectId;
   organizationRole?: "OWNER" | "MANAGER" | "SALES" | "STAFF";
   /** Only meaningful for ADMIN. Missing is treated as FULL so admins created before this field keep their access. */
-  adminAccess?: "FULL" | "READ_ONLY";
+  /** FULL or MANAGER (src/lib/adminRoles.ts); READ_ONLY is the old view-only level, read as MANAGER */
+  adminAccess?: "FULL" | "MANAGER" | "READ_ONLY";
+  /** The shared "AutoGO Support" account (src/lib/supportAccount.ts): it can't sign in; admins write as it from the Support inbox */
+  isSupportAccount?: boolean;
+  /** SHA-256 of this admin's personal key for the hidden admin entry on /login (src/lib/adminPersonalKey.ts) */
+  adminKeyHash?: string;
+  adminKeyCreatedAt?: Date;
+  /** The 6-digit admin sign-in code: only sha256(userId:code), its expiry and wrong tries (src/lib/adminCode.ts) */
+  adminCodeHash?: string;
+  adminCodeExpires?: Date;
+  adminCodeTries?: number;
   plan: PlanId;
   planExpiresAt?: Date;
   /** How the current paid plan was obtained: ADMIN_GRANT is a gift from the admin panel, TRIAL the one-time free trial */
@@ -76,7 +86,13 @@ const UserSchema = new Schema<IUser>(
     role: { type: String, enum: ["USER", "SELLER", "ADMIN"], default: "USER" },
     organizationId: { type: Schema.Types.ObjectId, ref: "Organization" },
     organizationRole: { type: String, enum: ["OWNER", "MANAGER", "SALES", "STAFF"] },
-    adminAccess: { type: String, enum: ["FULL", "READ_ONLY"] },
+    adminAccess: { type: String, enum: ["FULL", "MANAGER", "READ_ONLY"] },
+    isSupportAccount: { type: Boolean, index: { sparse: true } },
+    adminKeyHash: { type: String, index: { unique: true, sparse: true } },
+    adminKeyCreatedAt: { type: Date },
+    adminCodeHash: { type: String },
+    adminCodeExpires: { type: Date },
+    adminCodeTries: { type: Number },
     plan: { type: String, enum: PLAN_IDS, default: "FREE" },
     planExpiresAt: { type: Date },
     planSource: { type: String, enum: ["PAID", "ADMIN_GRANT", "TRIAL"] },

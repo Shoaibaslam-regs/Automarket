@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const filter: Record<string, unknown> = {};
     const type = sp.get("type");
-    if (type && ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT", "ANNOUNCEMENT", "AD", "SETTINGS"].includes(type)) filter.targetType = type;
+    if (type && ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT", "ANNOUNCEMENT", "AD", "SETTINGS", "REQUEST"].includes(type)) filter.targetType = type;
     const q = sp.get("q")?.trim();
     if (q) {
       const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").slice(0, 80), "i");
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
  * An "activity.clear" entry is written afterwards so the deletion itself stays on record.
  */
 export async function DELETE(req: NextRequest) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
   if (!isPlatformOwner(gate.admin.email)) return NextResponse.json({ error: "Only the platform owner can delete activity history" }, { status: 403 });
   try {

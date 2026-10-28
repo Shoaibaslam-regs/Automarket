@@ -33,8 +33,9 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     // Emails are stored as typed at sign-up, so match without regard to case
-    const user = await User.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") }).select("name email");
-    if (!user) return done;
+    const user = await User.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") }).select("name email isSupportAccount");
+    // The shared AutoGO Support account can never get a password
+    if (!user || user.isSupportAccount) return done;
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");

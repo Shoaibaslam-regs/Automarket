@@ -38,7 +38,8 @@ function actHref(r: AdminReport) {
 
 /** Admin queue of user reports about listings, deals and businesses. */
 export default function AdminReportsPage() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("reports");
   const [status, setStatus] = useState<Status>("OPEN");
   const [reports, setReports] = useState<AdminReport[] | null>(null);
   const [open, setOpen] = useState(0);

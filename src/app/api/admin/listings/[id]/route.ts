@@ -12,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireAdminApi("write");
+    const gate = await requireAdminApi("listings");
     if (!gate.ok) return gate.response;
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
@@ -48,7 +48,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireAdminApi("write");
+    const gate = await requireAdminApi("listings");
     if (!gate.ok) return gate.response;
     const { id } = await params;
     await connectDB();

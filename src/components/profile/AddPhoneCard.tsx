@@ -12,7 +12,7 @@ const snoozeKey = (userId: string) => `add-phone-snooze:${userId}`;
 
 /**
  * Dashboard card for accounts without a phone (Google sign-ups): saving one lets sellers and businesses call back
- * and, with a password, lets the person sign in with it. Accounts without a password are pointed to Forgot password.
+ * and, with a password, lets the person sign in with it. Accounts without a password are pointed to Profile → Set a password.
  */
 export default function AddPhoneCard({ userId, hasPassword }: { userId: string; hasPassword: boolean }) {
   const [show, setShow] = useState(false);
@@ -59,7 +59,7 @@ export default function AddPhoneCard({ userId, hasPassword }: { userId: string; 
             <p className="mt-0.5 text-slate-500">
               {hasPassword
                 ? "You can now sign in with it and your password."
-                : <>To sign in with it too, <Link href="/forgot-password" className="font-semibold text-indigo-600 hover:underline">set a password</Link>. Google sign-in keeps working either way.</>}
+                : <>To sign in with it too, <Link href="/profile?tab=password" className="font-semibold text-indigo-600 hover:underline">set a password</Link>. Google sign-in keeps working either way.</>}
             </p>
           </div>
           <button type="button" onClick={() => setShow(false)} aria-label="Close" className="rounded-lg p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600"><X size={16} /></button>

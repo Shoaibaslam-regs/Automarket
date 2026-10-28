@@ -3,10 +3,13 @@ import { userChannel } from "@/lib/pusherChannels";
 import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
-import { ANNOUNCEMENT_KINDS, MAX_BODY, MAX_TITLE, type AnnouncementKind } from "@/lib/announcements";
+import { ANNOUNCEMENT_KINDS, MAX_BODY, MAX_TITLE, ownSitePath, type AnnouncementKind } from "@/lib/announcements";
+import { SITE_URL } from "@/lib/site";
 import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
+
+const siteHost = () => { try { return new URL(SITE_URL).host; } catch { return null; } };
 
 /** Validates an announcement from an admin's request body (all fields for a new post, or only the ones sent when editing). */
 export function parseAnnouncement(body: Record<string, unknown>, partial = false):
@@ -29,7 +32,8 @@ export function parseAnnouncement(body: Record<string, unknown>, partial = false
     data.body = text.slice(0, MAX_BODY);
   }
   if (!partial || has("link")) {
-    const link = String(body.link ?? "").trim();
+    // A full link to AutoGO itself is kept as a path, so the button opens in the same window
+    const link = ownSitePath(String(body.link ?? "").trim(), [siteHost()]);
     // Only AutoGO paths or https links, so a post can't carry javascript: or other schemes
     if (link && !/^\/[^/]/.test(link) && !/^https:\/\/[^\s]+$/i.test(link)) return { error: "The link must start with / (an AutoGO page) or https://" };
     data.link = link || undefined;

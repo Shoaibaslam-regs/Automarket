@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Crown, Eye, Gift, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
+import { BriefcaseBusiness, Check, Copy, Crown, Gift, KeyRound, ShieldCheck, ShieldOff, Trash2, Undo2, UserCog, type LucideIcon } from "lucide-react";
 import { Badge, ConfirmDialog, CopyId, DataTable, PageHeader, SearchField, SelectField, StatusBadge, UserCell, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { isFreeGrant, planInfo, type PlanId, type PlanSource } from "@/lib/plans";
 import PlanGiftDialog, { type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 
-type AdminAccess = "FULL" | "READ_ONLY";
+import { ADMIN_ACCESS_HINT, ADMIN_ACCESS_LABEL, normalizeAdminAccess, type AdminAccess } from "@/lib/adminRoles";
 
 type User = {
   _id: string;
@@ -17,7 +17,8 @@ type User = {
   email: string;
   phone?: string;
   role: string;
-  adminAccess?: AdminAccess;
+  /** FULL or MANAGER (older view-only admins come back as MANAGER) */
+  adminAccess?: AdminAccess | "READ_ONLY";
   isOwner: boolean;
   effectivePlan: PlanId;
   planExpiresAt?: string;
@@ -26,18 +27,8 @@ type User = {
 };
 
 const ACCESS_OPTIONS: { value: AdminAccess; title: string; description: string; icon: LucideIcon }[] = [
-  {
-    value: "FULL",
-    title: "Full admin",
-    description: "Can see everything and make changes: manage users, listings, plans and other admins.",
-    icon: ShieldCheck,
-  },
-  {
-    value: "READ_ONLY",
-    title: "View-only admin",
-    description: "Can see every page and all data in the admin panel, but can't change or delete anything.",
-    icon: Eye,
-  },
+  { value: "FULL", title: ADMIN_ACCESS_LABEL.FULL, description: ADMIN_ACCESS_HINT.FULL, icon: ShieldCheck },
+  { value: "MANAGER", title: ADMIN_ACCESS_LABEL.MANAGER, description: ADMIN_ACCESS_HINT.MANAGER, icon: BriefcaseBusiness },
 ];
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -65,7 +56,7 @@ function AccessDialog({ user, onClose, onSave }: {
   const [choice, setChoice] = useState<AdminAccess | null>(null);
   const [busy, setBusy] = useState(false);
   const promoting = user?.role !== "ADMIN";
-  const selected = choice ?? (promoting ? null : user?.adminAccess ?? "FULL");
+  const selected = choice ?? (promoting ? null : normalizeAdminAccess(user?.adminAccess));
 
   async function save() {
     if (!selected) return;
@@ -128,7 +119,7 @@ function AccessDialog({ user, onClose, onSave }: {
             <button
               type="button"
               onClick={save}
-              disabled={busy || !selected || (!promoting && selected === user.adminAccess)}
+              disabled={busy || !selected || (!promoting && selected === normalizeAdminAccess(user.adminAccess))}
               className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? "Saving…" : promoting ? "Make admin" : "Save access"}
@@ -140,9 +131,38 @@ function AccessDialog({ user, onClose, onSave }: {
   );
 }
 
+/** Shows a personal admin key once, with how to pass it on. */
+function AdminKeyDialog({ shown, onClose }: { shown: { name: string; key: string } | null; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Dialog.Root open={shown !== null} onOpenChange={o => { if (!o) { setCopied(false); onClose(); } }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
+          <Dialog.Title className="flex items-center gap-2 text-base font-semibold text-slate-900"><KeyRound size={17} className="text-amber-500" /> Admin key for {shown?.name}</Dialog.Title>
+          <Dialog.Description className="mt-1.5 text-sm leading-relaxed text-slate-500">
+            Send this to them privately. They type it in the email box on the sign-in page, then enter the code emailed to them.
+            It&apos;s shown only now; if it&apos;s lost, make a new one.
+          </Dialog.Description>
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
+            <code className="min-w-0 flex-1 break-all font-mono text-sm text-slate-900">{shown?.key}</code>
+            <button type="button" onClick={() => { if (shown) navigator.clipboard?.writeText(shown.key).then(() => setCopied(true)).catch(() => {}); }}
+              className={`${btn.base} ${btn.secondary} flex-shrink-0`}>
+              {copied ? <><Check size={13} /> Copied</> : <><Copy size={13} /> Copy</>}
+            </button>
+          </div>
+          <div className="mt-5 flex justify-end">
+            <Dialog.Close className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Done</Dialog.Close>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 export default function AdminUsersPage() {
   const { data: session } = useSession();
-  const { canWrite } = useAdminAccess();
+  const { can } = useAdminAccess();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -150,6 +170,8 @@ export default function AdminUsersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [pending, setPending] = useState<{ action: "demote" | "delete" | "revoke"; user: User } | null>(null);
   const [accessFor, setAccessFor] = useState<User | null>(null);
+  // A personal admin key just made, shown once to pass on
+  const [shownKey, setShownKey] = useState<{ name: string; key: string } | null>(null);
   const [planFor, setPlanFor] = useState<User | null>(null);
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
@@ -167,13 +189,14 @@ export default function AdminUsersPage() {
     setActionError("");
     setNotice("");
     const res = await fetch(url, init);
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       setActionError(data.error || "Something went wrong. Please try again.");
     } else {
       setNotice(success);
     }
     await fetchUsers();
+    return res.ok ? data : null;
   }
 
   const json = (method: string, body: unknown): RequestInit => ({
@@ -202,9 +225,18 @@ export default function AdminUsersPage() {
 
   async function saveAccess(access: AdminAccess) {
     if (!accessFor) return;
-    const label = access === "FULL" ? "a full admin" : "a view-only admin";
-    await send(`/api/admin/users/${accessFor._id}`, json("PATCH", { role: "ADMIN", adminAccess: access }), `${displayName(accessFor)} is now ${label}.`);
+    const label = access === "FULL" ? "a full admin" : "a manager";
+    const data = await send(`/api/admin/users/${accessFor._id}`, json("PATCH", { role: "ADMIN", adminAccess: access }), `${displayName(accessFor)} is now ${label}.`);
+    // A new admin's personal key comes back once
+    if (data?.adminKey) setShownKey({ name: displayName(accessFor), key: data.adminKey });
     setAccessFor(null);
+  }
+
+  async function newAdminKey(user: User) {
+    setUpdating(user._id);
+    const data = await send(`/api/admin/users/${user._id}/admin-key`, { method: "POST" }, `${displayName(user)} has a new admin key. The old one no longer works.`);
+    setUpdating(null);
+    if (data?.adminKey) setShownKey({ name: displayName(user), key: data.adminKey });
   }
 
   async function savePlan(plan: PlanId, months: number, source: PlanSourceChoice) {
@@ -292,8 +324,8 @@ export default function AdminUsersPage() {
               <div className="flex flex-wrap gap-1">
                 {user.isOwner ? <Badge tone="amber">OWNER</Badge> : <StatusBadge status={user.role} />}
                 {user.role === "ADMIN" && !user.isOwner && (
-                  <Badge tone={user.adminAccess === "READ_ONLY" ? "neutral" : "violet"}>
-                    {user.adminAccess === "READ_ONLY" ? "VIEW ONLY" : "FULL"}
+                  <Badge tone={normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "neutral" : "violet"}>
+                    {normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "MANAGER" : "FULL"}
                   </Badge>
                 )}
               </div>
@@ -305,21 +337,23 @@ export default function AdminUsersPage() {
             hideLabel: true,
             align: "right",
             cell: user => {
-              if (!canWrite) return <p className="text-xs text-slate-400 md:text-right">View only</p>;
+              if (!can("plans") && !can("admins") && !can("users")) return <p className="text-xs text-slate-400 md:text-right">View only</p>;
               const self = user._id === session?.user?.id;
               const locked = self || user.isOwner;
+              // Managers handle plans only; making, changing and removing admins and deleting users is for full admins
+              const manageAdmins = can("admins") && !locked;
               const busy = updating === user._id;
               return (
                 <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
-                  <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
+                  {can("plans") && <button onClick={() => setPlanFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Activate a paid plan or gift one">
                     <Gift size={13} /> Plan
-                  </button>
-                  {isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (
+                  </button>}
+                  {can("plans") && isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (
                     <button onClick={() => setPending({ action: "revoke", user })} disabled={busy} aria-label="Revoke gifted plan" title="Revoke gifted plan" className={`${btn.base} ${btn.danger}`}>
                       <Undo2 size={13} />
                     </button>
                   )}
-                  {!locked && (user.role !== "ADMIN" ? (
+                  {manageAdmins && (user.role !== "ADMIN" ? (
                     <button onClick={() => setAccessFor(user)} disabled={busy} className={`${btn.base} ${btn.warn} flex-1 md:flex-none`}>
                       <ShieldCheck size={13} /> Make admin
                     </button>
@@ -328,12 +362,15 @@ export default function AdminUsersPage() {
                       <button onClick={() => setAccessFor(user)} disabled={busy} className={`${btn.base} ${btn.secondary} flex-1 md:flex-none`} title="Change admin access">
                         <UserCog size={13} /> Access
                       </button>
+                      <button onClick={() => newAdminKey(user)} disabled={busy} aria-label="New admin key" title="Make a new admin key (the old one stops working)" className={`${btn.base} ${btn.secondary}`}>
+                        <KeyRound size={13} />
+                      </button>
                       <button onClick={() => setPending({ action: "demote", user })} disabled={busy} aria-label="Remove admin" title="Remove admin" className={`${btn.base} ${btn.secondary}`}>
                         <ShieldOff size={13} />
                       </button>
                     </>
                   ))}
-                  {!locked && (
+                  {can("users") && !locked && (
                     <button onClick={() => setPending({ action: "delete", user })} disabled={busy} aria-label="Delete user" title="Delete user" className={`${btn.base} ${btn.danger}`}>
                       <Trash2 size={13} />
                     </button>
@@ -352,6 +389,7 @@ export default function AdminUsersPage() {
       )}
 
       <AccessDialog user={accessFor} onClose={() => setAccessFor(null)} onSave={saveAccess} />
+      <AdminKeyDialog shown={shownKey} onClose={() => setShownKey(null)} />
       <PlanGiftDialog
         target={planFor && { name: displayName(planFor), effectivePlan: planFor.effectivePlan, planExpiresAt: planFor.planExpiresAt }}
         onClose={() => setPlanFor(null)}

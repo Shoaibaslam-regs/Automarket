@@ -9,7 +9,7 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { REPORT_REASONS } from "@/lib/reports";
 import { rateLimitResponse } from "@/lib/rateLimit";
-import { triggerPusher, getSupportAdmin } from "@/lib/support";
+import { triggerPusher } from "@/lib/support";
 import { reportError } from "@/lib/errorLog";
 
 type Oid = mongoose.Types.ObjectId;
@@ -68,10 +68,10 @@ export async function POST(req: NextRequest) {
 
     await Report.create({ targetType, targetId, targetLabel: label, organizationId, reporterId: me, reason, details: text || undefined });
 
-    // Badge refresh for the support admin
+    // Every admin's Reports badge (and phones that turned alerts on)
     try {
-      const admin = await getSupportAdmin();
-      if (admin) await triggerPusher(`user-${admin._id}`, "new-notification", { type: "report" });
+      const admins = await User.find({ role: "ADMIN" }).select("_id").lean<Array<{ _id: unknown }>>();
+      await Promise.all(admins.map(a => triggerPusher(`user-${a._id}`, "new-notification", { type: "report" })));
     } catch {}
 
     return NextResponse.json({ ok: true }, { status: 201 });

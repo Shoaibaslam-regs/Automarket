@@ -6,8 +6,12 @@ describe("adminBadgeKind", () => {
     expect(adminBadgeKind({ role: "ADMIN", adminAccess: "FULL" })).toBe("full");
     expect(adminBadgeKind({ role: "ADMIN" })).toBe("full");
   });
-  it("gives view-only admins the grey tick", () => {
-    expect(adminBadgeKind({ role: "ADMIN", adminAccess: "READ_ONLY" })).toBe("view");
+  it("gives managers, and the old view-only admins, the grey tick", () => {
+    expect(adminBadgeKind({ role: "ADMIN", adminAccess: "MANAGER" })).toBe("manager");
+    expect(adminBadgeKind({ role: "ADMIN", adminAccess: "READ_ONLY" })).toBe("manager");
+  });
+  it("gives the AutoGO Support account the blue tick", () => {
+    expect(adminBadgeKind({ role: "USER", isSupportAccount: true })).toBe("full");
   });
   it("gives everyone else none", () => {
     expect(adminBadgeKind({ role: "USER" })).toBeNull();

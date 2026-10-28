@@ -19,12 +19,13 @@ type User = {
   image?: string;
   role?: string;
   adminAccess?: string;
+  isSupportAccount?: boolean;
   /** From /api/users/[id]: the AutoGO team tick */
-  badge?: "full" | "view";
+  badge?: "full" | "manager";
 };
 
 /** The tick for a chat partner, whether it came from the messages list (role) or the user lookup (badge) */
-const badgeUser = (u?: User | null) => (u?.badge ? { role: "ADMIN", adminAccess: u.badge === "view" ? "READ_ONLY" : "FULL" } : u);
+const badgeUser = (u?: User | null) => (u?.badge ? { role: "ADMIN", adminAccess: u.badge === "manager" ? "MANAGER" : "FULL" } : u);
 
 type Message = {
   _id: string;
@@ -41,9 +42,14 @@ type Conversation = Message & {
   partnerImage?: string;
   partnerRole?: string;
   partnerAccess?: string;
+  partnerSupport?: boolean;
 };
 
-export default function MessagesContent() {
+/**
+ * The inbox and chat. `embedded` is for the admin panel's Messages page: a shorter, rounded box inside the admin
+ * layout instead of the full-height page, and links stay under `basePath`.
+ */
+export default function MessagesContent({ embedded = false, basePath = "/messages" }: { embedded?: boolean; basePath?: string } = {}) {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -74,7 +80,7 @@ export default function MessagesContent() {
       const convs = (data.conversations || []).map((msg: Message) => {
         const isMe = msg.senderId._id === session?.user?.id;
         const partner = isMe ? msg.receiverId : msg.senderId;
-        return { ...msg, partnerId: partner._id, partnerName: partner.name, partnerImage: partner.image, partnerRole: partner.role, partnerAccess: partner.adminAccess };
+        return { ...msg, partnerId: partner._id, partnerName: partner.name, partnerImage: partner.image, partnerRole: partner.role, partnerAccess: partner.adminAccess, partnerSupport: partner.isSupportAccount };
       });
       setConversations(convs);
       setLoadingConvs(false);
@@ -224,7 +230,7 @@ export default function MessagesContent() {
         setMessages([]);
         setShowChat(false);
         // Drop ?with= so a reload doesn't reopen the deleted thread
-        if (withUserId === removedId) router.replace("/messages");
+        if (withUserId === removedId) router.replace(basePath);
       }
       setDeleteTarget(null);
       refreshNotificationCounts();
@@ -249,7 +255,8 @@ export default function MessagesContent() {
       <style>{`
         .messages-wrap {
           display: flex;
-          height: calc(100vh - 64px);
+          height: ${embedded ? "calc(100vh - 13rem)" : "calc(100vh - 64px)"};
+          ${embedded ? "min-height: 480px; border: 1px solid var(--gh-e1e4e8); border-radius: 16px;" : ""}
           background: var(--gh-f6f8fa);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           position: relative;
@@ -345,7 +352,7 @@ export default function MessagesContent() {
               const isMe = conv.senderId._id === session?.user?.id;
               return (
                 <div key={conv.partnerId} className="conv-row"
-                  onClick={() => selectUser(conv.partnerId, { _id: conv.partnerId, name: conv.partnerName, image: conv.partnerImage, role: conv.partnerRole, adminAccess: conv.partnerAccess })}
+                  onClick={() => selectUser(conv.partnerId, { _id: conv.partnerId, name: conv.partnerName, image: conv.partnerImage, role: conv.partnerRole, adminAccess: conv.partnerAccess, isSupportAccount: conv.partnerSupport })}
                   style={{ padding: "12px 16px", cursor: "pointer", background: isActive ? "var(--gh-f6f8fa)" : "var(--gh-ffffff)", borderLeft: `3px solid ${isActive ? "var(--gh-0d1117)" : "transparent"}`, display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "var(--gh-0d1117)", color: "var(--gh-ffffff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0, position: "relative" }}>
                     {conv.partnerImage ? (
@@ -357,7 +364,7 @@ export default function MessagesContent() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.partnerName}</span><AdminBadge user={{ role: conv.partnerRole, adminAccess: conv.partnerAccess }} size={13} /></p>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.partnerName}</span><AdminBadge user={{ role: conv.partnerRole, adminAccess: conv.partnerAccess, isSupportAccount: conv.partnerSupport }} size={13} /></p>
                       <p style={{ fontSize: "10px", color: "var(--gh-8c959f)" }}>{formatTime(conv.createdAt)}</p>
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--gh-57606a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -396,7 +403,7 @@ export default function MessagesContent() {
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--gh-0d1117)", display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeUser.name}</span><AdminBadge user={badgeUser(activeUser)} /></p>
-                  <p style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>{badgeUser(activeUser)?.role === "ADMIN" ? "AutoGO team" : "AutoGO member"}</p>
+                  <p style={{ fontSize: "11px", color: "var(--gh-57606a)" }}>{badgeUser(activeUser)?.role === "ADMIN" || activeUser.isSupportAccount ? "AutoGO team" : "AutoGO member"}</p>
                 </div>
                 <button type="button" className="chat-del" aria-label="Delete chat" title="Delete chat"
                   onClick={() => { setDeleteError(""); setDeleteTarget(activeUser); }}>

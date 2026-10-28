@@ -58,7 +58,7 @@ export default function VerifiedBadgeOffer() {
   const pending = !!v?.requestedAt;
   const chatWith = supportUserId ?? status?.supportUserId;
   const wa = status?.business
-    ? whatsappLink(badgeRequestText(status.business.name, VERIFIED_BADGE.price, { id: session?.user?.id, email: session?.user?.email }))
+    ? whatsappLink(badgeRequestText(status.business.name, VERIFIED_BADGE.price, { id: session?.user?.id, email: session?.user?.email, business: status.business }))
     : null;
 
   let action: React.ReactNode;

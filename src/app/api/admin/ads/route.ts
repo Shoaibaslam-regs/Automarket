@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
 
 /** Clears finished ads from the Past tab. Businesses keep their own copy until they clear it too. */
 export async function DELETE() {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("ads");
   if (!gate.ok) return gate.response;
   try {
     const cleared = await clearAdHistory("admin");

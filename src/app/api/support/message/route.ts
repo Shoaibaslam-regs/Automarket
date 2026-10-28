@@ -5,7 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
-import { getSupportAdmin, triggerPusher } from "@/lib/support";
+import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/support";
 import { supportTopicLabel } from "@/lib/supportTopics";
 import { hitRateLimit, isRateLimited, rateLimitResponse, waitText } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
@@ -42,8 +42,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     const admin = await getSupportAdmin();
-    if (!admin) return NextResponse.json({ error: "The support team isn't available right now. Please try again later." }, { status: 503 });
-    if (admin._id.equals(session.user.id)) return NextResponse.json({ error: "You're the support admin." }, { status: 400 });
+
 
     const me = await User.findById(session.user.id).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
     const org = me?.organizationId ? await Organization.findById(me.organizationId).select("name").lean<{ _id: mongoose.Types.ObjectId; name: string }>() : null;
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
       const populated = await Message.findById(created._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
       const adminId = admin._id.toString();
       await triggerPusher(`chat-${[session.user.id, adminId].sort().join("-")}`, "new-message", populated);
-      await triggerPusher(`user-${adminId}`, "new-notification", { type: "message", from: session.user.name, preview: content.slice(0, 50) });
+      await notifyAdminsOfSupport(session.user.name, content);
     }
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
   } catch (error) {

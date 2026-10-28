@@ -26,7 +26,8 @@ type Listing = {
 const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "PENDING", "SOLD", "RENTED"] as const;
 
 export default function AdminListingsPage() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("listings");
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

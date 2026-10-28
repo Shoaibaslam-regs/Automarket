@@ -9,16 +9,23 @@ import { nextPictureChangeAt, pictureWaitText } from "@/lib/profilePicture";
 import { passwordProblem } from "@/lib/password";
 import { newSessionKey } from "@/lib/accountTokens";
 
+import { sendPasswordAddedEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
+import { reportError } from "@/lib/errorLog";
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
     // Never send secrets back, even hashed ones
-    const user = await User.findById(session.user.id).select("-password -resetTokenHash -resetTokenExpires").lean<{ pictureChanges?: number; pictureChangedAt?: Date }>();
+    const user = await User.findById(session.user.id)
+      .select("-password -resetTokenHash -resetTokenExpires -sessionKey -signupCodeHash -emailVerifyTokenHash -adminKeyHash -adminCodeHash")
+      .lean<{ pictureChanges?: number; pictureChangedAt?: Date }>();
     // When the next new picture can be saved (null: now), so the page can say so instead of offering an upload
     const pictureNextChangeAt = user ? nextPictureChangeAt(user.pictureChanges, user.pictureChangedAt) : null;
-    return NextResponse.json({ user: user && { ...user, pictureNextChangeAt } });
+    // Google sign-ups have no password; the page then offers "Set a password" instead of "Change password"
+    const hasPassword = !!(await User.exists({ _id: session.user.id, password: { $exists: true, $nin: [null, ""] } }));
+    return NextResponse.json({ user: user && { ...user, pictureNextChangeAt, hasPassword } });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
@@ -46,11 +53,14 @@ export async function PATCH(req: NextRequest) {
     const user = await User.findById(session.user.id);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
+    // Accounts made with Google have no password yet: signed in already, they can set a first one without a current one
+    const settingFirst = !!newPassword && !user.password;
     if (newPassword) {
-      if (!currentPassword) return NextResponse.json({ error: "Current password required" }, { status: 400 });
-      if (!user.password) return NextResponse.json({ error: "No password set (OAuth account)" }, { status: 400 });
-      const valid = await bcrypt.compare(currentPassword, user.password);
-      if (!valid) return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
+      if (!settingFirst) {
+        if (!currentPassword) return NextResponse.json({ error: "Current password required" }, { status: 400 });
+        const valid = await bcrypt.compare(currentPassword, user.password!);
+        if (!valid) return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
+      }
       const weak = passwordProblem(newPassword, { email: user.email, name: user.name });
       if (weak) return NextResponse.json({ error: weak }, { status: 400 });
       user.password = await bcrypt.hash(newPassword, 12);
@@ -84,6 +94,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     await user.save();
+    // A first password is a new way into the account, so its owner hears about it
+    if (settingFirst) {
+      await sendPasswordAddedEmail({ to: user.email, name: user.name, resetLink: `${SITE_URL}/forgot-password` })
+        .catch(e => reportError("Password added email failed:", e));
+    }
     return NextResponse.json({
       user: {
         id: user._id.toString(),

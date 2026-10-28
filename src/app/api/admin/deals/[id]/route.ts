@@ -8,7 +8,7 @@ import { reportError } from "@/lib/errorLog";
 
 /** Disables or re-enables a deal (`{ disabledByAdmin }`), e.g. a misleading or abusive offer. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("deals");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("deals");
   if (!gate.ok) return gate.response;
   try {
     const { id } = await params;

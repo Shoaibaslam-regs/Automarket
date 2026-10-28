@@ -310,6 +310,23 @@ function simpleEmail({ to, subject, kicker, name, body, button }: { to: string; 
   });
 }
 
+/** Sent when an account made with Google gets its first password in Profile, so a stranger adding one is noticed. */
+export async function sendPasswordAddedEmail({ to, name, resetLink }: { to: string; name?: string; resetLink: string }) {
+  await simpleEmail({
+    to, name, subject: "A password was added to your AutoGO account", kicker: "Account security",
+    body: "A password was just added to your AutoGO account, so you can now sign in with your email or phone and that password, as well as with Google. If this wasn't you, set a new password straight away and check your Google account.",
+    button: { href: resetLink, label: "Set a new password" },
+  });
+}
+
+/** The 6-digit code that signs an admin in to the admin panel (after their admin key). */
+export async function sendAdminCodeEmail({ to, name, code, minutes }: { to: string; name?: string; code: string; minutes: number }) {
+  await simpleEmail({
+    to, name, subject: `${code} is your AutoGO admin sign-in code`, kicker: "Admin sign-in",
+    body: `Someone used your admin key to open the AutoGO admin panel. Enter this code to finish signing in:<br><br><span style="display:inline-block;font-size:28px;font-weight:700;letter-spacing:6px;color:#0d1117;background:#f6f8fa;border:1px solid #e1e4e8;border-radius:8px;padding:10px 16px">${code}</span><br><br>It works for ${minutes} minutes. If this wasn't you, ask the platform owner for a new admin key straight away.`,
+  });
+}
+
 /** The 6-digit code that confirms a new account (typed on the sign-up or sign-in page). */
 export async function sendSignupCodeEmail({ to, name, code, minutes }: { to: string; name?: string; code: string; minutes: number }) {
   await simpleEmail({

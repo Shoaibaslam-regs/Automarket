@@ -7,6 +7,8 @@ export interface IMessage extends Document {
   listingId?: mongoose.Types.ObjectId;
   content: string;
   read: boolean;
+  /** For messages sent as the AutoGO Support account: the admin who wrote it (shown only in the admin Support inbox) */
+  sentBy?: mongoose.Types.ObjectId;
   /** Users who deleted this message's conversation from their inbox (per-user soft delete). */
   deletedFor: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -19,6 +21,7 @@ const MessageSchema = new Schema<IMessage>(
     listingId: { type: Schema.Types.ObjectId, ref: "Listing" },
     content: { type: String, required: true },
     read: { type: Boolean, default: false },
+    sentBy: { type: Schema.Types.ObjectId, ref: "User" },
     deletedFor: { type: [{ type: Schema.Types.ObjectId, ref: "User" }], default: [] },
   },
   { timestamps: true }

@@ -23,7 +23,7 @@ export async function GET() {
  * The new key works at once and the old one (panel or ADMIN_ACCESS_KEY) stops working.
  */
 export async function PUT(req: NextRequest) {
-  const gate = await requireAdminApi("write");
+  const gate = await requireAdminApi("settings");
   if (!gate.ok) return gate.response;
   if (!isPlatformOwner(gate.admin.email)) {
     return NextResponse.json({ error: "Only the platform owner can change the admin access key" }, { status: 403 });

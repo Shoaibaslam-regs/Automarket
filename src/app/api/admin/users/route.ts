@@ -4,6 +4,7 @@ import { User } from "@/models/User";
 import { isPlatformOwner, requireAdminApi } from "@/lib/adminAuth";
 import { effectivePlanId } from "@/lib/plans";
 
+import { normalizeAdminAccess } from "@/lib/adminRoles";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -11,7 +12,8 @@ export async function GET() {
     const gate = await requireAdminApi("read");
     if (!gate.ok) return gate.response;
     await connectDB();
-    const users = await User.find().sort({ createdAt: -1 })
+    // The shared AutoGO Support account isn't a person to manage
+    const users = await User.find({ isSupportAccount: { $ne: true } }).sort({ createdAt: -1 })
       .select("name email phone role adminAccess plan planExpiresAt planSource createdAt emailVerified")
       .lean<Array<{ email: string; role: string; adminAccess?: string; plan?: string; planExpiresAt?: Date; planSource?: string }>>();
     return NextResponse.json({
@@ -22,7 +24,7 @@ export async function GET() {
           ...u,
           isOwner: owner,
           // Admins created before access levels existed have full access
-          adminAccess: u.role === "ADMIN" ? (owner ? "FULL" : u.adminAccess ?? "FULL") : undefined,
+          adminAccess: u.role === "ADMIN" ? (owner ? "FULL" : normalizeAdminAccess(u.adminAccess)) : undefined,
           effectivePlan: effectivePlanId(u.plan, u.planExpiresAt),
         };
       }),

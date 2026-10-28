@@ -30,6 +30,10 @@ export default function LoginPage() {
   const keyLock = useRateLock("login:access");
   const looksLikeKey = !email.includes("@") && !parseLoginIdentifier(email);
   const adminLock = useRateLock("login:admin");
+  // Admin form: where the 6-digit code went, the code typed, and a notice after "Send a new code"
+  const [adminSentTo, setAdminSentTo] = useState<string | null>(null);
+  const [adminCode, setAdminCode] = useState("");
+  const [adminNotice, setAdminNotice] = useState("");
 
   // ?verified=1 after confirming with a code, ?email= to fill the field
   useEffect(() => {
@@ -76,19 +80,34 @@ export default function LoginPage() {
     if (!res.ok) { setError("Invalid email or password"); return; }
     setEmail("");
     setPassword("");
+    setAdminCode("");
+    setAdminSentTo(data.sentTo ?? null);
+    setAdminNotice(data.sent === false ? "We sent you a code a moment ago. Use the latest one, or wait to send another." : "");
     setMode("admin");
+  }
+
+  async function resendAdminCode() {
+    setAdminNotice("");
+    setError("");
+    const res = await fetch("/api/auth/admin-key/code", { method: "POST" }).catch(() => null);
+    const data = await res?.json().catch(() => ({}));
+    if (res && adminLock.check(res, data)) return;
+    if (!res?.ok) { setError(data?.error ?? "Couldn't send a new code"); return; }
+    setAdminSentTo(data.sentTo);
+    setAdminCode("");
+    setAdminNotice("New code sent.");
   }
 
   async function handleAdminSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", { email: email.trim(), password, portal: "admin", redirect: false });
+    const res = await signIn("credentials", { portal: "admin", code: adminCode, redirect: false });
     setLoading(false);
     if (res?.error) {
       const limited = res.code?.match(/^rate_limited(?:_(\d+))?$/);
       if (limited) adminLock.lock(Number(limited[1]) || 15 * 60);
-      else setError("Invalid admin credentials");
+      else setError("That code isn't right or has expired. Check it, or send a new code.");
       return;
     }
     router.push("/admin");
@@ -132,7 +151,7 @@ export default function LoginPage() {
         await startCodeStep(value);
         setLoading(false);
       } else {
-        setError("Invalid email, phone or password");
+        setError("Invalid email, phone or password. Signed up with Google? Use Continue with Google, or Forgot password to set a password.");
       }
     } else {
       router.push("/dashboard");
@@ -163,22 +182,28 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {adminNotice && !error && (
+                <div role="status" style={{ background: "var(--gh-dafbe1)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", color: "var(--gh-1a7f37)", marginBottom: "16px" }}>
+                  {adminNotice}
+                </div>
+              )}
               <form onSubmit={handleAdminSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <p style={{ fontSize: "13px", color: "var(--gh-57606a)", lineHeight: 1.6 }}>
+                  We&apos;ve emailed a 6-digit code{adminSentTo ? <> to <strong style={{ color: "var(--gh-0d1117)" }}>{adminSentTo}</strong></> : ""}. It works for 10 minutes.
+                </p>
                 <div>
-                  <label htmlFor="admin-email" style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Admin email</label>
-                  <input id="admin-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus autoComplete="username"
-                    placeholder="admin@example.com"
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
+                  <label htmlFor="admin-code" style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Sign-in code</label>
+                  <input id="admin-code" value={adminCode} onChange={e => { setAdminCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                    inputMode="numeric" autoComplete="one-time-code" autoFocus required placeholder="••••••"
+                    style={{ width: "100%", padding: "12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "22px", letterSpacing: "8px", textAlign: "center", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
                 </div>
-                <div>
-                  <label htmlFor="admin-password" style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--gh-0d1117)", marginBottom: "6px" }}>Admin password</label>
-                  <input id="admin-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password"
-                    placeholder="••••••••"
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", color: "var(--gh-0d1117)", outline: "none", boxSizing: "border-box" }} />
-                </div>
-                <button type="submit" disabled={loading || adminLock.locked}
-                  style={{ padding: "11px", background: loading || adminLock.locked ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading || adminLock.locked ? "not-allowed" : "pointer" }}>
+                <button type="submit" disabled={loading || adminLock.locked || adminCode.length !== 6}
+                  style={{ padding: "11px", background: loading || adminLock.locked || adminCode.length !== 6 ? "var(--gh-8c959f)" : "var(--gh-0d1117)", color: "var(--gh-ffffff)", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: loading || adminLock.locked ? "not-allowed" : "pointer" }}>
                   {adminLock.locked ? adminLock.text : loading ? "Signing in..." : "Sign in as admin"}
+                </button>
+                <button type="button" onClick={resendAdminCode} disabled={loading || adminLock.locked}
+                  style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", cursor: "pointer", textDecoration: "underline" }}>
+                  Send a new code
                 </button>
               </form>
 

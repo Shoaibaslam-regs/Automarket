@@ -23,7 +23,8 @@ const field = "w-full rounded-xl border border-slate-200 bg-white px-3 text-sm t
 
 /** Admin: post announcements, updates and offers to every business that follows AutoGO Official. */
 export default function AdminAnnouncementsPage() {
-  const { canWrite } = useAdminAccess();
+  // What this admin's role may do here (src/lib/adminRoles.ts)
+  const canWrite = useAdminAccess().can("announcements");
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [stats, setStats] = useState({ followers: 0, businesses: 0 });
   const [form, setForm] = useState(EMPTY);
