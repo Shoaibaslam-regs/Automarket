@@ -48,6 +48,13 @@ export async function POST(req: NextRequest) {
 
     const me = await User.findById(session.user.id).select("organizationId").lean<{ organizationId?: mongoose.Types.ObjectId }>();
     const org = me?.organizationId ? await Organization.findById(me.organizationId).select("name").lean<{ _id: mongoose.Types.ObjectId; name: string }>() : null;
+    // Help & support topics are about a business; an account without one can only send feedback
+    if (!org && !isFeedback) {
+      return NextResponse.json(
+        { error: "Register your business first to contact business support. You can still send feedback from the menu.", code: "NO_BUSINESS" },
+        { status: 403 }
+      );
+    }
     const context = [org ? `Business: ${org.name} (business ID #${String(org._id).slice(-6)})` : null, `ID #${session.user.id.slice(-6)}`].filter(Boolean).join(" · ");
     const content = `[${topicLabel}] ${context}\n\n${text}`;
 

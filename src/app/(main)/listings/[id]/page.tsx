@@ -5,7 +5,6 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
 import { Inspection } from "@/models/Inspection";
-import { auth } from "@/lib/auth";
 import mongoose from "mongoose";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
@@ -28,7 +27,6 @@ import CompareButton from "@/components/listings/CompareButton";
 import ShareButton from "@/components/ShareButton";
 import EmiCalculator from "@/components/listings/EmiCalculator";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
-import { getMembership } from "@/lib/business";
 import StarRating from "@/components/reviews/StarRating";
 import ReportButton from "@/components/reports/ReportButton";
 import ListingCard from "@/components/listings/ListingCard";
@@ -38,10 +36,18 @@ import type { IListing } from "@/models/Listing";
 import "@/models/Organization";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 import { whatsappUrl } from "@/lib/phone";
-import ContactBar from "@/components/listings/ContactBar";
+import { ListingContactBar, ListingViewerProvider, ShowFor } from "@/components/listings/ListingViewer";
 
 import AdminBadge from "@/components/AdminBadge";
 type Props = { params: Promise<{ id: string }> };
+
+// The page is the same for every visitor (who is looking is worked out in the browser, ListingViewer), so the
+// CDN serves it and rebuilds it at most once a minute; edits clear it straight away through listingTag
+export const revalidate = 60;
+// No pages are built ahead: each one is built on its first visit and then cached (without this, a [param] route renders on every request)
+export function generateStaticParams() {
+  return [];
+}
 
 /**
  * Everything on the page that is the same for every visitor, cached for PUBLIC_CACHE_SECONDS and cleared
@@ -186,23 +192,19 @@ export default async function ListingDetailPage({ params }: Props) {
     estimate?: number;
   } | null;
 
-  const session = await auth();
   const sellerId = l.sellerId?._id?.toString();
-  const viewerId = session?.user?.id;
-  const isOwner = !!viewerId && viewerId === sellerId;
 
   const isForSale = l.type === "SALE" || l.type === "BOTH";
   const { business, rating } = page;
   // Sold or rented: shown with a tag so visitors move on to vehicles they can still buy or rent
   const closed = closedTag(l.status);
-  // Business vehicles for sale can be bought online, except by the business's own team
-  const viewerOrg = viewerId && business ? (await getMembership(viewerId))?.organizationId.toString() : undefined;
-  const canBuy = !!business && isForSale && !closed && !isOwner && viewerOrg !== business.id;
+  // Business vehicles for sale can be bought online, except by the business's own team (ShowFor "notTeam")
+  const canBuy = !!business && isForSale && !closed;
 
   const priceText = `PKR ${l.type === "RENT" ? l.price.toLocaleString("en-PK") : formatLakh(l.price)}`;
   const whatsapp = whatsappUrl(l.sellerId?.phone, `Hi, I'm interested in: ${l.title}`);
   // Phones: price and contact fixed to the bottom, for anyone who isn't the seller while it can still be bought or rented
-  const showContactBar = !!l.sellerId && !isOwner && !closed;
+  const showContactBar = !!l.sellerId && !closed;
 
   // Shown as icon + value; the label is the icon's tooltip and is read out by screen readers
   const specs = [
@@ -248,6 +250,7 @@ export default async function ListingDetailPage({ params }: Props) {
   };
 
   return (
+    <ListingViewerProvider listingId={id} sellerId={sellerId} business={!!business}>
     <div className="min-h-screen bg-slate-50">
       <script
         type="application/ld+json"
@@ -410,31 +413,30 @@ export default async function ListingDetailPage({ params }: Props) {
                     </p>
                   )}
                   {/* One dark main action (Call), quiet outlined ones beside it */}
-                  {!isOwner && (
+                  <ShowFor who="notOwner">
                     <div className="mt-4 space-y-2">
                       {l.sellerId.phone && (
                         <a href={`tel:${l.sellerId.phone}`} className={PRIMARY_BTN}>
                           <Phone size={16} /> Call seller
                         </a>
                       )}
-                      {(whatsapp || session?.user) && (
-                        <div className={`grid gap-2 ${whatsapp && session?.user ? "grid-cols-2" : "grid-cols-1"}`}>
-                          {whatsapp && (
-                            <a href={whatsapp} target="_blank" rel="noreferrer" className={OUTLINE_BTN}>
-                              <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
-                            </a>
-                          )}
-                          {session?.user && (
-                            <Link href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`} className={OUTLINE_BTN}>
-                              <MessageSquare size={16} className="text-slate-500" /> Message
-                            </Link>
-                          )}
-                        </div>
-                      )}
+                      {/* One or two equal columns: Message only shows to signed-in visitors */}
+                      <div className="flex gap-2 empty:hidden">
+                        {whatsapp && (
+                          <a href={whatsapp} target="_blank" rel="noreferrer" className={`flex-1 ${OUTLINE_BTN}`}>
+                            <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
+                          </a>
+                        )}
+                        <ShowFor who="signedIn">
+                          <Link href={`/messages?with=${l.sellerId?._id}&listing=${l._id}`} className={`flex-1 ${OUTLINE_BTN}`}>
+                            <MessageSquare size={16} className="text-slate-500" /> Message
+                          </Link>
+                        </ShowFor>
+                      </div>
                     </div>
-                  )}
+                  </ShowFor>
                   {/* A short safety reminder next to the contact buttons */}
-                  {!isOwner && (
+                  <ShowFor who="notOwner">
                     <p className="mt-4 flex items-start gap-2 border-t border-slate-100 pt-3.5 text-xs leading-relaxed text-slate-500">
                       <ShieldAlert size={14} className="mt-px flex-shrink-0 text-amber-500" />
                       <span>
@@ -442,10 +444,12 @@ export default async function ListingDetailPage({ params }: Props) {
                         <Link href="/help#safety" className="font-semibold text-slate-700 hover:underline">Safety tips</Link>
                       </span>
                     </p>
-                  )}
-                  <div className="mt-3 text-center">
-                    <ReportButton targetType="LISTING" targetId={String(l._id)} label={l.title} hidden={isOwner || (!!business && viewerOrg === business.id)} />
-                  </div>
+                  </ShowFor>
+                  <ShowFor who="notTeam">
+                    <div className="mt-3 text-center">
+                      <ReportButton targetType="LISTING" targetId={String(l._id)} label={l.title} />
+                    </div>
+                  </ShowFor>
                 </>
               ) : (
                 <p className="text-sm text-slate-400">Seller info unavailable</p>
@@ -453,11 +457,13 @@ export default async function ListingDetailPage({ params }: Props) {
             </div>
 
             {canBuy && business && (
+              <ShowFor who="notTeam">
               <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
                 <h2 className="text-sm font-semibold text-slate-900">Buy from {business.name}</h2>
                 <p className="mb-3 mt-1 text-xs text-slate-500">Send a purchase request. The business agrees the price with you, and you get a sale slip when it&apos;s done.</p>
                 <BuyRequestButton listingId={String(l._id)} title={l.title} price={l.price} businessName={business.name} />
               </div>
+              </ShowFor>
             )}
 
             {/* Rental */}
@@ -491,15 +497,19 @@ export default async function ListingDetailPage({ params }: Props) {
                   <p className="mt-4 text-center text-xs font-medium text-slate-500">
                     {closed.tone === "sold" ? "Sold, so it can't be booked" : "Rented out right now, so it can't be booked"}
                   </p>
-                ) : !isOwner && session?.user && (
-                  <Link href={`/rentals/${l._id}/book`} className={`mt-4 ${PRIMARY_BTN}`}>
-                    <CalendarCheck size={16} /> Book now
-                  </Link>
-                )}
-                {!closed && !isOwner && !session?.user && (
-                  <Link href="/login" className={`mt-4 ${OUTLINE_BTN}`}>
-                    Sign in to book online
-                  </Link>
+                ) : (
+                  <>
+                    <ShowFor who="signedInNotOwner">
+                      <Link href={`/rentals/${l._id}/book`} className={`mt-4 ${PRIMARY_BTN}`}>
+                        <CalendarCheck size={16} /> Book now
+                      </Link>
+                    </ShowFor>
+                    <ShowFor who="guest">
+                      <Link href="/login" className={`mt-4 ${OUTLINE_BTN}`}>
+                        Sign in to book online
+                      </Link>
+                    </ShowFor>
+                  </>
                 )}
               </div>
             )}
@@ -519,7 +529,7 @@ export default async function ListingDetailPage({ params }: Props) {
               </a>
             )}
 
-            {isOwner && (
+            <ShowFor who="owner">
               <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
                 <h2 className="mb-3 text-sm font-semibold text-slate-900">Manage listing</h2>
                 <div className="mb-3">
@@ -535,7 +545,7 @@ export default async function ListingDetailPage({ params }: Props) {
                   </Link>
                 </div>
               </div>
-            )}
+            </ShowFor>
           </div>
         </div>
 
@@ -555,15 +565,16 @@ export default async function ListingDetailPage({ params }: Props) {
         <TrackListingView listing={{ id, title: l.title, price: l.price, type: l.type, image: l.images?.[0], location: l.location, year: l.year }} />
       </div>
       {showContactBar && (
-        <ContactBar
+        <ListingContactBar
           price={priceText}
           perDay={l.type === "RENT"}
           phone={l.sellerId?.phone}
           whatsapp={whatsapp}
-          messageHref={session?.user ? `/messages?with=${sellerId}&listing=${l._id}` : undefined}
-          bookHref={rental ? (session?.user ? `/rentals/${l._id}/book` : "/login") : undefined}
+          messageHref={`/messages?with=${sellerId}&listing=${l._id}`}
+          bookHref={rental ? `/rentals/${l._id}/book` : undefined}
         />
       )}
     </div>
+    </ListingViewerProvider>
   );
 }

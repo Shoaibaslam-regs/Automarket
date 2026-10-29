@@ -7,13 +7,11 @@ import { PUBLIC_CACHE_SECONDS, businessTag } from "@/lib/pageCache";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
 import { Building2, CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { Listing, type IListing } from "@/models/Listing";
 import { BusinessReview } from "@/models/BusinessReview";
 import { getOrgUserIds } from "@/lib/business";
-import { canReviewBusiness } from "@/lib/reviews";
 import { getLiveDeals } from "@/lib/publicDeals";
 import { publicStatusQuery } from "@/lib/listingFilters";
 import DealCard from "@/components/deals/DealCard";
@@ -21,13 +19,20 @@ import { isVerified, type BadgeVerification } from "@/lib/plans";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import DealerVehicles from "@/components/listings/DealerVehicles";
 import StarRating from "@/components/reviews/StarRating";
-import BusinessReviews, { type ReviewViewer } from "@/components/reviews/BusinessReviews";
+import { DealerReportButton, DealerReviews, DealerViewerProvider } from "@/components/reviews/DealerViewer";
 import { toReviewView } from "@/components/reviews/types";
 import ShareButton from "@/components/ShareButton";
-import ReportButton from "@/components/reports/ReportButton";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
 
 type Props = { params: Promise<{ slug: string }> };
+
+// The same for every visitor (your own review and the team check load in the browser, DealerViewer), so the CDN
+// serves it and rebuilds it at most once a minute; changes clear it straight away through businessTag
+export const revalidate = 60;
+// No pages are built ahead: each one is built on its first visit and then cached (without this, a [param] route renders on every request)
+export function generateStaticParams() {
+  return [];
+}
 type Org = {
   _id: mongoose.Types.ObjectId; name: string; slug: string; type: "DEALER" | "RENTAL" | "BOTH";
   city?: string; address?: string; phone?: string; email?: string; description?: string; createdAt: Date;
@@ -91,34 +96,22 @@ export default async function DealerPage({ params }: Props) {
   const { slug } = await params;
   const page = await getBusinessPage(slug);
   if (!page) notFound();
-  const { org, memberIds, listings, ratingRows, firstReviews } = page;
+  const { org, listings, ratingRows, firstReviews } = page;
   const deals = await getLiveDeals({ orgId: String(org._id), limit: 12 });
   const nowMs = new Date().getTime();
-
-  const session = await auth();
-  const viewerId = session?.user?.id;
-
-  // Only the viewer's own review and whether they may write one are read fresh on every visit.
-  // A cache hit skips the loader, so connect here before querying.
-  if (viewerId) await connectDB();
-  const [myReview, eligible] = await Promise.all([
-    viewerId ? BusinessReview.findOne({ organizationId: org._id, reviewerId: viewerId }).populate("reviewerId", "name image").lean() : null,
-    viewerId ? canReviewBusiness(viewerId, String(org._id)) : false,
-  ]);
 
   const distribution = [0, 0, 0, 0, 0, 0];
   for (const r of ratingRows) distribution[r._id] = r.count;
   const count = distribution.reduce((a, b) => a + b, 0);
   const average = count ? Math.round((distribution.reduce((sum, c, star) => sum + c * star, 0) / count) * 10) / 10 : 0;
 
-  const isMember = !!viewerId && memberIds.includes(viewerId);
-  const viewer: ReviewViewer = !viewerId ? "anon" : isMember ? "member" : eligible || myReview ? "eligible" : "ineligible";
   const available = listings.filter(l => l.status === "ACTIVE");
   const forSale = available.filter(l => l.type !== "RENT").length;
   const forRent = available.filter(l => l.type !== "SALE").length;
   const since = new Date(org.createdAt).getFullYear();
 
   return (
+    <DealerViewerProvider slug={org.slug}>
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
@@ -160,7 +153,7 @@ export default async function DealerPage({ params }: Props) {
               </a>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name} />
-                <ReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} hidden={isMember} tone="dark" />
+                <DealerReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} tone="dark" />
               </div>
             </div>
           </div>
@@ -198,15 +191,13 @@ export default async function DealerPage({ params }: Props) {
             listings={listings}
           />
 
-          <BusinessReviews
+          <DealerReviews
             slug={org.slug}
             businessName={org.name}
-            viewer={viewer}
             initialReviews={firstReviews.map(toReviewView)}
             initialSummary={{ average, count }}
             initialHasMore={count > REVIEW_PAGE}
             distribution={distribution}
-            myReview={myReview ? toReviewView(myReview) : undefined}
           />
         </div>
 
@@ -245,5 +236,6 @@ export default async function DealerPage({ params }: Props) {
         </aside>
       </div>
     </div>
+    </DealerViewerProvider>
   );
 }

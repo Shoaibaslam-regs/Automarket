@@ -10,7 +10,8 @@ import { useRateLock } from "@/hooks/useRateLock";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
 /** anon: signed out · member: works at this business · eligible: may review · ineligible: hasn't dealt with it */
-export type ReviewViewer = "anon" | "member" | "eligible" | "ineligible";
+/** "loading" while the browser asks who the visitor is (the business page is cached for everyone) */
+export type ReviewViewer = "loading" | "anon" | "member" | "eligible" | "ineligible";
 
 const RATING_WORDS = ["", "Poor", "Fair", "Good", "Very good", "Excellent"];
 const fmt = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -84,7 +85,7 @@ export default function BusinessReviews({
   // A first review is kept as a draft per business; editing a posted one isn't
   const draftValue = useMemo(() => ({ rating, comment }), [rating, comment]);
   const draft = useFormDraft(`review:${slug}`, draftValue, d => { setRating(d.rating); setComment(d.comment); },
-    { isEmpty: d => !d.rating && !d.comment.trim(), enabled: !mine });
+    { isEmpty: d => !d.rating && !d.comment.trim(), enabled: !mine && viewer !== "loading" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -188,7 +189,9 @@ export default function BusinessReviews({
 
       {/* Write / edit */}
       <div className="mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200 sm:p-5">
-        {viewer === "anon" ? (
+        {viewer === "loading" ? (
+          <div aria-hidden className="h-5 w-2/3 animate-pulse rounded bg-slate-200/70" />
+        ) : viewer === "anon" ? (
           <p className="text-sm text-slate-600">
             <Link href="/login" className="font-semibold text-indigo-700 hover:underline">Sign in</Link> to review {businessName}.
           </p>

@@ -21,6 +21,10 @@ import ReportButton from "@/components/reports/ReportButton";
 
 // Same for every visitor, so the page itself is cached too; deal changes clear it straight away
 export const revalidate = 60;
+// No pages are built ahead: each one is built on its first visit and then cached (without this, a [param] route renders on every request)
+export function generateStaticParams() {
+  return [];
+}
 
 type Props = { params: Promise<{ id: string }> };
 
