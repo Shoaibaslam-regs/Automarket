@@ -243,6 +243,11 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+          <div className="mt-4 text-center">
+            <Link href="/about" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-900">
+              More about AutoGO <ArrowRight size={14} />
+            </Link>
+          </div>
         </section>
 
         {/* ── How it works ── */}

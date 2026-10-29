@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { OfficialAvatar, OfficialName } from "@/components/business/Official";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import BrandLogo from "@/components/BrandLogo";
 import { Building2, Car, KeyRound, Rocket } from "lucide-react";
 import Link from "next/link";
 import Select from "@/components/ui/Select";
@@ -83,8 +82,6 @@ export default function OnboardingPage() {
 
       {/* Header */}
       <div style={{ background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", display: "flex", alignItems: "center", gap: "12px" }}>
-        <BrandLogo height={24} phoneHeight={18} />
-        <div style={{ width: "1px", height: "20px", background: "var(--gh-e1e4e8)" }} />
         <span style={{ fontSize: "13px", color: "var(--gh-57606a)", fontWeight: 500 }}>Business setup</span>
       </div>
 
