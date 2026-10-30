@@ -11,16 +11,23 @@ import BookingForm from "@/components/rentals/BookingForm";
 import mongoose from "mongoose";
 import Link from "next/link";
 import { ChevronLeft, ImageOff, MapPin, Phone } from "lucide-react";
+import { loginFor } from "@/lib/callbackPath";
+import { pickedDay } from "@/lib/bookings";
 
 export default async function BookingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  /** `start`: the pick-up day tapped on the listing's calendar */
+  searchParams: Promise<{ start?: string | string[] }>;
 }) {
   const { id } = await params;
+  const start = pickedDay((await searchParams).start);
   const session = await auth();
 
-  if (!session?.user) redirect("/login");
+  // Signing in brings them back here with the day still picked
+  if (!session?.user) redirect(loginFor(`/rentals/${id}/book${start ? `?start=${start}` : ""}`));
   if (!mongoose.Types.ObjectId.isValid(id)) notFound();
 
   await connectDB();
@@ -128,6 +135,7 @@ export default async function BookingPage({
               deposit={rental.deposit}
               availableFrom={rental.availableFrom.toISOString()}
               availableTo={rental.availableTo?.toISOString()}
+              initialStart={start}
             />
           </div>
         </div>

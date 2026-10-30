@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Database, HardDrive, RefreshCw, TriangleAlert } from "lucide-react";
+import { Database, HardDrive, Mail, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 import { DataTable, PageHeader, Panel, btn } from "@/components/admin/ui";
 import {
-  formatBytes, percentText, usageLevel, usagePercent,
-  type CollectionUsage, type SystemUsage, type UsageLevel,
+  formatBytes, formatCount, percentText, usageLevel, usagePercent,
+  type CollectionUsage, type ServiceUsage, type SystemUsage, type UsageFailure, type UsageLevel,
 } from "@/lib/usageMeter";
 
 const BAR: Record<UsageLevel, string> = { ok: "bg-emerald-500", warn: "bg-amber-500", danger: "bg-rose-600", unknown: "bg-slate-300" };
@@ -71,7 +71,69 @@ function Meter({
   );
 }
 
-/** Database and UploadThing storage against their limits, read every 10 minutes (or on Refresh). */
+const DAY_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const shortDay = (day: string) => `${Number(day.slice(8))} ${DAY_MONTHS[Number(day.slice(5, 7)) - 1]}`;
+
+/**
+ * A counted service (Gemini calls, emails sent): today against its daily limit, the last 7 and 30 days, failures,
+ * and a bar per day for the last two weeks.
+ */
+function CountMeter({ title, icon: Icon, unit, data, noLimit, advice }: {
+  title: string;
+  icon: typeof Database;
+  unit: string;
+  data?: ServiceUsage | UsageFailure;
+  noLimit: string;
+  advice: { warn: string; danger: string };
+}) {
+  if (!data) return <Meter title={title} icon={Icon} />;
+  if (!data.ok) return <Meter title={title} icon={Icon} error={data.error} />;
+  const level = usageLevel(data.today, data.dailyLimit);
+  const peak = Math.max(1, ...data.daily.map(d => d.calls));
+  return (
+    <Panel bodyClassName="p-4 sm:p-5">
+      <div className="flex items-center gap-2">
+        <Icon size={16} className="text-slate-500" />
+        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+        {data.dailyLimit && <span className={`ml-auto text-sm font-bold tabular-nums ${LEVEL_TEXT[level]}`}>{percentText(data.today, data.dailyLimit)}</span>}
+      </div>
+      <p className="mt-3 text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+        {formatCount(data.today)} <span className="text-sm font-medium text-slate-400">{unit} today{data.dailyLimit ? ` of ${formatCount(data.dailyLimit)} a day` : ""}</span>
+      </p>
+      {data.dailyLimit ? (
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(usagePercent(data.today, data.dailyLimit))} aria-label={`${title} today`}>
+          <div className={`h-full rounded-full transition-[width] duration-500 ${BAR[level]}`} style={{ width: `${Math.max(usagePercent(data.today, data.dailyLimit), data.today > 0 ? 1 : 0)}%` }} />
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-slate-400">{noLimit}</p>
+      )}
+      {/* The last 14 days, one bar each, today on the right */}
+      <div className="mt-4 flex h-14 items-end gap-1" aria-label={`${title}, last ${data.daily.length} days`}>
+        {data.daily.map((d, i) => (
+          <div key={d.day} title={`${shortDay(d.day)}: ${d.calls.toLocaleString("en-PK")}`}
+            className={`flex-1 rounded-t ${i === data.daily.length - 1 ? "bg-indigo-500" : "bg-slate-300"}`}
+            style={{ height: `${d.calls ? Math.max(6, (d.calls / peak) * 100) : 3}%` }} />
+        ))}
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+        <span>{shortDay(data.daily[0].day)}</span><span>Today</span>
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+        <div><dt className="text-slate-400">Last 7 days</dt><dd className="font-semibold text-slate-700 tabular-nums">{formatCount(data.week)}</dd></div>
+        <div><dt className="text-slate-400">Last 30 days</dt><dd className="font-semibold text-slate-700 tabular-nums">{formatCount(data.month)}</dd></div>
+        <div><dt className="text-slate-400">Failed (30 days)</dt><dd className={`font-semibold tabular-nums ${data.failures ? "text-rose-600" : "text-slate-700"}`}>{formatCount(data.failures)}</dd></div>
+        {data.service === "gemini" && <div><dt className="text-slate-400">Tokens (30 days)</dt><dd className="font-semibold text-slate-700 tabular-nums">{formatCount(data.tokens)}</dd></div>}
+      </dl>
+      {(level === "warn" || level === "danger") && (
+        <p className={`mt-4 flex items-start gap-1.5 text-xs leading-relaxed ${LEVEL_TEXT[level]}`}>
+          <TriangleAlert size={13} className="mt-px flex-shrink-0" /> {level === "danger" ? advice.danger : advice.warn}
+        </p>
+      )}
+    </Panel>
+  );
+}
+
+/** Database and UploadThing storage against their limits, Gemini calls and emails sent, read every 10 minutes (or on Refresh). */
 export default function AdminUsagePage() {
   const [data, setData] = useState<SystemUsage | null>(null);
   const [failed, setFailed] = useState(false);
@@ -102,7 +164,7 @@ export default function AdminUsagePage() {
     <div>
       <PageHeader
         title="System usage"
-        description="How much of the database and file storage is used. Checked every 10 minutes."
+        description="How much of the database and file storage is used, and how many AI checks and emails were sent. Checked every 10 minutes."
         actions={
           <>
             {data && <span className="text-xs text-slate-400">Checked {ago(data.checkedAt)}</span>}
@@ -148,6 +210,31 @@ export default function AdminUsagePage() {
           advice={{
             warn: "Getting full. Photos of deleted listings and accounts are removed automatically; upgrading the UploadThing plan raises the limit.",
             danger: "Almost full: new photo uploads will fail at the limit. Upgrade the UploadThing plan soon.",
+          }}
+        />
+      </div>
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <CountMeter
+          title="AI photo checks (Gemini)"
+          icon={Sparkles}
+          unit="calls"
+          data={data?.gemini}
+          noLimit="No daily limit set. Add GEMINI_DAILY_LIMIT (your Gemini plan's requests per day) to see how close you are."
+          advice={{
+            warn: "Getting close to the daily Gemini limit. Past it, photo uploads are refused until the limit resets.",
+            danger: "At the daily Gemini limit: photo checks fail, so new listings and deals can't add photos until it resets. Raise the plan's limit.",
+          }}
+        />
+        <CountMeter
+          title="Emails sent"
+          icon={Mail}
+          unit="emails"
+          data={data?.email}
+          noLimit="No daily limit set for this email service. Add EMAIL_DAILY_LIMIT to compare against it."
+          advice={{
+            warn: "Getting close to the daily email limit. Past it, sign-up codes and password resets stop arriving until tomorrow.",
+            danger: "At the daily email limit: sign-up codes, password resets and booking emails fail. Move to a transactional service (SMTP_HOST) for more.",
           }}
         />
       </div>

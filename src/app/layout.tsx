@@ -10,8 +10,6 @@ import { Providers } from "@/components/providers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { themeInitScript } from "@/lib/theme";
 import PwaRegister from "@/components/pwa/PwaRegister";
-import SplashScreen from "@/components/pwa/SplashScreen";
-import { splashInitScript } from "@/lib/splash";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -60,10 +58,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <script dangerouslySetInnerHTML={{ __html: splashInitScript }} />
       </head>
       <body className={geist.className}>
-        <SplashScreen />
         <Providers>{children}</Providers>
         <PwaRegister />
       </body>

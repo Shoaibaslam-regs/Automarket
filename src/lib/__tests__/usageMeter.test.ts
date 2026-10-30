@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes, percentText, usageAlerts, usageLevel, usagePercent, type DbUsage, type UploadUsage } from "@/lib/usageMeter";
+import { GMAIL_DAILY_LIMIT, USAGE_CHART_DAYS, formatBytes, formatCount, percentText, pkDayKey, summarizeService, usageAlerts, usageLevel, usagePercent, type DbUsage, type UploadUsage } from "@/lib/usageMeter";
 
 const MB = 1024 * 1024;
 
@@ -49,5 +49,44 @@ describe("usageAlerts", () => {
   });
   it("ignores a service that couldn't be read", () => {
     expect(usageAlerts({ db: { ok: false, error: "x" }, uploads: up(2000 * MB) })).toBe(1);
+  });
+});
+
+describe("counted services (Gemini, email)", () => {
+  // 30 Oct 2026, 21:00 in Pakistan (16:00 UTC)
+  const now = new Date("2026-10-30T16:00:00Z");
+  const rows = [
+    { day: "2026-10-30", calls: 120, failures: 2, tokens: 50_000 },
+    { day: "2026-10-28", calls: 30, failures: 0, tokens: 10_000 },
+    { day: "2026-10-10", calls: 400, failures: 5, tokens: 0 },
+    { day: "2026-08-01", calls: 999, failures: 9, tokens: 0 },
+  ];
+
+  it("keeps days in Pakistan time", () => {
+    expect(pkDayKey(new Date("2026-10-30T19:30:00Z"))).toBe("2026-10-31");
+    expect(pkDayKey(new Date("2026-10-30T18:59:00Z"))).toBe("2026-10-30");
+  });
+
+  it("adds up today, the last 7 and 30 days, and fills every chart day", () => {
+    const s = summarizeService("email", rows, now, 500);
+    expect(s).toMatchObject({ today: 120, week: 150, month: 550, failures: 7, tokens: 60_000, dailyLimit: 500 });
+    expect(s.daily).toHaveLength(USAGE_CHART_DAYS);
+    expect(s.daily[USAGE_CHART_DAYS - 1]).toEqual({ day: "2026-10-30", calls: 120 });
+    expect(s.daily[USAGE_CHART_DAYS - 3]).toEqual({ day: "2026-10-28", calls: 30 });
+    expect(s.daily[0].calls).toBe(0);
+  });
+
+  it("warns on today's count against the daily limit only", () => {
+    const base = { db: { ok: false as const, error: "" }, uploads: { ok: false as const, error: "" } };
+    expect(usageAlerts({ ...base, email: summarizeService("email", [{ day: "2026-10-30", calls: 450, failures: 0, tokens: 0 }], now, GMAIL_DAILY_LIMIT) })).toBe(1);
+    expect(usageAlerts({ ...base, email: summarizeService("email", rows, now, GMAIL_DAILY_LIMIT) })).toBe(0);
+    expect(usageAlerts({ ...base, gemini: summarizeService("gemini", [{ day: "2026-10-30", calls: 9999, failures: 0, tokens: 0 }], now, null) })).toBe(0);
+  });
+
+  it("shortens big counts", () => {
+    expect(formatCount(1234)).toBe("1,234");
+    expect(formatCount(250_000)).toBe("250K");
+    expect(formatCount(1_500_000)).toBe("1.5M");
+    expect(formatCount(2_000_000)).toBe("2M");
   });
 });

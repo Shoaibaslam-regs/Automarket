@@ -137,6 +137,12 @@ export function heldDays(start: Date | string, end: Date | string): string[] {
   return days;
 }
 
+/** A "YYYY-MM-DD" day from the address (`?start=` from a calendar tap), or undefined when it isn't one. */
+export function pickedDay(value: unknown): string | undefined {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  return isNaN(new Date(`${value}T00:00:00Z`).getTime()) || dayKey(`${value}T00:00:00Z`) !== value ? undefined : value;
+}
+
 /** True when a new booking from `start` to `end` would need a day that is already taken. */
 export function needsTakenDay(start: Date | string, end: Date | string, taken: Set<string>): boolean {
   return heldDays(start, end).some(d => taken.has(d));

@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
-import { FeedbackLink } from "@/components/FeedbackDialog";
+import { FeedbackLink } from "@/components/FeedbackHost";
+import { seoHeading, seoPath, type SeoPage } from "@/lib/seoPages";
+
+// Search-landing pages (src/lib/seoPages.ts) for the biggest cities, so visitors and search engines find them
+const POPULAR: SeoPage[] = [
+  ...["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan"].map(city => ({ kind: "sale" as const, city, make: null })),
+  ...["Karachi", "Lahore", "Islamabad"].map(city => ({ kind: "rent" as const, city, make: null })),
+];
 
 export default function Footer() {
   return (
@@ -64,6 +71,15 @@ export default function Footer() {
               ))}
             </div>
           ))}
+        </div>
+
+        <div className="mb-5 border-t border-gray-200 pt-4 text-center md:text-left">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-900">Popular searches</p>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:justify-start">
+            {POPULAR.map(p => (
+              <Link key={seoPath(p)} href={seoPath(p)} className="text-gray-500 transition hover:text-black">{seoHeading(p)}</Link>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col items-center gap-2 border-t border-gray-200 pt-4 text-center sm:flex-row sm:justify-between">

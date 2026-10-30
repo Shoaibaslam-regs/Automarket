@@ -21,6 +21,8 @@ interface Props {
   deposit: number;
   availableFrom: string;
   availableTo?: string;
+  /** A pick-up day already chosen (tapped on the listing's or deal's calendar, `?start=`) */
+  initialStart?: string;
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -45,10 +47,12 @@ const QUICK_DAYS = [1, 2, 3, 7];
 const dateInputClass =
   "block h-12 w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-base text-slate-900 outline-none transition hover:border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:text-sm";
 
-export default function BookingForm({ rentalId, dealId, dailyRate, deposit, availableFrom, availableTo }: Props) {
+export default function BookingForm({ rentalId, dealId, dailyRate, deposit, availableFrom, availableTo, initialStart }: Props) {
   const router = useRouter();
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // A day tapped on the calendar arrives picked, with a one-day return to adjust
+  const firstDay = initialStart && initialStart >= new Date().toISOString().slice(0, 10) ? initialStart : "";
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(firstDay ? addDays(firstDay, 1) : "");
   const bookLock = useRateLock("bookings");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,7 +68,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
   // Days already confirmed for someone else (requests don't count); the calendar shows them and they can't be picked
   const { taken, loading: takenLoading } = useTakenDays(dealId ? { dealId } : { rentalId: rentalId ?? "" });
   // Tapping the calendar: first the pick-up day, then the return day
-  const [picking, setPicking] = useState<"start" | "end">("start");
+  const [picking, setPicking] = useState<"start" | "end">(firstDay ? "end" : "start");
 
   function pickStart(v: string) {
     setStartDate(v);

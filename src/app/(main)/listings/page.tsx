@@ -167,14 +167,18 @@ export default function ListingsPage({
   const [availableOnly, setAvailableOnly] = useState(initialParams.available === "1");
   // Phones open in the list view (photo beside details), or the view the visitor last picked on a phone;
   // tablets and desktops always open in the grid. Switching across the phone width (rotating, resizing)
-  // re-applies the rule. Applied after mount so the server HTML stays the grid.
+  // re-applies the rule. Applied after mount so the server HTML stays the grid. Until then (`viewKnown` false)
+  // the loading placeholders follow the screen width in CSS (list on phones, grid from sm), so a slow phone
+  // doesn't see grid placeholders swapped for list ones once the code arrives (a layout shift).
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [viewKnown, setViewKnown] = useState(false);
   useEffect(() => {
     const phone = window.matchMedia(PHONE_QUERY);
     const apply = () => {
       let saved: string | null = null;
       try { saved = localStorage.getItem(VIEW_KEY); } catch {}
       setView(phone.matches ? (saved === "grid" ? "grid" : "list") : "grid");
+      setViewKnown(true);
     };
     queueMicrotask(apply);
     phone.addEventListener("change", apply);
@@ -923,8 +927,10 @@ export default function ListingsPage({
               </div>
             )}
 
-            {loading && view === "list" ? (
-              <div className="flex flex-col gap-3 sm:gap-4">
+            {loading ? (
+              <>
+              {(view === "list" || !viewKnown) && (
+              <div className={`flex flex-col gap-3 sm:gap-4 ${viewKnown ? "" : "sm:hidden"}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:gap-5 sm:rounded-[22px] sm:p-2">
                     <div className="aspect-[4/3] w-[42%] flex-shrink-0 animate-pulse rounded-xl bg-slate-200/70 sm:w-[260px] sm:rounded-2xl md:w-[300px] lg:w-[320px]" />
@@ -937,8 +943,9 @@ export default function ListingsPage({
                   </div>
                 ))}
               </div>
-            ) : loading ? (
-              <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3">
+              )}
+              {(view === "grid" || !viewKnown) && (
+              <div className={`${viewKnown ? "grid" : "hidden sm:grid"} grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3`}>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:rounded-[22px] sm:p-2">
                     <div className="aspect-[4/3] animate-pulse rounded-xl bg-slate-200/70 sm:rounded-2xl" />
@@ -950,6 +957,8 @@ export default function ListingsPage({
                   </div>
                 ))}
               </div>
+              )}
+              </>
             ) : listings.length === 0 ? (
               // Says which filters to drop (one tap each) instead of only "Clear filters"
               <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-14 text-center">

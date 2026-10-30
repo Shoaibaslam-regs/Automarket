@@ -1,5 +1,6 @@
 "use client";
 
+import { safeCallbackPath } from "@/lib/callbackPath";
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -86,7 +87,7 @@ export default function LoginPage() {
       setNotice("Account confirmed. Sign in to continue.");
       return;
     }
-    router.push("/dashboard");
+    router.push(safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl")));
     router.refresh();
   }
 
@@ -185,7 +186,7 @@ export default function LoginPage() {
         setError("Invalid email, phone or password. Signed up with Google? Use Continue with Google, or Forgot password to set a password.");
       }
     } else {
-      router.push("/dashboard");
+      router.push(safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl")));
       router.refresh();
     }
   }

@@ -250,7 +250,7 @@ export default async function DealPage({ params }: Props) {
             {/* Which days the package is free: only bookings the business confirmed block a day */}
             {rent && live && (
               <div className="mt-6">
-                <AvailabilityCard source={{ dealId: String(deal._id) }} title="Availability" />
+                <AvailabilityCard source={{ dealId: String(deal._id) }} title="Availability" bookHref={`/deals/${deal._id}/book`} />
               </div>
             )}
           </div>

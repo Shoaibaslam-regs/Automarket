@@ -1,7 +1,7 @@
 import CarIllustration from "@/components/launch/CarIllustration";
 
 /**
- * The 404 page's little story: the splash's car drives in along the road (lane dashes rushing past), runs into a
+ * The 404 page's little story: the logo's car drives in along the road (lane dashes rushing past), runs into a
  * rock, jolts back and tips up, the rock shakes and an impact flash pops, then smoke keeps rising from the bonnet.
  * It plays once (about 2.6 s) and stays crashed; the page's "404" can shudder at the impact with `crash-shudder`.
  * Plain CSS, so the page stays a server component. It follows the theme (the car and road use the theme's slate

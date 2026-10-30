@@ -1,4 +1,5 @@
-// Shapes and wording for the admin System usage page (database and UploadThing storage). Client-safe.
+// Shapes and wording for the admin System usage page (database and UploadThing storage, Gemini calls and emails
+// sent). Client-safe.
 
 /** Past this share of a limit the meter turns amber, past DANGER red; the sidebar badge counts both. */
 export const USAGE_WARN = 0.8;
@@ -68,16 +69,84 @@ export type UploadUsage = {
 
 export type UsageFailure = { ok: false; error: string };
 
+/** Counted services (src/lib/usageTracker.ts): one counter per service per Pakistan day. */
+export type CountedService = "gemini" | "email";
+export type UsageDayRow = { day: string; calls: number; failures: number; tokens: number };
+
+/** Gmail sends about 500 a day; a transactional SMTP service has its own limit (EMAIL_DAILY_LIMIT). */
+export const GMAIL_DAILY_LIMIT = 500;
+/** Days of counters kept and the bars drawn on the page. */
+export const USAGE_KEEP_DAYS = 100;
+export const USAGE_CHART_DAYS = 14;
+
+const PKT_OFFSET_MS = 5 * 60 * 60 * 1000;
+/** "YYYY-MM-DD" of a moment in Pakistan time (UTC+5, no daylight saving), the day counters are kept by. */
+export const pkDayKey = (d: Date) => new Date(d.getTime() + PKT_OFFSET_MS).toISOString().slice(0, 10);
+
+export type ServiceUsage = {
+  ok: true;
+  service: CountedService;
+  /** Daily limit to compare today with, or null when none is known */
+  dailyLimit: number | null;
+  today: number;
+  week: number;
+  month: number;
+  /** Failed calls or sends in the last 30 days */
+  failures: number;
+  /** Gemini tokens in the last 30 days (0 for email) */
+  tokens: number;
+  /** The last USAGE_CHART_DAYS days, oldest first, every day present (0 when nothing was counted) */
+  daily: { day: string; calls: number }[];
+};
+
+/** Today, the last 7 and 30 days and the chart from one service's daily rows. */
+export function summarizeService(service: CountedService, rows: UsageDayRow[], now: Date, dailyLimit: number | null): ServiceUsage {
+  const byDay = new Map(rows.map(r => [r.day, r]));
+  const dayAgo = (n: number) => pkDayKey(new Date(now.getTime() - n * 86_400_000));
+  const sum = (days: number, pick: (r: UsageDayRow) => number) => {
+    let total = 0;
+    for (let i = 0; i < days; i++) { const r = byDay.get(dayAgo(i)); if (r) total += pick(r); }
+    return total;
+  };
+  return {
+    ok: true,
+    service,
+    dailyLimit,
+    today: byDay.get(dayAgo(0))?.calls ?? 0,
+    week: sum(7, r => r.calls),
+    month: sum(30, r => r.calls),
+    failures: sum(30, r => r.failures),
+    tokens: sum(30, r => r.tokens),
+    daily: Array.from({ length: USAGE_CHART_DAYS }, (_, i) => {
+      const day = dayAgo(USAGE_CHART_DAYS - 1 - i);
+      return { day, calls: byDay.get(day)?.calls ?? 0 };
+    }),
+  };
+}
+
+/** "1,234" for counts, "1.2M" for large token totals. */
+export function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 100_000) return `${Math.round(n / 1000)}K`;
+  return n.toLocaleString("en-PK");
+}
+
 export type SystemUsage = {
   checkedAt: string;
   db: DbUsage | UsageFailure;
   uploads: UploadUsage | UsageFailure;
+  gemini: ServiceUsage | UsageFailure;
+  email: ServiceUsage | UsageFailure;
 };
 
 /** How many services are at or past the warning line, for the sidebar badge. */
-export function usageAlerts(u: Pick<SystemUsage, "db" | "uploads">): number {
+export function usageAlerts(u: Pick<SystemUsage, "db" | "uploads"> & Partial<Pick<SystemUsage, "gemini" | "email">>): number {
   let n = 0;
   if (u.db.ok && usageLevel(u.db.usedBytes, u.db.limitBytes) !== "ok") n++;
   if (u.uploads.ok && usageLevel(u.uploads.accountBytes, u.uploads.limitBytes) !== "ok") n++;
+  // Counted services warn on today's calls against their daily limit; without a limit there is nothing to warn about
+  for (const svc of [u.gemini, u.email]) {
+    if (svc?.ok && ["warn", "danger"].includes(usageLevel(svc.today, svc.dailyLimit))) n++;
+  }
   return n;
 }

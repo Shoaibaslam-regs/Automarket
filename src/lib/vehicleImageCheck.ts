@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
+import { generateCounted } from "@/lib/usageTracker";
 import { fetchUploadedImage } from "@/lib/safeFetch";
 
 export type VehicleCheck = {
@@ -52,7 +53,8 @@ export async function checkVehicleImage(data: ArrayBuffer, mimeType: string): Pr
     generationConfig: { responseMimeType: "application/json", responseSchema: SCHEMA, temperature: 0 },
   });
 
-  const result = await model.generateContent([
+  // Counted for the admin System usage page
+  const result = await generateCounted(model, [
     { inlineData: { data: Buffer.from(data).toString("base64"), mimeType } },
     PROMPT,
   ]);

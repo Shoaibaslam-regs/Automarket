@@ -11,7 +11,9 @@
     "reset-admin-key": "tsx --env-file-if-exists=.env src/scripts/reset-admin-key.ts",
     "backfill-login-phones": "tsx --env-file-if-exists=.env src/scripts/backfill-login-phones.ts",
     "move-support-messages": "tsx --env-file-if-exists=.env src/scripts/move-support-messages.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "perf": "PERF=1 playwright test e2e/perf.spec.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -38,6 +40,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^20",
@@ -48,6 +51,7 @@
     "autoprefixer": "^10.5.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "mongodb-memory-server": "^11.3.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.23.0",

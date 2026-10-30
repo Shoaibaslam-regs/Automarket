@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 import { UTApi } from "uploadthing/server";
 import { connectDB } from "@/lib/mongodb";
 import { reportError } from "@/lib/errorLog";
-import { DEFAULT_DB_LIMIT_MB, type CollectionUsage, type DbUsage, type SystemUsage, type UploadUsage, type UsageFailure } from "@/lib/usageMeter";
+import {
+  DEFAULT_DB_LIMIT_MB, GMAIL_DAILY_LIMIT, pkDayKey, summarizeService,
+  type CollectionUsage, type CountedService, type DbUsage, type ServiceUsage, type SystemUsage, type UploadUsage, type UsageDayRow, type UsageFailure,
+} from "@/lib/usageMeter";
+import { UsageCount } from "@/models/UsageCount";
 
 export const SYSTEM_USAGE_TAG = "system-usage";
 /** Read again at most this often; the admin's Refresh button skips the wait. */
@@ -68,11 +72,36 @@ export async function readUploadUsage(): Promise<UploadUsage | UsageFailure> {
   }
 }
 
-/** Both reports, read now. */
+const positive = (v: string | undefined) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.round(n) : null; };
+
+/**
+ * The daily limit each counted service is compared with: Gmail's 500 unless SMTP_HOST points at another service
+ * (then EMAIL_DAILY_LIMIT, if set); Gemini's depends on the model and plan, so only GEMINI_DAILY_LIMIT.
+ */
+function dailyLimit(service: CountedService): number | null {
+  if (service === "email") return positive(process.env.EMAIL_DAILY_LIMIT) ?? (process.env.SMTP_HOST ? null : GMAIL_DAILY_LIMIT);
+  return positive(process.env.GEMINI_DAILY_LIMIT);
+}
+
+/** One counted service's last 30 days (src/lib/usageTracker.ts). Read-only. */
+export async function readServiceUsage(service: CountedService): Promise<ServiceUsage | UsageFailure> {
+  try {
+    await connectDB();
+    const now = new Date();
+    const rows = await UsageCount.find({ service, day: { $gte: pkDayKey(new Date(now.getTime() - 30 * 86_400_000)) } })
+      .select("day calls failures tokens").lean<UsageDayRow[]>();
+    return summarizeService(service, rows, now, dailyLimit(service));
+  } catch (error) {
+    reportError(`System usage: ${service} counts failed:`, error);
+    return { ok: false, error: "Couldn't read the counts" };
+  }
+}
+
+/** Every report, read now. */
 export async function readSystemUsage(): Promise<SystemUsage> {
-  const [db, uploads] = await Promise.all([readDbUsage(), readUploadUsage()]);
-  return { checkedAt: new Date().toISOString(), db, uploads };
+  const [db, uploads, gemini, email] = await Promise.all([readDbUsage(), readUploadUsage(), readServiceUsage("gemini"), readServiceUsage("email")]);
+  return { checkedAt: new Date().toISOString(), db, uploads, gemini, email };
 }
 
 /** The same, saved for CACHE_SECONDS and shared by every admin, so opening the page or the badge adds no load. */
-export const getSystemUsage = unstable_cache(readSystemUsage, ["system-usage-v1"], { revalidate: CACHE_SECONDS, tags: [SYSTEM_USAGE_TAG] });
+export const getSystemUsage = unstable_cache(readSystemUsage, ["system-usage-v2"], { revalidate: CACHE_SECONDS, tags: [SYSTEM_USAGE_TAG] });

@@ -10,13 +10,8 @@ import { useRateLock } from "@/hooks/useRateLock";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
 import { useTurnstile } from "@/components/ui/Turnstile";
+import { OPEN_FEEDBACK_EVENT as OPEN_EVENT } from "@/components/FeedbackHost";
 
-const OPEN_EVENT = "am:open-feedback";
-
-/** Opens the feedback dialog from anywhere (menus, footer). */
-export function openFeedback() {
-  window.dispatchEvent(new Event(OPEN_EVENT));
-}
 
 const KINDS = [
   { id: "Idea", label: "An idea" },
@@ -29,10 +24,11 @@ const KINDS = [
  * "Feedback & ideas") with the page it was sent from. Mounted once in Providers; signed-out visitors are asked
  * to sign in.
  */
-export default function FeedbackDialog() {
+export default function FeedbackDialog({ startOpen = false }: { startOpen?: boolean }) {
   const { status } = useSession();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // Loaded by FeedbackHost on the first openFeedback(), which it missed, so it starts open
+  const [open, setOpen] = useState(startOpen);
   const [kind, setKind] = useState<(typeof KINDS)[number]["id"]>("Idea");
   const [text, setText] = useState("");
   // Closing the dialog keeps what was written for next time
@@ -132,7 +128,3 @@ export default function FeedbackDialog() {
   );
 }
 
-/** A plain text link that opens the dialog, for server components such as the footer. */
-export function FeedbackLink({ className = "" }: { className?: string }) {
-  return <button type="button" onClick={openFeedback} className={className}>Send feedback</button>;
-}

@@ -43,6 +43,7 @@ import { ListingContactBar, ListingViewerProvider, ShowFor } from "@/components/
 
 import AdminBadge from "@/components/AdminBadge";
 import { AvailabilityCard } from "@/components/rentals/AvailabilityCalendar";
+import { cityOfLocation, makeFromSlug, seoHeading, seoPath, slugify, type SeoPage } from "@/lib/seoPages";
 type Props = { params: Promise<{ id: string }> };
 
 // The page is the same for every visitor (who is looking is worked out in the browser, ListingViewer), so the
@@ -243,6 +244,13 @@ export default async function ListingDetailPage({ params }: Props) {
   const model = l.model?.trim() ?? "";
   const browseMake = `/listings?make=${encodeURIComponent(make)}`;
   const browseModel = `${browseMake}&search=${encodeURIComponent(model)}`;
+  // "Honda cars for sale in Karachi" and "Rent a car in Karachi": the city's landing pages for this kind of vehicle
+  const city = cityOfLocation(l.location);
+  const knownMake = makeFromSlug(slugify(make)) ?? null;
+  const landingLinks: SeoPage[] = city ? [
+    ...(isForSale ? [{ kind: "sale" as const, city, make: knownMake }] : []),
+    ...(rental ? [{ kind: "rent" as const, city, make: null }] : []),
+  ] : [];
   // A short reference people can quote when they call or message ("Ad ID 4F2A9C"), like account and business IDs
   const adId = id.slice(-6).toUpperCase();
   const listedOn = l.createdAt
@@ -625,7 +633,7 @@ export default async function ListingDetailPage({ params }: Props) {
             )}
 
             {/* Which days are free: only bookings the owner confirmed block a day, never requests */}
-            {rental && <AvailabilityCard source={{ rentalId: String(rental._id) }} />}
+            {rental && <AvailabilityCard source={{ rentalId: String(rental._id) }} bookHref={closed ? undefined : `/rentals/${l._id}/book`} />}
 
             {isForSale && !closed && <EmiCalculator price={l.price} />}
 
@@ -673,6 +681,14 @@ export default async function ListingDetailPage({ params }: Props) {
               {similar.map(s => <ListingCard key={s._id} listing={s} />)}
             </div>
           </section>
+        )}
+        {/* More like this in the same city: the search-landing pages (src/lib/seoPages.ts) */}
+        {landingLinks.length > 0 && (
+          <p className="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 text-sm">
+            {landingLinks.map(p => (
+              <Link key={seoPath(p)} href={seoPath(p)} className="font-semibold text-indigo-600 hover:text-indigo-700">{seoHeading(p)}</Link>
+            ))}
+          </p>
         )}
         <RecentlyViewed excludeId={id} className="mt-10" />
         <TrackListingView listing={{ id, title: l.title, price: l.price, type: l.type, image: l.images?.[0], location: l.location, year: l.year }} />

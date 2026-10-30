@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { trackUsage } from "@/lib/usageTracker";
 
 // Gmail only allows about 500 emails a day. For real traffic, set SMTP_HOST (and SMTP_PORT, default 587) to a
 // transactional email service such as Amazon SES, Brevo or Resend; EMAIL_USER/EMAIL_PASS are then its SMTP login.
@@ -8,6 +9,26 @@ const smtpPort = Number(process.env.SMTP_PORT) || 587;
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({ host: process.env.SMTP_HOST, port: smtpPort, secure: smtpPort === 465, pool: true, auth })
   : nodemailer.createTransport({ service: "gmail", auth });
+
+/**
+ * Every email goes through here. EMAIL_DISABLED=1 (the browser tests, or local development without spamming
+ * real inboxes) prints the subject and recipient instead of sending.
+ */
+async function deliver(mail: { from?: string; to: string; subject: string; html: string }): Promise<unknown> {
+  if (process.env.EMAIL_DISABLED === "1") {
+    console.log(`[email disabled] ${mail.subject} → ${mail.to}`);
+    return null;
+  }
+  // Counted (sent or failed) for the admin System usage page, against Gmail's or the SMTP service's daily limit
+  try {
+    const sent = await transporter.sendMail(mail);
+    trackUsage("email");
+    return sent;
+  } catch (error) {
+    trackUsage("email", { failed: true });
+    throw error;
+  }
+}
 
 export async function sendBookingRequestEmail({
   ownerEmail,
@@ -38,7 +59,7 @@ export async function sendBookingRequestEmail({
 }) {
   const bookingsUrl = `${process.env.NEXTAUTH_URL}/bookings`;
 
-  await transporter.sendMail({
+  await deliver({
     from: process.env.EMAIL_FROM,
     to: ownerEmail,
     subject: `New booking request for "${listingTitle}"`,
@@ -150,7 +171,7 @@ export async function sendBookingConfirmedEmail({
 }) {
   const isConfirmed = status === "CONFIRMED";
 
-  await transporter.sendMail({
+  await deliver({
     from: process.env.EMAIL_FROM,
     to: renterEmail,
     subject: `Booking ${isConfirmed ? "confirmed" : "declined"} — ${listingTitle}`,
@@ -214,7 +235,7 @@ export async function sendSavedSearchAlertEmail({
   const manageUrl = `${process.env.NEXTAUTH_URL}/saved`;
   const searches = searchNames.map(n => `<strong style="color: #0d1117;">${escapeHtml(n)}</strong>`).join(", ");
 
-  await transporter.sendMail({
+  await deliver({
     from: process.env.EMAIL_FROM,
     to,
     subject: `New match: ${listing.title} — ${listing.price}`,
@@ -256,7 +277,7 @@ export async function sendSavedSearchAlertEmail({
 
 /** Forgot-password email with a one-time link (valid for an hour). */
 export async function sendPasswordResetEmail({ to, name, link }: { to: string; name?: string; link: string }) {
-  await transporter.sendMail({
+  await deliver({
     from: process.env.EMAIL_FROM,
     to,
     subject: "Reset your AutoGO password",
@@ -287,7 +308,7 @@ export async function sendPasswordResetEmail({ to, name, link }: { to: string; n
 }
 
 function simpleEmail({ to, subject, kicker, name, body, button }: { to: string; subject: string; kicker: string; name?: string; body: string; button?: { href: string; label: string } }) {
-  return transporter.sendMail({
+  return deliver({
     from: process.env.EMAIL_FROM,
     to,
     subject,
@@ -359,7 +380,7 @@ export async function sendAccountExistsEmail({ to, name, loginLink, resetLink }:
 export async function sendPlanExpiringEmail({ to, name, planName, endsAt, daysLeft }: { to: string; name?: string; planName: string; endsAt: Date; daysLeft: number }) {
   const when = endsAt.toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Karachi" });
   const left = daysLeft <= 1 ? "tomorrow" : `in ${daysLeft} days`;
-  await transporter.sendMail({
+  await deliver({
     from: process.env.EMAIL_FROM,
     to,
     subject: `Your AutoGO ${planName} plan ends ${left}`,

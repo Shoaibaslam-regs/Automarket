@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PERSONAL_OWNER_MOVES, RENTER_MOVES, MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, CANCEL_REASON_TEXT, cancelReasonOf, heldDays, holdsDatesQuery, lateCharge, needsTakenDay, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
+import { PERSONAL_OWNER_MOVES, RENTER_MOVES, MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, CANCEL_REASON_TEXT, cancelReasonOf, heldDays, holdsDatesQuery, lateCharge, needsTakenDay, pickedDay, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 
 const d = (s: string) => new Date(s);
 
@@ -142,5 +142,15 @@ describe("cancel reasons", () => {
   it("tells the renter what happened and what to do", () => {
     expect(CANCEL_REASON_TEXT.DATES_TAKEN.text).toMatch(/booked by someone else/);
     expect(CANCEL_REASON_TEXT.EXPIRED.text).toMatch(/48 hours/);
+  });
+});
+
+describe("pickedDay", () => {
+  it("accepts a real YYYY-MM-DD day only", () => {
+    expect(pickedDay("2026-11-05")).toBe("2026-11-05");
+    expect(pickedDay("2026-02-30")).toBeUndefined();
+    expect(pickedDay("05-11-2026")).toBeUndefined();
+    expect(pickedDay(["2026-11-05"])).toBeUndefined();
+    expect(pickedDay(undefined)).toBeUndefined();
   });
 });

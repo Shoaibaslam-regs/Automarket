@@ -18,7 +18,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import { InstallAppRow } from "@/components/pwa/InstallBanner";
 import PushCard from "@/components/pwa/PushCard";
-import { openFeedback } from "@/components/FeedbackDialog";
+import { openFeedback } from "@/components/FeedbackHost";
 
 import AdminBadge from "@/components/AdminBadge";
 /** `action` makes the row a button (e.g. opening a dialog) instead of a link */

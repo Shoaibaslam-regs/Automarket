@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+# browser tests (Playwright): their own build, seed data and reports
+/.next-e2e/
+/e2e/.data/
+/playwright-report/
+/test-results/
 
 # next.js
 /.next/

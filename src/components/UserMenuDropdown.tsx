@@ -14,7 +14,7 @@ import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
-import { openFeedback } from "@/components/FeedbackDialog";
+import { openFeedback } from "@/components/FeedbackHost";
 
 import AdminBadge from "@/components/AdminBadge";
 /** `action` makes the row a button (e.g. opening a dialog) instead of a link */

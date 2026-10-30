@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import CompareBar from "@/components/listings/CompareBar";
-import InstallBanner from "@/components/pwa/InstallBanner";
-import { PushPrompt } from "@/components/pwa/PushCard";
+import LazyPrompts from "@/components/pwa/LazyPrompts";
 
 // One Navbar instance for every page in this group (including the home page), so it never
 // duplicates during client-side navigation.
@@ -11,8 +10,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Navbar />
       <main>{children}</main>
       <CompareBar />
-      <InstallBanner />
-      <PushPrompt className="top-[72px]" />
+      <LazyPrompts pushClassName="top-[72px]" />
     </>
   );
 }

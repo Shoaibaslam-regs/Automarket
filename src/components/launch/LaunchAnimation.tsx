@@ -16,7 +16,7 @@ const CONFETTI = ["#818cf8", "#6366f1", "#38bdf8", "#34d399"];
 
 /**
  * The launch moment after publishing a vehicle or a deal, or creating a business (requests use the quieter
- * RequestSent): the AutoGO car (as in the app splash) drives onto a road, a tick in the home hero's indigo → sky →
+ * RequestSent): the AutoGO car drives onto a road, a tick in the home hero's indigo → sky →
  * emerald gradient pops with a light sprinkle of confetti in the same colours, the title and subtitle rise, and
  * the car drives off. The card itself follows the light and dark theme like the site's dialogs. Tapping anywhere skips it. Loaded with next/dynamic by LaunchOverlay, so Framer Motion is
  * only downloaded when it plays. With reduced motion it shows the finished card briefly.

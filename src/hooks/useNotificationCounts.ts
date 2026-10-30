@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { create } from "zustand";
-import { getPusherClient } from "@/lib/pusher-client";
 import { playChime } from "@/lib/notifySound";
 import { userChannel } from "@/lib/pusherChannels";
 
@@ -64,15 +63,23 @@ export function refreshNotificationCounts(): Promise<void> {
   return inFlight;
 }
 
-// One poller + one realtime subscription shared by every badge on the page
+// One poller + one realtime subscription shared by every badge on the page. Pusher's client (about 60 KB) is
+// loaded here, only for signed-in visitors, instead of at the top of the file, so guests never download it.
 function start(userId: string) {
   refreshNotificationCounts();
   const onFocus = () => refreshNotificationCounts();
   window.addEventListener("focus", onFocus);
 
-  let live = false;
+  let stopped = false;
   let unbind = () => {};
-  try {
+  // A hidden tab doesn't poll; it refreshes when it comes back (focus)
+  const poll = (ms: number) => setInterval(() => {
+    if (document.visibilityState === "visible") refreshNotificationCounts();
+  }, ms);
+  let interval = poll(POLL_MS);
+
+  import("@/lib/pusher-client").then(({ getPusherClient }) => {
+    if (stopped) return;
     const pusher = getPusherClient();
     const channelName = userChannel(userId);
     const channel = pusher.subscribe(channelName);
@@ -82,16 +89,15 @@ function start(userId: string) {
       channel.unbind("new-notification", handler);
       pusher.unsubscribe(channelName);
     };
-    live = true;
-  } catch {
+    // Live now: polling is only a safety net
+    clearInterval(interval);
+    interval = poll(LIVE_POLL_MS);
+  }).catch(() => {
     // Pusher not configured: polling still keeps the badges up to date
-  }
-  // A hidden tab doesn't poll; it refreshes when it comes back (focus)
-  const interval = setInterval(() => {
-    if (document.visibilityState === "visible") refreshNotificationCounts();
-  }, live ? LIVE_POLL_MS : POLL_MS);
+  });
 
   stopPolling = () => {
+    stopped = true;
     clearInterval(interval);
     window.removeEventListener("focus", onFocus);
     unbind();

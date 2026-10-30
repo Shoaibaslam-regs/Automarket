@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-/** Transparent logo files in /public, 1200×118 (about 10:1), coloured in the home hero's indigo → sky → emerald.
+/** Transparent logo files in /public, 1200×118 (about 10:1; keep the ratio below in step), coloured in the home hero's indigo → sky → emerald.
  * The dark one has white ink for dark surfaces. */
 const LIGHT = "/autogo-logo-v2.png";
 const DARK = "/autogo-logo-v2-dark.png";
@@ -26,10 +26,11 @@ export default function BrandLogo({
   className?: string;
   style?: React.CSSProperties;
 }) {
-  // The real pixel size goes in the attributes and CSS sets the shown size, so Next's "only one side modified"
-  // check never trips on a rounded width (both sides differ from the attributes)
+  // The attributes are the size it is shown at (the logo's 1200×118 shape at `height`), so the browser fetches
+  // about a 640px copy instead of the 3840px one it chose from the full 1200px width; CSS sets the shown size
+  // (width auto keeps the shape at phoneHeight too)
   const size = { "--logo-h": `${height}px`, "--logo-hp": `${phoneHeight ?? height}px`, width: "auto" } as React.CSSProperties;
-  const props = { width: 1200, height: 118, priority, style: { ...size, ...style } };
+  const props = { width: Math.round((height * 1200) / 118), height, priority, style: { ...size, ...style } };
   const cls = `h-[var(--logo-hp)] sm:h-[var(--logo-h)] ${className}`;
   if (tone === "dark") return <Image src={DARK} alt="AutoGO" {...props} className={cls} />;
   return (

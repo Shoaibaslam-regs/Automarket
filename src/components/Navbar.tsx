@@ -7,8 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import BookingBadge from "@/components/BookingBadge";
 import MessageBadge from "@/components/MessageBadge";
 import BrandLogo from "@/components/BrandLogo";
-import SignOutDialog from "@/components/SignOutDialog";
-import MobileNavDrawer from "@/components/MobileNavDrawer";
+import dynamic from "next/dynamic";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
 import { NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -18,6 +17,12 @@ import { useSubscription } from "@/components/subscription/useSubscription";
 import { planInfo } from "@/lib/plans";
 import { ThemeCycleButton } from "@/components/theme/ThemeToggle";
 
+// Not needed for the first paint, so they stay out of every page's first download (Radix's dialog, the drawer's
+// menus): the drawer loads once the page is idle so a tap opens it at once, the sign-out dialog when asked for
+const loadDrawer = () => import("@/components/MobileNavDrawer");
+const MobileNavDrawer = dynamic(loadDrawer, { ssr: false });
+const SignOutDialog = dynamic(() => import("@/components/SignOutDialog"), { ssr: false });
+
 export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -25,6 +30,14 @@ export default function Navbar() {
   // Menus remember which route they were opened on, so they close automatically after navigation
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
   const [mobileOpenOn, setMobileOpenOn] = useState<string | null>(null);
+  // Fetch the drawer's code in the background once the page has settled (phones and tablets only)
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 768px)").matches) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    const run = () => { loadDrawer().catch(() => {}); };
+    if (w.requestIdleCallback) w.requestIdleCallback(run);
+    else setTimeout(run, 2000);
+  }, []);
   const menuOpen = menuOpenOn === pathname;
   const mobileOpen = mobileOpenOn === pathname;
   const setMenuOpen = (open: boolean) => setMenuOpenOn(open ? pathname : null);
@@ -207,7 +220,7 @@ export default function Navbar() {
         session={session}
         counts={counts}
       />
-      <SignOutDialog open={confirmSignOut} onOpenChange={setConfirmSignOut} />
+      {confirmSignOut && <SignOutDialog open={confirmSignOut} onOpenChange={setConfirmSignOut} />}
     </>
   );
 }

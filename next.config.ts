@@ -37,6 +37,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The browser tests build into their own folder (e2e/server.ts), so they never touch .next or a running dev server
+  ...(process.env.NEXT_DIST_DIR && { distDir: process.env.NEXT_DIST_DIR }),
   // Each Vercel deployment gets its own id, so a phone still running the previous version does a full reload
   // on its next tap instead of asking for code files that no longer exist (which showed "Something went wrong")
   deploymentId: process.env.NEXT_DEPLOYMENT_ID || process.env.VERCEL_DEPLOYMENT_ID || undefined,
@@ -53,6 +55,9 @@ const nextConfig: NextConfig = {
       { source: "/biz/:slug", destination: "/dealers/:slug", permanent: true },
       // The separate landing page was removed; "/" is the one home page now
       { source: "/home", destination: "/", permanent: true },
+      // The search-landing pages' all-Pakistan versions (src/lib/seoPages.ts)
+      { source: "/cars-for-sale", destination: "/cars-for-sale/pakistan", permanent: true },
+      { source: "/rent-a-car", destination: "/rent-a-car/pakistan", permanent: true },
     ];
   },
   // Pages visited in the last 30 seconds come back instantly on back/forward and repeat taps

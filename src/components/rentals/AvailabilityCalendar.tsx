@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { dayKey } from "@/lib/bookings";
 
@@ -38,12 +39,14 @@ const key = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(
  * button, and `start`/`end` mark the chosen dates (the return day itself is free for the next pickup, so a
  * range is drawn up to and including it).
  */
-export default function AvailabilityCalendar({ taken, loading = false, start, end, onPick, isDisabled, footnote = true }: {
+export default function AvailabilityCalendar({ taken, loading = false, start, end, onPick, dayHref, isDisabled, footnote = true }: {
   taken: Set<string>;
   loading?: boolean;
   start?: string;
   end?: string;
   onPick?: (day: string) => void;
+  /** Read-only calendars: free days link here (the booking page with that pick-up day) */
+  dayHref?: (day: string) => string;
   /** Days the form won't accept (before the first bookable day, after a deal ends). */
   isDisabled?: (day: string) => boolean;
   footnote?: boolean;
@@ -120,6 +123,11 @@ export default function AvailabilityCalendar({ taken, loading = false, start, en
               className={`${base} ${!off && !isEdge ? "hover:ring-1 hover:ring-inset hover:ring-slate-300" : ""} disabled:cursor-not-allowed`}>
               {Number(d.slice(8))}{todayDot}
             </button>
+          ) : dayHref && !off && !booked ? (
+            <Link key={d} href={dayHref(d)} aria-label={`${label}, book from this day`}
+              className={`${base} hover:bg-slate-900 hover:text-white`}>
+              {Number(d.slice(8))}{todayDot}
+            </Link>
           ) : (
             <span key={d} aria-label={label} className={base}>{Number(d.slice(8))}{todayDot}</span>
           );
@@ -130,6 +138,7 @@ export default function AvailabilityCalendar({ taken, loading = false, start, en
         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm ring-1 ring-inset ring-slate-300" /> Free</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-200" /> Booked</span>
         {onPick && <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-slate-900" /> Your dates</span>}
+        {dayHref && <span className="font-medium text-slate-700">Tap a free day to book from it</span>}
         {loading ? <span className="ml-auto">Checking dates…</span> : <span className="ml-auto">{freeThisMonth} free day{freeThisMonth !== 1 ? "s" : ""} this month</span>}
       </div>
       {footnote && (
@@ -142,10 +151,15 @@ export default function AvailabilityCalendar({ taken, loading = false, start, en
 }
 
 /**
- * The calendar in its own card, read-only, for listing and deal pages. Closed by default (a Show/Hide row), so it
+ * The calendar in its own card, for listing and deal pages; with `bookHref`, tapping a free day opens booking. Closed by default (a Show/Hide row), so it
  * doesn't take up the page; the dates are only fetched once it is opened. `#availability` in the address opens it.
  */
-export function AvailabilityCard({ source, title = "Availability" }: { source: CalendarSource; title?: string }) {
+export function AvailabilityCard({ source, title = "Availability", bookHref }: {
+  source: CalendarSource;
+  title?: string;
+  /** The booking page; free days then link to it with `?start=<day>` already picked */
+  bookHref?: string;
+}) {
   const [open, setOpen] = useState(false);
   // A link ending in #availability (e.g. "See free dates" on a request closed because the dates were taken)
   // opens the calendar straight away
@@ -172,7 +186,7 @@ export function AvailabilityCard({ source, title = "Availability" }: { source: C
       </button>
       {open && (
         <div className="border-t border-slate-100 px-5 pb-5 pt-4">
-          <OpenCalendar source={source} />
+          <OpenCalendar source={source} bookHref={bookHref} />
         </div>
       )}
     </div>
@@ -180,7 +194,7 @@ export function AvailabilityCard({ source, title = "Availability" }: { source: C
 }
 
 /** Mounted only while the card is open, so closed cards make no request. */
-function OpenCalendar({ source }: { source: CalendarSource }) {
+function OpenCalendar({ source, bookHref }: { source: CalendarSource; bookHref?: string }) {
   const { taken, loading } = useTakenDays(source);
-  return <AvailabilityCalendar taken={taken} loading={loading} />;
+  return <AvailabilityCalendar taken={taken} loading={loading} dayHref={bookHref ? d => `${bookHref}?start=${d}` : undefined} />;
 }

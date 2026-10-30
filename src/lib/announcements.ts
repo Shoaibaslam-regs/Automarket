@@ -25,7 +25,7 @@ export const MAX_BODY = 2000;
 /**
  * A button link that points at AutoGO itself ("https://autogo-pak.vercel.app/pricing") as a path ("/pricing"), so it
  * opens in the same window. Opened as an outside link it got a new window without a referrer, which the installed
- * app takes for a fresh launch and covers with the splash. Other links come back unchanged.
+ * app opened as a second window. Other links come back unchanged.
  */
 export function ownSitePath(link: string, ownHosts: (string | null | undefined)[]): string {
   if (!/^https:\/\//i.test(link)) return link;

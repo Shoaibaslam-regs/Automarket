@@ -1,5 +1,6 @@
 import { reportError } from "@/lib/errorLog";
  import { NextRequest, NextResponse } from "next/server";
+import { generateCounted } from "@/lib/usageTracker";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { connectDB } from "@/lib/mongodb";
@@ -90,7 +91,8 @@ No explanation.
 }
 `;
 
-  const result = await model.generateContent([
+  // Counted for the admin System usage page
+  const result = await generateCounted(model, [
     prompt,
     ...imageParts,
   ]);

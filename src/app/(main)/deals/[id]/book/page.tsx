@@ -9,12 +9,20 @@ import BookingForm from "@/components/rentals/BookingForm";
 import { getDealPage } from "@/lib/publicDeals";
 import { dealLabel, dealPrice, dealState, isRentDeal } from "@/lib/deals";
 import { mapsUrl } from "@/lib/address";
+import { loginFor } from "@/lib/callbackPath";
+import { pickedDay } from "@/lib/bookings";
 
 /** Booking page for a rent deal: same date picker and flow as renting a listed vehicle. */
-export default async function BookDealPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BookDealPage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  /** `start`: the pick-up day tapped on the deal's calendar */
+  searchParams: Promise<{ start?: string | string[] }>;
+}) {
   const { id } = await params;
+  const start = pickedDay((await searchParams).start);
   const session = await auth();
-  if (!session?.user) redirect(`/login?callbackUrl=/deals/${id}/book`);
+  // Signing in brings them back here with the day still picked
+  if (!session?.user) redirect(loginFor(`/deals/${id}/book${start ? `?start=${start}` : ""}`));
 
   const page = await getDealPage(id);
   if (!page || !isRentDeal(page.deal)) notFound();
@@ -103,6 +111,7 @@ export default async function BookDealPage({ params }: { params: Promise<{ id: s
               deposit={deal.deposit ?? 0}
               availableFrom={deal.startsAt}
               availableTo={deal.endsAt}
+              initialStart={start}
             />
           </div>
         </div>

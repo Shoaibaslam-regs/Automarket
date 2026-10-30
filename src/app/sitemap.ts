@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { SITE_URL } from "@/lib/site";
 import { reportError } from "@/lib/errorLog";
+import { seoSitemapPaths } from "@/lib/seoData";
+import { seoPath } from "@/lib/seoPages";
 
 // Regenerate at most once an hour so new listings show up without a rebuild
 export const revalidate = 3600;
@@ -25,8 +27,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select("_id updatedAt images")
       .lean<{ _id: unknown; updatedAt: Date; images?: string[] }[]>();
 
+    // Search-landing pages with at least one live listing (/cars-for-sale/karachi/honda, /rent-a-car/lahore…)
+    const landing = await seoSitemapPaths().catch(err => {
+      reportError("Sitemap landing pages failed:", err);
+      return [];
+    });
+
     return [
       ...staticPages,
+      ...landing.map(p => ({
+        url: `${SITE_URL}${seoPath(p)}`,
+        changeFrequency: "daily" as const,
+        priority: p.make && p.city ? 0.6 : 0.7,
+      })),
       ...listings.map(l => ({
         url: `${SITE_URL}/listings/${String(l._id)}`,
         lastModified: l.updatedAt,

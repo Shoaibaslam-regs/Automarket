@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import FeedbackDialog from "@/components/FeedbackDialog";
+import FeedbackHost from "@/components/FeedbackHost";
 import Toaster from "@/components/ui/Toaster";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -10,8 +10,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <ThemeProvider>
         {children}
-        {/* Opened from the menus and the footer with openFeedback() */}
-        <FeedbackDialog />
+        {/* Opened from the menus and the footer with openFeedback(); the dialog loads on first use */}
+        <FeedbackHost />
         <Toaster />
       </ThemeProvider>
     </SessionProvider>

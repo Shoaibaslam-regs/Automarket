@@ -10,7 +10,7 @@ import { Organization } from "@/models/Organization";
 import { Employee } from "@/models/Employee";
 import { can, type BusinessRole } from "@/lib/business";
 import QuickNew from "@/components/business/QuickNew";
-import { PushPrompt } from "@/components/pwa/PushCard";
+import LazyPrompts from "@/components/pwa/LazyPrompts";
 
 type WarningRow = { reason: string; at: Date; acknowledgedAt?: Date };
 
@@ -90,7 +90,7 @@ export default async function BusinessLayout({ children }: { children: React.Rea
           </NoBusinessGate>
         </div>
         {!suspension && !noBusiness && <QuickNew />}
-        <PushPrompt className="top-14 md:left-auto md:right-6 md:top-6 md:mx-0 md:w-[380px]" />
+        <LazyPrompts install={false} pushClassName="top-14 md:left-auto md:right-6 md:top-6 md:mx-0 md:w-[380px]" />
       </div>
     </>
   );
