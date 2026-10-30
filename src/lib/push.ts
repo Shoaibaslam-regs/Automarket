@@ -39,7 +39,7 @@ export async function sendPush(userIds: unknown[], payload: PushPayload) {
   }
 }
 
-type EventData = { type?: string; from?: string | null; preview?: string; status?: string; rating?: number; note?: string };
+type EventData = { type?: string; from?: string | null; preview?: string; status?: string; reason?: string; rating?: number; note?: string };
 
 /**
  * Turns a `new-notification` event (the same one that updates the in-app badges) into a phone notification,
@@ -53,6 +53,7 @@ export function pushForEvent(userId: string, data: EventData) {
       case "booking":
         if (data.status === "PENDING") return { title: "New booking request", body: "Someone wants to book your vehicle. Confirm or decline it.", url: "/notifications", tag: "booking-request" };
         if (data.status === "CONFIRMED") return { title: "Booking confirmed ✓", body: "Your booking was confirmed by the owner.", url: "/bookings", tag: "booking" };
+        if (data.status === "CANCELLED" && data.reason === "DATES_TAKEN") return { title: "Those dates were taken", body: "Someone else was confirmed for your dates. Tap to pick other free dates.", url: "/bookings", tag: "booking" };
         if (data.status === "CANCELLED") return { title: "Booking cancelled", body: "One of your bookings was cancelled.", url: "/bookings", tag: "booking" };
         return null;
       case "purchase": {

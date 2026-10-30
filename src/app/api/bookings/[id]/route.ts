@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { sendBookingConfirmedEmail } from "@/lib/email";
 import { reportError } from "@/lib/errorLog";
 import { PERSONAL_OWNER_MOVES, RENTER_MOVES } from "@/lib/bookings";
+import { CONFIRM_CLASH_ERROR, cancelClashingRequests, confirmClash } from "@/lib/bookingConfirm";
 
 export async function PATCH(
   req: NextRequest,
@@ -20,7 +21,7 @@ export async function PATCH(
     }
     const { id } = await params;
     await connectDB();
-    const { status } = await req.json();
+    const { status } = await req.json().catch(() => ({}));
     const booking = await Booking.findById(id).populate("rentalId");
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
@@ -46,6 +47,10 @@ export async function PATCH(
         ? "This booking can't be cancelled any more: the vehicle has already been handed over."
         : "That change isn't possible for this booking." }, { status: 400 });
     }
+    // Requests don't hold dates, so the confirmation is where two bookings could meet
+    if (status === "CONFIRMED" && (await confirmClash(booking))) {
+      return NextResponse.json({ error: CONFIRM_CLASH_ERROR, code: "DATES_TAKEN" }, { status: 409 });
+    }
     booking.status = status;
     if (status === "CONFIRMED") booking.confirmedAt = new Date();
     if (status === "CANCELLED") booking.cancelledAt = new Date();
@@ -53,6 +58,8 @@ export async function PATCH(
       booking.seenByRenter = false;
     }
     await booking.save();
+    // The other requests for those days can't be confirmed any more: cancel them so their renters look elsewhere
+    if (status === "CONFIRMED") await cancelClashingRequests(booking);
 
     if (isOwner && rental && (status === "CONFIRMED" || status === "CANCELLED")) {
       try {

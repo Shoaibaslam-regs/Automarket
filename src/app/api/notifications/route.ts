@@ -11,7 +11,7 @@ import { Organization } from "@/models/Organization";
 import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
 import { can, getMembership } from "@/lib/business";
 import { getOrgDealIds } from "@/lib/dealBookings";
-import { bookingNumber } from "@/lib/bookings";
+import { CANCEL_REASON_TEXT, bookingNumber, cancelReasonOf } from "@/lib/bookings";
 import { purchaseNumber, PURCHASE_LABEL, type PurchaseStatus } from "@/lib/purchases";
 import { OFFICIAL_NAME } from "@/lib/announcements";
 import type { NotificationItem } from "@/lib/notifications";
@@ -71,14 +71,17 @@ export async function GET() {
 
     // My bookings that were confirmed or cancelled since I last looked
     const updates = await Booking.find({ renterId: me, status: { $in: ["CONFIRMED", "CANCELLED"] }, seenByRenter: { $ne: true } })
-      .sort({ updatedAt: -1 }).limit(10).select("status updatedAt dealId rentalId")
+      .sort({ updatedAt: -1 }).limit(10).select("status cancelReason updatedAt dealId rentalId")
       .populate("dealId", "title").populate({ path: "rentalId", select: "listingId", populate: { path: "listingId", select: "title" } })
-      .lean<Array<{ _id: Oid; status: string; updatedAt: Date; dealId?: { title: string } | null; rentalId?: { listingId?: { title: string } | null } | null }>>();
+      .lean<Array<{ _id: Oid; status: string; cancelReason?: string; updatedAt: Date; dealId?: { title: string } | null; rentalId?: { listingId?: { title: string } | null } | null }>>();
     for (const b of updates) {
       const vehicle = b.dealId?.title ?? b.rentalId?.listingId?.title ?? "your vehicle";
+      // A request AutoGO closed by itself says why (dates taken by someone else, or no answer in time)
+      const reason = b.status === "CANCELLED" ? cancelReasonOf(b.cancelReason) : null;
       items.push({
-        kind: "bookingUpdate", id: String(b._id), title: `Your booking for ${vehicle} was ${b.status === "CONFIRMED" ? "confirmed" : "cancelled"}`,
-        body: bookingNumber(String(b._id)), at: b.updatedAt.toISOString(), href: "/bookings",
+        kind: "bookingUpdate", id: String(b._id),
+        title: reason ? `Your request for ${vehicle} was closed: ${CANCEL_REASON_TEXT[reason].label.toLowerCase()}` : `Your booking for ${vehicle} was ${b.status === "CONFIRMED" ? "confirmed" : "cancelled"}`,
+        body: reason ? `${bookingNumber(String(b._id))} · ${CANCEL_REASON_TEXT[reason].text}` : bookingNumber(String(b._id)), at: b.updatedAt.toISOString(), href: "/bookings",
       });
     }
 

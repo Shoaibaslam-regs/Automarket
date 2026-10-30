@@ -1,10 +1,10 @@
 "use client";
 
-import { Fragment, useState, useEffect, useRef, use } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Search, SlidersHorizontal, X, MapPin, ArrowUpDown, Bell, BellRing, LayoutGrid, List, ChevronDown, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin, ArrowUpDown, Bell, BellRing, LayoutGrid, List, ChevronDown, Loader2, Sparkles } from "lucide-react";
 import ListingCard from "@/components/listings/ListingCard";
 import Select from "@/components/ui/Select";
 import { IListing } from "@/models/Listing";
@@ -15,6 +15,7 @@ import {
 import { useRateLock } from "@/hooks/useRateLock";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import SearchSuggest from "@/components/SearchSuggest";
+import { parseSmartSearch, smartLabels } from "@/lib/smartSearch";
 import { CITIES, MY_CITY_KEY } from "@/lib/cities";
 import { MAKES as ALL_MAKES } from "@/lib/vehicleOptions";
 import { SponsoredCard } from "@/components/home/SponsoredRow";
@@ -132,8 +133,11 @@ export default function ListingsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const initialParams = use(searchParams);
-  // Every filter can come from the URL, so searches can be shared, bookmarked and saved
-  const initial = parseFilters(initialParams);
+  // Every filter can come from the URL, so searches can be shared, bookmarked and saved. A sentence in `search`
+  // (the home page's smart search, a shared link) is read into filters first.
+  const fromUrl = parseFilters(initialParams);
+  const smartStart = fromUrl.search ? parseSmartSearch(fromUrl.search) : null;
+  const initial: ListingFilters = smartStart?.applied ? { ...fromUrl, ...smartStart.filters, search: smartStart.filters.search } : fromUrl;
   const str = (v: string | number | undefined) => (v === undefined ? "" : String(v));
   const initialSort = typeof initialParams.sort === "string" && SORTS.some(([v]) => v === initialParams.sort) ? initialParams.sort : "createdAt";
   // How many pages were loaded when this link was made (scrolling adds pages), so Back returns to the same spot
@@ -235,10 +239,16 @@ export default function ListingsPage({
   const debouncedMaxPrice = useDebounce(maxPrice);
   const debouncedLocation = useDebounce(location);
 
+  // Smart search: while the box holds a sentence ("civic under 70 lac in karachi"), the results already use what
+  // it says; Enter or the suggestion's Smart search row then turns it into ordinary filters (commitSmart)
+  const smartLive = useMemo(() => parseSmartSearch(debouncedSearch), [debouncedSearch]);
+  const smartPreview = smartLive.applied ? smartLive.filters : null;
+
   // parseFilters drops empty/invalid values, so this is exactly what the API will apply
   const filters: ListingFilters = parseFilters({
     search: debouncedSearch, type, make, condition, minPrice: debouncedMinPrice, maxPrice: debouncedMaxPrice,
     location: debouncedLocation, minYear, maxYear, maxMileage, fuelType, transmission,
+    ...(smartPreview && { ...smartPreview, search: smartPreview.search ?? "" }),
   });
   const filterQuery = filtersToSearchParams(filters).toString();
   const params = filtersToSearchParams(filters);
@@ -408,6 +418,25 @@ export default function ListingsPage({
       cancelAnimationFrame(raf);
     };
   }, []);
+
+  /** Turns smart-search filters into the page's own filters (shown as removable chips); false when there are none. */
+  function applySmart(found: ListingFilters) {
+    const setters: Partial<Record<keyof ListingFilters, (v: string) => void>> = {
+      type: setType, make: setMake, condition: setCondition, location: setLocation, fuelType: setFuelType,
+      transmission: setTransmission, minPrice: setMinPrice, maxPrice: setMaxPrice, minYear: setMinYear,
+      maxYear: setMaxYear, maxMileage: setMaxMileage,
+    };
+    for (const [key, set] of Object.entries(setters) as [keyof ListingFilters, (v: string) => void][]) {
+      const v = found[key];
+      if (v !== undefined) set(String(v));
+    }
+    setSearch(found.search ?? "");
+    setPage(1);
+  }
+  function commitSmart(text: string) {
+    const parsed = parseSmartSearch(text);
+    if (parsed.applied) applySmart(parsed.filters);
+  }
 
   /** Brings the top of the results back into view after a change made from the compact bar. */
   function jumpToResults() {
@@ -674,7 +703,9 @@ export default function ListingsPage({
           <div ref={heroSearchRef} className="relative mt-4 w-full lg:mt-0 lg:max-w-md">
             <Search size={18} strokeWidth={2} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400" />
             <SearchSuggest
-              placeholder="Search by make, model, location..."
+              placeholder="Try “Civic under 70 lac in Karachi”"
+              smart
+              onSmart={applySmart}
               value={search}
               onChange={v => {
                 setSearch(v);
@@ -856,6 +887,19 @@ export default function ListingsPage({
               </p>
             )}
 
+            {/* What a typed sentence was read as, until Enter turns it into the chips below */}
+            {smartPreview && (
+              <p className="mb-3 flex items-start gap-2 text-xs leading-relaxed text-slate-500" role="status">
+                <Sparkles size={14} className="mt-px flex-shrink-0 text-indigo-500" />
+                <span>
+                  <span className="font-semibold text-slate-700">Smart search:</span> {smartLabels(smartPreview).join(" · ")}
+                  <button type="button" onClick={() => commitSmart(debouncedSearch)} className="ml-2 font-semibold text-indigo-600 hover:underline">
+                    Keep as filters
+                  </button>
+                </span>
+              </p>
+            )}
+
             {/* Active filter chips */}
             {activeChips.length > 0 && (
               <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -1024,6 +1068,7 @@ export default function ListingsPage({
               onKeyDown={e => {
                 if (e.key === "Enter") {
                   e.currentTarget.blur();
+                  commitSmart(search);
                   jumpToResults();
                 }
               }}

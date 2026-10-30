@@ -1,9 +1,10 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BellRing, Check, MessageCircle, Phone, X } from "lucide-react";
+import { BellRing, Check, Phone, X } from "lucide-react";
 import Tip from "@/components/ui/Tip";
 
 export type FollowUpItem = {
@@ -155,7 +156,7 @@ export function FollowUpList({ items, canEdit, onDone, limit, compact }: {
               <>
                 <a href={`tel:${f.customerPhone}`} aria-label={`Call ${f.customerName}`} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]"><Phone size={14} /></a>
                 <a href={`https://wa.me/${phone}?text=${encodeURIComponent(`Hi ${f.customerName}, `)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${f.customerName}`}
-                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[var(--gh-1a7f37)] hover:bg-[var(--gh-f6f8fa)]"><MessageCircle size={14} /></a>
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[var(--gh-1a7f37)] hover:bg-[var(--gh-f6f8fa)]"><WhatsAppIcon size={14} /></a>
               </>
             )}
           </li>

@@ -1,3 +1,4 @@
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { Listing } from "@/models/Listing";
 import { Rental } from "@/models/Rental";
 import { Inspection } from "@/models/Inspection";
 import mongoose from "mongoose";
-import { cache } from "react";
+import { Fragment, cache } from "react";
 import { unstable_cache } from "next/cache";
 import { PUBLIC_CACHE_SECONDS, listingTag } from "@/lib/pageCache";
 import type { Metadata } from "next";
@@ -18,7 +19,9 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { closedTag } from "@/lib/availability";
 import { mapsUrl } from "@/lib/address";
-import { BadgeCheck, Building2, CalendarCheck, ChevronRight, Cog, Fuel, Gauge, MapPin, MessageCircle, MessageSquare, Palette, Phone, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, CalendarCheck, CalendarDays, ChevronRight, Cog, Fuel, Gauge, MapPin, MessageSquare, Palette, Phone, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
+import StatusText from "@/components/ui/StatusText";
+import { priceInsight, VERDICT_TEXT, YEAR_SPREAD } from "@/lib/priceInsight";
 import ReadMore from "@/components/ui/ReadMore";
 import { RingAvatar } from "@/components/UserMenuDropdown";
 import { conditionLabel } from "@/lib/vehicleOptions";
@@ -39,6 +42,7 @@ import { whatsappUrl } from "@/lib/phone";
 import { ListingContactBar, ListingViewerProvider, ShowFor } from "@/components/listings/ListingViewer";
 
 import AdminBadge from "@/components/AdminBadge";
+import { AvailabilityCard } from "@/components/rentals/AvailabilityCalendar";
 type Props = { params: Promise<{ id: string }> };
 
 // The page is the same for every visitor (who is looking is worked out in the browser, ListingViewer), so the
@@ -103,6 +107,29 @@ const loadSimilar = (id: string, make: string, type: string, price: number) =>
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [listingTag(id)] }
   )();
 
+/**
+ * Asking prices of other live listings for sale with the same make and model, within YEAR_SPREAD model years,
+ * for the market price check (src/lib/priceInsight.ts). Prices move slowly, so this is kept for 10 minutes.
+ */
+const loadMarketPrices = (id: string, make: string, model: string, year: number) =>
+  unstable_cache(
+    async () => {
+      await connectDB();
+      const same = (v: string) => new RegExp(`^\\s*${v.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
+      const rows = await Listing.find({
+        _id: { $ne: new mongoose.Types.ObjectId(id) },
+        status: "ACTIVE",
+        type: { $in: ["SALE", "BOTH"] },
+        make: same(make),
+        model: same(model),
+        year: { $gte: year - YEAR_SPREAD, $lte: year + YEAR_SPREAD },
+      }).select("price").sort({ createdAt: -1 }).limit(200).lean<{ price: number }[]>();
+      return rows.map(r => r.price);
+    },
+    ["listing-market", id],
+    { revalidate: 600, tags: [listingTag(id)] }
+  )();
+
 // Shared by generateMetadata and the page, so the data is only read once per request
 const getListingPage = cache(async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -161,6 +188,7 @@ export default async function ListingDetailPage({ params }: Props) {
     images: string[];
     type: string;
     status: string;
+    createdAt?: string;
     sellerId: {
       _id?: mongoose.Types.ObjectId;
       name?: string;
@@ -174,7 +202,11 @@ export default async function ListingDetailPage({ params }: Props) {
   };
 
   const page = (await getListingPage(id))!;
-  const similar = (await loadSimilar(id, l.make, l.type, l.price)) as Array<IListing & { _id: string }>;
+  const isForSale = l.type === "SALE" || l.type === "BOTH";
+  const [similar, marketPrices] = await Promise.all([
+    loadSimilar(id, l.make, l.type, l.price) as Promise<Array<IListing & { _id: string }>>,
+    isForSale && l.model?.trim() ? loadMarketPrices(id, l.make, l.model, l.year) : Promise.resolve([] as number[]),
+  ]);
   const rental = page.rental as {
     _id: mongoose.Types.ObjectId;
     dailyRate: number;
@@ -194,7 +226,6 @@ export default async function ListingDetailPage({ params }: Props) {
 
   const sellerId = l.sellerId?._id?.toString();
 
-  const isForSale = l.type === "SALE" || l.type === "BOTH";
   const { business, rating } = page;
   // Sold or rented: shown with a tag so visitors move on to vehicles they can still buy or rent
   const closed = closedTag(l.status);
@@ -205,16 +236,29 @@ export default async function ListingDetailPage({ params }: Props) {
   const whatsapp = whatsappUrl(l.sellerId?.phone, `Hi, I'm interested in: ${l.title}`);
   // Phones: price and contact fixed to the bottom, for anyone who isn't the seller while it can still be bought or rented
   const showContactBar = !!l.sellerId && !closed;
+  // How the asking price compares with similar live listings (only for vehicles that can still be bought)
+  const market = isForSale && !closed ? priceInsight(l.price, marketPrices) : null;
 
-  // Shown as icon + value; the label is the icon's tooltip and is read out by screen readers
+  const make = l.make.trim();
+  const model = l.model?.trim() ?? "";
+  const browseMake = `/listings?make=${encodeURIComponent(make)}`;
+  const browseModel = `${browseMake}&search=${encodeURIComponent(model)}`;
+  // A short reference people can quote when they call or message ("Ad ID 4F2A9C"), like account and business IDs
+  const adId = id.slice(-6).toUpperCase();
+  const listedOn = l.createdAt
+    ? new Date(l.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Karachi" })
+    : null;
+
+  // Shown as icon + value; the label is the icon's tooltip and is read out by screen readers. Details the seller
+  // left out are skipped rather than shown as "N/A"; the city is on the line under the title.
   const specs = [
-    { label: "Condition", icon: ShieldCheck, value: l.condition ? conditionLabel(l.condition) : "N/A" },
-    { label: "Mileage", icon: Gauge, value: l.mileage ? `${l.mileage.toLocaleString()} km` : "N/A" },
-    { label: "Fuel type", icon: Fuel, value: l.fuelType ?? "N/A" },
-    { label: "Transmission", icon: Cog, value: l.transmission ?? "N/A" },
-    { label: "Color", icon: Palette, value: l.color ?? "N/A" },
-    { label: "Location", icon: MapPin, value: l.location },
-  ];
+    { label: "Model year", icon: CalendarDays, value: l.year ? String(l.year) : null },
+    { label: "Condition", icon: ShieldCheck, value: l.condition ? conditionLabel(l.condition) : null },
+    { label: "Mileage", icon: Gauge, value: l.mileage ? `${l.mileage.toLocaleString("en-PK")} km` : null },
+    { label: "Fuel type", icon: Fuel, value: l.fuelType || null },
+    { label: "Transmission", icon: Cog, value: l.transmission || null },
+    { label: "Color", icon: Palette, value: l.color || null },
+  ].filter((s): s is { label: string; icon: typeof Gauge; value: string } => !!s.value);
 
   const inspectionSpecs = inspection ? [
     { label: "Detected make", value: inspection.make },
@@ -248,6 +292,19 @@ export default async function ListingDetailPage({ params }: Props) {
       itemCondition: l.condition === "NEW" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
     },
   };
+  // The breadcrumb trail, so search results can show "AutoGO › Honda › Civic"
+  const crumbs = [
+    { name: "Marketplace", href: "/listings" },
+    { name: make, href: browseMake },
+    ...(model ? [{ name: model, href: browseModel }] : []),
+  ];
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [...crumbs, { name: l.title, href: `/listings/${id}` }].map((c, i) => ({
+      "@type": "ListItem", position: i + 1, name: c.name, item: `${SITE_URL}${c.href}`,
+    })),
+  };
 
   return (
     <ListingViewerProvider listingId={id} sellerId={sellerId} business={!!business}>
@@ -257,7 +314,17 @@ export default async function ListingDetailPage({ params }: Props) {
         // Escape "<" so listing text can't close the script tag
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <div className={`max-w-6xl mx-auto px-4 pt-8 ${showContactBar ? "pb-28 lg:pb-8" : "pb-8"}`}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd).replace(/</g, "\\u003c") }} />
+      <div className={`max-w-6xl mx-auto px-4 pt-5 sm:pt-6 ${showContactBar ? "pb-28 lg:pb-8" : "pb-8"}`}>
+        {/* Marketplace › Honda › Civic: each step opens Browse filtered to it */}
+        <nav aria-label="Breadcrumb" className="mb-4 flex min-w-0 items-center gap-1 text-xs font-medium text-slate-500">
+          {crumbs.map((c, i) => (
+            <Fragment key={c.href}>
+              {i > 0 && <ChevronRight size={12} aria-hidden className="flex-shrink-0 text-slate-300" />}
+              <Link href={c.href} className={`transition hover:text-slate-900 ${i === crumbs.length - 1 ? "truncate" : "flex-shrink-0"}`}>{c.name}</Link>
+            </Fragment>
+          ))}
+        </nav>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Left */}
@@ -271,7 +338,14 @@ export default async function ListingDetailPage({ params }: Props) {
               <div className="flex items-start justify-between">
                 <div>
                   <h1 className="text-2xl font-semibold text-slate-900">{l.title}</h1>
-                  <p className="text-slate-500 mt-1">{l.make} {l.model} · {l.year}</p>
+                  <p className="text-slate-500 mt-1">{l.year} {make} {model}</p>
+                  {/* Where it is, when it was listed and the ad's reference */}
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
+                    <span className="inline-flex items-center gap-1 font-medium text-slate-600"><MapPin size={12} aria-hidden /> {l.location}</span>
+                    {listedOn && <><span aria-hidden>·</span><span>Listed {listedOn}</span></>}
+                    <span aria-hidden>·</span>
+                    <span title="Quote this when you contact the seller">Ad ID <span className="font-mono font-semibold text-slate-500">{adId}</span></span>
+                  </p>
                 </div>
                 <div className="text-right">
                   {/* Rent-only listings store the daily rate as their price */}
@@ -424,7 +498,7 @@ export default async function ListingDetailPage({ params }: Props) {
                       <div className="flex gap-2 empty:hidden">
                         {whatsapp && (
                           <a href={whatsapp} target="_blank" rel="noreferrer" className={`flex-1 ${OUTLINE_BTN}`}>
-                            <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
+                            <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
                           </a>
                         )}
                         <ShowFor who="signedIn">
@@ -514,6 +588,45 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
             )}
 
+            {/* Market price check: the asking price against similar live listings */}
+            {market && (
+              <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold text-slate-900">Market price check</h2>
+                  <StatusText className={VERDICT_TEXT[market.verdict].tone}>{VERDICT_TEXT[market.verdict].label}</StatusText>
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                  {Math.abs(market.diff) < 1000 ? (
+                    <>About the usual price</>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-slate-800">PKR {formatLakh(Math.abs(market.diff))} {market.diff < 0 ? "below" : "above"}</span> the usual price
+                    </>
+                  )}{" "}
+                  of {market.count} similar {make} {model} listing{market.count !== 1 ? "s" : ""} ({l.year - YEAR_SPREAD}–{l.year + YEAR_SPREAD}).
+                </p>
+                {/* The usual range, cheaper on the left, with this vehicle marked */}
+                <div className="relative mt-4 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-amber-400">
+                  <span
+                    aria-hidden
+                    className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-900 shadow"
+                    style={{ left: `${market.position * 100}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-between text-[11px] text-slate-400">
+                  <span>{formatLakh(market.low)}</span>
+                  <span>Typical <span className="font-semibold text-slate-600">{formatLakh(market.median)}</span></span>
+                  <span>{formatLakh(market.high)}</span>
+                </div>
+                <p className="mt-3 border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-400">
+                  From live AutoGO listings. Condition, mileage and variant change the price, so check the vehicle too.
+                </p>
+              </div>
+            )}
+
+            {/* Which days are free: only bookings the owner confirmed block a day, never requests */}
+            {rental && <AvailabilityCard source={{ rentalId: String(rental._id) }} />}
+
             {isForSale && !closed && <EmiCalculator price={l.price} />}
 
             {/* Owner actions */}
@@ -554,7 +667,7 @@ export default async function ListingDetailPage({ params }: Props) {
           <section className="mt-10" aria-label="Similar vehicles">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-slate-900">Similar vehicles</h2>
-              <Link href={`/listings?make=${encodeURIComponent(l.make.trim())}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">See all {l.make.trim()}</Link>
+              <Link href={browseMake} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">See all {make}</Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {similar.map(s => <ListingCard key={s._id} listing={s} />)}

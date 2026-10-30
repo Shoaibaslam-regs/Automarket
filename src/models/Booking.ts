@@ -59,6 +59,8 @@ export interface IBooking extends Document {
   startedAt?: Date;
   completedAt?: Date;
   cancelledAt?: Date;
+  /** Set when AutoGO closed a request by itself (CANCEL_REASONS in src/lib/bookings.ts) */
+  cancelReason?: "DATES_TAKEN" | "EXPIRED";
   createdAt: Date;
 }
 
@@ -120,6 +122,7 @@ const BookingSchema = new Schema<IBooking>(
     startedAt: { type: Date },
     completedAt: { type: Date },
     cancelledAt: { type: Date },
+    cancelReason: { type: String, enum: ["DATES_TAKEN", "EXPIRED"] },
   },
   { timestamps: true }
 );

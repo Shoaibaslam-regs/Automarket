@@ -153,13 +153,13 @@ export async function sendMorningDigest(now = new Date()): Promise<{ businesses:
 
 /** Everything the daily cron does. Each job is separate, so one failing doesn't stop the others. */
 /**
- * Cancels online booking requests nobody answered within REQUEST_EXPIRY_HOURS. They already stopped holding their
- * dates (holdsDatesQuery); this tidies them away, and the renter sees "Cancelled" in My bookings (badge included).
+ * Cancels online booking requests nobody answered within REQUEST_EXPIRY_HOURS. Requests never hold dates
+ * (holdsDatesQuery); this tidies them away, and the renter sees "Cancelled" in My bookings (badge included).
  */
 async function expireStaleRequests(now: Date) {
   const { modifiedCount } = await Booking.updateMany(
     { status: "PENDING", source: { $ne: "WALK_IN" }, createdAt: { $lt: requestExpiryCutoff(now) } },
-    { $set: { status: "CANCELLED", cancelledAt: now, seenByRenter: false } }
+    { $set: { status: "CANCELLED", cancelledAt: now, cancelReason: "EXPIRED", seenByRenter: false } }
   );
   return { expired: modifiedCount };
 }

@@ -3,7 +3,9 @@ import Skeleton from "@/components/ui/Skeleton";
 export default function ListingDetailLoading() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-4 pb-8 pt-5 sm:pt-6">
+        {/* Breadcrumb: Marketplace › Make › Model */}
+        <Skeleton className="mb-4 h-3.5 w-48" />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -19,6 +21,8 @@ export default function ListingDetailLoading() {
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-6 w-2/3" />
                   <Skeleton className="h-4 w-1/3" />
+                  {/* City · listed date · ad ID */}
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
                 <Skeleton className="h-7 w-32" />
               </div>

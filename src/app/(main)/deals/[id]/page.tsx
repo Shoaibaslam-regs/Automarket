@@ -1,3 +1,4 @@
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,6 +19,9 @@ import { SITE_URL } from "@/lib/site";
 import BuyRequestButton from "@/components/purchases/BuyRequestButton";
 import ShareButton from "@/components/ShareButton";
 import ReportButton from "@/components/reports/ReportButton";
+import ContactBar from "@/components/listings/ContactBar";
+import { AvailabilityCard } from "@/components/rentals/AvailabilityCalendar";
+import { whatsappUrl } from "@/lib/phone";
 
 // Same for every visitor, so the page itself is cached too; deal changes clear it straight away
 export const revalidate = 60;
@@ -64,6 +68,10 @@ export default async function DealPage({ params }: Props) {
   const rent = isRentDeal(deal);
   const cars = deal.vehicleCount ?? 1;
   const more = (await getLiveDeals({ orgId: business.id, limit: 5 })).filter(d => d._id !== deal._id).slice(0, 4);
+  // Phones: price and the ways to act fixed to the bottom, like a listing (Book first for a live rent deal)
+  const callable = business.phone?.replace(/[^\d+]/g, "") || undefined;
+  const whatsapp = whatsappUrl(business.phone, `Hi, I'm interested in your deal: ${deal.title}`);
+  const barNote = !live ? DEAL_STATE_STYLE[state].label : saving > 0 ? `You save PKR ${formatLakh(saving)}${rent ? " a day" : ""}` : endsText(deal.endsAt, now);
 
   const specs = [
     { label: "Make", value: deal.make },
@@ -104,7 +112,7 @@ export default async function DealPage({ params }: Props) {
     <div className="min-h-screen bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
 
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+      <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:pt-8 lg:pb-8">
         <Link href="/deals" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900">
           <ArrowLeft size={15} /> All deals
         </Link>
@@ -172,13 +180,19 @@ export default async function DealPage({ params }: Props) {
                     <BuyRequestButton dealId={String(deal._id)} title={deal.title} price={final} businessName={business.name}
                       className="!py-2.5 !font-semibold" />
                   )}
-                  <div className={`grid gap-2 ${business.phone ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {/* Call, WhatsApp and Message side by side (phones also get them in the bottom bar) */}
+                  <div className={`grid gap-2 ${business.phone ? "grid-cols-3" : "grid-cols-1"}`}>
                     {business.phone && (
-                      <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className={OUTLINE_BTN} title={business.phone}>
+                      <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className={`${OUTLINE_BTN} px-1`} title={business.phone}>
                         <Phone size={16} className="text-slate-500" /> Call
                       </a>
                     )}
-                    <Link href={`/messages?with=${business.ownerId}`} className={OUTLINE_BTN}>
+                    {whatsapp && (
+                      <a href={whatsapp} target="_blank" rel="noreferrer" className={`${OUTLINE_BTN} px-1`}>
+                        <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
+                      </a>
+                    )}
+                    <Link href={`/messages?with=${business.ownerId}`} className={`${OUTLINE_BTN} px-1`}>
                       <MessageSquare size={16} className="text-slate-500" /> Message
                     </Link>
                   </div>
@@ -233,6 +247,12 @@ export default async function DealPage({ params }: Props) {
                 </>
               )}
             </div>
+            {/* Which days the package is free: only bookings the business confirmed block a day */}
+            {rent && live && (
+              <div className="mt-6">
+                <AvailabilityCard source={{ dealId: String(deal._id) }} title="Availability" />
+              </div>
+            )}
           </div>
 
         </div>
@@ -248,6 +268,18 @@ export default async function DealPage({ params }: Props) {
       </div>
 
       <Footer />
+      <ContactBar
+        price={`PKR ${formatLakh(final)}`}
+        perDay={rent}
+        note={barNote}
+        phone={callable}
+        whatsapp={whatsapp}
+        messageHref={`/messages?with=${business.ownerId}`}
+        bookHref={rent && live ? `/deals/${deal._id}/book` : undefined}
+        bookLabel="Book deal"
+      />
+      {/* Room for the bar under the footer on phones */}
+      <div aria-hidden className="h-[calc(68px+env(safe-area-inset-bottom))] lg:hidden" />
     </div>
   );
 }

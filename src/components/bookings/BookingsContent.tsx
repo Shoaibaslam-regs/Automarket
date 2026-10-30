@@ -1,15 +1,17 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import { toast } from "@/lib/toast";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Briefcase, CalendarDays, Car, Clock3, FileText, IdCard, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Trash2, TriangleAlert, Undo2, UserRound, Wallet, X } from "lucide-react";
+import { Briefcase, CalendarDays, Car, Clock3, FileText, IdCard, Mail, MapPin, MoreHorizontal, Pencil, Phone, Trash2, TriangleAlert, Undo2, UserRound, Wallet, X } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import HandoverDialog, { PlateBadge } from "@/components/bookings/HandoverDialog";
 import { DepositTag } from "@/components/bookings/DepositDialog";
-import { LATE_RULE_TEXT, bookingNumber, rentalDays } from "@/lib/bookings";
+import { CANCEL_REASON_TEXT, LATE_RULE_TEXT, bookingNumber, cancelReasonOf, rentalDays } from "@/lib/bookings";
 import { PAYMENT_LABEL, paymentState, type PaymentStatus } from "@/lib/payments";
 import { PaymentDialog, PaymentTag } from "@/components/bookings/PaymentTag";
 import { mapsUrl } from "@/lib/address";
@@ -46,6 +48,8 @@ type Booking = {
   createdAt: string;
   confirmedAt?: string;
   cancelledAt?: string;
+  /** Why AutoGO closed the request by itself: dates taken by someone else, or no answer in time */
+  cancelReason?: string;
   plateNumber?: string;
   renterCnic?: string;
   /** Exact return time the owner set at handover; late fee charged at "Mark returned" */
@@ -268,8 +272,10 @@ export default function BookingsContent() {
 
   async function updateStatus(id: string, status: string) {
     setUpdating(id);
-    await fetch(`/api/bookings/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+    const res = await fetch(`/api/bookings/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
     setUpdating(null);
+    // e.g. confirming dates another confirmed booking already has
+    if (!res.ok) toast((await res.json().catch(() => ({}))).error || "Couldn't update this booking", { tone: "info" });
     fetchBookings();
     fetchCounts();
   }
@@ -421,7 +427,7 @@ export default function BookingsContent() {
                           ) : (
                             <p className="min-w-0 truncate text-[15px] font-bold leading-tight text-[var(--gh-0d1117)]">{listing?.title ?? "Vehicle removed"}</p>
                           )}
-                          <StatusText color={look.color}>{look.label}</StatusText>
+                          <StatusText color={look.color}>{!received && booking.status === "CANCELLED" && cancelReasonOf(booking.cancelReason) ? CANCEL_REASON_TEXT[cancelReasonOf(booking.cancelReason)!].label : look.label}</StatusText>
                         </div>
                         <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                           {isDeal && (
@@ -447,6 +453,21 @@ export default function BookingsContent() {
                     {/* People, pickup, return, handover */}
                     <div className="mt-3 space-y-1.5 text-xs">
                       {look.hint && <p className="font-medium" style={{ color: look.color }}>{look.hint}</p>}
+                      {/* A request AutoGO closed by itself says why, and dates taken by someone else link to the calendar */}
+                      {!received && booking.status === "CANCELLED" && (() => {
+                        const reason = cancelReasonOf(booking.cancelReason);
+                        if (!reason) return null;
+                        return (
+                          <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium text-[var(--gh-cf222e)]">
+                            <span>{CANCEL_REASON_TEXT[reason].text}</span>
+                            {listingId && (
+                              <Link href={`${isDeal ? `/deals/${listingId}` : `/listings/${listingId}`}#availability`} className="inline-flex items-center gap-1 font-semibold text-[var(--gh-0550ae)] hover:underline">
+                                <CalendarDays size={12} /> {reason === "DATES_TAKEN" ? "See free dates" : "Book again"}
+                              </Link>
+                            )}
+                          </p>
+                        );
+                      })()}
                       {viaBusiness && (
                         <p className="flex items-center gap-1.5 text-[var(--gh-57606a)]">
                           <Briefcase size={12} className="flex-shrink-0 text-[var(--gh-8c959f)]" /> A request for your business. Confirm, hand over and take payment in the Business console.
@@ -520,7 +541,7 @@ export default function BookingsContent() {
                       )}
                       {person?.phone && (
                         <a href={`https://wa.me/${person.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${person.name ?? ""}`)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp the ${person.role.toLowerCase()}`} className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
-                          <MessageCircle size={14} /> <span className={primary || viaBusiness ? "hidden sm:inline" : ""}>WhatsApp</span>
+                          <WhatsAppIcon size={14} /> <span className={primary || viaBusiness ? "hidden sm:inline" : ""}>WhatsApp</span>
                         </a>
                       )}
                     </div>

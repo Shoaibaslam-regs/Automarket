@@ -75,7 +75,7 @@ export function bookingClashQuery(start: Date, end: Date) {
 /**
  * Limits on online booking requests, so one renter can't hold a vehicle for months or many vehicles at once:
  * a request covers at most MAX_BOOKING_DAYS, a renter has at most MAX_OPEN_REQUESTS waiting, and a request the
- * owner hasn't answered within REQUEST_EXPIRY_HOURS stops holding the dates (the daily job then cancels it).
+ * owner hasn't answered within REQUEST_EXPIRY_HOURS is cancelled by the daily job. Requests never hold dates.
  * Walk-ins entered by a business aren't limited.
  */
 export const MAX_BOOKING_DAYS = 30;
@@ -87,19 +87,59 @@ export function bookingLengthError(start: Date | string, end: Date | string): st
   return rentalDays(start, end) > MAX_BOOKING_DAYS ? `A booking can be at most ${MAX_BOOKING_DAYS} days. Book again for a longer trip.` : null;
 }
 
-/** When a still-unanswered request made before this moment no longer holds its dates. */
+/** Unanswered requests made before this moment are past their time (no longer counted as open, then cancelled). */
 export function requestExpiryCutoff(now = new Date()): Date {
   return new Date(now.getTime() - REQUEST_EXPIRY_HOURS * 60 * 60 * 1000);
 }
 
 /**
- * Bookings that hold their dates: confirmed or handed over, or requests still within REQUEST_EXPIRY_HOURS.
+ * Bookings that hold their dates: only ones the owner confirmed, or that were handed over. A request ("PENDING")
+ * never blocks anyone: several people can ask for the same dates, the owner confirms one, and confirming
+ * refuses a clash with an earlier confirmed booking and cancels the other requests for those dates
+ * (src/lib/bookingConfirm.ts). Walk-ins are created confirmed, so they hold their dates straight away.
  * Use with bookingClashQuery (inside `$and`, so its `$or` isn't overwritten).
  */
-export function holdsDatesQuery(now = new Date()) {
+export function holdsDatesQuery() {
   return {
-    $and: [{ $or: [{ status: { $in: ["CONFIRMED", "ACTIVE"] } }, { status: "PENDING", createdAt: { $gte: requestExpiryCutoff(now) } }] }],
+    $and: [{ status: { $in: HOLDING_STATUSES } }],
   };
+}
+export const HOLDING_STATUSES = ["CONFIRMED", "ACTIVE"];
+
+/**
+ * Why AutoGO closed a request by itself (owners' and renters' own cancellations carry no reason):
+ * DATES_TAKEN when the owner confirmed someone else for those days (cancelClashingRequests), EXPIRED when the
+ * owner didn't answer within REQUEST_EXPIRY_HOURS (the daily job). Shown to the renter on their booking card,
+ * in Notifications and on their phone.
+ */
+export const CANCEL_REASONS = ["DATES_TAKEN", "EXPIRED"] as const;
+export type CancelReason = (typeof CANCEL_REASONS)[number];
+export const CANCEL_REASON_TEXT: Record<CancelReason, { label: string; text: string }> = {
+  DATES_TAKEN: { label: "Dates taken", text: "Those dates were booked by someone else, so your request was closed. Pick other free dates." },
+  EXPIRED: { label: "Not answered", text: `The owner didn't answer within ${REQUEST_EXPIRY_HOURS} hours, so your request was closed. You can send a new one.` },
+};
+export const cancelReasonOf = (v: unknown): CancelReason | null => (CANCEL_REASONS as readonly unknown[]).includes(v) ? (v as CancelReason) : null;
+
+/** "YYYY-MM-DD" of a date or ISO string, read in UTC (booking dates are stored as UTC midnight). */
+export function dayKey(value: Date | string): string {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+/**
+ * The calendar days a booking holds, as "YYYY-MM-DD": pickup up to (not including) the return day, or just the
+ * pickup day for a same-day booking (the same rule as bookingClashQuery). Capped at 400 days.
+ */
+export function heldDays(start: Date | string, end: Date | string): string[] {
+  const first = new Date(`${dayKey(start)}T00:00:00Z`).getTime();
+  const last = Math.max(first, new Date(`${dayKey(end)}T00:00:00Z`).getTime() - DAY_MS);
+  const days: string[] = [];
+  for (let t = first; t <= last && days.length < 400; t += DAY_MS) days.push(new Date(t).toISOString().slice(0, 10));
+  return days;
+}
+
+/** True when a new booking from `start` to `end` would need a day that is already taken. */
+export function needsTakenDay(start: Date | string, end: Date | string, taken: Set<string>): boolean {
+  return heldDays(start, end).some(d => taken.has(d));
 }
 
 /** A renter may bring the vehicle back this late without charge. */

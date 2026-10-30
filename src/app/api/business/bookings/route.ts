@@ -7,6 +7,7 @@ import { Listing } from "@/models/Listing";
 import { Customer } from "@/models/Customer";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
 import { bookingClashQuery, holdsDatesQuery, rentalDays, validBookingDates, bookingNumber } from "@/lib/bookings";
+import { cancelClashingRequests } from "@/lib/bookingConfirm";
 import { ensureBookingCustomer } from "@/lib/customerSync";
 import { normalizeCnic, normalizePlate, samePlatePattern } from "@/lib/plates";
 import { DEAL_BOOKING_FIELDS, businessBookingQuery } from "@/lib/dealBookings";
@@ -187,6 +188,9 @@ export async function POST(req: NextRequest) {
       // Nobody on the renter side to notify
       seenByRenter: true,
     });
+
+    // A confirmed walk-in takes its days: online requests for them can't be confirmed any more
+    if (status === "CONFIRMED") await cancelClashingRequests(booking);
 
     // A walk-in typed in by hand still ends up in the customer list
     if (!linkedCustomer) {

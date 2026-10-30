@@ -1,6 +1,7 @@
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Building2, CalendarDays, MapPin, MessageCircle, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, MapPin, ShieldCheck, Wallet } from "lucide-react";
 import Footer from "@/components/Footer";
 import LiveStats from "@/components/home/LiveStats";
 import { getPublicStats } from "@/lib/publicStats";
@@ -153,7 +154,7 @@ export default async function AboutPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             {wa && (
               <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-                <MessageCircle size={15} /> WhatsApp us
+                <WhatsAppIcon size={15} /> WhatsApp us
               </a>
             )}
             <Link href="/help" className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">

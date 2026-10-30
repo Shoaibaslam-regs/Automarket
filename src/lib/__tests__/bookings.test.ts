@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PERSONAL_OWNER_MOVES, RENTER_MOVES, MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, holdsDatesQuery, lateCharge, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
+import { PERSONAL_OWNER_MOVES, RENTER_MOVES, MAX_BOOKING_DAYS, REQUEST_EXPIRY_HOURS, bookingClashQuery, bookingDailyRate, bookingLengthError, canTransition, CANCEL_REASON_TEXT, cancelReasonOf, heldDays, holdsDatesQuery, lateCharge, needsTakenDay, rentalDays, requestExpiryCutoff, validBookingDates } from "@/lib/bookings";
 
 const d = (s: string) => new Date(s);
 
@@ -83,12 +83,12 @@ describe("online request limits", () => {
     expect(bookingLengthError("2026-11-01", "2026-12-02")).toMatch(String(MAX_BOOKING_DAYS));
     expect(bookingLengthError("2026-11-01", "2099-01-01")).not.toBeNull();
   });
-  it("lets an unanswered request hold dates only for REQUEST_EXPIRY_HOURS", () => {
+  it("expires unanswered requests after REQUEST_EXPIRY_HOURS", () => {
     const now = d("2026-11-03T12:00:00Z");
     expect(requestExpiryCutoff(now).getTime()).toBe(now.getTime() - REQUEST_EXPIRY_HOURS * 3600_000);
-    const q = holdsDatesQuery(now).$and[0].$or;
-    expect(q[0]).toEqual({ status: { $in: ["CONFIRMED", "ACTIVE"] } });
-    expect(q[1]).toEqual({ status: "PENDING", createdAt: { $gte: requestExpiryCutoff(now) } });
+  });
+  it("lets only confirmed and handed-over bookings hold dates, never a request", () => {
+    expect(holdsDatesQuery().$and[0]).toEqual({ status: { $in: ["CONFIRMED", "ACTIVE"] } });
   });
   it("combines with the clash query without overwriting its $or", () => {
     const merged = { ...bookingClashQuery(d("2026-11-01"), d("2026-11-03")), ...holdsDatesQuery() };
@@ -109,5 +109,38 @@ describe("personal booking moves", () => {
     expect(PERSONAL_OWNER_MOVES.PENDING).not.toContain("COMPLETED");
     expect(PERSONAL_OWNER_MOVES.COMPLETED).toBeUndefined();
     expect(PERSONAL_OWNER_MOVES.CANCELLED).toBeUndefined();
+  });
+});
+
+describe("heldDays", () => {
+  it("holds pickup up to, not including, the return day", () => {
+    expect(heldDays("2026-11-01", "2026-11-04")).toEqual(["2026-11-01", "2026-11-02", "2026-11-03"]);
+  });
+  it("holds just the pickup day for a same-day or next-day return", () => {
+    expect(heldDays("2026-11-01", "2026-11-01")).toEqual(["2026-11-01"]);
+    expect(heldDays("2026-11-01T00:00:00.000Z", "2026-11-02T00:00:00.000Z")).toEqual(["2026-11-01"]);
+  });
+  it("crosses months", () => {
+    expect(heldDays("2026-10-30", "2026-11-02")).toEqual(["2026-10-30", "2026-10-31", "2026-11-01"]);
+  });
+  it("agrees with the clash rule: the return day is free for the next pickup", () => {
+    const taken = new Set(heldDays("2026-11-01", "2026-11-04"));
+    expect(needsTakenDay("2026-11-04", "2026-11-06", taken)).toBe(false);
+    expect(needsTakenDay("2026-10-29", "2026-11-01", taken)).toBe(false);
+    expect(needsTakenDay("2026-10-29", "2026-11-02", taken)).toBe(true);
+    expect(needsTakenDay("2026-11-03", "2026-11-03", taken)).toBe(true);
+  });
+});
+
+describe("cancel reasons", () => {
+  it("only accepts the reasons AutoGO sets itself", () => {
+    expect(cancelReasonOf("DATES_TAKEN")).toBe("DATES_TAKEN");
+    expect(cancelReasonOf("EXPIRED")).toBe("EXPIRED");
+    expect(cancelReasonOf(undefined)).toBeNull();
+    expect(cancelReasonOf("OWNER")).toBeNull();
+  });
+  it("tells the renter what happened and what to do", () => {
+    expect(CANCEL_REASON_TEXT.DATES_TAKEN.text).toMatch(/booked by someone else/);
+    expect(CANCEL_REASON_TEXT.EXPIRED.text).toMatch(/48 hours/);
   });
 });

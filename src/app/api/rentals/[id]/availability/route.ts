@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { Booking } from "@/models/Booking";
-import { holdsDatesQuery } from "@/lib/bookings";
+import { takenDays } from "@/lib/takenDays";
+import { reportError } from "@/lib/errorLog";
 
-export async function GET(
-  req: NextRequest, 
- { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * The days this rental is taken ("YYYY-MM-DD"), for the availability calendar: confirmed and handed-over
+ * bookings only, since a request doesn't block anyone. Public; only dates are sent.
+ */
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await connectDB();
-
-    const bookings = await Booking.find({
-      rentalId: id,
-      // The same bookings that refuse a new request (an unanswered one stops holding its dates after a while)
-      ...holdsDatesQuery(),
-    }).select("startDate endDate").lean();
-
-    return NextResponse.json({ bookedDates: bookings });
+    const taken = await takenDays({ rentalId: id });
+    return NextResponse.json({ taken }, { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=30" } });
   } catch (error) {
+    reportError("Rental availability error:", error);
     return NextResponse.json({ error: "Failed to fetch availability" }, { status: 500 });
   }
 }

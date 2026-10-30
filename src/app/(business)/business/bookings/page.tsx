@@ -1,11 +1,12 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  AlertTriangle, CalendarCheck, IdCard, MessageCircle, MoreHorizontal, Pencil, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
+  AlertTriangle, CalendarCheck, IdCard, MoreHorizontal, Pencil, Tag, CalendarDays, Car, CheckCircle2, Clock3, FileText, KeyRound, Phone, Plus, Search,
   CalendarRange, Gauge, List as ListIcon, ShieldCheck, Store, Trash2, Undo2, UserRound, Wallet, X,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
@@ -834,7 +835,7 @@ export default function BusinessBookingsPage() {
                         aria-label="WhatsApp the customer"
                         className={`${iconBtn} text-[var(--gh-1a7f37)]`}
                       >
-                        <MessageCircle size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
+                        <WhatsAppIcon size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
                       </a>
                     )}
                   </div>

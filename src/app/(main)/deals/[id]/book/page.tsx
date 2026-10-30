@@ -1,7 +1,9 @@
+import { whatsappUrl } from "@/lib/phone";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CarFront, ChevronLeft, ImageOff, MapPin, Tag } from "lucide-react";
+import { CarFront, ChevronLeft, ImageOff, MapPin, Phone, Tag } from "lucide-react";
 import { auth } from "@/lib/auth";
 import BookingForm from "@/components/rentals/BookingForm";
 import { getDealPage } from "@/lib/publicDeals";
@@ -21,6 +23,9 @@ export default async function BookDealPage({ params }: { params: Promise<{ id: s
 
   const daily = dealPrice(deal.price, deal);
   const cars = deal.vehicleCount ?? 1;
+  // The business's number, so the renter can ask before booking
+  const wa = whatsappUrl(business.phone, `Hi, I'd like to book your deal: ${deal.title}`);
+  const tel = business.phone?.replace(/[^\d+]/g, "") || null;
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-10">
@@ -70,6 +75,24 @@ export default async function BookDealPage({ params }: { params: Promise<{ id: s
                   <span className="font-semibold text-slate-900">PKR {(deal.deposit ?? 0).toLocaleString("en-PK")}</span>
                 </div>
               </div>
+              {/* Ask the business before booking: WhatsApp and Call */}
+              {(wa || tel) && (
+                <div className="border-t border-slate-100 px-4 py-3.5 lg:mx-5 lg:px-0 lg:pb-5">
+                  <p className="mb-2 text-xs text-slate-500">Questions before booking?</p>
+                  <div className={`grid gap-2 ${wa && tel ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {wa && (
+                      <a href={wa} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
+                        <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
+                      </a>
+                    )}
+                    {tel && (
+                      <a href={`tel:${tel}`} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
+                        <Phone size={15} className="text-slate-500" /> Call
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </aside>
 

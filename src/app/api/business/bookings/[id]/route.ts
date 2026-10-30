@@ -9,6 +9,7 @@ import { User } from "@/models/User";
 import { can, getBusinessRentals, getMembership } from "@/lib/business";
 import { bookingDailyRate, canTransition, lateCharge, bookingNumber } from "@/lib/bookings";
 import { sendBookingConfirmedEmail } from "@/lib/email";
+import { CONFIRM_CLASH_ERROR, cancelClashingRequests, confirmClash } from "@/lib/bookingConfirm";
 import { triggerPusher } from "@/lib/support";
 import { Rental } from "@/models/Rental";
 import { normalizeCnic, normalizePlate } from "@/lib/plates";
@@ -122,6 +123,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       booking.extraChargesNote = extra ? String(extraChargesNote).trim().slice(0, 200) : undefined;
     }
 
+    // Requests don't hold dates, so the confirmation is where two bookings could meet
+    if (status === "CONFIRMED" && (await confirmClash(booking))) {
+      return NextResponse.json({ error: CONFIRM_CLASH_ERROR, code: "DATES_TAKEN" }, { status: 409 });
+    }
+
     booking.status = status;
     const now = new Date();
     if (status === "CONFIRMED") booking.confirmedAt = now;
@@ -133,6 +139,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const notifyRenter = booking.source !== "WALK_IN" && booking.renterId && (status === "CONFIRMED" || status === "CANCELLED");
     if (notifyRenter) booking.seenByRenter = false;
     await booking.save();
+    // The other requests for those days can't be confirmed any more: cancel them so their renters look elsewhere
+    if (status === "CONFIRMED") await cancelClashingRequests(booking);
     if (plate && booking.rentalId) await Rental.updateOne({ _id: booking.rentalId }, { $set: { plateNumber: plate } });
     {
       const act = { CONFIRMED: "booking.confirm", CANCELLED: "booking.cancel", ACTIVE: "booking.handover", COMPLETED: "booking.return" }[status as string];

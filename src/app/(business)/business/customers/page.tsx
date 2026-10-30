@@ -1,9 +1,10 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, BellRing, MessageCircle, MoreHorizontal, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
+import { BadgeCheck, BellRing, MoreHorizontal, Pencil, Search, Star, Store, Trash2, Users } from "lucide-react";
 import { FollowUpDialog, FollowUpList, followUpWhen, type FollowUpItem } from "@/components/business/FollowUps";
 import { isClosedDeal } from "@/lib/customers";
 import { formatLimit } from "@/lib/plans";
@@ -492,7 +493,7 @@ function CustomersContent() {
                   <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=Hi ${c.name}, regarding your vehicle inquiry at AutoGO`}
                     target="_blank" rel="noreferrer" aria-label={`WhatsApp ${c.name}`} title="WhatsApp"
                     className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
-                    <MessageCircle size={15} />
+                    <WhatsAppIcon size={15} />
                   </a>
                   <button type="button" onClick={() => setOpenMore(moreOpen ? null : c._id)} aria-expanded={moreOpen} aria-label={`More for ${c.name}`}
                     className={`${iconBtn} ${moreOpen ? "bg-[var(--gh-f6f8fa)] text-[var(--gh-0d1117)]" : "text-[var(--gh-57606a)]"}`}>

@@ -31,10 +31,18 @@ function ago(iso: string) {
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [error, setError] = useState("");
+  // 401: the session ended while the page was open (password changed elsewhere, role changed, account banned)
+  const [signedOut, setSignedOut] = useState(false);
   useEffect(() => {
     fetch("/api/notifications")
-      .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); setItems(d.items); refreshNotificationCounts(); })
-      .catch(e => setError(e.message || "Couldn't load notifications"));
+      .then(async r => {
+        if (r.status === 401) { setSignedOut(true); return; }
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error);
+        setItems(d.items);
+        refreshNotificationCounts();
+      })
+      .catch(() => setError("Couldn't load notifications. Check your connection and try again."));
   }, []);
 
   return (
@@ -48,7 +56,12 @@ export default function NotificationsPage() {
         <div className="mt-5"><TeamInvites /></div>
 
         <div className="mt-6">
-          {error ? (
+          {signedOut ? (
+            <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
+              You&apos;ve been signed out, so your notifications can&apos;t be shown.{" "}
+              <Link href="/login" className="font-semibold underline">Sign in again</Link>
+            </div>
+          ) : error ? (
             <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>
           ) : items === null ? (
             <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />)}</div>

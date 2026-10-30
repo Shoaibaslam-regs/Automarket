@@ -1,7 +1,8 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useRef, useState } from "react";
-import { Check, Link2, MessageCircle, Share2 } from "lucide-react";
+import { Check, Link2, Share2 } from "lucide-react";
 
 /** The Facebook "f" (lucide no longer ships brand logos). */
 function FacebookIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
@@ -110,7 +111,7 @@ export default function ShareButton({ path, title, label = "Share", variant = "p
       {open && (
         <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200 ${MENU_POSITION[variant]}`}>
           <a role="menuitem" href={`https://wa.me/?text=${encodeURIComponent(`${text}: ${url()}`)}`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={item}>
-            <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
+            <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
           </a>
           <a role="menuitem" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url())}`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={item}>
             <FacebookIcon size={16} className="text-blue-600" /> Facebook

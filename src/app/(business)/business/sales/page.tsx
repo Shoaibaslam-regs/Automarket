@@ -1,11 +1,12 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  BadgeDollarSign, CalendarClock, Car, CheckCircle2, Clock3, Download, FileText, Handshake, MessageCircle, MoreHorizontal, Phone, Plus, Search,
+  BadgeDollarSign, CalendarClock, Car, CheckCircle2, Clock3, Download, FileText, Handshake, MoreHorizontal, Phone, Plus, Search,
   Store, Trash2, UserRound, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
@@ -559,7 +560,7 @@ export default function BusinessSalesPage() {
                     )}
                     <a href={`https://wa.me/${s.buyer.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${s.buyer.name}, regarding ${s.vehicle.title} (${purchaseNumber(s._id)})`)}`}
                       target="_blank" rel="noreferrer" aria-label="WhatsApp the buyer" className={`${iconBtn} text-[var(--gh-1a7f37)]`}>
-                      <MessageCircle size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
+                      <WhatsAppIcon size={14} /> <span className={primary ? "hidden sm:inline" : ""}>WhatsApp</span>
                     </a>
                   </div>
                   <button type="button" onClick={() => setOpenMore(moreOpen ? null : s._id)} aria-expanded={moreOpen} aria-label="More actions"

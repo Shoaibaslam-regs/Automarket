@@ -1,3 +1,4 @@
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -217,9 +218,9 @@ export default async function DealerPage({ params }: Props) {
                 href={`https://wa.me/${org.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${org.name}, I found you on AutoGO.`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 block rounded-xl bg-[#25D366] py-2.5 text-center text-sm font-semibold text-white hover:bg-[#1ebe5b]"
+                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-semibold text-white hover:bg-[#1ebe5b]"
               >
-                WhatsApp {org.name.split(" ")[0]}
+                <WhatsAppIcon size={16} /> WhatsApp {org.name.split(" ")[0]}
               </a>
             )}
           </div>

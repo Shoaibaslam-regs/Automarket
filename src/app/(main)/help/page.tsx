@@ -1,6 +1,7 @@
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { LifeBuoy, MessageCircle } from "lucide-react";
+import { LifeBuoy } from "lucide-react";
 import Footer from "@/components/Footer";
 import { PLANS, VERIFIED_BADGE } from "@/lib/plans";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
@@ -169,7 +170,7 @@ export default function HelpPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               {wa && (
                 <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  <MessageCircle size={15} /> WhatsApp us
+                  <WhatsAppIcon size={15} /> WhatsApp us
                 </a>
               )}
               <Link href="/terms" className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">

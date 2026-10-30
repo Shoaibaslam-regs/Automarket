@@ -1,5 +1,6 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -118,7 +119,7 @@ export default function VerifiedBadgeOffer() {
             )}
             {wa && (
               <a href={wa} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1ebe5b]">
-                WhatsApp us
+                <WhatsAppIcon size={16} /> WhatsApp us
               </a>
             )}
           </div>

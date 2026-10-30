@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { CalendarCheck, MessageCircle, MessageSquare, Phone } from "lucide-react";
+import { CalendarCheck, MessageSquare, Phone } from "lucide-react";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 
 /**
- * Phones and tablets: the listing's price and the ways to reach the seller, fixed to the bottom of the screen so
+ * Phones and tablets: the listing's (or deal's) price and the ways to reach the seller, fixed to the bottom of the screen so
  * contact is always one tap away. Hidden on desktop, where the seller box sits beside the photos. While it shows it
  * sets --am-bottom-bar, which the compare bar and install banner use to sit above it.
  */
-export default function ContactBar({ price, perDay, phone, whatsapp, messageHref, bookHref }: {
+export default function ContactBar({ price, perDay, phone, whatsapp, messageHref, bookHref, note = "Contact the seller", bookLabel = "Book" }: {
   /** Already formatted, e.g. "PKR 26 lakh" */
   price: string;
+  /** The small line under the price */
+  note?: string;
+  bookLabel?: string;
   perDay?: boolean;
   phone?: string;
   whatsapp?: string | null;
@@ -20,11 +24,11 @@ export default function ContactBar({ price, perDay, phone, whatsapp, messageHref
   const btn = "inline-flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition";
   // The first available action is the main one; the rest are compact icon buttons
   const actions = [
-    bookHref && { key: "book", href: bookHref, label: "Book", icon: CalendarCheck, tone: "bg-slate-900 text-white hover:bg-slate-800" },
+    bookHref && { key: "book", href: bookHref, label: bookLabel, icon: CalendarCheck, tone: "bg-slate-900 text-white hover:bg-slate-800" },
     phone && { key: "call", href: `tel:${phone}`, label: "Call", icon: Phone, tone: "bg-slate-900 text-white hover:bg-slate-800" },
-    whatsapp && { key: "wa", href: whatsapp, label: "WhatsApp", icon: MessageCircle, tone: "bg-emerald-600 text-white hover:bg-emerald-700", external: true },
+    whatsapp && { key: "wa", href: whatsapp, label: "WhatsApp", icon: WhatsAppIcon, tone: "bg-emerald-600 text-white hover:bg-emerald-700", external: true },
     messageHref && { key: "msg", href: messageHref, label: "Message", icon: MessageSquare, tone: "text-slate-900 ring-1 ring-inset ring-slate-200 hover:bg-slate-50" },
-  ].filter(Boolean).slice(0, 3) as { key: string; href: string; label: string; icon: typeof Phone; tone: string; external?: boolean }[];
+  ].filter(Boolean).slice(0, 3) as { key: string; href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; tone: string; external?: boolean }[];
   if (!actions.length) return null;
   const [main, ...rest] = actions;
   const MainIcon = main.icon;
@@ -36,7 +40,7 @@ export default function ContactBar({ price, perDay, phone, whatsapp, messageHref
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-2.5">
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold leading-tight text-slate-900">{price}{perDay && <span className="text-xs font-medium text-slate-500"> /day</span>}</p>
-            <p className="text-[11px] text-slate-500">Contact the seller</p>
+            <p className="truncate text-[11px] text-slate-500">{note}</p>
           </div>
           {rest.map(a => {
             const Icon = a.icon;

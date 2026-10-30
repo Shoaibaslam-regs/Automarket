@@ -1,3 +1,6 @@
+import { User } from "@/models/User";
+import { whatsappUrl } from "@/lib/phone";
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
@@ -7,7 +10,7 @@ import { auth } from "@/lib/auth";
 import BookingForm from "@/components/rentals/BookingForm";
 import mongoose from "mongoose";
 import Link from "next/link";
-import { ChevronLeft, ImageOff, MapPin } from "lucide-react";
+import { ChevronLeft, ImageOff, MapPin, Phone } from "lucide-react";
 
 export default async function BookingPage({
   params,
@@ -30,9 +33,14 @@ export default async function BookingPage({
     model: string;
     year: number;
     location: string;
+    sellerId: mongoose.Types.ObjectId;
   } | null;
 
   if (!listing) notFound();
+  // The owner's number, so the renter can ask before booking (as on the listing page)
+  const seller = await User.findById(listing.sellerId).select("phone").lean<{ phone?: string }>();
+  const wa = whatsappUrl(seller?.phone, `Hi, I'd like to book: ${listing.title}`);
+  const tel = seller?.phone?.replace(/[^\d+]/g, "") || null;
 
   const rental = await Rental.findOne({ listingId: id }).lean() as {
     _id: mongoose.Types.ObjectId;
@@ -91,6 +99,24 @@ export default async function BookingPage({
                   <span className="font-semibold text-slate-900">PKR {rental.deposit.toLocaleString()}</span>
                 </div>
               </div>
+              {/* Ask the owner before booking: WhatsApp and Call */}
+              {(wa || tel) && (
+                <div className="border-t border-slate-100 px-4 py-3.5 lg:mx-5 lg:px-0 lg:pb-5">
+                  <p className="mb-2 text-xs text-slate-500">Questions before booking?</p>
+                  <div className={`grid gap-2 ${wa && tel ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {wa && (
+                      <a href={wa} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
+                        <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
+                      </a>
+                    )}
+                    {tel && (
+                      <a href={`tel:${tel}`} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-slate-800 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
+                        <Phone size={15} className="text-slate-500" /> Call
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </aside>
 

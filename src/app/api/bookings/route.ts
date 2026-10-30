@@ -105,10 +105,14 @@ export async function POST(req: NextRequest) {
     if (limited) return limited;
 
     await connectDB();
-    const { rentalId, startDate, endDate } = await req.json();
+    const { rentalId, startDate, endDate } = await req.json().catch(() => ({}));
 
     if (!rentalId || !startDate || !endDate) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    // A plain id only: an object such as { "$ne": null } would make findById match any rental
+    if (typeof rentalId !== "string" || !/^[0-9a-f]{24}$/i.test(rentalId)) {
+      return NextResponse.json({ error: "Rental not found" }, { status: 404 });
     }
 
     const start = new Date(startDate);

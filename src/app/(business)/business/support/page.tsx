@@ -1,5 +1,6 @@
 "use client";
 
+import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -129,7 +130,7 @@ export default function BusinessSupportPage() {
           <div className="space-y-3">
             {SUPPORT_WHATSAPP && wa && (
               <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl bg-[#25D366] p-4 text-white transition hover:bg-[#1ebe5b]">
-                <MessageSquare size={18} />
+                <WhatsAppIcon size={18} />
                 <span>
                   <span className="block text-sm font-bold">WhatsApp us</span>
                   <span className="block text-[11px] text-white/85">Quick questions</span>

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CalendarDays, Info, Phone, UserRound } from "lucide-react";
 import { normalizePkMobile } from "@/lib/phone";
-import { MAX_BOOKING_DAYS, LATE_RULE_TEXT, rentalDays, validBookingDates } from "@/lib/bookings";
+import { MAX_BOOKING_DAYS, LATE_RULE_TEXT, needsTakenDay, rentalDays, validBookingDates } from "@/lib/bookings";
+import AvailabilityCalendar, { useTakenDays } from "@/components/rentals/AvailabilityCalendar";
 import { useRateLock } from "@/hooks/useRateLock";
 import RequestSent from "@/components/launch/RequestSent";
 import { bookingSteps } from "@/lib/requestSteps";
@@ -60,6 +61,10 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     fetch("/api/profile").then(r => (r.ok ? r.json() : null)).then(d => d?.user && setMe({ name: d.user.name, phone: d.user.phone })).catch(() => {});
   }, []);
   const needsPhone = !!me && !me.phone?.trim();
+  // Days already confirmed for someone else (requests don't count); the calendar shows them and they can't be picked
+  const { taken, loading: takenLoading } = useTakenDays(dealId ? { dealId } : { rentalId: rentalId ?? "" });
+  // Tapping the calendar: first the pick-up day, then the return day
+  const [picking, setPicking] = useState<"start" | "end">("start");
 
   function pickStart(v: string) {
     setStartDate(v);
@@ -74,6 +79,26 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
 
   const today = new Date().toISOString().split("T")[0];
   const minDate = availableFrom > today ? availableFrom.split("T")[0] : today;
+  // A rent deal must be picked up by the day it ends; the return can be later
+  const lastPickup = dealId && availableTo ? availableTo.split("T")[0] : undefined;
+
+  function pickDay(day: string) {
+    setError("");
+    if (picking === "start" || !startDate || day < startDate) {
+      if (taken.has(day)) { setError("That day is already booked. Choose a free day."); return; }
+      if (day < minDate || (lastPickup && day > lastPickup)) return;
+      setStartDate(day);
+      setEndDate(addDays(day, 1));
+      setPicking("end");
+      return;
+    }
+    if (rentalDays(startDate, day) > MAX_BOOKING_DAYS) { setError(`A booking can be at most ${MAX_BOOKING_DAYS} days.`); return; }
+    // The return day itself may be booked by someone else: it's free for their pickup
+    if (needsTakenDay(startDate, day, taken)) { setError("Your dates run into a booked day. Choose a return day before it."); return; }
+    setEndDate(day);
+    setPicking("start");
+  }
+  const clashes = !!startDate && !!endDate && validBookingDates(startDate, endDate) && needsTakenDay(startDate, endDate, taken);
 
   // A same-day return counts as one day; the return day is free for the next customer
   const days = startDate && endDate && validBookingDates(startDate, endDate) ? rentalDays(startDate, endDate) : 0;
@@ -85,6 +110,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     e.preventDefault();
     if (!startDate || !endDate) { setError("Please select both dates"); return; }
     if (days <= 0) { setError("The return date can't be before the pickup date"); return; }
+    if (clashes) { setError("Some of your dates are already booked. Pick free days on the calendar."); return; }
     if (needsPhone && !normalizePkMobile(phone)) { setError("Enter your mobile number so the owner can call you, e.g. 0300 1234567"); return; }
 
     setLoading(true);
@@ -110,7 +136,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
     setSent(true);
   }
 
-  const disabled = loading || sent || days <= 0 || bookLock.locked;
+  const disabled = loading || sent || days <= 0 || clashes || bookLock.locked;
 
   if (sent) {
     return (
@@ -145,6 +171,26 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
           </div>
         )}
 
+        {/* Tap the pick-up day, then the return day; booked days are crossed out */}
+        <div>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            {picking === "end" && startDate ? "Now tap your return day" : "Tap your pick-up day"}
+          </p>
+          <AvailabilityCalendar
+            taken={taken}
+            loading={takenLoading}
+            start={startDate || undefined}
+            end={endDate || undefined}
+            onPick={pickDay}
+            // Before the first bookable day nothing can be picked; after a deal ends only a return day can
+            isDisabled={d => d < minDate || (picking === "start" && !!lastPickup && d > lastPickup)}
+          />
+        </div>
+
+        {clashes && (
+          <p role="alert" className="-mt-2 text-xs font-medium text-rose-600">Some of these dates are already booked. Pick free days on the calendar.</p>
+        )}
+
         {/* Date fields */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="min-w-0">
@@ -158,7 +204,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
                 type="date"
                 value={startDate}
                 min={minDate}
-                onChange={(e) => pickStart(e.target.value)}
+                onChange={(e) => { pickStart(e.target.value); setPicking("end"); }}
                 required
                 className={dateInputClass}
               />
@@ -177,7 +223,7 @@ export default function BookingForm({ rentalId, dealId, dailyRate, deposit, avai
                 min={startDate || minDate}
                 // Online requests are at most MAX_BOOKING_DAYS long (checked again on the server)
                 max={startDate ? addDays(startDate, MAX_BOOKING_DAYS) : undefined}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => { setEndDate(e.target.value); setPicking("start"); }}
                 required
                 className={dateInputClass}
               />
