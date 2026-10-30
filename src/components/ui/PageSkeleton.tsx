@@ -1,4 +1,5 @@
 import Skeleton from "@/components/ui/Skeleton";
+import Image from "next/image";
 
 /**
  * Building blocks for the loading.tsx placeholders. Each loading file copies its page's real layout (container
@@ -47,10 +48,25 @@ export function TitleBlock({ eyebrow, lines = 1, action, className = "" }: { eye
 }
 
 /** A grid ListingCard (or DealCard): photo, then make, title, price and a spec line. */
+/**
+ * The photo area of a vehicle placeholder: soft grey with the AutoGO mark small and faded in the middle
+ * loading cards look finished rather than empty. The coloured mark in light mode, the white one in dark;
+ * both are the tab icons, so browsers usually have them already. `size="lg"` for big photos (the listing page).
+ */
+export function PhotoSkeleton({ className = "", size = "sm" }: { className?: string; size?: "sm" | "lg" }) {
+  const mark = size === "lg" ? "h-10 w-10 sm:h-12 sm:w-12" : "h-7 w-7 sm:h-9 sm:w-9";
+  return (
+    <div aria-hidden className={`flex items-center justify-center bg-slate-200/70 ${className}`}>
+      <Image src="/icons/favicon-96.png" alt="" width={48} height={48} unoptimized className={`${mark} opacity-30 dark:hidden`} />
+      <Image src="/icons/badge-96.png" alt="" width={48} height={48} unoptimized className={`${mark} hidden opacity-25 dark:block`} />
+    </div>
+  );
+}
+
 export function VehicleCard() {
   return (
     <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
-      <Skeleton className="aspect-[4/3] rounded-none" />
+      <PhotoSkeleton className="aspect-[4/3]" />
       <div className="space-y-2 p-3">
         <Skeleton className="h-2.5 w-1/3" />
         <Skeleton className="h-3.5 w-4/5" />
@@ -65,7 +81,7 @@ export function VehicleCard() {
 export function VehicleRow() {
   return (
     <div className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80">
-      <Skeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-xl" />
+      <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-xl" />
       <div className="flex-1 space-y-2.5 py-2 pr-2">
         <Skeleton className="h-2.5 w-1/3" />
         <Skeleton className="h-4 w-4/5" />

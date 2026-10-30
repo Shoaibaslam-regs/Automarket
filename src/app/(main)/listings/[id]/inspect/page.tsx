@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { loginFor } from "@/lib/callbackPath";
 import { connectDB } from "@/lib/mongodb";
 import { Listing } from "@/models/Listing";
 import { Inspection } from "@/models/Inspection";
@@ -13,7 +14,7 @@ export default async function InspectPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect(loginFor(`/listings/${id}/inspect`));
   if (!mongoose.Types.ObjectId.isValid(id)) notFound();
 
   await connectDB();

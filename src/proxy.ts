@@ -3,7 +3,7 @@ import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server
 import type { NextAuthRequest } from "next-auth";
 import { isCrossSiteWrite } from "@/lib/csrf";
 import { findUnsafeKey } from "@/lib/nosql";
-import { loginFor } from "@/lib/callbackPath";
+import { loginFor, safeCallbackPath } from "@/lib/callbackPath";
 
 const protectedRoutes = ["/dashboard", "/sell", "/bookings", "/purchases", "/messages", "/profile", "/business", "/saved", "/notifications"];
 const authRoutes = ["/login", "/register"];
@@ -26,8 +26,9 @@ const pageGuard = auth((req: NextAuthRequest) => {
     return NextResponse.redirect(new URL(loginFor(pathname + req.nextUrl.search), req.url));
   }
 
+  // Already signed in: straight on to where the sign-in link was taking them (else the dashboard)
   if (authRoutes.some(r => pathname.startsWith(r)) && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL(safeCallbackPath(req.nextUrl.searchParams.get("callbackUrl")), req.url));
   }
 
   return NextResponse.next();

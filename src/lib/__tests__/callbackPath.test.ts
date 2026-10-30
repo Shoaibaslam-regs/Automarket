@@ -21,3 +21,11 @@ describe("safeCallbackPath", () => {
     expect(loginFor("/rentals/abc/book?start=2026-11-05")).toBe("/login?callbackUrl=%2Frentals%2Fabc%2Fbook%3Fstart%3D2026-11-05");
   });
 });
+
+describe("password pages", () => {
+  it("are never a place to come back to", () => {
+    expect(safeCallbackPath("/forgot-password")).toBe("/dashboard");
+    expect(safeCallbackPath("/reset-password?token=abc")).toBe("/dashboard");
+    expect(safeCallbackPath("/register#top")).toBe("/dashboard");
+  });
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { safeCallbackPath } from "@/lib/callbackPath";
+import { callbackFromUrl, registerFor, safeCallbackPath } from "@/lib/callbackPath";
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -309,7 +309,9 @@ export default function LoginPage() {
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Don&apos;t have an account?{" "}
-            <Link href="/register" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Create one</Link>
+            {/* Someone on their way somewhere (a booking page) keeps going there after creating the account */}
+            <Link href="/register" onClick={e => { const back = callbackFromUrl(); if (back) { e.preventDefault(); window.location.assign(registerFor(back)); } }}
+              style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Create one</Link>
           </p>
           </>
           )}

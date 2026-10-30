@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { callbackFromUrl } from "@/lib/callbackPath";
 import { signIn } from "next-auth/react";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 
@@ -12,7 +13,7 @@ import { PRIVACY_PATH, TERMS_PATH } from "@/lib/terms";
 export default function GoogleButton({ note = true, canStart }: { note?: boolean; canStart?: () => boolean }) {
   return (
     <>
-      <button type="button" onClick={() => { if (!canStart || canStart()) signIn("google", { callbackUrl: "/dashboard" }); }}
+      <button type="button" onClick={() => { if (!canStart || canStart()) signIn("google", { callbackUrl: callbackFromUrl() ?? "/dashboard" }); }}
         style={{ width: "100%", padding: "10px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-d0d7de)", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "var(--gh-0d1117)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

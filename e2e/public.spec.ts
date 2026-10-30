@@ -26,7 +26,8 @@ test("listing page shows the breadcrumb, ad ID and market price check", async ({
   const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs).toContainText("Honda");
   await expect(crumbs).toContainText("Civic");
-  await expect(page.getByText(civicId.slice(-6).toUpperCase(), { exact: true })).toBeVisible();
+  // Inside main: while the page streams in, React briefly holds a hidden second copy of the content
+  await expect(page.getByRole("main").getByText(civicId.slice(-6).toUpperCase(), { exact: true })).toBeVisible();
   // 65 lakh against the other Civics' median of 62 lakh is within 7%
   await expect(page.getByRole("heading", { name: "Market price check" })).toBeVisible();
   await expect(page.getByText("Fair price")).toBeVisible();

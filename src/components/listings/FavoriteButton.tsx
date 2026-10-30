@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { currentPath, loginFor } from "@/lib/callbackPath";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Heart } from "lucide-react";
@@ -18,7 +19,7 @@ export default function FavoriteButton({ listingId, variant = "overlay" }: { lis
     e.preventDefault();
     e.stopPropagation();
     if (status !== "authenticated") {
-      router.push("/login");
+      router.push(loginFor(currentPath()));
       return;
     }
     if (!saved) setPop(p => p + 1);

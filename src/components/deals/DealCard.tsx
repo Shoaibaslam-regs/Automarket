@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Image from "next/image";
 import { Building2, CarFront, Clock3, Flame, ImageOff, MapPin } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -50,7 +51,11 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-[4/3]">
         {deal.images[0] ? (
+          <>
+          {/* The faded AutoGO mark shows while the photo downloads */}
+          <PhotoSkeleton className="absolute inset-0" />
           <Image src={deal.images[0]} alt={deal.title} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px" className="object-cover transition duration-500 group-hover:scale-105" />
+          </>
         ) : (
           <span className="flex h-full items-center justify-center text-slate-300"><ImageOff size={24} /></span>
         )}

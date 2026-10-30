@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Image from "next/image";
 import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2, PhoneCall } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -132,6 +133,9 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
           {/* Image tile */}
           <div className={`relative ${short ? "aspect-[16/10]" : phoneShort ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"} overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl`}>
             {listing.images?.[0] ? (
+              <>
+              {/* The faded AutoGO mark shows while the photo downloads; the photo covers it once it arrives */}
+              <PhotoSkeleton className="absolute inset-0" />
               <Image
                 src={listing.images[0]}
                 alt={listing.title}
@@ -140,6 +144,7 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 340px"
                 className="object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
               />
+              </>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-1.5 text-slate-400">
                 <ImageOff size={22} strokeWidth={1.5} />
@@ -255,6 +260,8 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
       <div className="relative w-[42%] max-w-[340px] flex-shrink-0 self-start sm:w-[260px] md:w-[300px] lg:w-[320px]">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl">
           {listing.images?.[0] ? (
+            <>
+            <PhotoSkeleton className="absolute inset-0" />
             <Image
               src={listing.images[0]}
               alt=""
@@ -263,6 +270,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
               sizes="(max-width: 640px) 42vw, 320px"
               className="object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
             />
+            </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-1.5 text-slate-400">
               <ImageOff size={22} strokeWidth={1.5} />

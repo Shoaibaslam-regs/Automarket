@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useState, useEffect, useMemo, useRef, use } from "react";
+import { currentPath, loginFor } from "@/lib/callbackPath";
+import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -276,7 +278,7 @@ export default function ListingsPage({
 
   async function saveSearch() {
     if (authStatus !== "authenticated") {
-      router.push("/login");
+      router.push(loginFor(currentPath()));
       return;
     }
     setSaveState({ query: filterQuery, status: "saving" });
@@ -933,7 +935,7 @@ export default function ListingsPage({
               <div className={`flex flex-col gap-3 sm:gap-4 ${viewKnown ? "" : "sm:hidden"}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:gap-5 sm:rounded-[22px] sm:p-2">
-                    <div className="aspect-[4/3] w-[42%] flex-shrink-0 animate-pulse rounded-xl bg-slate-200/70 sm:w-[260px] sm:rounded-2xl md:w-[300px] lg:w-[320px]" />
+                    <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-xl sm:w-[260px] sm:rounded-2xl md:w-[300px] lg:w-[320px]" />
                     <div className="flex-1 space-y-3 py-2 pr-2">
                       <div className="h-2.5 w-1/4 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200/70" />
@@ -948,7 +950,7 @@ export default function ListingsPage({
               <div className={`${viewKnown ? "grid" : "hidden sm:grid"} grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3`}>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:rounded-[22px] sm:p-2">
-                    <div className="aspect-[4/3] animate-pulse rounded-xl bg-slate-200/70 sm:rounded-2xl" />
+                    <PhotoSkeleton className="aspect-[4/3] rounded-xl sm:rounded-2xl" />
                     <div className="space-y-2.5 px-1.5 pb-1.5 pt-3 sm:px-2 sm:pb-2 sm:pt-4">
                       <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-3.5 w-4/5 animate-pulse rounded bg-slate-200/70" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { loginFor } from "@/lib/callbackPath";
 import { useSession } from "next-auth/react";
 import ContactBar from "@/components/listings/ContactBar";
 
@@ -81,7 +82,7 @@ export function ListingContactBar({ messageHref, bookHref, ...props }: Omit<Reac
     <ContactBar
       {...props}
       messageHref={signedIn ? messageHref : undefined}
-      bookHref={bookHref ? (signedIn ? bookHref : "/login") : undefined}
+      bookHref={bookHref ? (signedIn ? bookHref : loginFor(bookHref)) : undefined}
     />
   );
 }

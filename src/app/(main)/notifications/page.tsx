@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SignInLink from "@/components/auth/SignInLink";
 import Link from "next/link";
 import { BadgeDollarSign, Bell, CalendarCheck, CalendarPlus, ChevronRight, Megaphone, MessageCircle, ShoppingBag, type LucideIcon } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -59,7 +60,7 @@ export default function NotificationsPage() {
           {signedOut ? (
             <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
               You&apos;ve been signed out, so your notifications can&apos;t be shown.{" "}
-              <Link href="/login" className="font-semibold underline">Sign in again</Link>
+              <SignInLink className="font-semibold underline">Sign in again</SignInLink>
             </div>
           ) : error ? (
             <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>

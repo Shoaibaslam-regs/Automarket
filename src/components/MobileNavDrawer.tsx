@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import SignInLink from "@/components/auth/SignInLink";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -205,9 +206,9 @@ export default function MobileNavDrawer({
               <p className="text-sm font-semibold">Welcome to AutoGO</p>
               <p className="mt-0.5 text-xs text-slate-400">Buy, sell and rent cars and bikes across Pakistan.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link href="/login" onClick={onClose} className="rounded-lg bg-white/10 py-2 text-center text-xs font-semibold ring-1 ring-inset ring-white/15 transition hover:bg-white/15">
+                <SignInLink onClick={onClose} className="rounded-lg bg-white/10 py-2 text-center text-xs font-semibold ring-1 ring-inset ring-white/15 transition hover:bg-white/15">
                   Sign in
-                </Link>
+                </SignInLink>
                 <Link href="/register" onClick={onClose} className="rounded-lg bg-white py-2 text-center text-xs font-semibold text-slate-950 transition hover:bg-slate-200">
                   Create account
                 </Link>

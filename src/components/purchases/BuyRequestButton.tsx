@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SignInLink from "@/components/auth/SignInLink";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -48,9 +49,9 @@ export default function BuyRequestButton({ listingId, dealId, title, price, busi
 
   if (status !== "authenticated") {
     return (
-      <Link href="/login" className={btn}>
+      <SignInLink className={btn}>
         <ShoppingBag size={16} /> Sign in to buy this vehicle
-      </Link>
+      </SignInLink>
     );
   }
 

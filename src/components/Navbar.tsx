@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SignInLink from "@/components/auth/SignInLink";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
@@ -177,9 +178,9 @@ export default function Navbar() {
             ) : (
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <ThemeCycleButton />
-                <Link href="/login" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", textDecoration: "none", borderRadius: "8px", border: "1px solid rgb(var(--tw-c-slate-950) / 0.12)" }}>
+                <SignInLink style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-0d1117)", textDecoration: "none", borderRadius: "8px", border: "1px solid rgb(var(--tw-c-slate-950) / 0.12)" }}>
                   Sign in
-                </Link>
+                </SignInLink>
                 <Link href="/register" style={{ padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-ffffff)", textDecoration: "none", borderRadius: "8px", background: "var(--gh-0d1117)" }}>
                   Register
                 </Link>

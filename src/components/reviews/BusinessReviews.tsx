@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import SignInLink from "@/components/auth/SignInLink";
 import { MessageSquareText, Star, Store } from "lucide-react";
 import StarRating from "./StarRating";
 import { toReviewView, type ReviewSummary, type ReviewView } from "./types";
@@ -193,7 +193,7 @@ export default function BusinessReviews({
           <div aria-hidden className="h-5 w-2/3 animate-pulse rounded bg-slate-200/70" />
         ) : viewer === "anon" ? (
           <p className="text-sm text-slate-600">
-            <Link href="/login" className="font-semibold text-indigo-700 hover:underline">Sign in</Link> to review {businessName}.
+            <SignInLink className="font-semibold text-indigo-700 hover:underline">Sign in</SignInLink> to review {businessName}.
           </p>
         ) : viewer === "member" ? (
           <p className="text-sm text-slate-600">You&apos;re part of {businessName}, so you can&apos;t review it. Reply to reviews from your business console.</p>

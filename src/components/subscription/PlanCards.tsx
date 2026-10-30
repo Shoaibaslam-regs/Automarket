@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SignInLink from "@/components/auth/SignInLink";
 import { Car, Check, Crown, Gem, Rocket, Sparkles, UserRound, Users, type LucideIcon } from "lucide-react";
 import { PLAN_LIST, formatLimit, type Plan, type PlanId } from "@/lib/plans";
 
@@ -124,14 +125,13 @@ export default function PlanCards({
                     </Link>
                   )
                 ) : !signedIn ? (
-                  <Link
-                    href="/login"
+                  <SignInLink
                     className={`block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
                       dark ? "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:opacity-90" : premium ? "bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 hover:opacity-90" : "bg-slate-900 text-white hover:bg-slate-800"
                     }`}
                   >
                     Sign in to upgrade
-                  </Link>
+                  </SignInLink>
                 ) : (
                   <button
                     onClick={() => onUpgrade(plan)}

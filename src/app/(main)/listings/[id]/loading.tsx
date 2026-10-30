@@ -1,4 +1,5 @@
 import Skeleton from "@/components/ui/Skeleton";
+import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 
 export default function ListingDetailLoading() {
   return (
@@ -9,7 +10,7 @@ export default function ListingDetailLoading() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              <Skeleton className="aspect-[16/10] rounded-none" />
+              <PhotoSkeleton className="aspect-[16/10]" size="lg" />
               <div className="flex gap-2 p-3">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-14 w-20" />

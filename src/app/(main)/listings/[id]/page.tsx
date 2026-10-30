@@ -1,4 +1,5 @@
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import SignInLink from "@/components/auth/SignInLink";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -587,9 +588,9 @@ export default async function ListingDetailPage({ params }: Props) {
                       </Link>
                     </ShowFor>
                     <ShowFor who="guest">
-                      <Link href="/login" className={`mt-4 ${OUTLINE_BTN}`}>
+                      <SignInLink to={`/rentals/${l._id}/book`} className={`mt-4 ${OUTLINE_BTN}`}>
                         Sign in to book online
-                      </Link>
+                      </SignInLink>
                     </ShowFor>
                   </>
                 )}

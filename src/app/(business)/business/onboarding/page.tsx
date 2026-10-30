@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { loginFor } from "@/lib/callbackPath";
 import { OfficialAvatar, OfficialName } from "@/components/business/Official";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -51,7 +52,7 @@ export default function OnboardingPage() {
   }
 
   async function handleSubmit() {
-    if (!session?.user) { router.push("/login"); return; }
+    if (!session?.user) { router.push(loginFor("/business/onboarding")); return; }
     setLoading(true);
     setError("");
 

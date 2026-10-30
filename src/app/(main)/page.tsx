@@ -175,17 +175,6 @@ export default async function HomePage() {
           <BrandLogos />
         </section>
 
-        {/* ── Hot deals (only while some are running) ── */}
-        {deals.length > 0 && (
-          <section>
-            <SectionHeader title="Hot deals" href="/deals" line={false} />
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              {deals.map(d => <DealCard key={d._id} deal={d} now={now} />)}
-            </div>
-          </section>
-        )}
-
-
         {/* ── Latest for sale ── */}
         <section>
           <SectionHeader title="Latest for sale" href="/listings?type=SALE" line={false} />
@@ -202,6 +191,16 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+
+        {/* ── Hot deals (only while some are running) ── */}
+        {deals.length > 0 && (
+          <section>
+            <SectionHeader title="Hot deals" href="/deals" line={false} />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {deals.map(d => <DealCard key={d._id} deal={d} now={now} />)}
+            </div>
+          </section>
+        )}
 
         {/* ── For rent ── */}
         <section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { callbackFromUrl, loginFor } from "@/lib/callbackPath";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import VerifyCodeForm from "@/components/auth/VerifyCodeForm";
@@ -45,11 +46,13 @@ export default function RegisterPage() {
   /** The code was right: sign in with the details just typed. A full load, so menus pick up the session. */
   async function signInAfterCode() {
     const res = await signIn("credentials", { email: form.email.trim(), password: form.password, cf: await human.take(), redirect: false });
+    // Back to where they were going (a booking page, say) when they came here from a sign-in; else the dashboard
+    const back = callbackFromUrl();
     if (res?.error) {
-      window.location.assign(`/login?verified=1&email=${encodeURIComponent(form.email.trim())}`);
+      window.location.assign(`/login?verified=1&email=${encodeURIComponent(form.email.trim())}${back ? `&callbackUrl=${encodeURIComponent(back)}` : ""}`);
       return;
     }
-    window.location.assign("/dashboard");
+    window.location.assign(back ?? "/dashboard");
   }
 
   function renderField(field: Field) {
@@ -204,7 +207,8 @@ export default function RegisterPage() {
 
           <p style={{ textAlign: "center", fontSize: "13px", color: "var(--gh-57606a)", marginTop: "20px" }}>
             Already have an account?{" "}
-            <Link href="/login" style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Sign in</Link>
+            <Link href="/login" onClick={e => { const back = callbackFromUrl(); if (back) { e.preventDefault(); window.location.assign(loginFor(back)); } }}
+              style={{ color: "var(--gh-0d1117)", fontWeight: 600, textDecoration: "underline" }}>Sign in</Link>
           </p>
         </div>
       </div>

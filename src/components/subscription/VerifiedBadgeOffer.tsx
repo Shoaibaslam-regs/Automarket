@@ -1,6 +1,7 @@
 "use client";
 
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import SignInLink from "@/components/auth/SignInLink";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -65,9 +66,9 @@ export default function VerifiedBadgeOffer() {
   let action: React.ReactNode;
   if (authStatus !== "authenticated") {
     action = authStatus === "loading" ? null : (
-      <Link href="/login" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+      <SignInLink className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
         Sign in to get verified
-      </Link>
+      </SignInLink>
     );
   } else if (!status) {
     action = <div className="h-12 animate-pulse rounded-xl bg-slate-100" />;

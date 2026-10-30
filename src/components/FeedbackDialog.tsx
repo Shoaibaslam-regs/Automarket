@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import SignInLink from "@/components/auth/SignInLink";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -86,9 +86,9 @@ export default function FeedbackDialog({ startOpen = false }: { startOpen?: bool
           {status !== "authenticated" ? (
             <div className="mt-5 space-y-3">
               <p className="text-sm text-slate-600">Sign in so we can reply to you.</p>
-              <Link href="/login" onClick={() => setOpen(false)} className="block w-full rounded-xl bg-slate-900 py-2.5 text-center text-sm font-semibold text-white hover:bg-slate-800">
+              <SignInLink onClick={() => setOpen(false)} className="block w-full rounded-xl bg-slate-900 py-2.5 text-center text-sm font-semibold text-white hover:bg-slate-800">
                 Sign in
-              </Link>
+              </SignInLink>
             </div>
           ) : sent ? (
             <div className="mt-5 space-y-4">

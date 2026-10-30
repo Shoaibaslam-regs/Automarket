@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { loginFor } from "@/lib/callbackPath";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -214,7 +215,7 @@ export default function SellPage() {
     // Enter key on steps 1–2 advances instead of publishing a half-filled listing
     if (step < 3) { goNext(); return; }
     if (photosUploading) return;
-    if (!session?.user) { router.push("/login"); return; }
+    if (!session?.user) { router.push(loginFor("/sell")); return; }
 
     setLoading(true);
     setError("");

@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
+import { loginFor } from "@/lib/callbackPath";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 
 export default async function BusinessPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect(loginFor("/business"));
 
   await connectDB();
   const user = await User.findById(session.user.id);

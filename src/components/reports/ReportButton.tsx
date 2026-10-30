@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import SignInLink from "@/components/auth/SignInLink";
 import { useSession } from "next-auth/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, Flag, X } from "lucide-react";
@@ -38,7 +38,7 @@ export default function ReportButton({ targetType, targetId, label, hidden, clas
   const noun = targetType === "LISTING" ? "listing" : targetType === "DEAL" ? "deal" : "business";
 
   if (status !== "authenticated") {
-    return <Link href="/login" className={linkCls}><Flag size={13} /> Report this {noun}</Link>;
+    return <SignInLink className={linkCls}><Flag size={13} /> Report this {noun}</SignInLink>;
   }
 
   async function submit(e: React.FormEvent) {

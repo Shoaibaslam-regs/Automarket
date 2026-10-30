@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { loginFor } from "@/lib/callbackPath";
 import { useSession } from "next-auth/react";
 
 export default function ModeToggle() {
@@ -15,7 +16,7 @@ export default function ModeToggle() {
       router.push("/");
     } else {
       if (!session?.user) {
-        router.push("/login");
+        router.push(loginFor("/business"));
         return;
       }
       router.push("/business");

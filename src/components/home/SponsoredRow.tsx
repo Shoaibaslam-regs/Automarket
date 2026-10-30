@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Building2, Store } from "lucide-react";
@@ -93,7 +94,11 @@ export function SponsoredCard({ item, index = 0, layout = "grid", highlight = tr
               <span className="flex h-full items-center justify-center bg-slate-50"><Building2 size={44} strokeWidth={1.5} className="text-slate-300" /></span>
             )
           ) : item.image ? (
-            <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 50vw, 280px" className="object-cover transition duration-500 group-hover:scale-105" />
+            <>
+              {/* The faded AutoGO mark shows while the photo downloads */}
+              <PhotoSkeleton className="absolute inset-0" />
+              <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 50vw, 280px" className="object-cover transition duration-500 group-hover:scale-105" />
+            </>
           ) : null}
           <Ribbon />
         </div>

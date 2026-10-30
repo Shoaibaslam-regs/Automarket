@@ -1,8 +1,8 @@
 "use client";
 
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import SignInLink from "@/components/auth/SignInLink";
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { MessageSquare } from "lucide-react";
@@ -61,9 +61,9 @@ export default function ContactTeam({ plan = PLANS.STARTER, tone = "light", clas
             <MessageSquare size={16} /> {supLock.locked ? supLock.text : sending ? "Sending request…" : "Message the team"}
           </button>
         ) : (
-          <Link href="/login" className={primary}>
+          <SignInLink className={primary}>
             <MessageSquare size={16} /> Sign in to message us
-          </Link>
+          </SignInLink>
         )}
         {wa && (
           <a
