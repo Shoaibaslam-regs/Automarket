@@ -95,3 +95,14 @@ test.describe("on a phone", () => {
     await expect(bar).toContainText("You save");
   });
 });
+
+test("the footer's popular cars open as dropdowns and lead to Browse filtered to that car", async ({ page }) => {
+  await page.goto("/");
+  const footer = page.locator("footer");
+  const civic = footer.getByRole("link", { name: "Honda Civic" });
+  await expect(civic).toBeHidden();
+  await footer.getByText("Japanese cars").click();
+  await civic.click();
+  await page.waitForURL("**/listings?make=Honda&search=Civic");
+  await expect(page.getByRole("main").getByText("Honda Civic Oriel").first()).toBeVisible();
+});

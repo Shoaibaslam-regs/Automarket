@@ -42,7 +42,6 @@ export async function sendBookingRequestEmail({
   totalAmount,
   deposit,
   days,
-  bookingId,
 }: {
   ownerEmail: string;
   ownerName: string;
@@ -377,34 +376,16 @@ export async function sendAccountExistsEmail({ to, name, loginLink, resetLink }:
 }
 
 /** "Your plan ends in N days" reminder, sent once per plan period by the daily cron. */
-export async function sendPlanExpiringEmail({ to, name, planName, endsAt, daysLeft }: { to: string; name?: string; planName: string; endsAt: Date; daysLeft: number }) {
-  const when = endsAt.toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Karachi" });
-  const left = daysLeft <= 1 ? "tomorrow" : `in ${daysLeft} days`;
-  await deliver({
-    from: process.env.EMAIL_FROM,
-    to,
-    subject: `Your AutoGO ${planName} plan ends ${left}`,
-    html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f6f8fa; padding: 24px;">
-        <div style="background: white; border-radius: 12px; border: 1px solid #e1e4e8; overflow: hidden;">
-          <div style="background: #0d1117; padding: 24px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">AutoGO</h1>
-            <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 4px 0 0;">Plan reminder</p>
-          </div>
-          <div style="padding: 28px;">
-            <p style="font-size: 15px; color: #0d1117; font-weight: 600; margin-bottom: 4px;">Hi ${escapeHtml(name || "there")},</p>
-            <p style="font-size: 14px; color: #57606a; margin-bottom: 24px; line-height: 1.6;">
-              Your <strong style="color: #0d1117;">${escapeHtml(planName)}</strong> plan ends ${left}, on ${when}.
-              After that your account moves to the Free plan and its limits. Your listings and records stay, but you
-              can't add more than the Free plan allows. Renew before then to keep everything running.
-            </p>
-            <a href="${process.env.NEXTAUTH_URL}/pricing" style="display: block; text-align: center; padding: 12px; background: #0d1117; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">
-              Renew my plan
-            </a>
-          </div>
-        </div>
-        <p style="font-size: 11px; color: #8c959f; text-align: center; margin-top: 16px;">© ${new Date().getFullYear()} AutoGO Pakistan</p>
-      </div>
-    `,
+/**
+ * A reminder that something paid ends soon or has ended (plans, a business's free month, the Verified badge,
+ * sponsored ads; src/lib/expiryReminders.ts). `lines` are plain text; the email escapes them.
+ */
+export async function sendReminderEmail({ to, name, subject, kicker, lines, button }: {
+  to: string; name?: string; subject: string; kicker: string; lines: string[]; button: { path: string; label: string };
+}) {
+  await simpleEmail({
+    to, name, subject, kicker,
+    body: lines.map(escapeHtml).join("<br><br>"),
+    button: { href: `${process.env.NEXTAUTH_URL}${button.path}`, label: escapeHtml(button.label) },
   });
 }

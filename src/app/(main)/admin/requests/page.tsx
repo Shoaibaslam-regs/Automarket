@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { refreshAdminCounts } from "@/lib/adminCounts";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BadgeCheck, Crown, Hand, Inbox, MessageSquare, XCircle } from "lucide-react";
@@ -9,6 +10,7 @@ import { useAdminAccess } from "@/components/admin/AdminAccess";
 import PlanGiftDialog, { type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import VerifyBadgeDialog, { type BadgeAction } from "@/components/admin/VerifyBadgeDialog";
 import StatusText from "@/components/ui/StatusText";
+import ExpiringList from "@/components/admin/ExpiringList";
 import { PLANS, effectivePlanId, isPlanId, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
 
 type Person = { _id: string; name?: string; email: string; plan?: PlanId; planExpiresAt?: string; planSource?: PlanSource } | null;
@@ -27,7 +29,7 @@ type TeamRequest = {
   takenBy: { _id: string; name?: string; email: string } | null;
   handledBy: { name?: string; email: string } | null;
 };
-type Tab = "waiting" | "done";
+type Tab = "waiting" | "done" | "expiring";
 
 const fmt = (d: string) => new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 const shortId = (id?: string) => (id ? `#${id.slice(-6)}` : "");
@@ -51,9 +53,11 @@ export default function AdminRequestsPage() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    // Expiring soon has its own list (ExpiringList)
+    if (tab === "expiring") return;
     fetch(`/api/admin/requests?status=${tab}`)
       .then(r => r.json())
-      .then(d => setData({ requests: d.requests ?? [], waiting: d.waiting ?? 0 }))
+      .then(d => { setData({ requests: d.requests ?? [], waiting: d.waiting ?? 0 }); refreshAdminCounts({ requests: d.waiting ?? 0 }); })
       .catch(() => setData({ requests: [], waiting: 0 }));
   }, [tab, reload]);
 
@@ -106,15 +110,16 @@ export default function AdminRequestsPage() {
 
   return (
     <div>
-      <PageHeader title="Requests" description="Plan upgrades and Verified badge requests. Check the payment in Messages, then activate or refuse. Activating from Users or Businesses closes the request too." />
+      <PageHeader title="Requests" description="Plan upgrades and Verified badge requests. Check the payment in Messages, then activate or refuse. Activating from Users or Businesses closes the request too. Expiring soon lists plans and badges ending this week, to follow up." />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <Segmented<Tab> value={tab} onChange={setTab}
-          options={[{ value: "waiting", label: `Waiting${data && tab === "waiting" ? ` (${data.waiting})` : ""}` }, { value: "done", label: "Done" }]} />
+          options={[{ value: "waiting", label: `Waiting${data && tab === "waiting" ? ` (${data.waiting})` : ""}` }, { value: "done", label: "Done" }, { value: "expiring", label: "Expiring soon" }]} />
       </div>
       {error && <p role="alert" className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
       {notice && !error && <p role="status" className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">{notice}</p>}
 
+      {tab === "expiring" ? <ExpiringList /> : (
       <Panel>
         {data === null ? (
           <div className="space-y-px">{[1, 2, 3].map(i => <div key={i} className="h-24 animate-pulse bg-slate-50" />)}</div>
@@ -188,6 +193,7 @@ export default function AdminRequestsPage() {
           </ul>
         )}
       </Panel>
+      )}
 
       <PlanGiftDialog target={planTarget || null} onClose={() => setPlanFor(null)} onSave={savePlan} />
       <VerifyBadgeDialog

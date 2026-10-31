@@ -49,8 +49,11 @@ export const RATE_LIMITS = {
    *  profile picture is limited further by src/lib/profilePicture.ts (30 days, then 6 months between changes). */
   profileImage: { limit: 10, windowSec: 60 * 60 },
   businessLogo: { limit: 10, windowSec: 60 * 60 },
+  blogImage: { limit: 30, windowSec: 60 * 60 },
   messages: { limit: 30, windowSec: 60 },
   support: { limit: 5, windowSec: 60 * 60 },
+  // Shop announcements (Business → Announcements): plenty for real use, not enough to flood a shop page
+  shopNotices: { limit: 20, windowSec: 24 * 60 * 60 },
   reviews: { limit: 5, windowSec: 60 * 60 },
   bookings: { limit: 10, windowSec: 60 * 60 },
   purchases: { limit: 10, windowSec: 60 * 60 },

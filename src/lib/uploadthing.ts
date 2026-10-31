@@ -2,6 +2,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UTApi, UploadThingError } from "uploadthing/server";
 import { hitRateLimit, waitText } from "@/lib/rateLimit";
 import { nextPictureChangeAt, pictureWaitText } from "@/lib/profilePicture";
+import { MAX_LISTING_PHOTOS } from "@/lib/listingInput";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { VehicleImage } from "@/models/VehicleImage";
@@ -33,7 +34,7 @@ export type VehicleUploadResult =
 export const ourFileRouter = {
   // Listing / inspection photos: every file must pass the AI vehicle check or it is deleted.
   vehicleImages: f({
-    image: { maxFileSize: "4MB", maxFileCount: 8 },
+    image: { maxFileSize: "4MB", maxFileCount: MAX_LISTING_PHOTOS },
   })
     .middleware(requireUserWithinPhotoLimit)
     .onUploadComplete(async ({ file, metadata }): Promise<VehicleUploadResult> => {
@@ -98,6 +99,21 @@ export const ourFileRouter = {
       if (!member || !["OWNER", "MANAGER"].includes(member.role)) throw new UploadThingError("Only the owner or a manager can change the business picture.");
       const r = await hitRateLimit("businessLogo", userId!, 1);
       if (!r.ok) throw new UploadThingError(`Too many picture uploads. Please try again in ${waitText(r.retryAfterSec)}.`);
+      return { userId };
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
+
+  // Blog cover photos (Admin → Blog): admins signed in through the admin form, with content permission
+  blogImage: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(async () => {
+      const { requireAdminApi } = await import("@/lib/adminAuth");
+      const gate = await requireAdminApi("announcements");
+      if (!gate.ok) throw new UploadThingError("Only the AutoGO team can upload blog photos.");
+      const userId = String(gate.admin._id);
+      const r = await hitRateLimit("blogImage", userId, 1);
+      if (!r.ok) throw new UploadThingError(`Too many uploads. Please try again in ${waitText(r.retryAfterSec)}.`);
       return { userId };
     })
     .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),

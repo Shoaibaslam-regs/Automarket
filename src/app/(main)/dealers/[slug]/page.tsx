@@ -1,4 +1,7 @@
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import { ShopNotice as ShopNoticeModel } from "@/models/ShopNotice";
+import { ShopNoticeList } from "@/components/business/ShopNoticeCard";
+import { noticesToShow, type ShopNotice } from "@/lib/shopNotices";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -58,7 +61,7 @@ const loadBusinessPage = (slug: string) =>
         .lean<Org>();
       if (!org) return null;
       const memberIds = await getOrgUserIds(org._id);
-      const [listings, ratingRows, firstReviews] = await Promise.all([
+      const [listings, ratingRows, firstReviews, notices] = await Promise.all([
         // Recently sold or rented vehicles stay on show (stamped) after the available ones
         Listing.find({ sellerId: { $in: memberIds }, ...publicStatusQuery() }).sort({ status: 1, featured: -1, createdAt: -1 }).limit(24).populate(CARD_SELLER_POPULATE).lean(),
         BusinessReview.aggregate<{ _id: number; count: number }>([
@@ -66,8 +69,11 @@ const loadBusinessPage = (slug: string) =>
           { $group: { _id: "$rating", count: { $sum: 1 } } },
         ]),
         BusinessReview.find({ organizationId: org._id }).sort({ createdAt: -1 }).limit(REVIEW_PAGE).populate("reviewerId", "name image").lean(),
+        // The shop's own announcements; the page picks the ones still live when it renders (noticesToShow)
+        ShopNoticeModel.find({ organizationId: org._id, endsAt: { $gt: new Date() } }).sort({ pinned: -1, createdAt: -1 }).limit(10)
+          .select("kind title body eventAt endsAt link linkLabel pinned createdAt").lean(),
       ]);
-      return JSON.parse(JSON.stringify({ org, memberIds, listings, ratingRows, firstReviews }));
+      return JSON.parse(JSON.stringify({ org, memberIds, listings, ratingRows, firstReviews, notices }));
     },
     ["business-page", slug],
     { revalidate: PUBLIC_CACHE_SECONDS, tags: [businessTag(slug)] }
@@ -77,6 +83,7 @@ const loadBusinessPage = (slug: string) =>
     listings: Array<IListing & { _id: string }>;
     ratingRows: Array<{ _id: number; count: number }>;
     firstReviews: Parameters<typeof toReviewView>[0][];
+    notices: ShopNotice[];
   } | null>;
 
 // Shared by generateMetadata and the page, so the data is only read once per request
@@ -99,7 +106,10 @@ export default async function DealerPage({ params }: Props) {
   if (!page) notFound();
   const { org, listings, ratingRows, firstReviews } = page;
   const deals = await getLiveDeals({ orgId: String(org._id), limit: 12 });
-  const nowMs = new Date().getTime();
+  const now = new Date();
+  const nowMs = now.getTime();
+  // Announcements the business posted (Business → Announcements), pinned first
+  const notices = noticesToShow(page.notices ?? [], now);
 
   const distribution = [0, 0, 0, 0, 0, 0];
   for (const r of ratingRows) distribution[r._id] = r.count;
@@ -173,6 +183,12 @@ export default async function DealerPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {notices.length > 0 && (
+        <div className="mx-auto max-w-[1120px] px-4 pt-6 sm:px-6 sm:pt-8">
+          <ShopNoticeList notices={notices} businessName={org.name} now={now} />
+        </div>
+      )}
 
       <div className="mx-auto grid max-w-[1120px] gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">

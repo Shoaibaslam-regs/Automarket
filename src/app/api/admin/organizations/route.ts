@@ -48,7 +48,7 @@ export async function GET() {
     );
 
     return NextResponse.json({ organizations: enriched });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

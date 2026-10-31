@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Clock3, IdCard, KeyRound, Pencil, X } from "lucide-react";
+import { Clock3, KeyRound, X } from "lucide-react";
 import { formatCnicInput, normalizeCnic, normalizePlate } from "@/lib/plates";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
 import type { Check } from "@/lib/checklist";
@@ -27,46 +27,6 @@ export function PlateBadge({ plate, className = "" }: { plate: string; className
     <span className={`theme-static inline-flex items-center rounded-md border-2 border-slate-900 bg-white px-2 py-0.5 font-mono text-xs font-black tracking-[0.12em] text-slate-900 ${className}`}>
       {plate}
     </span>
-  );
-}
-
-/**
- * The handover details on a booking card: number plate and renter CNIC side by side, with an Edit button
- * for the owner. Shows an "Add" button instead when nothing is recorded yet and `onEdit` is given.
- */
-export function HandoverDetails({ plate, cnic, onEdit, addLabel = "Add plate & CNIC" }: {
-  plate?: string;
-  cnic?: string;
-  onEdit?: () => void;
-  addLabel?: string;
-}) {
-  if (!plate && !cnic) {
-    return onEdit ? (
-      <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-500 transition hover:border-slate-900 hover:text-slate-900">
-        <KeyRound size={12} /> {addLabel}
-      </button>
-    ) : null;
-  }
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-inset ring-slate-200/70">
-      {plate && (
-        <span className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Plate</span>
-          <PlateBadge plate={plate} />
-        </span>
-      )}
-      {cnic && (
-        <span className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">CNIC</span>
-          <span className="inline-flex items-center gap-1 font-mono text-xs font-bold tracking-wide text-slate-900"><IdCard size={13} className="text-slate-400" /> {cnic}</span>
-        </span>
-      )}
-      {onEdit && (
-        <button type="button" onClick={onEdit} className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 transition hover:text-slate-900">
-          <Pencil size={11} /> Edit
-        </button>
-      )}
-    </div>
   );
 }
 

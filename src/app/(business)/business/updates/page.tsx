@@ -60,7 +60,7 @@ export default function UpdatesPage() {
                 <OfficialAvatar size={56} />
                 <div className="min-w-[calc(100%-72px)] flex-1 sm:min-w-0">
                   <OfficialName tone="dark" className="text-base" />
-                  <p className="text-xs text-slate-400">The AutoGO team · {feed.followers.toLocaleString()} business{feed.followers !== 1 ? "es" : ""} following <Tip id="official" size={12} /></p>
+                  <p className="text-xs text-slate-400">Business Partner <Tip id="official" size={12} /></p>
                 </div>
                 {feed.following ? (
                   feed.canChange ? (

@@ -32,7 +32,7 @@ export async function GET(
     const inspection = await Inspection.findOne({ listingId: id }).lean();
 
     return NextResponse.json({ listing, rental, inspection });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch listing" }, { status: 500 });
   }
 }
@@ -123,7 +123,7 @@ export async function PATCH(
     await invalidateListingAndSeller(id, session.user.id);
     if (updated) await logBusinessAction({ userId: session.user.id }, "listing.update", { type: "LISTING", id: updated._id, label: updated.title });
     return NextResponse.json({ listing: updated });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update listing" }, { status: 500 });
   }
 }
@@ -159,7 +159,7 @@ export async function DELETE(
     await invalidateListingAndSeller(id, session.user.id);
     await logBusinessAction({ userId: session.user.id }, "listing.delete", { type: "LISTING", id: deleted._id, label: deleted.title });
     return NextResponse.json({ message: "Listing deleted" });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to delete listing" }, { status: 500 });
   }
 }

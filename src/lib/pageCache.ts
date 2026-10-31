@@ -18,6 +18,9 @@ export const dealTag = (id: string) => `deal:${id}`;
 export const DEALS_TAG = "deals";
 /** The running sponsored ads (src/lib/sponsored.ts); cleared when an admin approves or stops one */
 export const SPONSORED_TAG = "sponsored";
+/** Every blog list (/blog, the sitemap); each post also has blogTag(slug) */
+export const BLOG_TAG = "blog";
+export const blogTag = (slug: string) => `blog:${slug}`;
 
 // expire: 0 drops the entry now, so the next visit (often the owner checking their change) gets fresh data
 const NOW = { expire: 0 };
@@ -33,6 +36,12 @@ function expire(tag: string) {
 /** After an admin approves or stops a sponsored ad: the running list is read again on the next visit. */
 export function invalidateSponsored() {
   expire(SPONSORED_TAG);
+}
+
+/** A blog post was published, edited, unpublished or deleted: its page (old and new address) and every list. */
+export function invalidateBlog(...slugs: (string | undefined)[]) {
+  expire(BLOG_TAG);
+  for (const slug of new Set(slugs)) if (slug) expire(blogTag(slug));
 }
 
 export function invalidateListingPage(listingId: unknown) {

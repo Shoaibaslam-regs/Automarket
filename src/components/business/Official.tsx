@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { BellRing, CalendarClock, ExternalLink, Megaphone, Pin } from "lucide-react";
+import { BellRing, CalendarClock, ExternalLink, Pin } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { ANNOUNCEMENT_LABEL, ANNOUNCEMENT_STYLE, OFFICIAL_NAME, type AnnouncementKind } from "@/lib/announcements";
 import StatusText from "@/components/ui/StatusText";
@@ -26,11 +27,10 @@ export function OfficialName({ tone = "light", className = "" }: { tone?: "light
 
 /** The channel's round avatar: the AutoGO gradient with a megaphone. */
 export function OfficialAvatar({ size = 44 }: { size?: number }) {
+  // The AutoGO app icon (the logo's mark on white), the same picture as the installed app
   return (
-    <span className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-400 text-white shadow-md"
-      style={{ width: size, height: size }}>
-      <Megaphone size={Math.round(size * 0.45)} strokeWidth={2.2} />
-    </span>
+    <Image src={size > 96 ? "/icons/icon-512.png" : "/icons/icon-192.png"} alt="AutoGO" width={size} height={size}
+      className="flex-shrink-0 rounded-full bg-white shadow-md ring-1 ring-black/10" style={{ width: size, height: size }} />
   );
 }
 

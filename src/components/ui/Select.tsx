@@ -118,7 +118,3 @@ export default function Select({
   );
 }
 
-/** Builds options from a plain string list, e.g. ["NEW","GOOD"] with an optional label formatter. */
-export function toOptions(values: readonly string[], label: (v: string) => React.ReactNode = v => v): SelectOption[] {
-  return values.map(v => ({ value: v, label: label(v) }));
-}

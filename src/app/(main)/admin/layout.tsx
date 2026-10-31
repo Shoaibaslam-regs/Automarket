@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ADMIN_COUNTS_EVENT, type KnownAdminCounts } from "@/lib/adminCounts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, CalendarDays, Headset, Inbox, MessageSquare, Car, Eye, Flag, Gauge, History, LayoutDashboard, Megaphone, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CalendarDays, Car, Eye, Flag, Gauge, Headset, History, Inbox, LayoutDashboard, Megaphone, MessageSquare, Newspaper, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { ADMIN_ACCESS_HINT } from "@/lib/adminRoles";
@@ -28,6 +29,7 @@ const NAV_GROUPS = [
       { href: "/admin/support", label: "Support inbox", icon: Headset },
       { href: "/admin/ads", label: "Ad requests", icon: Rocket },
       { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/admin/blog", label: "Blog", icon: Newspaper },
     ],
   },
   {
@@ -85,8 +87,9 @@ function ViewOnlyBanner() {
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
-  // Unread messages, open reports, ad requests waiting for review and services near their storage limit,
-  // refreshed on each admin page change
+  // Unread messages, open support conversations, waiting requests, open reports, ad requests and services near
+  // their limits: read on each admin page change, when a page changes one of them (refreshAdminCounts, e.g. a reply
+  // or Done in the Support inbox), when the tab comes back into view and every minute while it is visible
   const [unread, setUnread] = useState(0);
   const [waitingRequests, setWaitingRequests] = useState(0);
   const [openSupport, setOpenSupport] = useState(0);
@@ -94,12 +97,32 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const [waitingAds, setWaitingAds] = useState(0);
   const [usageAlerts, setUsageAlerts] = useState(0);
   useEffect(() => {
-    fetch("/api/admin/support?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenSupport(d?.open ?? 0)).catch(() => {});
-    fetch("/api/admin/requests?count=1").then(r => (r.ok ? r.json() : null)).then(d => setWaitingRequests(d?.waiting ?? 0)).catch(() => {});
-    fetch("/api/messages/unread").then(r => (r.ok ? r.json() : null)).then(d => setUnread(d?.count ?? 0)).catch(() => {});
-    fetch("/api/admin/reports?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenReports(d?.open ?? 0)).catch(() => {});
-    fetch("/api/admin/ads?count=1").then(r => (r.ok ? r.json() : null)).then(d => setWaitingAds(d?.waiting ?? 0)).catch(() => {});
-    fetch("/api/admin/usage?count=1").then(r => (r.ok ? r.json() : null)).then(d => setUsageAlerts(d?.alerts ?? 0)).catch(() => {});
+    const loadAll = () => {
+      fetch("/api/admin/support?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenSupport(d?.open ?? 0)).catch(() => {});
+      fetch("/api/admin/requests?count=1").then(r => (r.ok ? r.json() : null)).then(d => setWaitingRequests(d?.waiting ?? 0)).catch(() => {});
+      fetch("/api/messages/unread").then(r => (r.ok ? r.json() : null)).then(d => setUnread(d?.count ?? 0)).catch(() => {});
+      fetch("/api/admin/reports?count=1").then(r => (r.ok ? r.json() : null)).then(d => setOpenReports(d?.open ?? 0)).catch(() => {});
+      fetch("/api/admin/ads?count=1").then(r => (r.ok ? r.json() : null)).then(d => setWaitingAds(d?.waiting ?? 0)).catch(() => {});
+      fetch("/api/admin/usage?count=1").then(r => (r.ok ? r.json() : null)).then(d => setUsageAlerts(d?.alerts ?? 0)).catch(() => {});
+    };
+    loadAll();
+    const onChange = (e: Event) => {
+      const known = (e as CustomEvent<KnownAdminCounts | null>).detail;
+      if (!known) return loadAll();
+      if (known.support !== undefined) setOpenSupport(known.support);
+      if (known.requests !== undefined) setWaitingRequests(known.requests);
+      if (known.reports !== undefined) setOpenReports(known.reports);
+      if (known.ads !== undefined) setWaitingAds(known.ads);
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") loadAll(); };
+    const timer = setInterval(onVisible, 60_000);
+    window.addEventListener(ADMIN_COUNTS_EVENT, onChange);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener(ADMIN_COUNTS_EVENT, onChange);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [pathname]);
   const badge = (href: string) => {
     const n = href === "/admin/support" ? openSupport : href === "/admin/requests" ? waitingRequests : href === "/admin/messages" ? unread : href === "/admin/reports" ? openReports : href === "/admin/ads" ? waitingAds : href === "/admin/usage" ? usageAlerts : 0;

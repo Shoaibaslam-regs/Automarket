@@ -39,12 +39,22 @@ export function useFormDraft<T>(
     valueRef.current = value;
   });
 
-  // Put a saved draft back once, when the account is known (not while disabled: the form shows saved data)
+  // Put a saved draft back when the account is known (not while disabled: the form shows saved data). Disabling
+  // (a dialog closing) arms it again, so a form closed by mistake gets its text back when it opens again.
   const checkedRef = useRef<string | null>(null);
+  // True from arming until the stored draft has been read: the form still shows its blank start then, and saving
+  // that would delete the draft about to be put back
+  const checkingRef = useRef(false);
   useEffect(() => {
-    if (!key || !enabled || checkedRef.current === key) return;
+    if (!enabled) {
+      checkedRef.current = null;
+      return;
+    }
+    if (!key || checkedRef.current === key) return;
     checkedRef.current = key;
+    checkingRef.current = true;
     queueMicrotask(() => {
+      checkingRef.current = false;
       try {
         const raw = localStorage.getItem(key);
         const stored = raw ? (JSON.parse(raw) as Stored<T>) : null;
@@ -62,7 +72,7 @@ export function useFormDraft<T>(
   // Save shortly after typing stops; an emptied form removes the draft. A save still waiting when the form closes
   // or switches (another chat, another review) is written straight away instead of dropped.
   useEffect(() => {
-    if (!key || !ready || !enabled) return;
+    if (!key || !ready || !enabled || checkingRef.current) return;
     if (clearedRef.current !== null && clearedRef.current === value) return;
     clearedRef.current = null;
     const write = () => {

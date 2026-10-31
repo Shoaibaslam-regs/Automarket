@@ -11,6 +11,8 @@ import { Rental } from "../src/models/Rental";
 import { Organization } from "../src/models/Organization";
 import { Employee } from "../src/models/Employee";
 import { Deal } from "../src/models/Deal";
+import { BlogPost } from "../src/models/BlogPost";
+import { STARTER_POSTS } from "../src/lib/blogStarter";
 
 export const SEED_FILE = path.join(__dirname, ".data", "seed.json");
 export const PASSWORD = "Drive-Safe-2026!";
@@ -18,7 +20,7 @@ const DAY = 86_400_000;
 
 export type Seed = {
   password: string;
-  users: { owner: string; renterA: string; renterB: string; dealer: string };
+  users: { owner: string; renterA: string; renterB: string; dealer: string; lapsed: string };
   names: { renterA: string; renterB: string };
   rentalListingId: string;
   civicId: string;
@@ -31,11 +33,14 @@ export async function seed(uri: string): Promise<Seed> {
   const hash = await bcrypt.hash(PASSWORD, 10);
   const person = (name: string, email: string, phone: string) =>
     ({ name, email, phone, password: hash, termsAcceptedAt: new Date() });
-  const [owner, renterA, renterB, dealer] = await User.create([
+  const [owner, renterA, renterB, dealer, lapsed] = await User.create([
     person("Asad Owner", "owner@e2e.test", "03001110001"),
     person("Bilal Renter", "bilal@e2e.test", "03001110002"),
     person("Sara Renter", "sara@e2e.test", "03001110003"),
-    person("Zain Dealer", "dealer@e2e.test", "03001110004"),
+    // On Premium, ending in 3 days: the console's plan reminders
+    { ...person("Zain Dealer", "dealer@e2e.test", "03001110004"), plan: "STARTER", planSource: "PAID", planExpiresAt: new Date(Date.now() + 3 * DAY - 3_600_000) },
+    // Premium ended yesterday: a lapsed business can't add anything new
+    { ...person("Laila Lapsed", "lapsed@e2e.test", "03001110005"), plan: "STARTER", planSource: "PAID", planExpiresAt: new Date(Date.now() - DAY) },
   ]);
 
   const photos = ["/car/body.png", "/icons/icon-512.png"];
@@ -66,6 +71,9 @@ export async function seed(uri: string): Promise<Seed> {
     city: "Karachi", phone: "03001110004", address: "Shahrah-e-Faisal",
   });
   await Employee.create({ organizationId: org._id, userId: dealer._id, role: "OWNER" });
+  const lapsedOrg = await Organization.create({ name: "Lapsed Motors", slug: "lapsed-motors", type: "DEALER", ownerId: lapsed._id, isActive: true, city: "Lahore" });
+  await Employee.create({ organizationId: lapsedOrg._id, userId: lapsed._id, role: "OWNER" });
+  await User.updateOne({ _id: lapsed._id }, { organizationId: lapsedOrg._id, organizationRole: "OWNER" });
   await User.updateOne({ _id: dealer._id }, { organizationId: org._id, organizationRole: "OWNER" });
   const deal = await Deal.create({
     organizationId: org._id, createdBy: dealer._id, title: "Wedding convoy package", dealType: "RENT",
@@ -75,9 +83,12 @@ export async function seed(uri: string): Promise<Seed> {
     description: "Three Fortuners with drivers for your wedding day.",
   });
 
+  // The blog's starter guides, as `npm run seed-blog` adds them
+  await BlogPost.create(STARTER_POSTS.map((p, i) => ({ ...p, status: "PUBLISHED", publishedAt: new Date(Date.now() - (STARTER_POSTS.length - i) * DAY) })));
+
   const data: Seed = {
     password: PASSWORD,
-    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email },
+    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email, lapsed: lapsed.email },
     names: { renterA: renterA.name, renterB: renterB.name },
     rentalListingId: String(rentalListing._id),
     civicId: String(civics[0]._id),

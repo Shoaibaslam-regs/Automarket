@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { UploadDropzone } from "@/lib/uploadthing-client";
 import { splitVehicleUploads, type RejectedUpload } from "@/lib/vehicleUploads";
+import { MAX_LISTING_PHOTOS } from "@/lib/listingInput";
 
 interface Props {
   images: string[];
@@ -13,7 +14,7 @@ interface Props {
   onUploadingChange?: (uploading: boolean) => void;
 }
 
-export default function ImageUpload({ images, onChange, maxImages = 8, onUploadingChange }: Props) {
+export default function ImageUpload({ images, onChange, maxImages = MAX_LISTING_PHOTOS, onUploadingChange }: Props) {
   const [uploading, setUploadingState] = useState(false);
   const setUploading = (v: boolean) => { setUploadingState(v); onUploadingChange?.(v); };
   const [rejected, setRejected] = useState<RejectedUpload[]>([]);

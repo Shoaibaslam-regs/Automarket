@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import { Deal } from "@/models/Deal";
@@ -10,59 +9,16 @@ import { Rental } from "@/models/Rental";
 import { User } from "@/models/User";
 import { can, type BusinessRole } from "@/lib/businessPermissions";
 import { sendPush, type PushPayload } from "@/lib/push";
-import { sendPlanExpiringEmail } from "@/lib/email";
-import { planInfo } from "@/lib/plans";
+import { sendExpiryReminders } from "@/lib/expiryReminders";
 import { pkDay, pkRange } from "@/lib/money";
 import { digestText, type DigestCounts as Counts } from "@/lib/today";
 import { reportError } from "@/lib/errorLog";
 import { requestExpiryCutoff } from "@/lib/bookings";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** How many days before a paid plan ends its owner is reminded */
-export const PLAN_REMINDER_DAYS = 3;
-// One cron run must finish inside the 30 s function limit, and Gmail allows about 500 emails a day
-const MAX_PLAN_REMINDERS = 100;
 
 /** Runs `fn` over `items` a few at a time, so hundreds of pushes don't open hundreds of connections at once. */
 async function inBatches<T>(items: T[], size: number, fn: (item: T) => Promise<unknown>) {
   for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
-}
-
-/**
- * Emails (and pushes to) everyone whose paid plan ends within PLAN_REMINDER_DAYS, once per plan period:
- * `planReminderFor` is set to the end date before sending, so a second run (or a renewal) can't send it twice.
- */
-export async function remindExpiringPlans(now = new Date()): Promise<number> {
-  const users = await User.find({
-    plan: { $ne: "FREE" },
-    planExpiresAt: { $gt: now, $lte: new Date(now.getTime() + PLAN_REMINDER_DAYS * DAY_MS) },
-    $expr: { $ne: ["$planReminderFor", "$planExpiresAt"] },
-  })
-    .select("name email plan planExpiresAt")
-    .limit(MAX_PLAN_REMINDERS)
-    .lean<Array<{ _id: mongoose.Types.ObjectId; name?: string; email: string; plan: string; planExpiresAt: Date }>>();
-
-  let sent = 0;
-  await inBatches(users, 5, async u => {
-    // Claim it first: only the run that sets the field sends
-    const claimed = await User.updateOne({ _id: u._id, planExpiresAt: u.planExpiresAt, planReminderFor: { $ne: u.planExpiresAt } }, { $set: { planReminderFor: u.planExpiresAt } });
-    if (!claimed.modifiedCount) return;
-    const daysLeft = Math.max(1, Math.ceil((u.planExpiresAt.getTime() - now.getTime()) / DAY_MS));
-    const planName = planInfo(u.plan).name;
-    try {
-      await sendPlanExpiringEmail({ to: u.email, name: u.name, planName, endsAt: u.planExpiresAt, daysLeft });
-    } catch (e) {
-      reportError("Plan reminder email failed:", e);
-    }
-    await sendPush([u._id], {
-      title: `Your ${planName} plan ends ${daysLeft <= 1 ? "tomorrow" : `in ${daysLeft} days`}`,
-      body: "Renew it to keep your limits. After it ends your account moves to the Free plan.",
-      url: "/pricing",
-      tag: "plan-expiry",
-    });
-    sent++;
-  });
-  return sent;
 }
 
 /**
@@ -168,7 +124,8 @@ export async function runDailyJobs(now = new Date()) {
   await connectDB();
   const result: Record<string, unknown> = {};
   try {
-    result.planReminders = await remindExpiringPlans(now);
+    // Plans, a new business's free month, Verified badges and sponsored ads (src/lib/expiryReminders.ts)
+    result.reminders = await sendExpiryReminders(now);
   } catch (e) {
     reportError("Daily job plan reminders failed:", e);
     result.planReminders = "failed";

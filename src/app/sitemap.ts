@@ -5,6 +5,7 @@ import { SITE_URL } from "@/lib/site";
 import { reportError } from "@/lib/errorLog";
 import { seoSitemapPaths } from "@/lib/seoData";
 import { seoPath } from "@/lib/seoPages";
+import { getPublishedPosts } from "@/lib/publicBlog";
 
 // Regenerate at most once an hour so new listings show up without a rebuild
 export const revalidate = 3600;
@@ -16,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/listings?type=RENT`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE_URL}/deals`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/pricing`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
@@ -33,8 +35,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return [];
     });
 
+    const posts = await getPublishedPosts().catch(err => {
+      reportError("Sitemap blog posts failed:", err);
+      return [];
+    });
+
     return [
       ...staticPages,
+      ...posts.map(p => ({
+        url: `${SITE_URL}/blog/${p.slug}`,
+        lastModified: p.updatedAt ? new Date(p.updatedAt) : undefined,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+        images: p.coverImage ? [p.coverImage] : undefined,
+      })),
       ...landing.map(p => ({
         url: `${SITE_URL}${seoPath(p)}`,
         changeFrequency: "daily" as const,

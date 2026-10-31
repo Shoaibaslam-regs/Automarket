@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
-import { Rental } from "@/models/Rental";
 import { Listing } from "@/models/Listing";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";

@@ -16,6 +16,8 @@ export type SubscriptionInfo = {
   listingsResetAt?: string;
   /** Days until the paid plan ends and the account is back on Free; null on Free */
   planDaysLeft?: number | null;
+  /** Businesses: on a plan, in the one-time free start, or lapsed (src/lib/businessPlan.ts); null for private sellers */
+  business?: { state: "PLAN" | "FREE_START" | "LAPSED"; endsAt: string; daysLeft: number; role: string | null } | null;
 };
 
 /** Loads /api/subscription. Pass `enabled: false` for signed-out visitors so no request is made. */

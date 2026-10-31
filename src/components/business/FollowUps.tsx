@@ -1,11 +1,10 @@
 "use client";
 
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BellRing, Check, Phone, X } from "lucide-react";
-import Tip from "@/components/ui/Tip";
 
 export type FollowUpItem = {
   _id: string; customerId: string; customerName: string; customerPhone?: string; dueAt: string; note: string; doneAt?: string;
@@ -168,34 +167,5 @@ export function FollowUpList({ items, canEdit, onDone, limit, compact }: {
         </li>
       )}
     </ul>
-  );
-}
-
-/** Dashboard card: follow-ups due today or overdue. Hidden when nothing is due. */
-export function DueFollowUpsCard() {
-  const [items, setItems] = useState<FollowUpItem[] | null>(null);
-  const [canEdit, setCanEdit] = useState(false);
-  useEffect(() => {
-    fetch("/api/business/followups")
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d) { setItems((d.followUps as FollowUpItem[]).filter(f => followUpWhen(f) !== "later")); setCanEdit(!!d.canEdit); } })
-      .catch(() => {});
-  }, []);
-  if (!items?.length) return null;
-  async function done(f: FollowUpItem) {
-    setItems(prev => prev?.filter(x => x._id !== f._id) ?? null);
-    await fetch(`/api/business/followups/${f._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: true }) }).catch(() => {});
-  }
-  const overdue = items.filter(f => followUpWhen(f) === "overdue").length;
-  return (
-    <div className="mb-5 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--gh-f6f8fa)] px-4 py-3">
-        <p className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--gh-0d1117)]"><BellRing size={14} /> Follow-ups due <Tip id="followUp" /></p>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${overdue ? "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)]" : "bg-[var(--gh-fff8c5)] text-[var(--gh-7d4e00)]"}`}>
-          {overdue ? `${overdue} overdue` : `${items.length} today`}
-        </span>
-      </div>
-      <FollowUpList items={items} canEdit={canEdit} onDone={done} limit={5} compact />
-    </div>
   );
 }

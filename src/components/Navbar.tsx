@@ -5,8 +5,6 @@ import SignInLink from "@/components/auth/SignInLink";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
-import BookingBadge from "@/components/BookingBadge";
-import MessageBadge from "@/components/MessageBadge";
 import BrandLogo from "@/components/BrandLogo";
 import dynamic from "next/dynamic";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
@@ -124,14 +122,8 @@ export default function Navbar() {
             <Link href="/listings?type=RENT" className="nav-link">Rentals</Link>
             <Link href="/deals" className="nav-link">Deals</Link>
             <Link href="/pricing" className="nav-link">Pricing</Link>
-            {session?.user && (
-              <>
-                <Link href="/sell" className="nav-link">Sell</Link>
-                <BookingBadge />
-                <MessageBadge />
-
-              </>
-            )}
+            {session?.user && <Link href="/sell" className="nav-link">Sell</Link>}
+            <Link href="/blog" className="nav-link">Blog</Link>
           </div>
 
           {/* ── DESKTOP RIGHT ── */}

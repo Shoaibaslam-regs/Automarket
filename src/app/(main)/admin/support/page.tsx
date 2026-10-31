@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { refreshAdminCounts } from "@/lib/adminCounts";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Hand, Headset, RotateCcw, Search, Send, Trash2 } from "lucide-react";
@@ -67,7 +68,11 @@ function SupportInbox() {
 
   const loadList = useCallback(() => {
     const qs = new URLSearchParams({ filter, ...(q.trim() ? { q: q.trim() } : {}) });
-    return fetch(`/api/admin/support?${qs}`).then(r => r.json()).then(d => setList({ conversations: d.conversations ?? [], open: d.open ?? 0, me: d.me, canDelete: d.canDelete === true })).catch(() => {});
+    return fetch(`/api/admin/support?${qs}`).then(r => r.json()).then(d => {
+      setList({ conversations: d.conversations ?? [], open: d.open ?? 0, me: d.me, canDelete: d.canDelete === true });
+      // The sidebar badge follows every reload, so a reply, Done or Reopen shows there at once
+      refreshAdminCounts({ support: d.open ?? 0 });
+    }).catch(() => {});
   }, [filter, q]);
 
   const loadThread = useCallback((id: string) =>

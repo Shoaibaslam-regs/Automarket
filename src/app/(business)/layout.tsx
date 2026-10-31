@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PlanReminder from "@/components/business/PlanReminder";
 import mongoose from "mongoose";
 import BusinessSidebar from "@/components/business/BusinessSidebar";
 import SuspensionGate from "@/components/business/SuspensionGate";
@@ -85,6 +86,8 @@ export default async function BusinessLayout({ children }: { children: React.Rea
       <div className="biz-root">
         <BusinessSidebar />
         <div className="biz-content">
+          {/* Plan reminders: the card that slides down when the console opens, and the lapsed bar */}
+          {!noBusiness && !suspension && <PlanReminder />}
           <NoBusinessGate noBusiness={noBusiness}>
             <SuspensionGate suspension={suspension} warning={warning}>{children}</SuspensionGate>
           </NoBusinessGate>

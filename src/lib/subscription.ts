@@ -8,6 +8,7 @@ import { getInventorySellerIds } from "@/lib/business";
 import { PLANS, effectivePlanId, formatLimit, quotaMonthStart, quotaResetsAt, type Plan, type PlanId, type PlanSource } from "@/lib/plans";
 import { ListingLog } from "@/models/ListingLog";
 import { Deal } from "@/models/Deal";
+import { businessPlanStatus, type BusinessPlanStatus } from "@/lib/businessPlan";
 
 type PlanFields = {
   _id: mongoose.Types.ObjectId;
@@ -15,6 +16,7 @@ type PlanFields = {
   planExpiresAt?: Date;
   planSource?: PlanSource;
   organizationId?: mongoose.Types.ObjectId;
+  trialUsedAt?: Date;
 };
 
 export type Subscription = {
@@ -27,12 +29,17 @@ export type Subscription = {
   /** Business members share their owner's plan */
   inheritedFromOwner: boolean;
   organizationId: mongoose.Types.ObjectId | null;
+  /**
+   * Businesses only (src/lib/businessPlan.ts): on a plan, in the one-time free start, or LAPSED, when nothing new can
+   * be added until the owner subscribes. Null for private sellers, who keep the Free plan.
+   */
+  business: BusinessPlanStatus | null;
 };
 
 export type LimitKind = "listings" | "staff" | "customers";
 export type Usage = Record<LimitKind, number>;
 
-const PLAN_SELECT = "plan planExpiresAt planSource organizationId";
+const PLAN_SELECT = "plan planExpiresAt planSource organizationId trialUsedAt";
 
 /**
  * The plan in force for a user. Members of a business use the business owner's plan,
@@ -42,9 +49,11 @@ export async function getSubscription(userId: string): Promise<Subscription> {
   const user = await User.findById(userId).select(PLAN_SELECT).lean<PlanFields>();
   let billing: PlanFields | null = user;
   let inheritedFromOwner = false;
+  let orgCreatedAt: Date | null = null;
 
   if (user?.organizationId) {
-    const org = await Organization.findById(user.organizationId).select("ownerId").lean<{ ownerId: mongoose.Types.ObjectId }>();
+    const org = await Organization.findById(user.organizationId).select("ownerId createdAt").lean<{ ownerId: mongoose.Types.ObjectId; createdAt: Date }>();
+    if (org) orgCreatedAt = org.createdAt;
     if (org && !org.ownerId.equals(user._id)) {
       billing = await User.findById(org.ownerId).select(PLAN_SELECT).lean<PlanFields>();
       inheritedFromOwner = true;
@@ -52,6 +61,9 @@ export async function getSubscription(userId: string): Promise<Subscription> {
   }
 
   const planId = effectivePlanId(billing?.plan, billing?.planExpiresAt);
+  const business = orgCreatedAt
+    ? businessPlanStatus({ effectivePlan: planId, planExpiresAt: billing?.planExpiresAt, owner: billing ?? {}, orgCreatedAt })
+    : null;
   return {
     planId,
     plan: PLANS[planId],
@@ -60,6 +72,7 @@ export async function getSubscription(userId: string): Promise<Subscription> {
     source: planId === "FREE" ? null : billing?.planSource ?? null,
     inheritedFromOwner,
     organizationId: user?.organizationId ?? null,
+    business,
   };
 }
 
@@ -113,8 +126,26 @@ function limitReached(sub: Subscription, kind: LimitKind, limit: number, used: n
   };
 }
 
+/**
+ * A lapsed business adds nothing new until it subscribes (src/lib/businessPlan.ts). Same code as a reached limit, so
+ * the forms' upgrade prompts show; `lapsed` tells them apart.
+ */
+function planLapsed(sub: Subscription, kind: LimitKind) {
+  const when = sub.business!.endsAt.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Karachi" });
+  return {
+    error: `Your business's plan ended on ${when}. Subscribe to a plan to add new ${kind === "listings" ? "listings and deals" : kind === "staff" ? "team members" : "customers"}. Everything else keeps working.`,
+    code: "PLAN_LIMIT_REACHED",
+    lapsed: true,
+    kind,
+    limit: 0,
+    used: 0,
+    plan: sub.planId,
+  };
+}
+
 export async function checkPlanLimit(userId: string, kind: LimitKind) {
   const sub = await getSubscription(userId);
+  if (sub.business?.state === "LAPSED") return planLapsed(sub, kind);
   const limit = sub.plan.limits[kind];
   if (limit === null) return null;
   const used = (await getUsage(userId, sub))[kind];
@@ -131,6 +162,7 @@ export async function checkPlanLimit(userId: string, kind: LimitKind) {
  */
 export async function reserveListingSlot(userId: string, target: { listingId: mongoose.Types.ObjectId } | { dealId: mongoose.Types.ObjectId }) {
   const sub = await getSubscription(userId);
+  if (sub.business?.state === "LAPSED") return { ok: false as const, error: planLapsed(sub, "listings") };
   const limit = sub.plan.limits.listings;
   const log = await ListingLog.create({ sellerId: userId, ...target });
   const release = () => ListingLog.deleteOne({ _id: log._id }).then(() => undefined, () => undefined);

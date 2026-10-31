@@ -11,7 +11,7 @@ import UserIdBadge from "@/components/UserIdBadge";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import {
-  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Rocket, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
+  ArrowLeftRight, BadgeDollarSign, BarChart3, BookOpen, CalendarCheck, Car, ChevronDown, Crown, ExternalLink, Globe, Headset, House, LayoutDashboard, LogOut, Megaphone, Menu, MessageSquare, Newspaper, Rocket, Settings, Sparkles, Star, Tag, User, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge, NotificationDot } from "@/components/NotificationBadge";
 import { useNotificationCounts } from "@/hooks/useNotificationCounts";
@@ -59,6 +59,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { href: "/business/reviews", label: "Reviews", icon: Star },
       { href: "/business/reports", label: "Reports", icon: BarChart3 },
       { href: "/business/updates", label: "Updates", icon: Megaphone },
+      { href: "/business/announcements", label: "Announcements", icon: Newspaper },
       { href: "/business/guide", label: "Guide · رہنمائی", icon: BookOpen },
       { href: "/business/settings", label: "Settings", icon: Settings },
       { href: "/business/support", label: "Help & support", icon: Headset },
@@ -181,42 +182,60 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
   );
 }
 
-/** Plan name, listings meter and an upgrade link, so the plan is always visible in the console. */
+/**
+ * Plan name with the days it has left, this month's listings meter and an upgrade link, so the plan is always
+ * visible in the console. The meter is this calendar month's listings and deals. A business never falls back to Free (src/lib/businessPlan.ts), so its free
+ * month reads "Free month" and an ended plan reads "Plan ended" instead of a Free meter.
+ */
 function PlanCard({ sub }: { sub: SubscriptionInfo }) {
   const plan = planInfo(sub.planId);
+  const b = sub.business;
+  const lapsed = b?.state === "LAPSED";
+  const daysLeft = b ? b.daysLeft : sub.planId !== "FREE" ? sub.planDaysLeft : null;
   const limit = sub.limits.listings;
   const used = sub.usage.listings;
   const pct = limit === null ? 100 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
   const full = limit !== null && used >= limit;
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-3.5 ring-1 ring-inset ring-white/10">
-      <div aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-amber-400/20 blur-2xl" />
+      <div aria-hidden className={`pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full blur-2xl ${lapsed ? "bg-rose-400/20" : "bg-amber-400/20"}`} />
       <div className="relative flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-white">
-          <Crown size={13} className="text-amber-300" /> {plan.name} plan
-          {sub.planDaysLeft != null && sub.planId !== "FREE" && (
-            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${sub.planDaysLeft <= 7 ? "bg-rose-400/20 text-rose-200" : "bg-white/10 text-slate-300"}`}>
-              {sub.planDaysLeft <= 1 ? "ends today" : `${sub.planDaysLeft}d left`}
+          <Crown size={13} className={lapsed ? "text-rose-300" : "text-amber-300"} />
+          {lapsed ? "Plan ended" : b?.state === "FREE_START" ? "Free month" : `${plan.name} plan`}
+          {!lapsed && daysLeft != null && (
+            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${daysLeft <= 7 ? "bg-rose-400/20 text-rose-200" : "bg-white/10 text-slate-300"}`}>
+              {daysLeft <= 1 ? "ends today" : `${daysLeft}d left`}
             </span>
           )}
         </p>
-        <span className={`text-[11px] tabular-nums ${full ? "font-semibold text-rose-300" : "text-slate-400"}`}>
-          {used}/{formatLimit(limit)}
-        </span>
+        {!lapsed && (
+          <span className={`text-[11px] tabular-nums ${full ? "font-semibold text-rose-300" : "text-slate-400"}`}>
+            {used}/{formatLimit(limit)}
+          </span>
+        )}
       </div>
-      <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-        <div
-          className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-400" : pct >= 75 ? "bg-amber-400" : "bg-emerald-400"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <p className="relative mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-500"><Tip id="listingQuota" size={11} />Listings & deals this month{sub.listingsResetAt && limit !== null ? ` · resets ${new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" })}` : ""}</p>
-      {sub.planId !== "UNLIMITED" && (
+      {lapsed ? (
+        <p className="relative mt-1.5 text-[11px] leading-snug text-slate-400">Subscribe to add new listings, deals, staff and customers. Everything else keeps working.</p>
+      ) : (
+        <>
+          <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-400" : pct >= 75 ? "bg-amber-400" : "bg-emerald-400"}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="relative mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-500">
+            <Tip id="listingQuota" size={11} />Listings & deals this month
+          </p>
+        </>
+      )}
+      {(lapsed || sub.planId !== "UNLIMITED") && (
         <Link
           href="/pricing"
           className="relative mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-amber-500 py-2 text-xs font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:opacity-90"
         >
-          <Sparkles size={13} /> Upgrade plan
+          <Sparkles size={13} /> {lapsed ? "Subscribe" : b?.state === "FREE_START" ? "Choose a plan" : "Upgrade plan"}
         </Link>
       )}
     </div>

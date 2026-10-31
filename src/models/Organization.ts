@@ -54,6 +54,9 @@ export interface IOrganization extends Document {
   };
   createdAt: Date;
   updatedAt: Date;
+  /** The one-time free month's reminders already sent, for freeReminderFor (src/lib/expiryReminders.ts) */
+  freeReminderFor?: Date;
+  freeRemindersSent?: number[];
 }
 
 const OrganizationSchema = new Schema<IOrganization>(
@@ -110,6 +113,9 @@ const OrganizationSchema = new Schema<IOrganization>(
           requestedBy: { type: Schema.Types.ObjectId, ref: "User" },
           rejectedAt: { type: Date },
           rejectionReason: { type: String, maxlength: 500 },
+          // Badge reminders already sent for this end date (src/lib/expiryReminders.ts)
+          reminderFor: { type: Date },
+          remindersSent: { type: [Number], default: undefined },
         },
         { _id: false }
       ),
@@ -118,6 +124,9 @@ const OrganizationSchema = new Schema<IOrganization>(
       allowPublicListings: { type: Boolean, default: true },
       currency: { type: String, default: "PKR" },
     },
+    // The one-time free month's reminders already sent (src/lib/expiryReminders.ts)
+    freeReminderFor: { type: Date },
+    freeRemindersSent: { type: [Number], default: undefined },
   },
   { timestamps: true }
 );

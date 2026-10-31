@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const filter: Record<string, unknown> = {};
     const type = sp.get("type");
-    if (type && ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT", "ANNOUNCEMENT", "AD", "SETTINGS", "REQUEST"].includes(type)) filter.targetType = type;
+    if (type && ["USER", "BUSINESS", "LISTING", "DEAL", "REPORT", "ANNOUNCEMENT", "AD", "SETTINGS", "REQUEST", "BLOG"].includes(type)) filter.targetType = type;
     const q = sp.get("q")?.trim();
     if (q) {
       const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").slice(0, 80), "i");

@@ -34,6 +34,9 @@ export interface IAd extends Document {
   status: AdStatus;
   startsAt?: Date;
   endsAt?: Date;
+  /** Reminders already sent (1 = the day before, 0 = ended) for reminderFor (src/lib/expiryReminders.ts) */
+  reminderFor?: Date;
+  remindersSent?: number[];
   /** Why an admin refused or stopped it */
   reason?: string;
   handledBy?: mongoose.Types.ObjectId;
@@ -62,6 +65,9 @@ const AdSchema = new Schema<IAd>(
     status: { type: String, enum: ["REQUESTED", "APPROVED", "REJECTED", "CANCELLED", "STOPPED"], default: "REQUESTED", index: true },
     startsAt: Date,
     endsAt: Date,
+    // Reminders already sent for this end date (src/lib/expiryReminders.ts)
+    reminderFor: { type: Date },
+    remindersSent: { type: [Number], default: undefined },
     reason: { type: String, trim: true, maxlength: 500 },
     handledBy: { type: Schema.Types.ObjectId, ref: "User" },
     handledAt: Date,

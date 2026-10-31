@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { planInfo } from "@/lib/plans";
+import { endsInText, planNotice } from "@/lib/businessPlan";
+import { getSubscription } from "@/lib/subscription";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
@@ -119,6 +122,28 @@ export async function GET() {
         for (const a of posts) {
           items.push({ kind: "official", id: String(a._id), title: `${OFFICIAL_NAME}: ${a.title}`, body: a.body.slice(0, 120), at: a.createdAt.toISOString(), href: "/business/updates" });
         }
+      }
+    }
+
+    // A plan (or the business's free month, or the Verified badge) ending within a week, or ended: shown first.
+    // For a business only to those who can renew it (owner and managers); a private seller's own plan for them.
+    const sub = await getSubscription(session.user.id);
+    const canRenew = !sub.business || (member && ["OWNER", "MANAGER"].includes(member.role));
+    const notice = canRenew && (sub.business
+      ? planNotice({ state: sub.business.state, endsAt: sub.business.endsAt, planName: planInfo(sub.storedPlanId).name, business: true })
+      : sub.planId !== "FREE" && sub.expiresAt ? planNotice({ state: "PLAN", endsAt: sub.expiresAt, planName: sub.plan.name, business: false }) : null);
+    const top = new Date(Date.now() + 1000).toISOString();
+    if (notice) items.push({ kind: "plan", id: "plan", title: notice.title, body: notice.body, at: top, href: "/pricing" });
+    if (member && ["OWNER", "MANAGER"].includes(member.role)) {
+      const org = await Organization.findById(member.organizationId).select("verification.expiresAt").lean<{ verification?: { expiresAt?: Date } }>();
+      const badgeEnds = org?.verification?.expiresAt;
+      const left = badgeEnds ? badgeEnds.getTime() - Date.now() : null;
+      if (left !== null && left <= 3 * 86_400_000 && left > -3 * 86_400_000) {
+        items.push({
+          kind: "plan", id: "badge", at: top, href: "/pricing",
+          title: left > 0 ? `Your Verified badge ${endsInText(badgeEnds!)}` : "Your Verified badge has ended",
+          body: left > 0 ? "Renew it to keep the Verified tick on your shop page and listings." : "The Verified tick is gone from your shop. Renew it to bring it back.",
+        });
       }
     }
 

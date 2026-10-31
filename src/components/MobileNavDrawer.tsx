@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import {
   Briefcase, Calendar, Car, ChevronRight, Crown, Flame, Heart, LayoutDashboard, LifeBuoy, LogOut, MessageSquare, MessageSquareHeart,
-  Search, Settings, ShieldCheck, ShoppingBag, Sparkles, X, type LucideIcon,
+  Newspaper, Search, Settings, ShieldCheck, ShoppingBag, Sparkles, X, type LucideIcon,
 } from "lucide-react";
 import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
@@ -87,6 +87,7 @@ export default function MobileNavDrawer({
   ];
   const browse: Item[] = [
     { href: "/listings", label: "Browse vehicles", icon: Search },
+    { href: "/blog", label: "Blog & guides", icon: Newspaper },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
     { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
     { href: "/pricing", label: "Plans & pricing", icon: Crown, hint: plan && plan.id === "FREE" ? "Upgrade" : undefined },

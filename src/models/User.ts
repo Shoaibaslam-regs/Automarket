@@ -55,6 +55,8 @@ export interface IUser extends Document {
   trialUsedAt?: Date;
   /** The planExpiresAt the "plan ends soon" reminder was sent for (daily cron), so each period is reminded once */
   planReminderFor?: Date;
+  /** Reminder stages (7, 3, 1, 0 days) already sent for planReminderFor (src/lib/expiryReminders.ts) */
+  planRemindersSent?: number[];
   /** Profile picture changes made, and when the last one was (src/lib/profilePicture.ts sets the waits) */
   pictureChanges?: number;
   pictureChangedAt?: Date;
@@ -117,6 +119,7 @@ const UserSchema = new Schema<IUser>(
     planSource: { type: String, enum: ["PAID", "ADMIN_GRANT", "TRIAL"] },
     trialUsedAt: { type: Date },
     planReminderFor: { type: Date },
+    planRemindersSent: { type: [Number], default: undefined },
     pictureChanges: { type: Number, default: 0 },
     pictureChangedAt: { type: Date },
     loginPhone: { type: String, index: true, sparse: true },

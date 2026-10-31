@@ -5,6 +5,7 @@ import { LifeBuoy } from "lucide-react";
 import Footer from "@/components/Footer";
 import { PLANS, VERIFIED_BADGE } from "@/lib/plans";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
+import { BUSINESS_FREE_DAYS } from "@/lib/businessPlan";
 import { whatsappLink } from "@/lib/supportContact";
 import { MAX_COMPARE } from "@/lib/compare";
 
@@ -62,9 +63,9 @@ const SECTIONS: Section[] = [
           automatically, so only real vehicle photos are shown.
         </p>
         <ul>
-          <li>The free plan includes {free.listings} listings a month. Need more, a team or a customer list? See <Link href="/pricing">Plans &amp; pricing</Link>.</li>
+          <li>Private sellers get {free.listings} free listings a month. Need more, a team or a customer list? See <Link href="/pricing">Plans &amp; pricing</Link>.</li>
           <li>When a vehicle is sold or rented, mark it from your <Link href="/dashboard">Dashboard</Link> so buyers know.</li>
-          <li>Showrooms and rental companies can open a free business console for bookings, sales, customers and money.</li>
+          <li>Showrooms and rental companies can open a business console for bookings, sales, customers and money. A new business gets its first {BUSINESS_FREE_DAYS} days free, once; after that it needs a paid plan to add new listings, deals, staff or customers (everything already there keeps working).</li>
         </ul>
       </>
     ),
@@ -90,7 +91,7 @@ const SECTIONS: Section[] = [
       <dl className="space-y-3">
         <div>
           <dt className="font-semibold text-slate-800">Is AutoGO free?</dt>
-          <dd>Yes. Browsing, buying, renting and up to {free.listings} listings a month are free. Paid plans add more listings and business tools.</dd>
+          <dd>For buyers, renters and private sellers, yes: browsing, buying, renting and up to {free.listings} listings a month are free. Businesses get one free month, then choose a paid plan. Paid plans run 30 days at a time, and you get reminders a week before yours ends.</dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-800">What does the Verified tick mean?</dt>

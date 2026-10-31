@@ -2,6 +2,9 @@
 // Client-safe and unit-tested. Without it, any text length and any number (negative prices, a year 9999, a
 // multi-megabyte description) went straight into the database.
 
+/** Photos a listing can have (Sell form, the upload endpoint and this check all use it). */
+export const MAX_LISTING_PHOTOS = 12;
+
 export const LISTING_LIMITS = {
   title: 120,
   description: 5000,
@@ -9,7 +12,7 @@ export const LISTING_LIMITS = {
   model: 60,
   location: 80,
   short: 40, // colour, fuel type, transmission
-  maxImages: 20,
+  maxImages: MAX_LISTING_PHOTOS,
   /** PKR 1,000 crore: far above any vehicle, low enough to stop absurd numbers */
   maxPrice: 10_000_000_000,
   minYear: 1950,

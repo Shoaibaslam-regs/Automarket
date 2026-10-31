@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { refreshAdminCounts } from "@/lib/adminCounts";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, ExternalLink, Flag, X } from "lucide-react";
@@ -52,7 +53,7 @@ export default function AdminReportsPage() {
   function load(s: Status) {
     return fetch(`/api/admin/reports?status=${s}`)
       .then(r => r.json())
-      .then(d => { setReports(d.reports ?? []); setOpen(d.open ?? 0); })
+      .then(d => { setReports(d.reports ?? []); setOpen(d.open ?? 0); refreshAdminCounts({ reports: d.open ?? 0 }); })
       .catch(() => setReports([]));
   }
   useEffect(() => { load(status); }, [status]);

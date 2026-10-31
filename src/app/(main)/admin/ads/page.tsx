@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { refreshAdminCounts } from "@/lib/adminCounts";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ExternalLink, Rocket, Trash2, X } from "lucide-react";
 import { Badge, ConfirmDialog, PageHeader, Panel, Segmented, btn } from "@/components/admin/ui";
@@ -42,7 +43,7 @@ export default function AdminAdsPage() {
   function load(t: Tab) {
     return fetch(`/api/admin/ads?tab=${t}`)
       .then(r => r.json())
-      .then(d => { setAds(d.ads ?? []); setCounts({ waiting: d.waiting ?? 0, running: d.running ?? 0 }); })
+      .then(d => { setAds(d.ads ?? []); setCounts({ waiting: d.waiting ?? 0, running: d.running ?? 0 }); refreshAdminCounts({ ads: d.waiting ?? 0 }); })
       .catch(() => setAds([]));
   }
   useEffect(() => { load(tab); }, [tab]);

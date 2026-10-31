@@ -1,6 +1,6 @@
 // Client-safe shape of an item on the Notifications page (GET /api/notifications).
 
-export type NotificationKind = "message" | "bookingRequest" | "bookingUpdate" | "purchaseUpdate" | "saleRequest" | "official";
+export type NotificationKind = "message" | "bookingRequest" | "bookingUpdate" | "purchaseUpdate" | "saleRequest" | "official" | "plan";
 
 export type NotificationItem = {
   kind: NotificationKind;

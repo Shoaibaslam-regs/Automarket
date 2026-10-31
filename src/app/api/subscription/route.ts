@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getMembership } from "@/lib/business";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { getSubscription, getUsage } from "@/lib/subscription";
@@ -14,7 +15,7 @@ export async function GET() {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
     const sub = await getSubscription(session.user.id);
-    const usage = await getUsage(session.user.id, sub);
+    const [usage, member] = await Promise.all([getUsage(session.user.id, sub), sub.organizationId ? getMembership(session.user.id) : null]);
     return NextResponse.json({
       planId: sub.planId,
       storedPlanId: sub.storedPlanId,
@@ -28,6 +29,8 @@ export async function GET() {
       listingsResetAt: quotaResetsAt(),
       // Whole days until a paid plan ends (it then falls back to Free); null on Free
       planDaysLeft: sub.expiresAt ? Math.max(0, Math.ceil((new Date(sub.expiresAt).getTime() - Date.now()) / 86_400_000)) : null,
+      // Businesses: on a plan, in the one-time free start, or lapsed (src/lib/businessPlan.ts); null for private sellers
+      business: sub.business ? { state: sub.business.state, endsAt: sub.business.endsAt, daysLeft: sub.business.daysLeft, role: member?.role ?? null } : null,
     });
   } catch (error) {
     reportError("Subscription error:", error);

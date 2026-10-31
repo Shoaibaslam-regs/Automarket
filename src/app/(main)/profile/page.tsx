@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { UploadButton } from "@/lib/uploadthing-client";
+import PhotoUploadButton, { RemovePhotoButton } from "@/components/ui/PhotoUploadButton";
 import Image from "next/image";
 import UserIdBadge from "@/components/UserIdBadge";
 import DeleteAccount from "@/components/profile/DeleteAccount";
@@ -186,26 +186,14 @@ export default function ProfilePage() {
                   // Waiting: say when, instead of offering an upload the server would refuse
                   <p style={{ fontSize: "12px", color: "var(--gh-57606a)", margin: 0, lineHeight: 1.5 }}>{pictureWaitText(profile.pictureNextChangeAt)}</p>
                 ) : (
-                <UploadButton
+                <PhotoUploadButton
                   endpoint="profileImage"
-                  onClientUploadComplete={(res) => {
-                    const url = res[0]?.ufsUrl || res[0]?.url;
-                    if (url) setForm(prev => ({ ...prev, image: url }));
-                  }}
-                  onUploadError={(err) => setError(err.message)}
-                  appearance={{
-                    button: "bg-gray-900 text-white text-xs px-3 py-2 rounded-lg hover:bg-gray-700 transition",
-                    allowedContent: "hidden",
-                  }}
-                  content={{ button: "Upload photo" }}
+                  hasPhoto={!!form.image}
+                  onUploaded={url => { setError(""); setForm(prev => ({ ...prev, image: url })); }}
+                  onError={setError}
                 />
                 )}
-                {form.image && (
-                  <button type="button" onClick={() => setForm(prev => ({ ...prev, image: "" }))}
-                    style={{ fontSize: "12px", color: "var(--gh-cf222e)", background: "none", border: "none", cursor: "pointer" }}>
-                    Remove
-                  </button>
-                )}
+                {form.image && <RemovePhotoButton onClick={() => setForm(prev => ({ ...prev, image: "" }))} />}
               </div>
               {!profile?.pictureNextChangeAt && (
                 <p style={{ fontSize: "11px", color: "var(--gh-8c959f)", margin: "8px 0 0", lineHeight: 1.5 }}>

@@ -25,7 +25,7 @@ export const TIPS = {
   roles: "Owner: everything. Manager: everything except billing. Sales: customers, bookings and sales. Staff: view only.",
   performance: "What each team member did this month, counted from their actions in the console.",
   activity: "A record of every action your team takes: who did it and when. Only the owner sees it.",
-  listingQuota: "How many listings and deals you can post this month. It resets on the 1st, and deleted posts still count.",
+  listingQuota: "How many listings and deals you can post this calendar month. The count starts again on the 1st (separate from when your plan ends), and deleted posts still count.",
   verifiedBadge: "A blue tick on your business page after the AutoGO team checks your business. Buyers trust it more.",
   rentDeal: "A package customers can book, for example 6 cars for a wedding, at one price per day.",
   listingTypeBoth: "Your car shows up for buyers and for renters. You can mark it Sold or Rented later.",

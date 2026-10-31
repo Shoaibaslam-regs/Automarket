@@ -2,13 +2,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PlanBanner } from "@/components/business/PlanReminder";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import ModeToggle from "@/components/ModeToggle";
-import BrandLogo from "@/components/BrandLogo";
-import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, LayoutDashboard, Settings, User, Users, Wallet } from "lucide-react";
-import { planInfo } from "@/lib/plans";
+import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, User, Users, Wallet } from "lucide-react";
 import UserIdBadge from "@/components/UserIdBadge";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import TodayCard from "@/components/business/Today";
@@ -38,7 +36,6 @@ export default function BusinessDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -55,135 +52,6 @@ export default function BusinessDashboard() {
       setLoading(false);
     });
   }, [router]);
-
-  const navItems = [
-    { href: "/business/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/business/inventory", label: "Inventory", icon: Car },
-    { href: "/business/customers", label: "Customers", icon: Users },
-    { href: "/business/bookings", label: "Bookings", icon: KeyRound },
-    { href: "/business/staff", label: "Staff", icon: User },
-    { href: "/business/reports", label: "Reports", icon: BarChart3 },
-    { href: "/business/settings", label: "Settings", icon: Settings },
-  ];
-
-  const Sidebar = () => (
-    <div
-      style={{
-        width: "220px",
-        background: "var(--gh-0d1117)",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        flexShrink: 0,
-      }}
-    >
-      {/* Logo */}
-      <div
-        style={{
-          padding: "20px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <BrandLogo tone="dark" height={20} />
-
-        <div
-          style={{
-            marginTop: "10px",
-            padding: "8px 10px",
-            background: "rgba(255,255,255,0.06)",
-            borderRadius: "7px",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "12px",
-              fontWeight: 700,
-              color: "var(--gh-ffffff)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {org?.name}
-          </p>
-
-          <p
-            style={{
-              fontSize: "10px",
-              color: "rgba(255,255,255,0.4)",
-              marginTop: "1px",
-            }}
-          >
-            {planInfo(org?.plan).name} plan · {org?.city}
-          </p>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav
-        style={{
-          flex: 1,
-          padding: "12px 10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "2px",
-        }}
-      >
-        {navItems.map(item => {
-          const isActive =
-            typeof window !== "undefined" &&
-            window.location.pathname === item.href;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                background: isActive
-                  ? "rgba(255,255,255,0.1)"
-                  : "transparent",
-                color: isActive
-                  ? "white"
-                  : "rgba(255,255,255,0.55)",
-                fontSize: "13px",
-                fontWeight: isActive ? 600 : 400,
-                transition: "all 0.12s",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "15px",
-                  width: "18px",
-                  display: "inline-flex",
-                  justifyContent: "center",
-                }}
-              >
-                <item.icon size={16} strokeWidth={1.75} />
-              </span>
-
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bottom */}
-      <div
-        style={{
-          padding: "12px 10px",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <ModeToggle />
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -380,6 +248,7 @@ export default function BusinessDashboard() {
           </div>
 
           <div className="biz-dash-body" style={{ padding: "24px" }}>
+            <PlanBanner />
             <TodayCard />
             {/* Main stats */}
             <div className="stat-grid" style={{ marginBottom: "20px" }}>

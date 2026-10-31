@@ -32,7 +32,6 @@ type ListingWithId = IListing & { _id: string };
 // Re-read listings and counts at most once a minute instead of freezing them at build time
 export const revalidate = 60;
 
-const POPULAR = ["Corolla", "Haval", "Alto", "BYD"];
 
 const FEATURES = [
   {
@@ -146,21 +145,6 @@ export default async function HomePage() {
               </button>
             </div>
           </form>
-
-          {/* Popular searches */}
-          <div className="mx-auto mt-4 flex max-w-2xl flex-wrap items-center justify-center gap-2 text-xs">
-            <span className="text-slate-500">Popular:</span>
-            {POPULAR.map(term => (
-              <Link
-                key={term}
-                href={`/listings?search=${encodeURIComponent(term)}`}
-                className="rounded-full bg-white/5 px-3 py-1 text-slate-300 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 hover:text-white"
-              >
-                {term}
-              </Link>
-            ))}
-          </div>
-
         </div>
       </section>
 

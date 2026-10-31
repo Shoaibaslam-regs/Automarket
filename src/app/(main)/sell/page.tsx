@@ -10,6 +10,7 @@ import {
   ArrowLeft, ArrowRight, Check, CheckCircle2, ClipboardList, Copy, LayoutDashboard, Plus, Sparkles, Fuel, Gauge, Cog, ImageOff, KeyRound, MapPin, Repeat, Tag, Car, type LucideIcon,
 } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
+import { MAX_LISTING_PHOTOS } from "@/lib/listingInput";
 import Select from "@/components/ui/Select";
 import LaunchOverlay, { LAUNCH_TEXT } from "@/components/launch/LaunchOverlay";
 import { formatLakh } from "@/lib/format";
@@ -565,10 +566,11 @@ export default function SellPage() {
                 {step === 2 && (
                   <>
                     <div className="space-y-3">
-                      <SectionTitle title="Photos" hint="Upload up to 8 images. The first is the main photo; tap “Set as main” on another to change it." />
+                      <SectionTitle title="Photos" hint={`Upload up to ${MAX_LISTING_PHOTOS} images. The first is the main photo; tap “Set as main” on another to change it.`} />
                       <ImageUpload
                         images={form.images}
                         onChange={(urls) => setForm((prev) => ({ ...prev, images: urls }))}
+                        maxImages={MAX_LISTING_PHOTOS}
                         onUploadingChange={setPhotosUploading}
                       />
                     </div>

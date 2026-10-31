@@ -26,6 +26,8 @@ export const BUSINESS_PERMISSIONS = {
   replyReviews: ["OWNER", "MANAGER"],
   /** Ask for and cancel sponsored ads on the home page (Promote) */
   promote: ["OWNER", "MANAGER"],
+  /** Post, edit and remove announcements on the shop page (Announcements) */
+  announce: ["OWNER", "MANAGER"],
 } as const satisfies Record<string, readonly BusinessRole[]>;
 
 export type BusinessPermission = keyof typeof BUSINESS_PERMISSIONS;

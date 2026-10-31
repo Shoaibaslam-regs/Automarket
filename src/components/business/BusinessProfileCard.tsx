@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, Copy, ExternalLink, Globe, ImageIcon, Trash2 } from "lucide-react";
-import { UploadButton } from "@/lib/uploadthing-client";
+import { Check, Copy, ExternalLink, Globe } from "lucide-react";
+import PhotoUploadButton, { RemovePhotoButton } from "@/components/ui/PhotoUploadButton";
 import { ORG_UPDATED_EVENT } from "@/components/business/BusinessSidebar";
 
 /**
@@ -68,33 +68,15 @@ export default function BusinessProfileCard({ name, slug, logo, canEditLogo, onL
           <p className="mt-0.5 text-xs text-slate-500">Your logo or shop photo. Shown on your public page, your listings and here in the console. Square images look best, up to 4 MB.</p>
           {canEditLogo ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <UploadButton
+              <PhotoUploadButton
                 endpoint="businessLogo"
-                onUploadBegin={() => { setUploading(true); setError(""); }}
-                onClientUploadComplete={res => {
-                  setUploading(false);
-                  const url = res[0]?.ufsUrl || res[0]?.url;
-                  if (url) saveLogo(url);
-                }}
-                onUploadError={err => { setUploading(false); setError(err.message); }}
-                appearance={{
-                  // ! beats UploadThing's own blue button styles
-                  button: "!h-9 !w-auto !rounded-lg !bg-slate-900 !px-3 !text-xs !font-semibold !text-white transition hover:!bg-slate-800 ut-uploading:opacity-70",
-                  container: "items-start",
-                  allowedContent: "hidden",
-                }}
-                content={{ button: () => <span className="inline-flex items-center gap-1.5"><ImageIcon size={14} /> {logo ? "Change picture" : "Upload picture"}</span> }}
+                hasPhoto={!!logo}
+                disabled={busy}
+                onUploadingChange={u => { setUploading(u); if (u) setError(""); }}
+                onUploaded={saveLogo}
+                onError={setError}
               />
-              {logo && (
-                <button
-                  type="button"
-                  onClick={() => saveLogo("")}
-                  disabled={busy}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-rose-600 ring-1 ring-inset ring-rose-200 transition hover:bg-rose-50 disabled:opacity-50"
-                >
-                  <Trash2 size={13} /> Remove
-                </button>
-              )}
+              {logo && <RemovePhotoButton onClick={() => saveLogo("")} disabled={busy} />}
             </div>
           ) : (
             <p className="mt-2 text-xs text-slate-400">Only the owner or a manager can change the picture.</p>

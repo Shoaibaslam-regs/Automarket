@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeDollarSign, BookOpen, CalendarCheck, LayoutDashboard, Lightbulb, Tag, User, Users, Wallet, type LucideIcon } from "lucide-react";
+import { PLANS } from "@/lib/plans";
+import { BUSINESS_FREE_DAYS } from "@/lib/businessPlan";
+import { BadgeDollarSign, BookOpen, CalendarCheck, Crown, LayoutDashboard, Lightbulb, Tag, User, Users, Wallet, type LucideIcon } from "lucide-react";
 
 type Lang = "en" | "ur";
 const LANG_KEY = "business-guide-lang";
 
 type Term = { name: string; text: string; tone: string };
 type Section = {
-  id: "today" | "bookings" | "sales" | "customers" | "money" | "deals" | "staff";
+  id: "today" | "bookings" | "sales" | "customers" | "money" | "deals" | "staff" | "plan";
   icon: LucideIcon;
   title: string;
   intro: string;
@@ -30,6 +32,8 @@ const TONE = {
   green: "bg-[var(--gh-dafbe1)] text-[var(--gh-1a7f37)] ring-[var(--gh-d0d7de)]",
   red: "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)] ring-[var(--gh-ffcdd2)]",
 };
+
+const premium = PLANS.STARTER;
 
 const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sections: Section[]; help: string; helpLink: string }> = {
   en: {
@@ -255,6 +259,35 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
           "Your business has its own “Business ID”, and every person has their own “My ID”. Find the Business ID on the Dashboard, in Business settings, or by tapping your business name in the menu. Tap an ID to copy it, and give the Business ID when you contact AutoGO about the shop.",
         ],
         open: { href: "/business/staff", label: "Open Staff" },
+      },
+      {
+        id: "plan",
+        icon: Crown,
+        title: "Your plan",
+        intro:
+          `A business runs on its owner's plan. A new business gets its first ${BUSINESS_FREE_DAYS} days free, once. After that it needs a paid plan to keep adding things. There is no free plan for businesses after the free month.`,
+        stepsTitle: "How to subscribe or renew",
+        steps: [
+          "Tap “Upgrade plan” at the bottom of the menu, or “Renew now” on a reminder.",
+          `Pick a plan (Premium is PKR ${premium.price.toLocaleString()} a month) and pay to the account shown there, by bank, JazzCash or EasyPaisa.`,
+          "Tap “Message the team” and send the payment receipt in that chat.",
+          "The AutoGO team switches the plan on, usually the same day. Each payment adds 30 days, on top of any days you still have.",
+        ],
+        termsTitle: "What the menu's plan card means",
+        terms: [
+          { name: "Days left", text: "How long your plan (or free month) still runs. When it reaches zero you must renew.", tone: "amber" },
+          { name: "3/10", text: "Listings and deals posted this calendar month, out of what your plan allows. Deleted posts still count.", tone: "blue" },
+          { name: "New month", text: "On the 1st of every month the count starts again from 0. This has nothing to do with when your plan ends.", tone: "green" },
+          { name: "Plan ended", text: "Nothing new can be added (listings, deals, staff, customers) until you subscribe. Everything else keeps working.", tone: "red" },
+        ],
+        tipsTitle: "Good to know",
+        tips: [
+          "A week before your plan ends, you get a reminder: a card at the top of the console, a notification, an email, and again 3 days and 1 day before.",
+          "When the plan ends, your live listings stay up and bookings, sales, customers and money keep working. You just can't add new listings, deals, staff or customers.",
+          "Only the owner and managers see the Renew buttons. Other staff see a red bar while the plan has ended.",
+          "Ask the team for help anytime from “Help & support”.",
+        ],
+        open: { href: "/pricing", label: "See plans" },
       },
     ],
   },
@@ -482,11 +515,40 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         ],
         open: { href: "/business/staff", label: "Staff کھولیں" },
       },
+      {
+        id: "plan",
+        icon: Crown,
+        title: "آپ کا پلان",
+        intro:
+          `بزنس اپنے مالک کے پلان پر چلتا ہے۔ نئے بزنس کے پہلے ${BUSINESS_FREE_DAYS} دن مفت ہیں، صرف ایک بار۔ اس کے بعد نئی چیزیں شامل کرنے کے لیے پیڈ پلان ضروری ہے۔ مفت مہینے کے بعد بزنس کے لیے کوئی مفت پلان نہیں۔`,
+        stepsTitle: "پلان کیسے لیں یا رینیو کریں",
+        steps: [
+          "مینو کے نیچے “Upgrade plan” دبائیں، یا یاد دہانی پر “Renew now”۔",
+          `پلان چنیں (Premium ماہانہ PKR ${premium.price.toLocaleString()}) اور وہاں دکھائے گئے اکاؤنٹ میں بینک، JazzCash یا EasyPaisa سے رقم بھیجیں۔`,
+          "“Message the team” دبائیں اور اسی چیٹ میں رسید بھیجیں۔",
+          "AutoGO ٹیم پلان چالو کر دیتی ہے، عموماً اسی دن۔ ہر ادائیگی 30 دن بڑھاتی ہے، بچے ہوئے دنوں کے اوپر۔",
+        ],
+        termsTitle: "مینو کے پلان کارڈ کا مطلب",
+        terms: [
+          { name: "Days left", text: "آپ کا پلان (یا مفت مہینہ) کتنے دن اور چلے گا۔ صفر ہونے پر رینیو کرنا ہوگا۔", tone: "amber" },
+          { name: "3/10", text: "اس مہینے کتنی لسٹنگز اور ڈیلز لگائیں، پلان کی حد میں سے۔ ڈیلیٹ کی ہوئی بھی گنی جاتی ہیں۔", tone: "blue" },
+          { name: "New month", text: "ہر مہینے کی 1 تاریخ کو یہ گنتی دوبارہ 0 سے شروع ہوتی ہے۔ اس کا پلان ختم ہونے کی تاریخ سے کوئی تعلق نہیں۔", tone: "green" },
+          { name: "Plan ended", text: "پلان لینے تک کچھ نیا (لسٹنگ، ڈیل، اسٹاف، کسٹمر) شامل نہیں ہو سکتا۔ باقی سب چلتا رہتا ہے۔", tone: "red" },
+        ],
+        tipsTitle: "یاد رکھنے کی باتیں",
+        tips: [
+          "پلان ختم ہونے سے ایک ہفتہ پہلے یاد دہانی آتی ہے: کنسول کے اوپر کارڈ، نوٹیفکیشن، ای میل، اور پھر 3 دن اور 1 دن پہلے۔",
+          "پلان ختم ہونے پر آپ کی لسٹنگز لگی رہتی ہیں اور بکنگز، سیلز، کسٹمرز اور حساب کتاب چلتے رہتے ہیں۔ بس نئی لسٹنگ، ڈیل، اسٹاف یا کسٹمر شامل نہیں ہو سکتے۔",
+          "Renew کے بٹن صرف مالک اور مینیجر کو نظر آتے ہیں۔ باقی اسٹاف کو پلان ختم ہونے پر سرخ پٹی نظر آتی ہے۔",
+          "کسی بھی وقت “Help & support” سے ٹیم سے مدد لیں۔",
+        ],
+        open: { href: "/pricing", label: "پلان دیکھیں" },
+      },
     ],
   },
 };
 
-/** Bilingual (English / Urdu) how-to for every console page: Today, Bookings, Sales, Customers, Money, Deals and Staff. */
+/** Bilingual (English / Urdu) how-to for every console page: Today, Bookings, Sales, Customers, Money, Deals, Staff and the plan. */
 export default function GuideContent({ urduClassName }: { urduClassName: string }) {
   const [lang, setLang] = useState<Lang>("en");
 
