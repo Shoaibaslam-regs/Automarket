@@ -12,6 +12,7 @@ import { Organization } from "../src/models/Organization";
 import { Employee } from "../src/models/Employee";
 import { Deal } from "../src/models/Deal";
 import { BlogPost } from "../src/models/BlogPost";
+import { Announcement } from "../src/models/Announcement";
 import { STARTER_POSTS } from "../src/lib/blogStarter";
 
 export const SEED_FILE = path.join(__dirname, ".data", "seed.json");
@@ -69,6 +70,7 @@ export async function seed(uri: string): Promise<Seed> {
   const org = await Organization.create({
     name: "E2E Motors", slug: "e2e-motors", type: "RENTAL", ownerId: dealer._id, isActive: true,
     city: "Karachi", phone: "03001110004", address: "Shahrah-e-Faisal",
+    followsOfficial: true, followedOfficialAt: new Date(Date.now() - 7 * DAY),
   });
   await Employee.create({ organizationId: org._id, userId: dealer._id, role: "OWNER" });
   const lapsedOrg = await Organization.create({ name: "Lapsed Motors", slug: "lapsed-motors", type: "DEALER", ownerId: lapsed._id, isActive: true, city: "Lahore" });
@@ -82,6 +84,9 @@ export async function seed(uri: string): Promise<Seed> {
     startsAt: new Date(Date.now() - DAY), endsAt: new Date(Date.now() + 14 * DAY), images: photos,
     description: "Three Fortuners with drivers for your wedding day.",
   });
+
+  // A post on AutoGO Official, unread by E2E Motors (which follows it): the dashboard's update banner
+  await Announcement.create({ kind: "UPDATE", title: "Booking calendar is now on every rental", body: "Renters can see free days and book from the calendar.", status: "PUBLISHED", createdBy: owner._id });
 
   // The blog's starter guides, as `npm run seed-blog` adds them
   await BlogPost.create(STARTER_POSTS.map((p, i) => ({ ...p, status: "PUBLISHED", publishedAt: new Date(Date.now() - (STARTER_POSTS.length - i) * DAY) })));

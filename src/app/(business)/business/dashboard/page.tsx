@@ -202,16 +202,21 @@ export default function BusinessDashboard() {
           <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[var(--gh-0d1117)] sm:text-lg">Dashboard</h1>
-              {org?.name && (
-                <p className="flex min-w-0 items-center gap-1 text-[13px] font-semibold text-[var(--gh-57606a)]">
-                  <span className="truncate">{org.name}</span>
-                  {org.verified && <VerifiedBadge variant="icon" size={14} />}
-                </p>
-              )}
-              <p className="hidden text-xs text-[var(--gh-8c959f)] sm:block">
-                {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-              </p>
-              <UserIdBadge id={org?._id} kind="business" className="mt-1 hidden sm:inline-flex" />
+              {/* One line under the title: the business, then (from sm) today's date and the Business ID */}
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--gh-57606a)]">
+                {org?.name && (
+                  <span className="flex min-w-0 items-center gap-1 text-[13px] font-semibold text-[var(--gh-24292f)]">
+                    <span className="truncate">{org.name}</span>
+                    {org.verified && <VerifiedBadge variant="icon" size={14} />}
+                  </span>
+                )}
+                <span aria-hidden className="hidden text-[var(--gh-d0d7de)] sm:inline">·</span>
+                <span className="hidden sm:inline">
+                  {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </span>
+                {org?._id && <span aria-hidden className="hidden text-[var(--gh-d0d7de)] sm:inline">·</span>}
+                <UserIdBadge id={org?._id} kind="business" className="hidden sm:inline-flex" />
+              </div>
             </div>
 
             <div className="flex flex-shrink-0 items-center gap-2">
@@ -249,6 +254,7 @@ export default function BusinessDashboard() {
 
           <div className="biz-dash-body" style={{ padding: "24px" }}>
             <PlanBanner />
+            <OfficialDashboardCard />
             <TodayCard />
             {/* Main stats */}
             <div className="stat-grid" style={{ marginBottom: "20px" }}>
@@ -337,7 +343,6 @@ export default function BusinessDashboard() {
               ))}
             </div>
 
-            <OfficialDashboardCard />
 
             {/* Two col */}
             <div className="dashboard-two-col">
@@ -392,7 +397,9 @@ export default function BusinessDashboard() {
                       label: "Available",
                       value: stats?.inventory.available || 0,
                       total: stats?.inventory.totalVehicles || 1,
-                      color: "var(--gh-1a7f37)",
+                      color: "",
+                      // The AutoGO indigo → sky gradient (it was green)
+                      bar: "bg-gradient-to-r from-indigo-500 to-sky-400",
                     },
                     {
                       label: "Sold",
@@ -439,12 +446,13 @@ export default function BusinessDashboard() {
                         }}
                       >
                         <div
+                          className={"bar" in item ? item.bar : undefined}
                           style={{
                             width: `${Math.round(
                               (item.value / item.total) * 100
                             )}%`,
                             height: "100%",
-                            background: item.color,
+                            background: item.color || undefined,
                             borderRadius: "4px",
                             transition: "width 0.5s ease",
                           }}

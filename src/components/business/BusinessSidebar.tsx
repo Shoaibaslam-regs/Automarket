@@ -137,17 +137,17 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
                 <p className="mt-0.5 truncate text-[11px] text-slate-400">{session?.user?.email}</p>
               </div>
             </div>
-            <div className="mt-3 space-y-1.5 border-t border-white/10 pt-2.5">
+            {/* The business, then both IDs as aligned rows: label on the left, number and copy on the right */}
+            <div className="mt-3 border-t border-white/10 pt-2.5">
               {org?.name && (
-                <p className="flex min-w-0 items-center gap-1 text-[12px] font-semibold text-slate-200">
+                <p className="mb-1.5 flex min-w-0 items-center gap-1 text-[12px] font-semibold text-slate-200">
                   <span className="truncate">{org.name}</span>
                   {org.verified && <VerifiedBadge variant="icon" size={13} />}
                 </p>
               )}
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-                <UserIdBadge id={org?._id} kind="business" className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
-                <span aria-hidden className="text-slate-600">·</span>
-                <UserIdBadge id={session?.user?.id} kind="me" className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-400 !ring-0 hover:!text-white" />
+              <div className="space-y-0.5">
+                <UserIdBadge id={org?._id} kind="business" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-300 !ring-0 hover:!bg-white/5 hover:!text-white" />
+                <UserIdBadge id={session?.user?.id} kind="me" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-400 !ring-0 hover:!bg-white/5 hover:!text-white" />
               </div>
             </div>
           </div>

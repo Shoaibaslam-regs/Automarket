@@ -89,7 +89,7 @@ test.describe("on a phone", () => {
   test("a rent deal has the bottom bar with Book deal and WhatsApp", async ({ page }) => {
     const { dealId } = seedData();
     await page.goto(`/deals/${dealId}`);
-    const bar = page.locator("div.fixed.bottom-0").filter({ hasText: "Book deal" });
+    const bar = page.locator("div.fixed.bottom-0").filter({ hasText: "Book deal", visible: true });
     await expect(bar).toBeVisible();
     await expect(bar.getByRole("link", { name: "WhatsApp" })).toBeVisible();
     await expect(bar).toContainText("You save");

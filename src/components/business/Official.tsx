@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BellRing, CalendarClock, ExternalLink, Pin } from "lucide-react";
+import { ArrowRight, BellRing, CalendarClock, ExternalLink, Pin } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { ANNOUNCEMENT_LABEL, ANNOUNCEMENT_STYLE, OFFICIAL_NAME, type AnnouncementKind } from "@/lib/announcements";
 import StatusText from "@/components/ui/StatusText";
@@ -25,12 +25,11 @@ export function OfficialName({ tone = "light", className = "" }: { tone?: "light
   );
 }
 
-/** The channel's round avatar: the AutoGO gradient with a megaphone. */
 export function OfficialAvatar({ size = 44 }: { size?: number }) {
-  // The AutoGO app icon (the logo's mark on white), the same picture as the installed app
+  // public/icons/icon-192.png exactly as it is (the installed app's icon), not scaled or cropped
   return (
-    <Image src={size > 96 ? "/icons/icon-512.png" : "/icons/icon-192.png"} alt="AutoGO" width={size} height={size}
-      className="flex-shrink-0 rounded-full bg-white shadow-md ring-1 ring-black/10" style={{ width: size, height: size }} />
+    <Image src="/icons/icon-192.png" alt="AutoGO" width={size} height={size} unoptimized
+      className="theme-static flex-shrink-0 rounded-full bg-white shadow-md ring-1 ring-black/10" style={{ width: size, height: size }} />
   );
 }
 
@@ -80,8 +79,10 @@ export async function setFollowOfficial(follow: boolean): Promise<string | null>
 }
 
 /**
- * Dashboard card, shown to every business: the newest post from AutoGO Official (with a "new" count),
- * a Follow button for the owner or a manager when the business doesn't follow yet, and a link to Updates.
+ * Dashboard banner, shown to every business: the AutoGO Official icon (as on the Updates page) and name side by side, a thin divider, then "New Update
+ * Available!" with the newest unread post (or the latest one), and the button to Updates; a Follow button for the
+ * owner or a manager when the business doesn't follow yet. Below lg (phones, and tablets beside the sidebar) the logo
+ * row carries the buttons and the text goes underneath, so nothing wraps or overlaps.
  */
 export function OfficialDashboardCard() {
   const [data, setData] = useState<{ following: boolean; canChange: boolean; announcements: OfficialPost[] } | null>(null);
@@ -94,29 +95,46 @@ export function OfficialDashboardCard() {
   const latest = unread[0] ?? data.announcements[0];
 
   return (
-    <div className={`mb-5 flex flex-col gap-3 rounded-xl border bg-white p-4 sm:flex-row sm:items-center ${unread.length ? "border-indigo-200" : "border-[var(--gh-e1e4e8)]"}`}>
-      <OfficialAvatar size={40} />
-      <div className="min-w-0 flex-1">
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <OfficialName className="text-[13px]" />
-          {unread.length > 0 && <span className="rounded-full bg-indigo-600 px-1.5 py-px text-[10px] font-extrabold text-white">{unread.length} new</span>}
-        </p>
-        <p className="mt-0.5 truncate text-xs text-[var(--gh-57606a)]">
-          {latest
-            ? <><strong className="font-semibold text-[var(--gh-0d1117)]">{latest.title}</strong> · {day(latest.createdAt)}</>
-            : data.following ? "You'll see announcements, new features and offers here." : "Announcements, new features and offers for businesses."}
-        </p>
+    <div className={`mb-5 flex flex-col gap-3 rounded-2xl border bg-gradient-to-r from-indigo-100/70 via-sky-50/60 to-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:gap-5 ${unread.length ? "border-indigo-200 ring-1 ring-inset ring-indigo-100" : "border-[var(--gh-e1e4e8)]"}`}>
+      {/* Phones and tablets: the logo and the buttons share one row that never wraps; from lg the row dissolves (contents) and
+          its parts take their places in the single line: logo, divider, text, buttons */}
+      <div className="flex items-center justify-between gap-2 lg:contents">
+        {/* Branding: the same AutoGO Official icon as the Updates page (OfficialAvatar), with the name beside it */}
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5 lg:order-1">
+          <OfficialAvatar size={36} />
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-[15px] font-extrabold tracking-tight text-[var(--gh-0d1117)]">
+            AutoGO <VerifiedBadge variant="icon" size={14} />
+          </span>
+        </div>
+
+        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2 lg:order-4">
+          {!data.following && data.canChange && (
+            // Phones show only the bell, so it fits beside the logo with the main button
+            <button disabled={busy} aria-label="Follow AutoGO Official" title="Follow AutoGO Official"
+              onClick={async () => { setBusy(true); const err = await setFollowOfficial(true); setBusy(false); if (!err) setData({ ...data, following: true }); }}
+              className="inline-flex h-8 w-8 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50 sm:h-9 sm:w-auto sm:px-3.5 sm:text-[13px]">
+              <BellRing size={14} /> <span className="hidden sm:inline">{busy ? "Following…" : "Follow"}</span>
+            </button>
+          )}
+          <Link href="/business/updates"
+            className="group inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--gh-0d1117)] px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--gh-24292f)] sm:h-9 sm:px-4 sm:text-[13px]">
+            {unread.length ? "Update Now" : <><span className="sm:hidden">Updates</span><span className="hidden sm:inline">View updates</span></>} <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+          </Link>
+        </div>
       </div>
-      <div className="flex flex-shrink-0 gap-2">
-        {!data.following && data.canChange && (
-          <button disabled={busy} onClick={async () => { setBusy(true); const err = await setFollowOfficial(true); setBusy(false); if (!err) setData({ ...data, following: true }); }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50">
-            <BellRing size={14} /> {busy ? "Following…" : "Follow"}
-          </button>
-        )}
-        <Link href="/business/updates" className="inline-flex items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] px-3.5 py-2 text-[13px] font-semibold text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]">
-          {unread.length ? "Read" : "View updates"}
-        </Link>
+
+      <span aria-hidden className="hidden h-10 w-px flex-shrink-0 bg-[var(--gh-e1e4e8)] lg:order-2 lg:block" />
+
+      <div className="min-w-0 lg:order-3 lg:flex-1">
+        <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-[var(--gh-0d1117)] sm:text-[15px]">
+          <span className="truncate">{unread.length ? "New Update Available!" : "Updates from AutoGO"}</span>
+          {unread.length > 1 && <span className="flex-shrink-0 rounded-full bg-indigo-600 px-1.5 py-px text-[10px] font-extrabold text-white">{unread.length} new</span>}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-[var(--gh-57606a)] sm:text-[13px]">
+          {latest
+            ? <>{unread.length ? <strong className="font-semibold text-[var(--gh-24292f)]">{latest.title}</strong> : latest.title} · {day(latest.createdAt)}</>
+            : "Get the latest features and improvements."}
+        </p>
       </div>
     </div>
   );

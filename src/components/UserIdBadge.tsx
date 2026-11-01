@@ -14,7 +14,13 @@ const KINDS = {
  * An account or business ID, shown the same way the admin panel shows it (last 6 characters),
  * so people can quote it to support. Clicking copies the full ID.
  */
-export default function UserIdBadge({ id, kind = "user", className = "" }: { id?: string | null; kind?: keyof typeof KINDS; className?: string }) {
+/** `spread` puts the label on the left and the number on the right, for IDs listed under each other. */
+export default function UserIdBadge({ id, kind = "user", spread = false, className = "" }: {
+  id?: string | null;
+  kind?: keyof typeof KINDS;
+  spread?: boolean;
+  className?: string;
+}) {
   const { label, noun } = KINDS[kind];
   const [copied, setCopied] = useState(false);
   if (!id) return null;
@@ -39,7 +45,7 @@ export default function UserIdBadge({ id, kind = "user", className = "" }: { id?
         copied ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-white text-slate-500 ring-slate-200 hover:text-slate-800 hover:ring-slate-300"
       } ${className}`}
     >
-      <span className="font-medium">{label}</span>
+      <span className={`font-medium ${spread ? "mr-auto" : ""}`}>{label}</span>
       <span className="font-mono font-semibold tracking-wide">#{id.slice(-6)}</span>
       {copied ? <Check size={11} /> : <Copy size={11} />}
     </button>
