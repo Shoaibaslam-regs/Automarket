@@ -94,7 +94,13 @@ export async function seed(uri: string): Promise<Seed> {
   // Fuel prices, test values only (this database is thrown away): two approved days and two weeks of Brent / WTI
   const pkDay = (n: number) => new Date(`${new Date(Date.now() + 5 * 3_600_000 - n * DAY).toISOString().slice(0, 10)}T00:00:00+05:00`);
   const approved = { approvedBy: owner._id, approvedAt: new Date(), source: "Petroleum Division press release", notificationUrl: "https://petroleum.gov.pk/NewsDetail/TEST" };
+  // Older days first (prices that held for a few days, then changed), then the two newest the tests check
+  const older = [[2, 392.1, 397.2], [5, 390.4, 398.6], [9, 388.75, 396.9], [14, 391.2, 393.4], [20, 386.5, 395.1], [27, 389.9, 399.3]];
   await FuelPrice.create([
+    ...older.flatMap(([n, petrol, diesel]) => [
+      { ...approved, fuelType: "PETROL", price: petrol, effectiveDate: pkDay(n) },
+      { ...approved, fuelType: "DIESEL", price: diesel, effectiveDate: pkDay(n) },
+    ]),
     { ...approved, fuelType: "PETROL", price: 394.83, effectiveDate: pkDay(1) },
     { ...approved, fuelType: "DIESEL", price: 395.85, effectiveDate: pkDay(1) },
     { ...approved, fuelType: "PETROL", price: 396.65, effectiveDate: pkDay(0) },
@@ -104,10 +110,15 @@ export async function seed(uri: string): Promise<Seed> {
     { commodity: "BRENT", symbol: "BRENT", price: 64.12, previousClose: 63.5, change: 0.62, percentChange: 0.98, marketTimestamp: new Date(Date.now() - 3_600_000) },
     { commodity: "WTI", symbol: "WTI", price: 60.4, previousClose: 60.9, change: -0.5, percentChange: -0.82, marketTimestamp: new Date(Date.now() - 3_600_000) },
   ]);
-  await OilPriceHistory.create(Array.from({ length: 14 }, (_, i) => [
-    { commodity: "BRENT", date: new Date(Date.now() - (13 - i) * DAY).toISOString().slice(0, 10), price: 62 + i * 0.15 },
-    { commodity: "WTI", date: new Date(Date.now() - (13 - i) * DAY).toISOString().slice(0, 10), price: 59 + i * 0.1 },
-  ]).flat());
+  // 120 days of made-up closes that wander a little, ending at the quotes above
+  await OilPriceHistory.create(Array.from({ length: 120 }, (_, i) => {
+    const date = new Date(Date.now() - (119 - i) * DAY).toISOString().slice(0, 10);
+    const wave = Math.sin(i / 9) * 2.4 + Math.sin(i / 3.1) * 0.7;
+    return [
+      { commodity: "BRENT", date, price: Math.round((64.12 + wave - (119 - i) * 0.01) * 100) / 100 },
+      { commodity: "WTI", date, price: Math.round((60.4 + wave * 0.9 - (119 - i) * 0.008) * 100) / 100 },
+    ];
+  }).flat());
 
   // The blog's starter guides, as `npm run seed-blog` adds them
   await BlogPost.create(STARTER_POSTS.map((p, i) => ({ ...p, status: "PUBLISHED", publishedAt: new Date(Date.now() - (STARTER_POSTS.length - i) * DAY) })));

@@ -26,7 +26,7 @@ export type FuelPageData = {
   /** The latest approved changes, newest first */
   news: FuelNews[];
   oil: Partial<Record<Commodity, OilQuoteView>>;
-  /** Daily closes, oldest first, the last 30 */
+  /** Daily closes, oldest first, up to a year */
   oilHistory: Record<Commodity, { date: string; price: number }[]>;
   oilUpdatedAt: string | null;
 };
@@ -36,9 +36,9 @@ type PriceRow = { fuelType: FuelType; price: number; effectiveDate: Date; source
 async function load(): Promise<FuelPageData> {
   await connectDB();
   const [rows, quotes, history, status] = await Promise.all([
-    FuelPrice.find().sort({ effectiveDate: -1 }).limit(240).lean<PriceRow[]>(),
+    FuelPrice.find().sort({ effectiveDate: -1 }).limit(800).lean<PriceRow[]>(),
     OilMarketPrice.find().lean<(OilQuoteView & { commodity: Commodity; marketTimestamp: Date; updatedAt: Date })[]>(),
-    OilPriceHistory.find({ date: { $gte: pkDayKey(new Date(Date.now() - 45 * 86_400_000)) } }).sort({ date: 1 }).lean<{ commodity: Commodity; date: string; price: number }[]>(),
+    OilPriceHistory.find({ date: { $gte: pkDayKey(new Date(Date.now() - 370 * 86_400_000)) } }).sort({ date: 1 }).lean<{ commodity: Commodity; date: string; price: number }[]>(),
     getFuelStatus(),
   ]);
 
@@ -78,9 +78,8 @@ async function load(): Promise<FuelPageData> {
   }
   const oilHistory: FuelPageData["oilHistory"] = { BRENT: [], WTI: [] };
   for (const h of history) oilHistory[h.commodity].push({ date: h.date, price: h.price });
-  for (const c of ["BRENT", "WTI"] as const) oilHistory[c] = oilHistory[c].slice(-30);
 
-  return { pk, pkHistory: newestFirst.slice(0, 60).reverse(), news, oil, oilHistory, oilUpdatedAt: (status as FuelStatus).oil?.lastSuccessAt ?? null };
+  return { pk, pkHistory: newestFirst.slice(0, 370).reverse(), news, oil, oilHistory, oilUpdatedAt: (status as FuelStatus).oil?.lastSuccessAt ?? null };
 }
 
 /** The public fuel page and the blog's fuel card (cached for everyone). */

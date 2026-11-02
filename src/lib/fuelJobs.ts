@@ -197,14 +197,16 @@ async function alphaVantage(fn: string) {
 }
 
 const COMMODITIES: Commodity[] = ["BRENT", "WTI"];
-/** Closes kept fresh in the history on each update (the charts show up to 30) */
-const HISTORY_DAYS = 60;
+/** A year of closes is saved once (the charts go back to 1 year); after that each update only refreshes the latest */
+const HISTORY_DAYS = 400;
+const RECENT_DAYS = 15;
 /** The data changes once a day and the free plan allows 25 requests a day: a run this soon after the last is skipped */
 const OIL_REFRESH_MS = 4 * 3_600_000;
 
 /**
  * Brent and WTI daily closes from Alpha Vantage (one request each): the latest close (with its change from the one
- * before) saved over the previous quote, and the last HISTORY_DAYS closes written to the history. A commodity that
+ * before) saved over the previous quote, and the history filled with a year of closes once (then the latest RECENT_DAYS
+ * each time). A commodity that
  * fails keeps its saved data; its error is recorded. Nothing is invented: only Alpha Vantage's own closes are stored.
  */
 export async function updateOilPrices() {
@@ -225,7 +227,8 @@ export async function updateOilPrices() {
       { $set: { price: quote.price, previousClose: quote.previousClose, change: quote.change, percentChange: quote.percentChange, marketTimestamp, symbol: ALPHA_VANTAGE_FUNCTIONS[c], source: OIL_SOURCE, currency: "USD", unit: "barrel" } },
       { upsert: true }
     );
-    await OilPriceHistory.bulkWrite(points!.slice(-HISTORY_DAYS).map(p => ({
+    const full = (await OilPriceHistory.countDocuments({ commodity: c })) >= 300;
+    await OilPriceHistory.bulkWrite(points!.slice(full ? -RECENT_DAYS : -HISTORY_DAYS).map(p => ({
       updateOne: { filter: { commodity: c, date: p.date }, update: { $set: { price: p.close, marketTimestamp: new Date(`${p.date}T00:00:00Z`) } }, upsert: true },
     })));
     saved++;

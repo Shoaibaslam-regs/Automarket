@@ -7,6 +7,7 @@ import { BLOG_CATEGORIES, BLOG_CATEGORY, BLOG_PAGE_SIZE } from "@/lib/blog";
 import { getPublishedPosts, isBlogCategory } from "@/lib/publicBlog";
 import { reportError } from "@/lib/errorLog";
 import { getFuelPageData } from "@/lib/publicFuel";
+import LiveTag from "@/components/fuel/LiveTag";
 import { fuelDate } from "@/lib/fuelPrices";
 
 export const metadata: Metadata = {
@@ -62,7 +63,7 @@ export default async function BlogPage({ searchParams }: Props) {
       <div className="mx-auto max-w-[1180px] px-4 py-8 sm:py-10">
         {/* Today's approved fuel prices, linking to the full Fuel prices page */}
         <Link href="/fuel-prices" className="group mb-6 flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:flex-row sm:items-center sm:gap-5 sm:px-5">
-          <span className="flex items-center gap-2 text-sm font-bold text-slate-900"><Fuel size={17} className="text-indigo-600" /> Fuel prices</span>
+          <span className="flex items-center gap-2 text-sm font-bold text-slate-900"><Fuel size={17} className="text-indigo-600" /> Fuel prices <LiveTag /></span>
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-slate-600">
             {petrol && diesel ? (
               <>

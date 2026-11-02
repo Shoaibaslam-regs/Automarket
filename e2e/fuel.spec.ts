@@ -4,6 +4,7 @@ import { devices, expect, test } from "@playwright/test";
 test("the fuel page shows approved Pakistani prices with their change, crude oil and the trends", async ({ page }) => {
   await page.goto("/fuel-prices");
   await expect(page.getByRole("heading", { level: 1, name: "Fuel prices" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Live");
   const main = page.getByRole("main");
   await expect(main.getByText("396.65").first()).toBeVisible();
   await expect(main.getByText("394.94").first()).toBeVisible();
@@ -11,9 +12,12 @@ test("the fuel page shows approved Pakistani prices with their change, crude oil
   await expect(main.getByText("64.12")).toBeVisible();
   await expect(main.getByText(/a few days after the trading day; not real-time/)).toBeVisible();
   await expect(main.getByRole("heading", { name: "Price changes" })).toBeVisible();
-  await expect(main.locator(".recharts-line").first()).toBeVisible();
-  await main.getByRole("radio", { name: "7 days" }).click();
-  await expect(main.getByRole("radio", { name: "7 days" })).toHaveAttribute("aria-checked", "true");
+  // Crypto-style charts: a series tab, ranges, and the area drawn
+  await expect(main.locator(".recharts-area").first()).toBeVisible();
+  await main.getByRole("tab", { name: "Diesel" }).click();
+  await expect(main.getByRole("tab", { name: "Diesel" })).toHaveAttribute("aria-selected", "true");
+  await main.getByRole("radio", { name: "7D" }).first().click();
+  await expect(main.getByRole("radio", { name: "7D" }).first()).toHaveAttribute("aria-checked", "true");
 });
 
 test("the blog links to today's fuel prices", async ({ page }) => {
@@ -27,6 +31,9 @@ test("the blog links to today's fuel prices", async ({ page }) => {
 test("admin and scheduled fuel addresses refuse outsiders", async ({ request }) => {
   expect((await request.get("/api/admin/fuel")).status()).toBe(401);
   expect((await request.patch("/api/admin/fuel/abc", { data: { action: "approve" }, headers: { Origin: "http://127.0.0.1:3100" } })).status()).toBe(401);
+  const day = "/api/admin/fuel/day/2026-10-30";
+  expect((await request.patch(day, { data: { petrol: 1, diesel: 1 }, headers: { Origin: "http://127.0.0.1:3100" } })).status()).toBe(401);
+  expect((await request.delete(day, { data: { note: "test" }, headers: { Origin: "http://127.0.0.1:3100" } })).status()).toBe(401);
   const cron = await request.get("/api/cron/fuel");
   expect([401, 503]).toContain(cron.status());
 });

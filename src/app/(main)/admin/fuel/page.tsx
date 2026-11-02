@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, ExternalLink, Fuel, RefreshCw, X } from "lucide-react";
-import { Badge, PageHeader, Panel, btn } from "@/components/admin/ui";
+import { AlertTriangle, Check, ExternalLink, Fuel, Pencil, RefreshCw, Trash2, X } from "lucide-react";
+import { Badge, ConfirmDialog, PageHeader, Panel, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
 import { COMMODITY_LABEL, FUEL_LABEL, fuelDate, fuelTime, pkDayKey } from "@/lib/fuelPrices";
 import type { FuelPageData } from "@/lib/publicFuel";
@@ -44,6 +44,9 @@ export default function AdminFuelPage() {
   const [edits, setEdits] = useState<Record<string, { petrol: string; diesel: string; effectiveDate: string; note: string }>>({});
   const [manual, setManual] = useState({ petrol: "", diesel: "", effectiveDate: "", sourceUrl: "", note: "" });
   const [reload, setReload] = useState(0);
+  // A published day being corrected, or about to be removed
+  const [editing, setEditing] = useState<{ day: string; petrol: string; diesel: string; effectiveDate: string; note: string } | null>(null);
+  const [removing, setRemoving] = useState<{ day: string; note: string } | null>(null);
   const [nextRun] = useState(() => nextDailyRun());
 
   useEffect(() => {
@@ -238,10 +241,36 @@ export default function AdminFuelPage() {
             <Panel title="Pakistan price history" description="Approved prices, newest first">
               {data.pkHistory.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-500">No approved prices yet.</p> : (
                 <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs text-slate-400"><th className="px-4 py-2 font-medium sm:px-5">Effective</th><th className="px-2 py-2 font-medium">Petrol</th><th className="px-2 py-2 font-medium">Diesel</th></tr></thead>
+                  <thead><tr className="text-left text-xs text-slate-400"><th className="px-4 py-2 font-medium sm:px-5">Effective</th><th className="px-2 py-2 font-medium">Petrol</th><th className="px-2 py-2 font-medium">Diesel</th>{canWrite && <th className="px-4 py-2 sm:px-5"><span className="sr-only">Actions</span></th>}</tr></thead>
                   <tbody className="divide-y divide-slate-100">
-                    {[...data.pkHistory].reverse().slice(0, 20).map(d => (
-                      <tr key={d.date}><td className="px-4 py-2 text-slate-600 sm:px-5">{fuelDate(d.date)}</td><td className="px-2 py-2 tabular-nums">{d.petrol?.toFixed(2) ?? "—"}</td><td className="px-2 py-2 tabular-nums">{d.diesel?.toFixed(2) ?? "—"}</td></tr>
+                    {[...data.pkHistory].reverse().slice(0, 20).map(d => editing?.day === d.date ? (
+                      <tr key={d.date}>
+                        <td colSpan={4} className="px-4 py-3 sm:px-5">
+                          <form onSubmit={async ev => { ev.preventDefault(); if (await call(`edit:${d.date}`, `/api/admin/fuel/day/${d.date}`, "PATCH", editing, "Saved. The public page shows the corrected prices.")) setEditing(null); }}
+                            className="grid gap-2 sm:grid-cols-3">
+                            <label className="text-xs text-slate-500">Petrol<input required inputMode="decimal" value={editing.petrol} onChange={e => setEditing(x => x && { ...x, petrol: e.target.value })} className={`${field} mt-1`} /></label>
+                            <label className="text-xs text-slate-500">Diesel<input required inputMode="decimal" value={editing.diesel} onChange={e => setEditing(x => x && { ...x, diesel: e.target.value })} className={`${field} mt-1`} /></label>
+                            <label className="text-xs text-slate-500">Effective from<input required type="date" value={editing.effectiveDate} onChange={e => setEditing(x => x && { ...x, effectiveDate: e.target.value })} className={`${field} mt-1`} /></label>
+                            <label className="text-xs text-slate-500 sm:col-span-3">Note (optional)<input maxLength={300} value={editing.note} placeholder="e.g. diesel was typed wrong" onChange={e => setEditing(x => x && { ...x, note: e.target.value })} className={`${field} mt-1`} /></label>
+                            <div className="flex gap-2 sm:col-span-3">
+                              <button type="submit" disabled={busy === `edit:${d.date}`} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"><Check size={13} /> {busy === `edit:${d.date}` ? "Saving…" : "Save changes"}</button>
+                              <button type="button" onClick={() => setEditing(null)} className={`${btn.base} ${btn.secondary}`}>Cancel</button>
+                            </div>
+                          </form>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={d.date}>
+                        <td className="px-4 py-2 text-slate-600 sm:px-5">{fuelDate(d.date)}</td><td className="px-2 py-2 tabular-nums">{d.petrol?.toFixed(2) ?? "—"}</td><td className="px-2 py-2 tabular-nums">{d.diesel?.toFixed(2) ?? "—"}</td>
+                        {canWrite && (
+                          <td className="whitespace-nowrap px-4 py-1.5 text-right sm:px-5">
+                            <button type="button" aria-label={`Edit prices of ${fuelDate(d.date)}`} title="Edit" onClick={() => setEditing({ day: d.date, petrol: d.petrol?.toFixed(2) ?? "", diesel: d.diesel?.toFixed(2) ?? "", effectiveDate: d.date, note: "" })}
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900"><Pencil size={14} /></button>
+                            <button type="button" aria-label={`Remove prices of ${fuelDate(d.date)}`} title="Remove" onClick={() => setRemoving({ day: d.date, note: "" })}
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 size={14} /></button>
+                          </td>
+                        )}
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -269,6 +298,18 @@ export default function AdminFuelPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog open={!!removing} onOpenChange={o => !o && setRemoving(null)} tone="danger" icon={Trash2}
+        title={removing ? `Remove the prices of ${fuelDate(removing.day)}?` : "Remove prices"}
+        description={(
+          <>
+            They leave the public page and the charts straight away. The earlier day&apos;s prices show again if this was the latest.
+            <label className="mt-3 block text-xs text-slate-500">Why (kept in Activity)
+              <input autoFocus maxLength={300} value={removing?.note ?? ""} onChange={e => setRemoving(x => x && { ...x, note: e.target.value })} placeholder="e.g. entered under the wrong date" className={`${field} mt-1`} />
+            </label>
+          </>
+        )}
+        confirmLabel="Remove prices" loadingLabel="Removing…" loading={!!removing && busy === `remove:${removing.day}`}
+        onConfirm={async () => { if (removing && await call(`remove:${removing.day}`, `/api/admin/fuel/day/${removing.day}`, "DELETE", { note: removing.note }, "Removed from the public page.")) setRemoving(null); }} />
       <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-400"><Fuel size={13} /> The public page is /fuel-prices. Releases come from petroleum.gov.pk; oil prices from Alpha Vantage.</p>
     </div>
   );
