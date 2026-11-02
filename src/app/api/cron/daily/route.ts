@@ -20,7 +20,14 @@ export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return NextResponse.json({ error: "CRON_SECRET isn't set" }, { status: 503 });
   const given = (req.headers.get("authorization") ?? "").trim();
-  if (!timingSafeEqual(digest(given), digest(`Bearer ${secret}`))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Two different refusals (neither says anything about the secret): opening the address in a browser sends no
+  // header at all, which is expected; a header with the wrong value means the secret doesn't match
+  if (!given) {
+    return NextResponse.json({ error: "Unauthorized: no Authorization header. Vercel's cron sends it; a browser can't, so test with the Run button in Vercel → Settings → Cron Jobs, or with curl." }, { status: 401 });
+  }
+  if (!timingSafeEqual(digest(given), digest(`Bearer ${secret}`))) {
+    return NextResponse.json({ error: "Unauthorized: the secret sent doesn't match CRON_SECRET for this deployment." }, { status: 401 });
+  }
 
   const day = pkDay();
   const once = await hitRateLimit("cronDaily", day);
