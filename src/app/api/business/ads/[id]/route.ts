@@ -21,7 +21,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const ad = await Ad.findOneAndUpdate(
       { _id: id, organizationId: member.organizationId, status: "REQUESTED" },
       { $set: { status: "CANCELLED" } },
-      { new: true }
+      { returnDocument: "after" }
     ).lean<{ _id: mongoose.Types.ObjectId; targetLabel: string }>();
     if (!ad) return NextResponse.json({ error: "Only requests still waiting for approval can be cancelled" }, { status: 400 });
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.cancel", { type: "BUSINESS", id: ad._id, label: ad.targetLabel });

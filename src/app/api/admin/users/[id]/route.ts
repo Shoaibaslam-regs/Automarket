@@ -48,7 +48,7 @@ export async function PATCH(
       role === "ADMIN"
         ? { $set: { role, adminAccess, sessionKey: newSessionKey() } }
         : { $set: { role, sessionKey: newSessionKey() }, $unset: { adminAccess: "", adminKeyHash: "", adminKeyCreatedAt: "", adminCodeHash: "", adminCodeExpires: "", adminCodeTries: "" } },
-      { new: true }
+      { returnDocument: "after" }
     ).select("name email role adminAccess");
     await logAdminAction(gate.admin, "user.role", { type: "USER", id, label: target.name || target.email },
       `${before} → ${role === "ADMIN" ? `ADMIN (${adminAccess})` : role}`);

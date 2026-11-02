@@ -114,7 +114,7 @@ export async function PATCH(
     const updated = await Listing.findOneAndUpdate(
       { _id: id, sellerId: session.user.id },
       { $set: update },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
     if (!updated) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

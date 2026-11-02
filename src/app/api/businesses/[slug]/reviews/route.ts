@@ -73,7 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       { organizationId: org._id, reviewerId: session.user.id },
       // An edited review is new content, so any earlier reply no longer answers it
       { $set: { rating, comment: text }, ...(existing && { $unset: { reply: "" } }) },
-      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", runValidators: true, setDefaultsOnInsert: true }
     ).populate("reviewerId", "name image");
 
     await triggerPusher(`user-${org.ownerId}`, "new-notification", { type: "review", rating });

@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     const invite = await StaffInvite.findOneAndUpdate(
       { organizationId: member.organizationId, userId: targetUser._id },
       { $set: { role, invitedBy: session.user.id, createdAt: new Date() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
     const org = await Organization.findById(member.organizationId).select("name").lean<{ name: string }>();
     await sendChatMessage(session.user.id, String(targetUser._id),

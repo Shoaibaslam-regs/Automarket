@@ -64,7 +64,7 @@ export async function PATCH(req: NextRequest) {
       reply
         ? { $set: { reply: { text: reply, repliedBy: session.user.id, repliedAt: new Date() } } }
         : { $unset: { reply: "" } },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 });
     await invalidateBusinessPage(member.organizationId);

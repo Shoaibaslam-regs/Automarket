@@ -31,7 +31,7 @@ export async function PATCH(
     }
     if (!Object.keys(update).length) return NextResponse.json({ error: "Nothing to change" }, { status: 400 });
     await connectDB();
-    const listing = await Listing.findByIdAndUpdate(id, { $set: update }, { new: true });
+    const listing = await Listing.findByIdAndUpdate(id, { $set: update }, { returnDocument: "after" });
     if (listing) {
       await invalidateListingAndSeller(id, listing.sellerId);
       const what = [update.status && `status → ${update.status}`, update.featured !== undefined && (update.featured ? "featured" : "unfeatured")].filter(Boolean).join(", ");

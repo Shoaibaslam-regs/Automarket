@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const customer = await Customer.findOneAndUpdate(
       { _id: id, organizationId: member.organizationId },
       { $set: fields },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
     if (!customer) return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "customer.update",

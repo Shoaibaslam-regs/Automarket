@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     await connectDB();
     // Scoped to the owner, so one user can't edit another's searches
-    const search = await SavedSearch.findOneAndUpdate({ _id: id, userId: session.user.id }, update, { new: true }).lean();
+    const search = await SavedSearch.findOneAndUpdate({ _id: id, userId: session.user.id }, update, { returnDocument: "after" }).lean();
     if (!search) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ search });
   } catch (error) {

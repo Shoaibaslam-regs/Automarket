@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     const { disabledByAdmin } = await req.json().catch(() => ({}));
     if (typeof disabledByAdmin !== "boolean") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-    const deal = await Deal.findByIdAndUpdate(id, { $set: { disabledByAdmin } }, { new: true });
+    const deal = await Deal.findByIdAndUpdate(id, { $set: { disabledByAdmin } }, { returnDocument: "after" });
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     await invalidateDeal(deal._id, deal.organizationId);
     await logAdminAction(gate.admin, disabledByAdmin ? "deal.disable" : "deal.enable", { type: "DEAL", id: deal._id, label: deal.title });

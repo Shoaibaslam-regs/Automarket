@@ -61,7 +61,7 @@ export async function PATCH(
       const user = await User.findOneAndUpdate(
         { _id: id, trialUsedAt: { $exists: false } },
         { $set: { plan, planSource: "TRIAL", planExpiresAt: expiresAt, planGrantedBy: gate.admin._id, trialUsedAt: now, trialPlan: plan, trialPhone: target.verifiedPhone } },
-        { new: true }
+        { returnDocument: "after" }
       ).select("name email plan planExpiresAt planSource trialUsedAt trialPlan");
       if (user) {
         await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email }, `Started ${PLANS[plan].name} free trial until ${expiresAt.toLocaleDateString("en-PK")}`);
@@ -97,7 +97,7 @@ export async function PATCH(
       update = { $set: { plan, planSource: source, planGrantedBy: gate.admin._id, planExpiresAt: expiresAt } };
     }
 
-    const user = await User.findByIdAndUpdate(id, update, { new: true }).select("name email plan planExpiresAt planSource");
+    const user = await User.findByIdAndUpdate(id, update, { returnDocument: "after" }).select("name email plan planExpiresAt planSource");
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     const until = user.planExpiresAt ? ` until ${new Date(user.planExpiresAt).toLocaleDateString("en-PK")}` : "";
     await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email },
@@ -139,7 +139,7 @@ export async function DELETE(
     const updated = await User.findByIdAndUpdate(
       id,
       { $set: { plan: "FREE" }, $unset: { planExpiresAt: "", planSource: "", planGrantedBy: "" } },
-      { new: true }
+      { returnDocument: "after" }
     ).select("name email plan");
     await logAdminAction(gate.admin, "user.planRevoke", { type: "USER", id, label: updated?.name || updated?.email }, `Revoked ${user.planSource === "TRIAL" ? "free trial" : "gifted plan"}`);
     return NextResponse.json({ user: updated });

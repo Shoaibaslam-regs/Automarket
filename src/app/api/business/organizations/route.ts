@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest) {
     const org = await Organization.findByIdAndUpdate(
       user.organizationId,
       removeLogo ? { $set: update, $unset: { logo: "" } } : { $set: update },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (org) {
       invalidateBusinessSlug(org.slug);

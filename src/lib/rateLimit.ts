@@ -89,16 +89,16 @@ export async function hitRateLimit(name: RateLimitName, id: string, amount = 1):
   try {
     await connectDB();
     // Count within the running window…
-    let doc = await RateLimit.findOneAndUpdate({ key, expiresAt: { $gt: now } }, { $inc: { count: amount } }, { new: true }).lean<{ count: number; expiresAt: Date }>();
+    let doc = await RateLimit.findOneAndUpdate({ key, expiresAt: { $gt: now } }, { $inc: { count: amount } }, { returnDocument: "after" }).lean<{ count: number; expiresAt: Date }>();
     if (!doc) {
       // …or start a new one from now
       const fresh = { count: amount, expiresAt: new Date(now.getTime() + windowSec * 1000) };
       try {
-        doc = await RateLimit.findOneAndUpdate({ key, $or: [{ expiresAt: { $lte: now } }, { expiresAt: { $exists: false } }] }, { $set: fresh }, { upsert: true, new: true }).lean<{ count: number; expiresAt: Date }>();
+        doc = await RateLimit.findOneAndUpdate({ key, $or: [{ expiresAt: { $lte: now } }, { expiresAt: { $exists: false } }] }, { $set: fresh }, { upsert: true, returnDocument: "after" }).lean<{ count: number; expiresAt: Date }>();
       } catch (e) {
         // Another request started the window at the same moment; count against it
         if ((e as { code?: number }).code !== 11000) throw e;
-        doc = await RateLimit.findOneAndUpdate({ key }, { $inc: { count: amount } }, { new: true }).lean<{ count: number; expiresAt: Date }>();
+        doc = await RateLimit.findOneAndUpdate({ key }, { $inc: { count: amount } }, { returnDocument: "after" }).lean<{ count: number; expiresAt: Date }>();
       }
     }
     if (!doc) return { ok: true, remaining: limit, retryAfterSec: windowSec };

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
 
   await connectDB();
-  const user = await User.findOneAndUpdate({ email: email.trim() }, { role: "ADMIN", adminAccess: "FULL" }, { new: true });
+  const user = await User.findOneAndUpdate({ email: email.trim() }, { role: "ADMIN", adminAccess: "FULL" }, { returnDocument: "after" });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
   await logAdminAction({ _id: user._id, email: `${user.email} (via ADMIN_SECRET)` }, "user.makeAdmin", { type: "USER", id: user._id, label: user.name || user.email });
   return NextResponse.json({ message: `${user.email} is now ADMIN` });

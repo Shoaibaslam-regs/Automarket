@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!parsed.data) return NextResponse.json({ error: parsed.error }, { status: 400 });
     const set: Record<string, unknown> = {}, unset: Record<string, 1> = {};
     for (const [k, v] of Object.entries(parsed.data)) if (v === undefined) unset[k] = 1; else set[k] = v;
-    const announcement = await Announcement.findByIdAndUpdate(id, { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { new: true });
+    const announcement = await Announcement.findByIdAndUpdate(id, { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { returnDocument: "after" });
     if (!announcement) return NextResponse.json({ error: "Not found" }, { status: 404 });
     if (body.publish === true) {
       // Only one request publishes it. createdAt is immutable in Mongoose, so it's set on the collection directly.
