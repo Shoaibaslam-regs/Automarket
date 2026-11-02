@@ -37,7 +37,7 @@ export default function UsageMeters({ sub, compact = false }: { sub: Subscriptio
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
               <div
                 className={`h-full rounded-full transition-all duration-700 ${
-                  limit === null ? "w-full bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-500" : pct >= 75 ? "bg-amber-500" : "bg-emerald-500"
+                  limit === null ? "w-full bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-500" : pct >= 75 ? "bg-amber-500" : "bg-gradient-to-r from-indigo-500 to-sky-400"
                 }`}
                 style={limit === null ? undefined : { width: `${pct}%` }}
               />

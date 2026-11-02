@@ -433,7 +433,7 @@ export default function SellPage() {
 
                     {i < STEPS.length - 1 && (
                       <span aria-hidden className="mx-2 mt-5 h-0.5 min-w-4 flex-1 overflow-hidden rounded-full bg-slate-200 sm:mx-4 sm:mt-[21px]">
-                        <span className={`block h-full rounded-full bg-emerald-500 transition-all duration-500 ${done ? "w-full" : "w-0"}`} />
+                        <span className={`block h-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-all duration-500 ${done ? "w-full" : "w-0"}`} />
                       </span>
                     )}
                   </li>
@@ -452,8 +452,8 @@ export default function SellPage() {
             used={sub.usage.listings}
             limit={sub.limits.listings}
             hint={sub.inheritedFromOwner
-              ? `Every listing and deal posted this month counts, even deleted ones. Your business owner can upgrade, or wait until ${sub.listingsResetAt ? new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" }) : "next month"}.`
-              : `Every listing and deal posted this month counts, even deleted ones. Upgrade to post more, or wait until ${sub.listingsResetAt ? new Date(sub.listingsResetAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" }) : "next month"}.`}
+              ? "Every listing and deal posted this month counts, even deleted ones. Your business owner can upgrade, or wait until next month."
+              : "Every listing and deal posted this month counts, even deleted ones. Upgrade to post more, or wait until next month."}
           />
         )}
         <div className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] ${listingsFull ? "hidden" : ""}`}>

@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { CalendarCheck, MessageSquare, Phone } from "lucide-react";
+import { CalendarCheck, MapPin, MessageSquare, Phone } from "lucide-react";
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
 
 /**
- * Phones and tablets: the listing's (or deal's) price and the ways to reach the seller, fixed to the bottom of the screen so
+ * Phones and tablets: the listing's (or deal's) price, or a shop's name, and the ways to reach the seller, fixed to the bottom of the screen so
  * contact is always one tap away. Hidden on desktop, where the seller box sits beside the photos. While it shows it
  * sets --am-bottom-bar, which the compare bar and install banner use to sit above it.
  */
-export default function ContactBar({ price, perDay, phone, whatsapp, messageHref, bookHref, note = "Contact the seller", bookLabel = "Book" }: {
+export default function ContactBar({ price, perDay, phone, whatsapp, messageHref, bookHref, mapHref, whatsappFirst = false, note = "Contact the seller", bookLabel = "Book" }: {
   /** Already formatted, e.g. "PKR 26 lakh" */
   price: string;
   /** The small line under the price */
@@ -20,14 +20,20 @@ export default function ContactBar({ price, perDay, phone, whatsapp, messageHref
   messageHref?: string;
   /** Rentals: the online booking page (or sign in) */
   bookHref?: string;
+  /** A Google Maps link to where the vehicle or shop is (opens in Maps) */
+  mapHref?: string | null;
+  /** Make WhatsApp the main (wide) button, before Call: shop pages */
+  whatsappFirst?: boolean;
 }) {
   const btn = "inline-flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition";
   // The first available action is the main one; the rest are compact icon buttons
   const actions = [
     bookHref && { key: "book", href: bookHref, label: bookLabel, icon: CalendarCheck, tone: "bg-slate-900 text-white hover:bg-slate-800" },
-    phone && { key: "call", href: `tel:${phone}`, label: "Call", icon: Phone, tone: "bg-slate-900 text-white hover:bg-slate-800" },
-    whatsapp && { key: "wa", href: whatsapp, label: "WhatsApp", icon: WhatsAppIcon, tone: "bg-emerald-600 text-white hover:bg-emerald-700", external: true },
+    whatsappFirst && whatsapp && { key: "wa", href: whatsapp, label: "WhatsApp", icon: WhatsAppIcon, tone: "bg-emerald-600 text-white hover:bg-emerald-700", external: true },
+    phone && { key: "call", href: `tel:${phone}`, label: "Call", icon: Phone, tone: whatsappFirst ? "text-slate-900 ring-1 ring-inset ring-slate-200 hover:bg-slate-50" : "bg-slate-900 text-white hover:bg-slate-800" },
+    !whatsappFirst && whatsapp && { key: "wa", href: whatsapp, label: "WhatsApp", icon: WhatsAppIcon, tone: "bg-emerald-600 text-white hover:bg-emerald-700", external: true },
     messageHref && { key: "msg", href: messageHref, label: "Message", icon: MessageSquare, tone: "text-slate-900 ring-1 ring-inset ring-slate-200 hover:bg-slate-50" },
+    mapHref && { key: "map", href: mapHref, label: "Map", icon: MapPin, tone: "text-slate-900 ring-1 ring-inset ring-slate-200 hover:bg-slate-50", external: true },
   ].filter(Boolean).slice(0, 3) as { key: string; href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }>; tone: string; external?: boolean }[];
   if (!actions.length) return null;
   const [main, ...rest] = actions;

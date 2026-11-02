@@ -699,7 +699,7 @@ export default function ListingsPage({
             <div className="flex items-start justify-between gap-3">
             <div>
               {/* The marketplace's brand gradient (indigo → fuchsia, as on avatars and menu dots) */}
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Bazaar <span lang="ur" className="text-[13px] font-semibold text-slate-600 sm:text-[16px]">( بازار )</span></h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Marketplace</h1>
               <p className="mt-1 text-sm text-slate-500">Browse cars and bikes for sale and rent across Pakistan.</p>
             </div>
             {/* Phones and tablets: the city beside the title; desktop has it at the end of the tabs */}

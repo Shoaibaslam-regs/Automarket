@@ -221,7 +221,7 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
         <>
           <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
-              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-400" : pct >= 75 ? "bg-amber-400" : "bg-emerald-400"}`}
+              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-400" : pct >= 75 ? "bg-amber-400" : "bg-gradient-to-r from-indigo-400 to-sky-400"}`}
               style={{ width: `${pct}%` }}
             />
           </div>

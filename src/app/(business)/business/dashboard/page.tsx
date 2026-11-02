@@ -4,9 +4,8 @@
 import { useState, useEffect } from "react";
 import { PlanBanner } from "@/components/business/PlanReminder";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { BarChart3, BookOpen, Car, ClipboardList, Globe, KeyRound, User, Users, Wallet } from "lucide-react";
+import { BarChart3, Car, ClipboardList, KeyRound, User, Users, Wallet } from "lucide-react";
 import UserIdBadge from "@/components/UserIdBadge";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import TodayCard from "@/components/business/Today";
@@ -31,7 +30,6 @@ type Organization = {
 };
 
 export default function BusinessDashboard() {
-  const { data: session } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [org, setOrg] = useState<Organization | null>(null);
@@ -202,52 +200,22 @@ export default function BusinessDashboard() {
           <div className="biz-dash-header flex items-center justify-between gap-3 border-b border-[var(--gh-e1e4e8)] bg-white px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">
               <h1 className="text-base font-bold text-[var(--gh-0d1117)] sm:text-lg">Dashboard</h1>
-              {/* One line under the title: the business, then (from sm) today's date and the Business ID */}
-              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--gh-57606a)]">
-                {org?.name && (
-                  <span className="flex min-w-0 items-center gap-1 text-[13px] font-semibold text-[var(--gh-24292f)]">
-                    <span className="truncate">{org.name}</span>
-                    {org.verified && <VerifiedBadge variant="icon" size={14} />}
-                  </span>
-                )}
-                <span aria-hidden className="hidden text-[var(--gh-d0d7de)] sm:inline">·</span>
-                <span className="hidden sm:inline">
-                  {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </span>
-                {org?._id && <span aria-hidden className="hidden text-[var(--gh-d0d7de)] sm:inline">·</span>}
-                <UserIdBadge id={org?._id} kind="business" className="hidden sm:inline-flex" />
-              </div>
+              {org?.name && (
+                <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[13px] font-semibold text-[var(--gh-24292f)]">
+                  <span className="truncate">{org.name}</span>
+                  {org.verified && <VerifiedBadge variant="icon" size={14} />}
+                </p>
+              )}
             </div>
 
-            <div className="flex flex-shrink-0 items-center gap-2">
-              <Link
-                href="/business/guide"
-                title="How to use every page, in English and Urdu"
-                aria-label="Guide"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] sm:h-9 sm:px-3 sm:text-[13px]"
-              >
-                <BookOpen size={14} /> <span className="hidden sm:inline">Guide</span>
-              </Link>
-              {org?.slug && (
-                <a
-                  href={`/dealers/${org.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="See your shop the way customers see it"
-                  aria-label="View public page"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] sm:h-9 sm:px-3 sm:text-[13px]"
-                >
-                  <Globe size={14} /> <span className="hidden sm:inline">View public page</span>
-                </a>
-              )}
-              <Link
-                href="/sell"
-                className="inline-flex h-8 items-center gap-1 rounded-lg bg-[var(--gh-0d1117)] px-2.5 text-xs font-semibold text-white transition hover:bg-[var(--gh-24292f)] sm:h-9 sm:px-4 sm:text-[13px]"
-              >
-                + <span className="sm:hidden">Add</span><span className="hidden sm:inline">Add vehicle</span>
-              </Link>
-              <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-[var(--gh-0d1117)] text-[13px] font-bold text-white sm:flex">
-                {session?.user?.name?.[0]?.toUpperCase()}
+            {/* Right: today's date with the Business ID under it (the short date on phones) */}
+            <div className="flex flex-shrink-0 items-center gap-3">
+              <div className="flex flex-col items-end gap-1 text-right">
+                <span className="text-xs font-medium text-[var(--gh-57606a)] sm:text-[13px]">
+                  <span className="sm:hidden">{new Date().toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short" })}</span>
+                  <span className="hidden sm:inline">{new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                </span>
+                <UserIdBadge id={org?._id} kind="business" className="hidden sm:inline-flex" />
               </div>
             </div>
           </div>

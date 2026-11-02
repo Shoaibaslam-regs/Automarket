@@ -149,8 +149,8 @@ export function StatusBadge({ status }: { status: string }) {
 
 const AVATAR_GRADIENTS = [
   "from-indigo-500 to-violet-500",
-  "from-sky-500 to-cyan-500",
-  "from-emerald-500 to-teal-500",
+  "from-sky-500 to-indigo-500",
+  "from-fuchsia-500 to-indigo-500",
   "from-amber-500 to-orange-500",
   "from-rose-500 to-pink-500",
   "from-slate-600 to-slate-800",

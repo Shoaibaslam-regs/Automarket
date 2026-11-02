@@ -34,7 +34,7 @@ export const PLANS: Record<PlanId, Plan> = {
     accent: "var(--gh-0550ae)",
     name: "Premium",
     tagline: "For regular sellers and small showrooms",
-    price: 500,
+    price: 499,
     limits: { listings: 10, staff: 3, customers: 50 },
     features: ["10 listings or deals a month", "Team of 3 (owner + 2 staff)", "Up to 50 customer leads", "Rental management", "Sales reports"],
   },
@@ -43,9 +43,9 @@ export const PLANS: Record<PlanId, Plan> = {
     accent: "var(--gh-8250df)",
     name: "Premium Plus",
     tagline: "For growing dealerships",
-    price: 1200,
-    limits: { listings: 25, staff: 6, customers: 150 },
-    features: ["25 listings or deals a month", "Team of 6 (owner + 5 staff)", "Up to 150 customer leads", "Rental management", "Sales reports", "Priority support"],
+    price: 1199,
+    limits: { listings: 35, staff: 6, customers: 199 },
+    features: ["35 listings or deals a month", "Team of 6 (owner + 5 staff)", "Up to 199 customer leads", "Rental management", "Sales reports", "Priority support"],
     highlight: true,
   },
   UNLIMITED: {
@@ -53,7 +53,7 @@ export const PLANS: Record<PlanId, Plan> = {
     accent: "var(--gh-9a6700)",
     name: "Ultimate",
     tagline: "Run your whole business on AutoGO",
-    price: 5000,
+    price: 4999,
     limits: { listings: null, staff: null, customers: null },
     features: ["Unlimited listings and deals", "Unlimited staff", "Unlimited customers", "Full business management", "Advanced reports", "Dedicated support"],
   },
@@ -134,7 +134,7 @@ export function planSourceLabel(source: unknown): string | null {
 export const VERIFIED_BADGE = {
   name: "Verified badge",
   /** Monthly price in PKR */
-  price: 500,
+  price: 499,
   features: [
     "Blue Verified tick on your business page",
     "Verified label on every listing your team posts",
@@ -156,7 +156,7 @@ export type AdTier = "STANDARD" | "TOP";
 export const SPONSORED_AD = {
   name: "Sponsored ad",
   /** PKR per week, by tier */
-  pricePerWeek: { STANDARD: 1000, TOP: 2500 } as Record<AdTier, number>,
+  pricePerWeek: { STANDARD: 999, TOP: 2499 } as Record<AdTier, number>,
   /** The lengths a business can pick, in weeks */
   weeks: [1, 2, 4] as const,
   /** Ads in the home page row at one time (and so per visit) */

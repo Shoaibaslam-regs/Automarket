@@ -179,8 +179,9 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
               )}
             </div>
 
-            {/* Hover affordance (pointer devices only, so touch never sees a stuck overlay) */}
-            <span className="pointer-events-none absolute right-2.5 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-900 opacity-0 shadow-md transition duration-300 group-hover:opacity-100 [@media(hover:hover)]:flex">
+            {/* Hover affordance (pointer devices only, so touch never sees a stuck overlay), in the middle of the photo:
+                on the right edge it sat on top of the Save / Compare buttons */}
+            <span className="pointer-events-none absolute left-1/2 top-1/2 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 scale-90 items-center justify-center rounded-full bg-white/95 text-slate-900 opacity-0 shadow-lg transition duration-300 group-hover:scale-100 group-hover:opacity-100 [@media(hover:hover)]:flex">
               <ArrowUpRight size={16} strokeWidth={2} />
             </span>
           </div>

@@ -1,4 +1,7 @@
 import WhatsAppIcon from "@/components/ui/WhatsAppIcon";
+import ContactBar from "@/components/listings/ContactBar";
+import { mapsUrl } from "@/lib/address";
+import { whatsappUrl } from "@/lib/phone";
 import { ShopNotice as ShopNoticeModel } from "@/models/ShopNotice";
 import { ShopNoticeList } from "@/components/business/ShopNoticeCard";
 import { noticesToShow, type ShopNotice } from "@/lib/shopNotices";
@@ -128,22 +131,24 @@ export default async function DealerPage({ params }: Props) {
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
-        <div className="relative mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-12">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div className="relative mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10">
+          {/* The logo beside the name, details (ending with Report) and the rating with Share, vertically centred */}
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:gap-x-5">
             {org.logo ? (
-              <span className="flex-shrink-0 self-start rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px]">
+              <span className="flex-shrink-0 rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px] shadow-lg shadow-indigo-950/40">
                 <span className="relative block h-16 w-16 overflow-hidden rounded-[14px] bg-slate-900 sm:h-20 sm:w-20">
                   <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
                 </span>
               </span>
             ) : (
-              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-2xl font-extrabold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-2xl font-extrabold text-slate-950 shadow-lg shadow-indigo-950/40 sm:h-20 sm:w-20 sm:text-3xl">
                 {org.name[0]?.toUpperCase()}
               </span>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{org.name}</h1>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{org.name}</h1>
                 {isVerified(org.verification) ? (
                   <VerifiedBadge tone="dark" className="px-2.5 py-1" />
                 ) : (
@@ -152,35 +157,39 @@ export default async function DealerPage({ params }: Props) {
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
-                <span className="flex items-center gap-1"><Building2 size={14} /> {TYPE_LABEL[org.type]}</span>
-                {org.city && <span className="flex items-center gap-1"><MapPin size={14} /> {org.city}</span>}
-                <span className="flex items-center gap-1"><CalendarDays size={14} /> On AutoGO since {since}</span>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-2 text-[13px] text-slate-400 sm:text-sm">
+                <span className="flex items-center gap-1.5"><Building2 size={14} /> {TYPE_LABEL[org.type]}</span>
+                {org.city && <><span aria-hidden className="hidden text-slate-600 sm:inline">·</span><span className="flex items-center gap-1.5"><MapPin size={14} /> {org.city}</span></>}
+                <span aria-hidden className="hidden text-slate-600 sm:inline">·</span>
+                <span className="flex items-center gap-1.5"><CalendarDays size={14} /> On AutoGO since {since}</span>
+                <span className="sm:ml-1"><DealerReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} tone="dark" /></span>
               </p>
-              <a href="#reviews" className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-sm ring-1 ring-inset ring-white/10 hover:bg-white/10">
-                <StarRating value={average} size={14} />
-                <span className="font-semibold">{count ? average.toFixed(1) : "New"}</span>
-                <span className="text-slate-400">{count} review{count !== 1 ? "s" : ""}</span>
-              </a>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name} />
-                <DealerReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} tone="dark" />
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-7 gap-y-2">
+                <a href="#reviews" className="inline-flex items-center gap-2 text-sm transition hover:text-white">
+                  <StarRating value={average} size={14} />
+                  <span className="font-semibold">{count ? average.toFixed(1) : "New"}</span>
+                  <span className="text-slate-400 underline-offset-2 hover:underline">{count} review{count !== 1 ? "s" : ""}</span>
+                </a>
+                <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name}
+                  className="!px-0 !py-0 !ring-0 hover:!bg-transparent hover:text-white" />
               </div>
             </div>
+
           </div>
 
-          <div className="mt-7 grid grid-cols-3 gap-2 sm:max-w-md">
+          {/* What the shop has, as one strip with dividers */}
+          <dl className="mt-7 grid max-w-lg grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-inset ring-white/10">
             {[
               { label: "For sale", value: forSale, icon: Car },
               { label: "For rent", value: forRent, icon: KeyRound },
               { label: "Live deals", value: deals.length, icon: Tag },
             ].map(s => (
-              <div key={s.label} className="rounded-xl bg-white/5 px-3 py-2.5 ring-1 ring-inset ring-white/10">
-                <p className="flex items-center gap-1.5 text-[11px] text-slate-400"><s.icon size={12} /> {s.label}</p>
-                <p className="mt-0.5 text-lg font-bold tabular-nums">{s.value}</p>
+              <div key={s.label} className="px-3 py-3 sm:px-4">
+                <dt className="flex items-center gap-1.5 text-[11px] text-slate-400"><s.icon size={12} /> {s.label}</dt>
+                <dd className="mt-0.5 text-xl font-bold tabular-nums">{s.value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
@@ -190,7 +199,7 @@ export default async function DealerPage({ params }: Props) {
         </div>
       )}
 
-      <div className="mx-auto grid max-w-[1120px] gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="mx-auto grid max-w-[1120px] gap-6 px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:pb-8">
         <div className="min-w-0 space-y-6">
           {/* Deals */}
           {deals.length > 0 && (
@@ -220,26 +229,7 @@ export default async function DealerPage({ params }: Props) {
 
         {/* Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <div className="rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80">
-            <h2 className="text-sm font-semibold text-slate-900">Contact</h2>
-            <div className="mt-3 space-y-2.5 text-sm">
-              {org.phone && <a href={`tel:${org.phone}`} className="flex items-center gap-2.5 text-slate-700 hover:text-slate-950"><Phone size={15} className="text-slate-400" /> {org.phone}</a>}
-              {org.email && <a href={`mailto:${org.email}`} className="flex items-center gap-2.5 break-all text-slate-700 hover:text-slate-950"><Mail size={15} className="flex-shrink-0 text-slate-400" /> {org.email}</a>}
-              {(org.address || org.city) && (
-                <p className="flex items-start gap-2.5 text-slate-700"><MapPin size={15} className="mt-0.5 flex-shrink-0 text-slate-400" /> {[org.address, org.city].filter(Boolean).join(", ")}</p>
-              )}
-            </div>
-            {org.phone && (
-              <a
-                href={`https://wa.me/${org.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${org.name}, I found you on AutoGO.`)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-semibold text-white hover:bg-[#1ebe5b]"
-              >
-                <WhatsAppIcon size={16} /> WhatsApp {org.name.split(" ")[0]}
-              </a>
-            )}
-          </div>
+          <ContactCard org={org} />
           {org.description && (
             <div className="rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80">
               <h2 className="text-sm font-semibold text-slate-900">About</h2>
@@ -252,7 +242,43 @@ export default async function DealerPage({ params }: Props) {
           </div>
         </aside>
       </div>
+
+      {/* Phones and tablets: Call, WhatsApp and the shop on Google Maps, always one tap away at the bottom */}
+      <ContactBar
+        price={org.name}
+        note={org.city ? `${TYPE_LABEL[org.type]} · ${org.city}` : TYPE_LABEL[org.type]}
+        phone={org.phone || undefined}
+        whatsapp={whatsappUrl(org.phone, `Hi ${org.name}, I found you on AutoGO.`)}
+        mapHref={org.address || org.city ? mapsUrl(org.address || org.city!, org.city) : null}
+        whatsappFirst
+      />
     </div>
     </DealerViewerProvider>
+  );
+}
+
+/** The business's phone, email, address and WhatsApp button, in the right column (below the vehicles and reviews on phones). */
+function ContactCard({ org }: { org: Org }) {
+  return (
+    <div className="rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80">
+      <h2 className="text-sm font-semibold text-slate-900">Contact</h2>
+      <div className="mt-3 space-y-2.5 text-sm">
+        {org.phone && <a href={`tel:${org.phone}`} className="flex items-center gap-2.5 text-slate-700 hover:text-slate-950"><Phone size={15} className="text-slate-400" /> {org.phone}</a>}
+        {org.email && <a href={`mailto:${org.email}`} className="flex items-center gap-2.5 break-all text-slate-700 hover:text-slate-950"><Mail size={15} className="flex-shrink-0 text-slate-400" /> {org.email}</a>}
+        {(org.address || org.city) && (
+          <p className="flex items-start gap-2.5 text-slate-700"><MapPin size={15} className="mt-0.5 flex-shrink-0 text-slate-400" /> {[org.address, org.city].filter(Boolean).join(", ")}</p>
+        )}
+      </div>
+      {org.phone && (
+        <a
+          href={`https://wa.me/${org.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${org.name}, I found you on AutoGO.`)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-semibold text-white hover:bg-[#1ebe5b]"
+        >
+          <WhatsAppIcon size={16} /> WhatsApp {org.name.split(" ")[0]}
+        </a>
+      )}
+    </div>
   );
 }

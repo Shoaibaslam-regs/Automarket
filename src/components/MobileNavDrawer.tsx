@@ -86,7 +86,7 @@ export default function MobileNavDrawer({
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const browse: Item[] = [
-    { href: "/listings", label: "Bazaar", icon: Search },
+    { href: "/listings", label: "Marketplace", icon: Search },
     { href: "/blog", label: "Blog & guides", icon: Newspaper },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
     { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },

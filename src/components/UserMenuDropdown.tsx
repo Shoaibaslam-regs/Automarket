@@ -12,7 +12,7 @@ import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import UserIdBadge from "@/components/UserIdBadge";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { planInfo } from "@/lib/plans";
+import { PLANS, planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { openFeedback } from "@/components/FeedbackHost";
 
@@ -197,7 +197,7 @@ export default function UserMenuDropdown({
           </span>
           <span className="relative min-w-0 flex-1">
             <span className="block text-[13px] font-bold">Go Premium</span>
-            <span className="block truncate text-[11px] text-slate-300">More listings from PKR 500 / 30 days</span>
+            <span className="block truncate text-[11px] text-slate-300">More listings from PKR {PLANS.STARTER.price.toLocaleString()} / 30 days</span>
           </span>
           <ChevronRight size={15} className="relative text-slate-400" />
         </Link>

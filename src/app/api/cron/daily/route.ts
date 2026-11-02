@@ -15,9 +15,11 @@ const digest = (s: string) => createHash("sha256").update(s).digest();
  * without CRON_SECRET set it refuses every call. It runs once per Pakistan day even if called again.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
+  // Trimmed: a value pasted into Vercel (or piped into `vercel env add`) often ends with a stray space or newline,
+  // which made every call fail as Unauthorized
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return NextResponse.json({ error: "CRON_SECRET isn't set" }, { status: 503 });
-  const given = req.headers.get("authorization") ?? "";
+  const given = (req.headers.get("authorization") ?? "").trim();
   if (!timingSafeEqual(digest(given), digest(`Bearer ${secret}`))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const day = pkDay();
