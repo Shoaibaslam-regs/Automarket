@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import SignInLink from "@/components/auth/SignInLink";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import dynamic from "next/dynamic";
 import UserMenuDropdown, { RingAvatar } from "@/components/UserMenuDropdown";
@@ -21,6 +21,36 @@ import { ThemeCycleButton } from "@/components/theme/ThemeToggle";
 const loadDrawer = () => import("@/components/MobileNavDrawer");
 const MobileNavDrawer = dynamic(loadDrawer, { ssr: false });
 const SignOutDialog = dynamic(() => import("@/components/SignOutDialog"), { ssr: false });
+
+const NAV_LINKS = [
+  { href: "/listings", label: "Marketplace" },
+  { href: "/listings?type=RENT", label: "Rentals" },
+  { href: "/deals", label: "Deals" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/sell", label: "Sell", signedIn: true },
+  { href: "/blog", label: "Blog" },
+] as const;
+
+/** The link for the page being viewed: Rentals is Marketplace filtered to rent, and the Fuel prices page belongs to the Blog. */
+function currentLink(pathname: string, type: string | null): string | null {
+  const under = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
+  if (under("/rentals") || (pathname === "/listings" && type === "RENT")) return "/listings?type=RENT";
+  if (under("/listings")) return "/listings";
+  if (under("/blog") || under("/fuel-prices")) return "/blog";
+  return NAV_LINKS.find(l => under(l.href))?.href ?? null;
+}
+
+function DesktopLinks({ signedIn, type }: { signedIn: boolean; type: string | null }) {
+  const current = currentLink(usePathname(), type);
+  return NAV_LINKS.filter(l => !("signedIn" in l) || signedIn).map(l => (
+    <Link key={l.href} href={l.href} aria-current={current === l.href ? "page" : undefined} className={`nav-link${current === l.href ? " is-active" : ""}`}>{l.label}</Link>
+  ));
+}
+
+// The ?type= of Browse tells Marketplace from Rentals; reading it needs a Suspense boundary on cached pages
+function DesktopLinksWithType({ signedIn }: { signedIn: boolean }) {
+  return <DesktopLinks signedIn={signedIn} type={useSearchParams().get("type")} />;
+}
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -88,6 +118,13 @@ export default function Navbar() {
           white-space: nowrap;
         }
         .nav-link:hover { color: var(--gh-0d1117); background: rgb(var(--tw-c-slate-950) / 0.05); }
+        .nav-link { position: relative; }
+        .nav-link.is-active { color: var(--gh-0d1117); font-weight: 600; }
+        /* The current page: a small indigo → fuchsia dot under the word, like the menus' dot */
+        .nav-link.is-active::after {
+          content: ""; position: absolute; left: 50%; bottom: -1px; width: 5px; height: 5px; margin-left: -2.5px;
+          border-radius: 9999px; background: linear-gradient(90deg, rgb(var(--tw-c-indigo-500)), rgb(var(--tw-c-fuchsia-500)));
+        }
         @media (min-width: 769px) and (max-width: 960px) {
           .nav-link { padding: 6px 7px; font-size: 13px; }
         }
@@ -118,12 +155,9 @@ export default function Navbar() {
 
           {/* ── DESKTOP CENTER LINKS ── */}
           <div className="nav-desktop" style={{ alignItems: "center", gap: "2px", flex: 1, justifyContent: "center" }}>
-            <Link href="/listings" className="nav-link">Marketplace</Link>
-            <Link href="/listings?type=RENT" className="nav-link">Rentals</Link>
-            <Link href="/deals" className="nav-link">Deals</Link>
-            <Link href="/pricing" className="nav-link">Pricing</Link>
-            {session?.user && <Link href="/sell" className="nav-link">Sell</Link>}
-            <Link href="/blog" className="nav-link">Blog</Link>
+            <Suspense fallback={<DesktopLinks signedIn={!!session?.user} type={null} />}>
+              <DesktopLinksWithType signedIn={!!session?.user} />
+            </Suspense>
           </div>
 
           {/* ── DESKTOP RIGHT ── */}
