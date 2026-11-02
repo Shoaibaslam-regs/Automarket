@@ -68,6 +68,11 @@ export const RATE_LIMITS = {
   usageRefresh: { limit: 10, windowSec: 10 * 60 },
   /** The daily cron, keyed by Pakistan day, so a repeated call doesn't send the reminders twice */
   cronDaily: { limit: 1, windowSec: 20 * 60 * 60 },
+  // Fuel Price Tracker (src/lib/fuelJobs.ts): one run at a time, at most 20 release images read by Gemini a day,
+  // and an admin's "Check now" a few times an hour
+  fuelJobLock: { limit: 1, windowSec: 5 * 60 },
+  fuelRead: { limit: 20, windowSec: 24 * 60 * 60 },
+  fuelCheck: { limit: 6, windowSec: 60 * 60 },
 } as const satisfies Record<string, { limit: number; windowSec: number; lockout?: boolean }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

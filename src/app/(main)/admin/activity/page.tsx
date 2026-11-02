@@ -11,14 +11,14 @@ type Entry = {
   adminEmail: string;
   adminName?: string;
   action: string;
-  targetType: "USER" | "BUSINESS" | "LISTING" | "DEAL" | "REPORT" | "ANNOUNCEMENT" | "AD" | "SETTINGS" | "REQUEST" | "BLOG";
+  targetType: "USER" | "BUSINESS" | "LISTING" | "DEAL" | "REPORT" | "ANNOUNCEMENT" | "AD" | "SETTINGS" | "REQUEST" | "BLOG" | "FUEL";
   targetLabel?: string;
   details?: string;
   createdAt: string;
 };
 type Filter = "" | Entry["targetType"];
 
-const TONE: Record<Entry["targetType"], Tone> = { USER: "blue", BUSINESS: "violet", LISTING: "neutral", DEAL: "orange", REPORT: "red", ANNOUNCEMENT: "green", AD: "amber", SETTINGS: "neutral", REQUEST: "amber", BLOG: "violet" };
+const TONE: Record<Entry["targetType"], Tone> = { USER: "blue", BUSINESS: "violet", LISTING: "neutral", DEAL: "orange", REPORT: "red", ANNOUNCEMENT: "green", AD: "amber", SETTINGS: "neutral", REQUEST: "amber", BLOG: "violet", FUEL: "orange" };
 const fmt = (d: string) => new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 const CLEAR_CHOICES = [
@@ -123,6 +123,7 @@ export default function AdminActivityPage() {
             { value: "REPORT", label: "Reports" },
             { value: "ANNOUNCEMENT", label: "Announcements" },
             { value: "BLOG", label: "Blog" },
+            { value: "FUEL", label: "Fuel prices" },
             { value: "AD", label: "Ads" },
             { value: "REQUEST", label: "Requests" },
           ]}

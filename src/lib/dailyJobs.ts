@@ -13,6 +13,7 @@ import { sendExpiryReminders } from "@/lib/expiryReminders";
 import { pkDay, pkRange } from "@/lib/money";
 import { digestText, type DigestCounts as Counts } from "@/lib/today";
 import { reportError } from "@/lib/errorLog";
+import { runFuelJobs } from "@/lib/fuelJobs";
 import { requestExpiryCutoff } from "@/lib/bookings";
 
 
@@ -141,6 +142,13 @@ export async function runDailyJobs(now = new Date()) {
   } catch (e) {
     reportError("Daily job morning digest failed:", e);
     result.digest = "failed";
+  }
+  try {
+    // Petroleum Division releases and Brent / WTI (src/lib/fuelJobs.ts; /api/cron/fuel runs it more often)
+    result.fuel = await runFuelJobs(now);
+  } catch (e) {
+    reportError("Daily job fuel prices failed:", e);
+    result.fuel = "failed";
   }
   return result;
 }

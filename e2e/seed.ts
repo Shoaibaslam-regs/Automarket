@@ -13,6 +13,9 @@ import { Employee } from "../src/models/Employee";
 import { Deal } from "../src/models/Deal";
 import { BlogPost } from "../src/models/BlogPost";
 import { Announcement } from "../src/models/Announcement";
+import { FuelPrice } from "../src/models/FuelPrice";
+import { OilMarketPrice } from "../src/models/OilMarketPrice";
+import { OilPriceHistory } from "../src/models/OilPriceHistory";
 import { STARTER_POSTS } from "../src/lib/blogStarter";
 
 export const SEED_FILE = path.join(__dirname, ".data", "seed.json");
@@ -87,6 +90,24 @@ export async function seed(uri: string): Promise<Seed> {
 
   // A post on AutoGO Official, unread by E2E Motors (which follows it): the dashboard's update banner
   await Announcement.create({ kind: "UPDATE", title: "Booking calendar is now on every rental", body: "Renters can see free days and book from the calendar.", status: "PUBLISHED", createdBy: owner._id });
+
+  // Fuel prices, test values only (this database is thrown away): two approved days and two weeks of Brent / WTI
+  const pkDay = (n: number) => new Date(`${new Date(Date.now() + 5 * 3_600_000 - n * DAY).toISOString().slice(0, 10)}T00:00:00+05:00`);
+  const approved = { approvedBy: owner._id, approvedAt: new Date(), source: "Petroleum Division press release", notificationUrl: "https://petroleum.gov.pk/NewsDetail/TEST" };
+  await FuelPrice.create([
+    { ...approved, fuelType: "PETROL", price: 394.83, effectiveDate: pkDay(1) },
+    { ...approved, fuelType: "DIESEL", price: 395.85, effectiveDate: pkDay(1) },
+    { ...approved, fuelType: "PETROL", price: 396.65, effectiveDate: pkDay(0) },
+    { ...approved, fuelType: "DIESEL", price: 394.94, effectiveDate: pkDay(0) },
+  ]);
+  await OilMarketPrice.create([
+    { commodity: "BRENT", symbol: "BRENT", price: 64.12, previousClose: 63.5, change: 0.62, percentChange: 0.98, marketTimestamp: new Date(Date.now() - 3_600_000) },
+    { commodity: "WTI", symbol: "WTI", price: 60.4, previousClose: 60.9, change: -0.5, percentChange: -0.82, marketTimestamp: new Date(Date.now() - 3_600_000) },
+  ]);
+  await OilPriceHistory.create(Array.from({ length: 14 }, (_, i) => [
+    { commodity: "BRENT", date: new Date(Date.now() - (13 - i) * DAY).toISOString().slice(0, 10), price: 62 + i * 0.15 },
+    { commodity: "WTI", date: new Date(Date.now() - (13 - i) * DAY).toISOString().slice(0, 10), price: 59 + i * 0.1 },
+  ]).flat());
 
   // The blog's starter guides, as `npm run seed-blog` adds them
   await BlogPost.create(STARTER_POSTS.map((p, i) => ({ ...p, status: "PUBLISHED", publishedAt: new Date(Date.now() - (STARTER_POSTS.length - i) * DAY) })));

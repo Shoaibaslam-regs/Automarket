@@ -1,11 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Newspaper } from "lucide-react";
+import { ArrowRight, Fuel, Newspaper } from "lucide-react";
 import Footer from "@/components/Footer";
 import BlogCard from "@/components/blog/BlogCard";
 import { BLOG_CATEGORIES, BLOG_CATEGORY, BLOG_PAGE_SIZE } from "@/lib/blog";
 import { getPublishedPosts, isBlogCategory } from "@/lib/publicBlog";
 import { reportError } from "@/lib/errorLog";
+import { getFuelPageData } from "@/lib/publicFuel";
+import { fuelDate } from "@/lib/fuelPrices";
 
 export const metadata: Metadata = {
   title: "Blog: car buying, selling and renting guides",
@@ -20,10 +22,15 @@ export default async function BlogPage({ searchParams }: Props) {
   const sp = await searchParams;
   const category = isBlogCategory(sp.category) ? sp.category : null;
   const page = Math.max(1, Math.min(50, Number(sp.page) || 1));
-  const all = await getPublishedPosts().catch(err => {
-    reportError("Blog list failed:", err);
-    return [];
-  });
+  const [all, fuel] = await Promise.all([
+    getPublishedPosts().catch(err => {
+      reportError("Blog list failed:", err);
+      return [];
+    }),
+    getFuelPageData().catch(() => null),
+  ]);
+  const petrol = fuel?.pk.PETROL;
+  const diesel = fuel?.pk.DIESEL;
   const filtered = category ? all.filter(p => p.category === category) : all;
   const shown = filtered.slice((page - 1) * BLOG_PAGE_SIZE, page * BLOG_PAGE_SIZE);
   const [featured, ...rest] = page === 1 ? shown : [undefined, ...shown];
@@ -53,6 +60,21 @@ export default async function BlogPage({ searchParams }: Props) {
       </section>
 
       <div className="mx-auto max-w-[1180px] px-4 py-8 sm:py-10">
+        {/* Today's approved fuel prices, linking to the full Fuel prices page */}
+        <Link href="/fuel-prices" className="group mb-6 flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:flex-row sm:items-center sm:gap-5 sm:px-5">
+          <span className="flex items-center gap-2 text-sm font-bold text-slate-900"><Fuel size={17} className="text-indigo-600" /> Fuel prices</span>
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-slate-600">
+            {petrol && diesel ? (
+              <>
+                <span>Petrol <strong className="tabular-nums text-slate-900">PKR {petrol.price.toFixed(2)}</strong></span>
+                <span>Diesel <strong className="tabular-nums text-slate-900">PKR {diesel.price.toFixed(2)}</strong></span>
+                <span className="text-xs text-slate-400">per litre, from {fuelDate(petrol.effectiveDate)}</span>
+              </>
+            ) : <span>Pakistan&apos;s official petrol and diesel prices, with Brent and WTI crude</span>}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-600">See prices &amp; trends <ArrowRight size={14} className="transition group-hover:translate-x-0.5" /></span>
+        </Link>
+
         {all.length > 0 && (
           <nav aria-label="Categories" className="-mx-4 mb-6 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[null, ...BLOG_CATEGORIES.filter(c => used.has(c))].map(c => {

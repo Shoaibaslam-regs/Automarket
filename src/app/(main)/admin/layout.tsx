@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ADMIN_COUNTS_EVENT, type KnownAdminCounts } from "@/lib/adminCounts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, CalendarDays, Car, Eye, Flag, Gauge, Headset, History, Inbox, LayoutDashboard, Megaphone, MessageSquare, Newspaper, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CalendarDays, Car, Eye, Flag, Fuel, Gauge, Headset, History, Inbox, LayoutDashboard, Megaphone, MessageSquare, Newspaper, Rocket, ShieldCheck, Tag, Users } from "lucide-react";
 import { AdminAccessProvider, useAdminAccess } from "@/components/admin/AdminAccess";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { ADMIN_ACCESS_HINT } from "@/lib/adminRoles";
@@ -30,6 +30,7 @@ const NAV_GROUPS = [
       { href: "/admin/ads", label: "Ad requests", icon: Rocket },
       { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
       { href: "/admin/blog", label: "Blog", icon: Newspaper },
+      { href: "/admin/fuel", label: "Fuel prices", icon: Fuel },
     ],
   },
   {

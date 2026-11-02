@@ -21,6 +21,8 @@ export const SPONSORED_TAG = "sponsored";
 /** Every blog list (/blog, the sitemap); each post also has blogTag(slug) */
 export const BLOG_TAG = "blog";
 export const blogTag = (slug: string) => `blog:${slug}`;
+/** The public fuel prices (approved Pakistani prices and the saved Brent / WTI quotes) */
+export const FUEL_TAG = "fuel";
 
 // expire: 0 drops the entry now, so the next visit (often the owner checking their change) gets fresh data
 const NOW = { expire: 0 };
@@ -42,6 +44,11 @@ export function invalidateSponsored() {
 export function invalidateBlog(...slugs: (string | undefined)[]) {
   expire(BLOG_TAG);
   for (const slug of new Set(slugs)) if (slug) expire(blogTag(slug));
+}
+
+/** Approved fuel prices or the saved oil quotes changed: the fuel page and the blog's fuel card read again. */
+export function invalidateFuel() {
+  expire(FUEL_TAG);
 }
 
 export function invalidateListingPage(listingId: unknown) {
