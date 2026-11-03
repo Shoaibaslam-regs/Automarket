@@ -82,6 +82,12 @@ async function load(): Promise<FuelPageData> {
   return { pk, pkHistory: newestFirst.slice(0, 370).reverse(), news, oil, oilHistory, oilUpdatedAt: (status as FuelStatus).oil?.lastSuccessAt ?? null };
 }
 
+/** When the team last checked the Pakistani prices shown (the newer of the two approvals), for "Updated …". */
+export function latestCheck(data: Pick<FuelPageData, "pk"> | null): string | null {
+  const days = [data?.pk.PETROL?.approvedAt, data?.pk.DIESEL?.approvedAt].filter((d): d is string => !!d).sort();
+  return days[days.length - 1] ?? null;
+}
+
 /** The public fuel page and the blog's fuel card (cached for everyone). */
 export function getFuelPageData(): Promise<FuelPageData> {
   return unstable_cache(load, ["fuel-page"], { revalidate: REVALIDATE, tags: [FUEL_TAG] })();

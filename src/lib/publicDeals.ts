@@ -7,6 +7,7 @@ import { Organization } from "@/models/Organization";
 import { getBusinessRatings } from "@/lib/reviews";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 import { DEALS_TAG, PUBLIC_CACHE_SECONDS, dealTag } from "@/lib/pageCache";
+import { countByCity, knownCity, nearbyFirst } from "@/lib/dealCities";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -99,8 +100,13 @@ export function getLiveDeals(filters: DealFilters = {}): Promise<PublicDeal[]> {
 export const DEALS_POOL = 500;
 const DEAL_SORTS = ["ending", "newest", "discount"] as const;
 
-/** The Deals page filters from the URL (`make`, `city`, `type`, `sort`), the same for the page and `/api/deals`. */
-export function parseDealParams(get: (key: string) => string | null | undefined): Omit<DealFilters, "orgId" | "limit"> {
+export type DealPageFilters = Omit<DealFilters, "orgId" | "limit"> & {
+  /** A city with no deals of its own: every deal, that city's region first (src/lib/dealCities.ts) */
+  near?: string;
+};
+
+/** The Deals page filters from the URL (`make`, `city`, `type`, `sort`, `near`), the same for the page and `/api/deals`. */
+export function parseDealParams(get: (key: string) => string | null | undefined): DealPageFilters {
   const sort = get("sort");
   const type = get("type");
   return {
@@ -109,12 +115,16 @@ export function parseDealParams(get: (key: string) => string | null | undefined)
     city: (get("city") || "").trim().slice(0, 60),
     type: type === "RENT" || type === "SALE" ? type : "",
     sort: (DEAL_SORTS as readonly string[]).includes(sort ?? "") ? (sort as DealFilters["sort"]) : "ending",
+    near: knownCity(get("near")),
   };
 }
 
 /** One page of the Deals page's list, read from the same cached pool, with the total for "Showing 24 of 75". */
-export async function getLiveDealsPage(filters: Omit<DealFilters, "orgId" | "limit">, page: number): Promise<{ deals: PublicDeal[]; total: number }> {
-  const all = await getLiveDeals({ ...filters, limit: DEALS_POOL });
+export async function getLiveDealsPage(filters: DealPageFilters, page: number): Promise<{ deals: PublicDeal[]; total: number }> {
+  const { near, ...rest } = filters;
+  const pool = await getLiveDeals({ ...rest, limit: DEALS_POOL });
+  // Ordered in memory from the same cached pool, so `near` adds no cache entries or database reads
+  const all = near && !rest.city ? nearbyFirst(pool, near) : pool;
   const start = (Math.max(1, page) - 1) * DEALS_PAGE_SIZE;
   return { deals: all.slice(start, start + DEALS_PAGE_SIZE), total: all.length };
 }
@@ -144,9 +154,9 @@ export function getDealPage(id: string): Promise<DealPage | null> {
   )();
 }
 
-/** Makes and cities that currently have live deals, for the filter dropdowns. */
-export async function getDealFacets(): Promise<{ makes: string[]; cities: string[] }> {
+/** Makes with live deals, and how many live deals each city has (the picker offers every city), for the filters. */
+export async function getDealFacets(): Promise<{ makes: string[]; cityCounts: [string, number][] }> {
   const deals = await getLiveDeals({ limit: 500 });
   const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  return { makes: uniq(deals.map(d => d.make)), cities: uniq(deals.map(d => d.location.trim())) };
+  return { makes: uniq(deals.map(d => d.make)), cityCounts: [...countByCity(deals.map(d => d.location))] };
 }

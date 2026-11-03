@@ -22,7 +22,7 @@ test("a post shows its headings, lists and tips, and more posts to read", async 
   await page.goto("/blog/used-car-buying-checklist-pakistan");
   await expect(page.getByRole("heading", { level: 1, name: "Buying a used car in Pakistan: the complete checklist" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "The documents" })).toBeVisible();
-  await expect(page.getByText("Never buy a car on photocopies")).toBeVisible();
+  await expect(page.getByText("Never buy a car on photocopies").first()).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "Token tax paid up to date" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Keep reading" })).toBeVisible();
   const ld = await page.locator('script[type="application/ld+json"]').first().textContent();

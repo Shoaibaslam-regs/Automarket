@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { CircleAlert, Crown, X } from "lucide-react";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
 import { useSubscription, type SubscriptionInfo } from "@/components/subscription/useSubscription";
@@ -11,7 +12,8 @@ import { planNotice, type PlanNotice } from "@/lib/businessPlan";
 // - PlanReminder (business layout): when the console opens, a card slides down from the top once per session for
 //   each stage (a week before, the last three days, ended), with Renew now; and while the business is lapsed a slim
 //   red bar stays at the top of every page, so the team knows why nothing new can be added.
-// - PlanBanner (dashboard): the same reminder as a card above Today.
+// - PlanBanner (dashboard): the same reminder as a card above Today. The dashboard shows only the banner (the card
+//   sliding over it said the same thing twice), and that counts as this session's showing.
 // Renew now opens the usual upgrade dialog (payment details and "Message the team") for the plan to renew, or
 // Premium after the free month. Only the owner and managers get the buttons; the team still sees the lapsed bar.
 
@@ -44,6 +46,7 @@ export default function PlanReminder() {
   const r = reminderFor(sub);
   const [toast, setToast] = useState<"in" | "out" | null>(null);
   const [renewing, setRenewing] = useState<Plan | null>(null);
+  const onDashboard = usePathname() === "/business/dashboard";
 
   // Slide the card down once per session for this stage
   useEffect(() => {
@@ -52,10 +55,11 @@ export default function PlanReminder() {
     try { seen = sessionStorage.getItem(SEEN_KEY) ?? ""; } catch {}
     if (seen === r.key) return;
     try { sessionStorage.setItem(SEEN_KEY, r.key); } catch {}
+    if (onDashboard) return;
     const show = setTimeout(() => setToast("in"), 600);
     const hide = setTimeout(() => setToast("out"), 600 + SHOW_MS);
     return () => { clearTimeout(show); clearTimeout(hide); };
-  }, [r?.notice, r?.canRenew, r?.key]);
+  }, [r?.notice, r?.canRenew, r?.key, onDashboard]);
 
   if (!r?.notice) return null;
   const { notice, plan, canRenew } = r;

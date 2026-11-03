@@ -6,19 +6,30 @@ import { seedData, signedIn } from "./helpers";
 
 test("opening the console slides a reminder down from the top, once per session, with Renew", async ({ browser }) => {
   const page = await signedIn(browser, seedData().users.dealer);
-  await page.goto("/business/dashboard");
+  await page.goto("/business/customers");
   const toast = page.locator(".am-plan-toast");
   await expect(toast).toContainText("Your Premium plan ends in 3 days");
-  // The dashboard banner says the same, and Renew opens the payment details with the plan chosen
   await page.locator(".am-plan-toast").getByRole("button", { name: "Dismiss" }).click();
   await expect(toast).toBeHidden();
-  await page.getByRole("button", { name: "Renew now" }).first().click();
-  await expect(page.getByRole("dialog")).toContainText("Premium");
-  await page.keyboard.press("Escape");
   // Not again on the next console page in the same session
-  await page.goto("/business/customers");
+  await page.goto("/business/bookings");
   await page.waitForTimeout(1500);
   await expect(toast).toHaveCount(0);
+});
+
+test("the dashboard shows the reminder once, as its banner, and Renew opens the payment details", async ({ browser }) => {
+  const page = await signedIn(browser, seedData().users.dealer);
+  await page.goto("/business/dashboard");
+  await expect(page.getByText("Your Premium plan ends in 3 days")).toHaveCount(1);
+  await page.waitForTimeout(1500);
+  await expect(page.locator(".am-plan-toast")).toHaveCount(0);
+  await page.getByRole("button", { name: "Renew now" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Premium");
+  await page.keyboard.press("Escape");
+  // The banner counted as this session's reminder
+  await page.goto("/business/customers");
+  await page.waitForTimeout(1500);
+  await expect(page.locator(".am-plan-toast")).toHaveCount(0);
 });
 
 test("Notifications lists the plan ending", async ({ browser }) => {

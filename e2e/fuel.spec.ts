@@ -4,7 +4,7 @@ import { devices, expect, test } from "@playwright/test";
 test("the fuel page shows approved Pakistani prices with their change, crude oil and the trends", async ({ page }) => {
   await page.goto("/fuel-prices");
   await expect(page.getByRole("heading", { level: 1, name: "Fuel prices" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Live");
+  await expect(page.getByText(/^Updated \d{1,2} \w{3} \d{4}$/).first()).toBeVisible();
   const main = page.getByRole("main");
   await expect(main.getByText("396.65").first()).toBeVisible();
   await expect(main.getByText("394.94").first()).toBeVisible();

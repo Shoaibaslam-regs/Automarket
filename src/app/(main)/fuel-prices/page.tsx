@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { ArrowDownRight, ArrowUpRight, ExternalLink, Fuel, Info, Minus, Newspaper } from "lucide-react";
 import Footer from "@/components/Footer";
 import FuelCharts from "@/components/fuel/FuelCharts";
-import LiveTag from "@/components/fuel/LiveTag";
-import { getFuelPageData, type OilQuoteView, type PkPrice } from "@/lib/publicFuel";
+import UpdatedTag from "@/components/fuel/UpdatedTag";
+import { getFuelPageData, latestCheck, type OilQuoteView, type PkPrice } from "@/lib/publicFuel";
 import { COMMODITY_LABEL, FUEL_LABEL, fuelDate, fuelTime, pkDayKey, priceChange } from "@/lib/fuelPrices";
 import { reportError } from "@/lib/errorLog";
 
@@ -106,7 +106,8 @@ export default async function FuelPricesPage() {
           <Link href="/blog" className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10 hover:bg-white/10">
             <Newspaper size={13} /> AutoGO Blog
           </Link>
-          <h1 className="mt-4 flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices <LiveTag dark /></h1>
+          <h1 className="mt-4 flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices</h1>
+          <p className="mt-1.5"><UpdatedTag dark at={latestCheck(data)} /></p>
           <p className="mt-2 max-w-[640px] text-sm leading-relaxed text-slate-400">
             Pakistan&apos;s official petrol and diesel prices, checked by the AutoGO team against each Petroleum Division release, with international crude oil prices.
           </p>

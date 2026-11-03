@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
   CalendarCheck,
   MessageCircle,
   ScanSearch,
@@ -101,16 +100,8 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
 
         <div className="relative mx-auto max-w-[1180px] px-4 pb-10 pt-10 text-center sm:pb-14 sm:pt-16">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-slate-200 ring-1 ring-inset ring-white/15 backdrop-blur">
-            <BadgeCheck size={14} className="text-blue-400" />
-            Pakistan&apos;s trusted automobile marketplace
-          </span>
-
-          <h1 className="mx-auto mt-5 max-w-3xl text-[2rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Buy, sell &amp; rent{" "}
-            <span className="bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-transparent">
-              vehicles you want
-            </span>
+          <h1 className="mx-auto max-w-3xl text-[2rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Buy, sell &amp; rent vehicles you want
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-400 sm:text-lg">
             Find your perfect car or bike, list yours in minutes, and get AI-powered inspections built in.

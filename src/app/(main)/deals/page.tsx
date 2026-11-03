@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Flame, Tag } from "lucide-react";
+import { Flame, MapPin, Tag } from "lucide-react";
 import DealsGrid from "@/components/deals/DealsGrid";
 import DealFilters from "@/components/deals/DealFilters";
 import Footer from "@/components/Footer";
 import { getDealFacets, getLiveDealsPage, parseDealParams } from "@/lib/publicDeals";
+import { dealRegion, isNearby, knownCity } from "@/lib/dealCities";
 
 export const metadata: Metadata = {
   title: "Deals on cars and bikes",
@@ -12,12 +13,18 @@ export const metadata: Metadata = {
   alternates: { canonical: "/deals" },
 };
 
-type Props = { searchParams: Promise<{ make?: string; city?: string; sort?: string; type?: string }> };
+type Props = { searchParams: Promise<{ make?: string; city?: string; sort?: string; type?: string; near?: string }> };
 
 export default async function DealsPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const filters = parseDealParams(k => sp[k as keyof typeof sp]);
-  const [{ deals, total }, facets] = await Promise.all([getLiveDealsPage(filters, 1), getDealFacets()]);
+  const asked = parseDealParams(k => sp[k as keyof typeof sp]);
+  const [first, facets] = await Promise.all([getLiveDealsPage(asked, 1), getDealFacets()]);
+  // A known city with no deals of its own: show every deal, its region's first (src/lib/dealCities.ts)
+  const emptyCity = asked.city && first.total === 0 ? knownCity(asked.city) : "";
+  const filters = emptyCity ? { ...asked, city: "", near: emptyCity } : asked;
+  const { deals, total } = emptyCity ? await getLiveDealsPage(filters, 1) : first;
+  const region = emptyCity ? dealRegion(emptyCity) : null;
+  const nearbyCount = emptyCity ? deals.filter(d => isNearby(d.location, emptyCity)).length : 0;
   const now = new Date().getTime();
   const filtered = !!(filters.make || filters.city || filters.type);
   // The same filters for /api/deals when the grid loads more; also the grid's key, so a filter change starts over
@@ -45,9 +52,19 @@ export default async function DealsPage({ searchParams }: Props) {
             {total} {total === 1 ? "deal" : "deals"} {filtered ? "match" : "running now"}
           </p>
           <Suspense fallback={<div className="h-10" />}>
-            <DealFilters makes={facets.makes} cities={facets.cities} />
+            <DealFilters makes={facets.makes} cityCounts={facets.cityCounts} />
           </Suspense>
         </div>
+
+        {emptyCity && deals.length > 0 && (
+          <p role="status" className="mb-5 flex items-start gap-2 text-sm text-slate-600">
+            <MapPin size={16} className="mt-0.5 flex-shrink-0 text-rose-500" />
+            <span>
+              <strong className="font-semibold text-slate-900">No deals in {emptyCity} yet.</strong>{" "}
+              {nearbyCount > 0 && region ? `Showing deals in ${region.name} first, then the rest of Pakistan.` : "Showing deals from across Pakistan."}
+            </span>
+          </p>
+        )}
 
         {deals.length === 0 ? (
           <div className="rounded-2xl bg-white px-6 py-16 text-center ring-1 ring-slate-200/80">
