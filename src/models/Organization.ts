@@ -18,6 +18,8 @@ export interface IOrganization extends Document {
   isActive: boolean;
   /** Follows the AutoGO Official channel (announcements, updates, offers in Business → Updates) */
   followsOfficial?: boolean;
+  /** The admin who looks after this business (Dedicated support, Ultimate: src/lib/accountManager.ts) */
+  accountManagerId?: mongoose.Types.ObjectId;
   followedOfficialAt?: Date;
   suspension?: {
     reason: string;
@@ -75,6 +77,7 @@ const OrganizationSchema = new Schema<IOrganization>(
     planExpiresAt: { type: Date },
     isActive: { type: Boolean, default: true },
     followsOfficial: { type: Boolean, default: false, index: true },
+    accountManagerId: { type: Schema.Types.ObjectId, ref: "User" },
     followedOfficialAt: { type: Date },
     suspension: {
       type: new Schema(

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowRight, Building2, CalendarDays, MapPin, ShieldCheck, Wallet } from "lucide-react";
 import Footer from "@/components/Footer";
 import LiveStats from "@/components/home/LiveStats";
+import { getShowHomeStats } from "@/lib/siteFlags";
 import { getPublicStats } from "@/lib/publicStats";
 import { PLANS, formatPlanPrice } from "@/lib/plans";
 import { whatsappLink } from "@/lib/supportContact";
@@ -18,7 +19,7 @@ export const revalidate = 60;
 
 /** Linked only from the footer and the home page's "Why AutoGO" section, never from a menu */
 export default async function AboutPage() {
-  const stats = await getPublicStats();
+  const [stats, showStats] = await Promise.all([getPublicStats(), getShowHomeStats()]);
   const wa = whatsappLink("Hi AutoGO team, I'd like to know more about AutoGO.");
   const cheapest = PLANS.STARTER.price;
 
@@ -143,7 +144,7 @@ export default async function AboutPage() {
           </p>
         </section>
 
-        <LiveStats initial={stats} />
+        {showStats && <LiveStats initial={stats} />}
 
         <section className="rounded-2xl bg-white p-6 ring-1 ring-slate-200/80 sm:p-7">
           <h2 className="text-lg font-bold tracking-tight text-slate-900">Who we are</h2>

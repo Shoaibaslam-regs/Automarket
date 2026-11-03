@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { routeToAccountManager } from "@/lib/accountManager";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
@@ -109,6 +110,7 @@ export async function POST(req: NextRequest) {
       await sendChatMessage(session.user.id, String(admin._id),
         `Hi AutoGO team, "${org.name}"${city ? ` (${city})` : ""} asked for a ${tier === "TOP" ? "Top" : "Standard"} sponsored ad: ${AD_KIND_LABEL[kind].toLowerCase()} "${targetLabel}", ${weeks} week${weeks > 1 ? "s" : ""}, PKR ${price.toLocaleString()}. Payment: ${paymentRef}. See Admin → Ad requests.`,
         session.user.name).catch(e => reportError("Ad request message failed:", e));
+      await routeToAccountManager(session.user.id);
     }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "ad.request",
       { type: "BUSINESS", id: ad._id, label: targetLabel }, { details: `${tier === "TOP" ? "Top · " : ""}${weeks} week${weeks > 1 ? "s" : ""} · ${paymentRef}`, amount: price });

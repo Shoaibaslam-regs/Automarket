@@ -14,8 +14,10 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Calendar, Car, KeyRound, TrendingUp, Users, Wallet } from "lucide-react";
+import { Calendar, Car, KeyRound, Lock, TrendingUp, Users, Wallet } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { REPORT_PERIODS, type ReportPeriod } from "@/lib/reportPeriods";
+import AdvancedReports from "@/components/business/AdvancedReports";
 
 type Stats = {
   inventory: {
@@ -39,15 +41,18 @@ type Stats = {
     cancelled: number;
     online: number;
     walkIn: number;
-    revenueThisMonth: number;
-    revenueTotal: number;
-    depositsHeld: number;
-    revenueByMonth: { month: string; revenue: number }[];
+    /** null for roles that don't see money */
+    depositsHeld: number | null;
   };
-  monthly: {
-    sales: number;
-    revenue: number;
+  /** Business → Reports for the chosen period (src/app/api/business/stats); null when the plan doesn't include it */
+  report: null | {
+    period: { key: ReportPeriod; label: string };
+    canSeeMoney: boolean;
+    sales: { count: number; value: number | null };
+    rentals: { completed: number; revenue: number | null; revenueTotal: number | null };
+    byMonth: { month: string; sales: number; salesValue: number | null; rentalRevenue: number | null }[];
   };
+  reportLocked: null | { plan: string };
 };
 
 /** Compact PKR: 950 → "PKR 950", 12,500 → "PKR 12.5K", 2,400,000 → "PKR 2.4M" */
@@ -63,20 +68,24 @@ export default function ReportsPage() {
   const chart = resolved === "dark"
     ? { ink: "#eef2f8", grid: "#263248", tick: "#7d8ba1", cursor: "#1a2436", revenue: "#818cf8" }
     : { ink: "#0d1117", grid: "#f0f0f0", tick: "#8c959f", cursor: "#f6f8fa", revenue: "#4f46e5" };
+  // Sales bars beside rental income: sky, the other half of the AutoGO indigo → sky
+  const salesColor = resolved === "dark" ? "#38bdf8" : "#0ea5e9";
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [period, setPeriod] = useState<ReportPeriod>("this-month");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    fetch("/api/business/stats")
+    fetch(`/api/business/stats?period=${period}`)
       .then(async (r) => {
         const d = await r.json();
         if (!r.ok || !d.rentals) throw new Error(d.error || "Failed to load reports");
         setStats(d);
       })
       .catch((e) => setError(e.message === "No organization" ? "Set up your business to see reports." : "Couldn't load your reports. Please refresh to try again."))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => { setLoading(false); setUpdating(false); });
+  }, [period]);
 
   if (!loading && error) {
     return (
@@ -126,6 +135,23 @@ export default function ReportsPage() {
     );
   }
 
+  // The plan doesn't include Sales reports (PLAN_FEATURES in src/lib/plans.ts)
+  if (stats?.reportLocked) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+        <div style={{ maxWidth: "420px", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", borderRadius: "14px", padding: "26px 28px", textAlign: "center" }}>
+          <Lock size={22} style={{ color: "var(--gh-8c959f)" }} aria-hidden />
+          <h1 style={{ fontSize: "16px", fontWeight: 750, color: "var(--gh-0d1117)", margin: "10px 0 6px" }}>Sales reports are on {stats.reportLocked.plan} and up</h1>
+          <p style={{ fontSize: "13px", lineHeight: 1.6, color: "var(--gh-57606a)", margin: 0 }}>
+            See your sales and rental income by month, for this month, last month or the whole year. Your dashboard keeps its counts on every plan.
+          </p>
+          <Link href="/pricing" style={{ display: "inline-block", marginTop: "16px", fontSize: "13px", fontWeight: 600, color: "var(--gh-ffffff)", background: "var(--gh-0d1117)", padding: "9px 16px", borderRadius: "10px", textDecoration: "none" }}>See plans</Link>
+          <Link href="/business/dashboard" style={{ display: "block", marginTop: "12px", fontSize: "12px", color: "var(--gh-57606a)", fontWeight: 600 }}>← Back to dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
   const inventoryData = [
     {
       name: "Available",
@@ -164,6 +190,8 @@ export default function ReportsPage() {
     },
   ];
 
+  const report = stats?.report ?? null;
+
   const conversionRate = stats?.customers.totalCustomers
     ? Math.round(
       (stats.customers.closedSales /
@@ -186,10 +214,10 @@ export default function ReportsPage() {
       sub: "tracked",
     },
     {
-      label: "Sales this month",
-      value: stats?.monthly.sales || 0,
+      label: `Sales · ${report?.period.label ?? ""}`,
+      value: report?.sales.count || 0,
       icon: Wallet,
-      sub: `${pkr(stats?.monthly.revenue || 0)} sold`,
+      sub: report?.sales.value != null ? `${pkr(report.sales.value)} sold` : "vehicles sold",
     },
     {
       label: "Conversion rate",
@@ -203,14 +231,12 @@ export default function ReportsPage() {
       icon: KeyRound,
       sub: `${stats?.rentals.totalBookings || 0} bookings all time`,
     },
-    {
-      label: "Rental revenue",
-      value: pkr(stats?.rentals.revenueThisMonth || 0),
-      icon: Calendar,
-      sub: "completed this month",
-    },
+    report?.rentals.revenue != null
+      ? { label: `Rental income · ${report.period.label}`, value: pkr(report.rentals.revenue), icon: Calendar, sub: `${report.rentals.completed} completed` }
+      : { label: `Rentals completed · ${report?.period.label ?? ""}`, value: report?.rentals.completed || 0, icon: Calendar, sub: "bookings returned" },
   ];
 
+  const money = !!report?.canSeeMoney;
   const summaryColumns = [
     {
       section: "Inventory",
@@ -263,9 +289,18 @@ export default function ReportsPage() {
         ["Out now", stats?.rentals.activeRentals || 0],
         ["Completed", stats?.rentals.completed || 0],
         ["Online / walk-in", `${stats?.rentals.online || 0} / ${stats?.rentals.walkIn || 0}`],
-        ["Revenue this month", pkr(stats?.rentals.revenueThisMonth || 0)],
-        ["All-time rental revenue", pkr(stats?.rentals.revenueTotal || 0)],
-        ["Deposits held", pkr(stats?.rentals.depositsHeld || 0)],
+        ...(money ? [
+          [`Rental income · ${report?.period.label}`, pkr(report?.rentals.revenue || 0)],
+          ["All-time rental income", pkr(report?.rentals.revenueTotal || 0)],
+          ["Deposits held", pkr(stats?.rentals.depositsHeld || 0)],
+        ] : []),
+      ],
+    },
+    {
+      section: `Sales · ${report?.period.label ?? ""}`,
+      rows: [
+        ["Vehicles sold", report?.sales.count || 0],
+        ...(money ? [["Sales value", pkr(report?.sales.value || 0)]] : []),
       ],
     },
   ];
@@ -329,22 +364,15 @@ export default function ReportsPage() {
             </h1>
           </div>
 
-          <div
-            style={{
-              fontSize: "11px",
-              color: "var(--gh-8c959f)",
-              whiteSpace: "nowrap",
-              background: "var(--gh-f6f8fa)",
-              border: "1px solid var(--gh-e1e4e8)",
-              padding: "7px 10px",
-              borderRadius: "8px",
-            }}
-          >
-            {new Date().toLocaleDateString("en-PK", {
-              month: "long",
-              year: "numeric",
-            })}
-          </div>
+          {report && (
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", color: "var(--gh-8c959f)", whiteSpace: "nowrap" }}>
+              {updating ? "Updating…" : "Period"}
+              <select value={period} aria-label="Report period" onChange={e => { setUpdating(true); setPeriod(e.target.value as ReportPeriod); }}
+                style={{ fontSize: "12px", fontWeight: 600, color: "var(--gh-0d1117)", background: "var(--gh-ffffff)", border: "1px solid var(--gh-e1e4e8)", padding: "7px 10px", borderRadius: "8px" }}>
+                {REPORT_PERIODS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+              </select>
+            </label>
+          )}
         </div>
       </div>
 
@@ -353,7 +381,8 @@ export default function ReportsPage() {
           width: "100%",
           maxWidth: "1150px",
           margin: "0 auto",
-          padding: "clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px) 40px",
+          // Room at the bottom so the floating "+ New" button never sits over the last table
+          padding: "clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px) 96px",
           boxSizing: "border-box",
         }}
       >
@@ -392,14 +421,8 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
-              gap: "12px",
-            }}
-          >
+          {/* Six cards: 2, then 3, then 6 a row, so no row is left with a single card */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
             {kpis.map((s) => (
               <div
                 key={s.label}
@@ -684,21 +707,31 @@ export default function ReportsPage() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "8px" }}>
             <div>
-              <h2 style={{ fontSize: "14px", fontWeight: 750, color: "var(--gh-0d1117)", margin: 0 }}>Rental revenue</h2>
-              <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "4px 0 0" }}>Completed bookings, last 6 months</p>
+              <h2 style={{ fontSize: "14px", fontWeight: 750, color: "var(--gh-0d1117)", margin: 0 }}>{money ? "Sales and rental income" : "Vehicles sold"}</h2>
+              <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "4px 0 0" }}>By month (Pakistan time), from the sale records and returned bookings</p>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--gh-1a7f37)", margin: 0 }}>{pkr(stats?.rentals.revenueTotal || 0)}</p>
-              <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "2px 0 0" }}>all time</p>
-            </div>
+            {money && (
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--gh-0d1117)", margin: 0 }}>{pkr(report?.rentals.revenueTotal || 0)}</p>
+                <p style={{ fontSize: "10px", color: "var(--gh-8c959f)", margin: "2px 0 0" }}>rental income, all time</p>
+              </div>
+            )}
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={stats?.rentals.revenueByMonth || []} margin={{ top: 10, right: 8, left: 0, bottom: 5 }}>
+            <BarChart data={report?.byMonth || []} margin={{ top: 10, right: 8, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: chart.tick }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: chart.tick }} tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => pkr(v).replace("PKR ", "")} />
-              <Tooltip formatter={(v) => [pkr(Number(v)), "Revenue"]} cursor={{ fill: chart.cursor }} />
-              <Bar dataKey="revenue" fill={chart.revenue} radius={[5, 5, 0, 0]} name="Revenue" maxBarSize={48} />
+              <YAxis tick={{ fontSize: 10, fill: chart.tick }} tickLine={false} axisLine={false} width={56} allowDecimals={false}
+                tickFormatter={(v: number) => (money ? pkr(v).replace("PKR ", "") : String(v))} />
+              <Tooltip formatter={(v, name) => [money ? pkr(Number(v)) : String(v), String(name)]} cursor={{ fill: chart.cursor }} />
+              {money ? (
+                <>
+                  <Bar dataKey="salesValue" fill={salesColor} radius={[5, 5, 0, 0]} name="Sales" maxBarSize={32} />
+                  <Bar dataKey="rentalRevenue" fill={chart.revenue} radius={[5, 5, 0, 0]} name="Rental income" maxBarSize={32} />
+                </>
+              ) : (
+                <Bar dataKey="sales" fill={salesColor} radius={[5, 5, 0, 0]} name="Vehicles sold" maxBarSize={48} />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </section>
@@ -808,6 +841,9 @@ export default function ReportsPage() {
             ))}
           </div>
         </section>
+
+        {/* Ultimate: any date range, per vehicle and team member, CSV (all money, so owner and managers only) */}
+        {report?.canSeeMoney && <AdvancedReports />}
       </div>
     </div>
   );

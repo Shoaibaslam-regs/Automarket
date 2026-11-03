@@ -6,6 +6,8 @@
 //   (bookings, sales, customers, money and its live listings keep working);
 // - reminders go out 7, 3 and 1 day before a plan (or the free start) ends, and on the day it ends.
 
+import type { PlanId } from "@/lib/plans";
+
 const DAY = 86_400_000;
 
 export const BUSINESS_FREE_DAYS = 30;
@@ -120,3 +122,11 @@ export function planNotice(p: { state: BusinessPlanState; endsAt: Date | string;
 }
 // A lapsed business whose last plan has a name had a plan; one still called "Free" only had its free month
 const everHadPlanText = (p: { planName: string }) => p.planName !== "Free";
+
+/**
+ * The plan whose features apply (PLAN_FEATURES in src/lib/plans.ts): the plan in force, except that a business's free
+ * month includes Premium's features (its limits stay Free's), so a new business can try them before it subscribes.
+ */
+export function featurePlanId(planId: PlanId, state?: BusinessPlanState | null): PlanId {
+  return state === "FREE_START" && planId === "FREE" ? "STARTER" : planId;
+}

@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       const populated = await Message.findById(created._id).populate("senderId", "name image").populate("receiverId", "name image").lean();
       const adminId = admin._id.toString();
       await triggerPusher(`chat-${[session.user.id, adminId].sort().join("-")}`, "new-message", populated);
-      await notifyAdminsOfSupport(session.user.name, content);
+      await notifyAdminsOfSupport(session.user.name, content, session.user.id);
     }
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
   } catch (error) {

@@ -11,17 +11,14 @@ import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import VerifiedBadgeOffer from "@/components/subscription/VerifiedBadgeOffer";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLANS, PLAN_LIST, SPONSORED_AD, VERIFIED_BADGE, formatLimit, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
+import { PLANS, PLAN_FEATURES, PLAN_FEATURE_LIST, PLAN_LIST, SPONSORED_AD, VERIFIED_BADGE, formatLimit, planHas, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Listings & deals per month", value: p => formatLimit(p.limits.listings) },
   { label: "Team members (incl. owner)", value: p => formatLimit(p.limits.staff) },
   { label: "Customer leads", value: p => formatLimit(p.limits.customers) },
-  { label: "AI-verified photos", value: () => true },
-  { label: "Buyer messaging", value: () => true },
-  { label: "Rental management", value: p => p.price > 0 },
-  { label: "Sales reports", value: p => p.price > 0 },
-  { label: "Priority support", value: p => p.price >= 1200 },
+  // What each plan includes comes from PLAN_FEATURES (src/lib/plans.ts), never from its price
+  ...PLAN_FEATURE_LIST.map(f => ({ label: PLAN_FEATURES[f].label, value: (p: Plan) => planHas(p.id, f) })),
 ];
 
 const FAQ = [

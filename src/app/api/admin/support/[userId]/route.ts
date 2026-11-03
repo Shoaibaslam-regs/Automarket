@@ -4,12 +4,13 @@ import { requireAdminApi } from "@/lib/adminAuth";
 import { User } from "@/models/User";
 import { Message } from "@/models/Message";
 import { Organization } from "@/models/Organization";
+import { isPrioritySupport } from "@/lib/supportPriority";
+import { accountManagersFor } from "@/lib/accountManager";
 import { SupportThread } from "@/models/SupportThread";
 import { getSupportAccount, sendAsSupport } from "@/lib/support";
-import { deleteSupportConversations, markSupportDone, supportConversations } from "@/lib/supportInbox";
+import { deleteSupportConversations, markSupportDone, supportConversations, supportPlans } from "@/lib/supportInbox";
 import { isPlatformOwner } from "@/lib/adminAuth";
 import { logAdminAction } from "@/lib/adminLog";
-import { effectivePlanId } from "@/lib/plans";
 import { reportError } from "@/lib/errorLog";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +20,8 @@ type Oid = mongoose.Types.ObjectId;
 
 async function load(userId: string) {
   if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-  return User.findById(userId).select("name email image organizationId plan planExpiresAt isSupportAccount")
-    .lean<{ _id: Oid; name?: string; email: string; image?: string; organizationId?: Oid; plan?: string; planExpiresAt?: Date; isSupportAccount?: boolean }>();
+  return User.findById(userId).select("name email image organizationId isSupportAccount")
+    .lean<{ _id: Oid; name?: string; email: string; image?: string; organizationId?: Oid; isSupportAccount?: boolean }>();
 }
 
 /** One person's conversation with AutoGO Support, oldest first (the last 300), with who wrote each team reply. Marks their messages read. */
@@ -35,13 +36,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ use
     const between = { $or: [{ senderId: support._id, receiverId: person._id }, { senderId: person._id, receiverId: support._id }], deletedFor: { $ne: support._id } };
     const messages = (await Message.find(between).sort({ createdAt: -1 }).limit(300).populate("sentBy", "name email").lean()).reverse();
     await Message.updateMany({ senderId: person._id, receiverId: support._id, read: false }, { $set: { read: true } });
-    const [org, thread] = await Promise.all([
+    const [org, thread, plans] = await Promise.all([
       person.organizationId ? Organization.findById(person.organizationId).select("name slug").lean<{ _id: Oid; name: string; slug: string }>() : null,
       SupportThread.findOne({ userId: person._id }).populate("takenBy", "name email").lean<{ takenBy?: { _id: Oid; name?: string; email: string } | null; doneAt?: Date }>(),
+      // A team member's plan is their business owner's
+      supportPlans([String(person._id)]),
     ]);
+    const dedicated = (await accountManagersFor([String(person._id)])).get(String(person._id)) ?? null;
+    const plan = plans.get(String(person._id)) ?? "FREE";
     return NextResponse.json({
       supportId: String(support._id),
-      person: { _id: String(person._id), name: person.name, email: person.email, image: person.image, plan: effectivePlanId(person.plan, person.planExpiresAt) },
+      person: { _id: String(person._id), name: person.name, email: person.email, image: person.image, plan, priority: isPrioritySupport(plan), dedicated },
       business: org ? { _id: String(org._id), name: org.name, slug: org.slug } : null,
       takenBy: thread?.takenBy ? { _id: String(thread.takenBy._id), name: thread.takenBy.name, email: thread.takenBy.email } : null,
       doneAt: thread?.doneAt ?? null,

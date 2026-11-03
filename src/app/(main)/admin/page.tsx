@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Calendar, Car, CircleCheck, Crown, Flag, Gift, MessageSquare, MoreHorizontal, ShieldCheck, Store, Undo2, Users, Wallet, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Ban, Headset, Calendar, Car, CircleCheck, Crown, Flag, Gift, MessageSquare, MoreHorizontal, ShieldCheck, Store, Undo2, Users, Wallet, type LucideIcon } from "lucide-react";
 import PlanGiftDialog, { fmtPlanDate, type PlanSourceChoice } from "@/components/admin/PlanGiftDialog";
 import PlanLookup from "@/components/admin/PlanLookup";
 import PaymentSettings from "@/components/admin/PaymentSettings";
 import AdminKeySettings from "@/components/admin/AdminKeySettings";
+import HomeStatsSetting from "@/components/admin/HomeStatsSetting";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { isFreeGrant, isVerified, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
+import { isFreeGrant, isVerified, planHas, planInfo, type BadgeVerification, type PlanId, type PlanSource } from "@/lib/plans";
 import VerifyBadgeDialog, { type BadgeAction } from "@/components/admin/VerifyBadgeDialog";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import MessageBusinessDialog from "@/components/admin/MessageBusinessDialog";
+import AccountManagerDialog, { type AdminOption } from "@/components/admin/AccountManagerDialog";
 import {
   Badge,
   ConfirmDialog,
@@ -60,6 +62,8 @@ type Organization = {
   vehicleCount: number;
   createdAt: string;
   ownerId: { _id: string; name?: string; email: string };
+  /** Dedicated support: the admin who looks after it (src/lib/accountManager.ts) */
+  accountManager?: AdminOption | null;
 };
 
 const TYPE_NAME: Record<string, string> = { DEALER: "Dealer", RENTAL: "Rental", BOTH: "Dealer + rental" };
@@ -146,6 +150,8 @@ export default function AdminPage() {
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [recentListings, setRecentListings] = useState<RecentListing[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [admins, setAdmins] = useState<AdminOption[]>([]);
+  const [managerFor, setManagerFor] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "businesses">("overview");
   // What this admin's role may do here (src/lib/adminRoles.ts)
@@ -158,7 +164,7 @@ export default function AdminPage() {
   const reloadOrganizations = () =>
     fetch("/api/admin/organizations")
       .then(r => r.json())
-      .then(d => setOrganizations(d.organizations || []))
+      .then(d => { setOrganizations(d.organizations || []); setAdmins(d.admins || []); })
       .catch(() => {});
 
   // Business plans live on the owner's account, so both actions target the owner's user id
@@ -268,6 +274,7 @@ export default function AdminPage() {
       setRecentUsers(statsData.recentUsers || []);
       setRecentListings(statsData.recentListings || []);
       setOrganizations(orgData.organizations || []);
+      setAdmins(orgData.admins || []);
       setLoading(false);
     });
   }, []);
@@ -325,6 +332,8 @@ export default function AdminPage() {
           <PlanLookup />
 
           <PaymentSettings />
+
+          <HomeStatsSetting />
 
           <AdminKeySettings />
 
@@ -536,6 +545,11 @@ export default function AdminPage() {
                         {TYPE_NAME[org.type] ?? org.type}
                         {org.plan !== "FREE" && ` · ${org.planExpiresAt ? `until ${fmtPlanDate(org.planExpiresAt)}` : "no end date"}`}
                       </p>
+                      {org.accountManager ? (
+                        <p className="flex items-center gap-1 truncate text-xs text-slate-500"><Headset size={11} /> {org.accountManager.name || org.accountManager.email}</p>
+                      ) : planHas(org.plan, "dedicatedSupport") && (
+                        <p className="flex items-center gap-1 truncate text-xs font-medium text-amber-700"><Headset size={11} /> No account manager yet</p>
+                      )}
                     </div>
                   );
                 },
@@ -560,6 +574,7 @@ export default function AdminPage() {
                   if (org.slug && org.isActive) items.push({ label: "Open shop page", icon: Store, href: `/dealers/${org.slug}` });
                   if (canWrite && org.ownerId?._id) {
                     items.push({ label: "Message business", icon: MessageSquare, onClick: () => setMessageFor(org) });
+                    items.push({ label: "Account manager", icon: Headset, onClick: () => setManagerFor(org), dot: planHas(org.plan, "dedicatedSupport") && !org.accountManager });
                     items.push({ label: org.verification?.requestedAt ? "Review badge request" : "Verified badge", icon: BadgeCheck, onClick: () => setBadgeFor(org), dot: !!org.verification?.requestedAt });
                     if (isFreeGrant(org.planSource) && org.plan !== "FREE") items.push({ label: "Revoke gifted plan", icon: Undo2, onClick: () => setRevokeFor(org), tone: "danger" });
                     if (org.isActive) items.push({ label: "Send a warning", icon: AlertTriangle, onClick: () => { setWarnReason(""); setWarnFor(org); }, tone: "warn" });
@@ -693,6 +708,7 @@ export default function AdminPage() {
           />
 
           <MessageBusinessDialog business={messageFor} onClose={() => setMessageFor(null)} />
+          <AccountManagerDialog business={managerFor} admins={admins} onClose={() => setManagerFor(null)} onSaved={reloadOrganizations} />
           <VerifyBadgeDialog
             target={badgeFor && { name: badgeFor.name, ownerLabel: badgeFor.ownerId?.name || badgeFor.ownerId?.email, verification: badgeFor.verification }}
             onClose={() => setBadgeFor(null)}

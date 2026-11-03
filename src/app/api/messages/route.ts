@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     // A reply to AutoGO Support goes to every admin's Support inbox, not to the (unattended) account itself
     const support = await getSupportAdmin();
     if (receiverId === String(support._id)) {
-      await notifyAdminsOfSupport(session.user.name, content);
+      await notifyAdminsOfSupport(session.user.name, content, session.user.id);
     } else {
       await triggerPusher(`user-${receiverId}`, "new-notification", {
         type: "message",

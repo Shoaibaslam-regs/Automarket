@@ -106,3 +106,13 @@ test("the footer's popular cars open as dropdowns and lead to Browse filtered to
   await page.waitForURL("**/listings?make=Honda&search=Civic");
   await expect(page.getByRole("main").getByText("Honda Civic Oriel").first()).toBeVisible();
 });
+
+test("AutoGO in numbers stays hidden until an admin switches it on, and only admins can", async ({ page, request }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Latest for sale" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "AutoGO today" })).toHaveCount(0);
+  await page.goto("/about");
+  await expect(page.getByRole("region", { name: "AutoGO today" })).toHaveCount(0);
+  const res = await request.put("/api/admin/home-stats", { data: { show: true }, headers: { Origin: "http://127.0.0.1:3100" } });
+  expect(res.status()).toBe(401);
+});

@@ -9,8 +9,9 @@ import { ConfirmDialog, PageHeader, Segmented, btn } from "@/components/admin/ui
 import AdminBadge from "@/components/AdminBadge";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { planInfo, type PlanId } from "@/lib/plans";
+import { PRIORITY_REPLY_HOURS, priorityOverdue, waitingFor } from "@/lib/supportPriority";
 
-type Filter = "open" | "mine" | "done" | "all";
+type Filter = "open" | "priority" | "mine" | "done" | "all";
 type Conversation = {
   userId: string;
   lastAt: string;
@@ -18,13 +19,19 @@ type Conversation = {
   lastFromUser: boolean;
   unread: number;
   open: boolean;
+  /** From Premium Plus and up (src/lib/supportPriority.ts) */
+  priority: boolean;
+  /** When the person wrote, while it's open */
+  waitingSince: string | null;
+  /** Dedicated support (Ultimate): its account manager, or null when none is set yet */
+  dedicated: { manager: { _id: string; name?: string; email: string } | null } | null;
   user: { _id: string; name?: string; email: string; image?: string } | null;
   business: { _id: string; name: string; slug: string } | null;
   takenBy: { _id: string; name?: string; email: string } | null;
 };
 type Thread = {
   supportId: string;
-  person: { _id: string; name?: string; email: string; plan: PlanId };
+  person: { _id: string; name?: string; email: string; plan: PlanId; priority: boolean; dedicated: { manager: { _id: string; name?: string; email: string } | null } | null };
   business: { _id: string; name: string; slug: string } | null;
   takenBy: { _id: string; name?: string; email: string } | null;
   doneAt: string | null;
@@ -51,7 +58,7 @@ function SupportInbox() {
   const selected = params.get("with");
   const [filter, setFilter] = useState<Filter>("open");
   const [q, setQ] = useState("");
-  const [list, setList] = useState<{ conversations: Conversation[]; open: number; me: string; canDelete: boolean } | null>(null);
+  const [list, setList] = useState<{ conversations: Conversation[]; open: number; priority: number; me: string; canDelete: boolean } | null>(null);
   // Only the platform owner deletes finished conversations (one, or the done ones in bulk)
   const [deleteOne, setDeleteOne] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
@@ -69,7 +76,7 @@ function SupportInbox() {
   const loadList = useCallback(() => {
     const qs = new URLSearchParams({ filter, ...(q.trim() ? { q: q.trim() } : {}) });
     return fetch(`/api/admin/support?${qs}`).then(r => r.json()).then(d => {
-      setList({ conversations: d.conversations ?? [], open: d.open ?? 0, me: d.me, canDelete: d.canDelete === true });
+      setList({ conversations: d.conversations ?? [], open: d.open ?? 0, priority: d.priority ?? 0, me: d.me, canDelete: d.canDelete === true });
       // The sidebar badge follows every reload, so a reply, Done or Reopen shows there at once
       refreshAdminCounts({ support: d.open ?? 0 });
     }).catch(() => {});
@@ -173,7 +180,7 @@ function SupportInbox() {
         <section className={`flex min-h-[480px] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 lg:h-[calc(100vh-13rem)] ${selected ? "hidden lg:flex" : "flex"}`}>
           <div className="space-y-2 border-b border-slate-100 p-3">
             <Segmented<Filter> value={filter} onChange={setFilter}
-              options={[{ value: "open", label: `Open${list ? ` (${list.open})` : ""}` }, { value: "mine", label: "Mine" }, { value: "done", label: "Done" }, { value: "all", label: "All" }]} />
+              options={[{ value: "open", label: `Open${list ? ` (${list.open})` : ""}` }, { value: "priority", label: `Priority${list?.priority ? ` (${list.priority})` : ""}` }, { value: "mine", label: "Mine" }, { value: "done", label: "Done" }, { value: "all", label: "All" }]} />
             <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 ring-1 ring-inset ring-slate-200 focus-within:ring-slate-400">
               <Search size={14} className="text-slate-400" />
               <input value={q} onChange={e => setQ(e.target.value)} placeholder="Name, email, business or ID" aria-label="Search conversations"
@@ -185,7 +192,7 @@ function SupportInbox() {
               list.conversations.length === 0 ? (
                 <li className="px-6 py-14 text-center">
                   <Headset size={26} strokeWidth={1.5} className="mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm font-semibold text-slate-900">{filter === "open" ? "Nobody is waiting" : "No conversations"}</p>
+                  <p className="text-sm font-semibold text-slate-900">{filter === "open" ? "Nobody is waiting" : filter === "priority" ? "No Priority conversations waiting" : "No conversations"}</p>
                   <p className="mt-1 text-xs text-slate-500">Plan and badge requests, Help & support and feedback land here.</p>
                 </li>
               ) : list.conversations.map(c => (
@@ -203,6 +210,13 @@ function SupportInbox() {
                       </span>
                       {c.business && <span className="block truncate text-[11px] text-slate-500">{c.business.name} · {short(c.business._id)}</span>}
                       <span className="mt-0.5 block truncate text-xs text-slate-500">{c.lastFromUser ? "" : "You: "}{c.lastText}</span>
+                      {c.priority && c.open && (
+                        // Priority support: coloured text with a dot (no filled pills), red once past the target reply time
+                        <span className={`mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold ${priorityOverdue(c.waitingSince) ? "text-rose-600" : "text-amber-700"}`}>
+                          <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${priorityOverdue(c.waitingSince) ? "bg-rose-500" : "bg-amber-500"}`} />
+                          {c.dedicated ? `Dedicated${c.dedicated.manager ? ` · ${who(c.dedicated.manager)}` : " · no manager yet"}` : "Priority"}{c.waitingSince && ` · waiting ${waitingFor(c.waitingSince)}`}
+                        </span>
+                      )}
                       {(c.takenBy || !c.open) && (
                         <span className="mt-0.5 block text-[11px] font-semibold text-slate-400">
                           {!c.open ? "Done" : c.takenBy ? `${list.me === c.takenBy._id ? "You're" : `${who(c.takenBy)} is`} on it` : ""}
@@ -229,6 +243,7 @@ function SupportInbox() {
                   <p className="truncate text-sm font-semibold text-slate-900">{who(thread.person)}</p>
                   <p className="truncate text-xs text-slate-500">
                     {thread.person.email} · ID {short(thread.person._id)} · {planInfo(thread.person.plan).name}
+                    {thread.person.priority && <span className="font-semibold text-amber-700"> · {thread.person.dedicated ? `Dedicated support${thread.person.dedicated.manager ? ` (${who(thread.person.dedicated.manager)})` : ", no account manager yet"}` : "Priority support"} (reply within {PRIORITY_REPLY_HOURS} h)</span>}
                     {thread.business && <> · <Link href={`/dealers/${thread.business.slug}`} className="hover:underline">{thread.business.name}</Link> (Business ID {short(thread.business._id)})</>}
                   </p>
                 </div>

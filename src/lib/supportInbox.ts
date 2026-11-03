@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import { Message } from "@/models/Message";
 import { SupportThread } from "@/models/SupportThread";
 import { getSupportAccount } from "@/lib/support";
+import { User } from "@/models/User";
+import { Organization } from "@/models/Organization";
+import { effectivePlanId, type PlanId } from "@/lib/plans";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -86,4 +89,26 @@ export async function deleteSupportConversations(userIds: Array<string | Oid>): 
   });
   await SupportThread.deleteMany({ userId: { $in: ids } });
   return marked.modifiedCount;
+}
+
+/**
+ * The plan in force for each person writing to Support: their own, or their business owner's for a team member
+ * (a business runs on its owner's plan). Used for Priority support (src/lib/supportPriority.ts).
+ */
+export async function supportPlans(userIds: string[]): Promise<Map<string, PlanId>> {
+  type PlanUser = { _id: Oid; organizationId?: Oid; plan?: string; planExpiresAt?: Date };
+  const users = await User.find({ _id: { $in: userIds } }).select("organizationId plan planExpiresAt").lean<PlanUser[]>();
+  const orgs = await Organization.find({ _id: { $in: users.map(u => u.organizationId).filter(Boolean) } }).select("ownerId").lean<Array<{ _id: Oid; ownerId: Oid }>>();
+  const ownerOf = new Map(orgs.map(o => [String(o._id), String(o.ownerId)]));
+  const known = new Map(users.map(u => [String(u._id), u]));
+  const missing = [...new Set([...ownerOf.values()].filter(id => !known.has(id)))];
+  if (missing.length) {
+    for (const o of await User.find({ _id: { $in: missing } }).select("plan planExpiresAt").lean<PlanUser[]>()) known.set(String(o._id), o);
+  }
+  const out = new Map<string, PlanId>();
+  for (const u of users) {
+    const billing = (u.organizationId && known.get(ownerOf.get(String(u.organizationId)) ?? "")) || u;
+    out.set(String(u._id), effectivePlanId(billing.plan, billing.planExpiresAt));
+  }
+  return out;
 }

@@ -34,8 +34,13 @@ export async function getSupportAdmin(): Promise<SupportAdmin> {
 export const getSupportAccount = getSupportAdmin;
 
 /** Lets every admin's open pages (and phones) know someone wrote to AutoGO Support, for the Support inbox badge. Never throws. */
-export async function notifyAdminsOfSupport(fromName?: string | null, preview?: string) {
+export async function notifyAdminsOfSupport(fromName?: string | null, preview?: string, fromUserId?: string) {
   try {
+    // Dedicated support: an Ultimate business's message goes straight to its account manager (src/lib/accountManager.ts)
+    if (fromUserId) {
+      const { routeToAccountManager } = await import("@/lib/accountManager");
+      await routeToAccountManager(fromUserId);
+    }
     const admins = await User.find({ role: "ADMIN" }).select("_id").lean<Array<{ _id: mongoose.Types.ObjectId }>>();
     await Promise.all(admins.map(a => triggerPusher(`user-${a._id}`, "new-notification", { type: "support", from: fromName, preview: preview?.slice(0, 80) })));
   } catch (e) {

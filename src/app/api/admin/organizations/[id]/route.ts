@@ -5,7 +5,8 @@ import { Organization } from "@/models/Organization";
 import { Listing } from "@/models/Listing";
 import { getOrgUserIds } from "@/lib/business";
 import { sendAsSupport } from "@/lib/support";
-import { isVerified } from "@/lib/plans";
+import { effectivePlanId, isVerified, planHas } from "@/lib/plans";
+import { User } from "@/models/User";
 import { invalidateBusinessSlug, invalidateListingPage } from "@/lib/pageCache";
 import { logAdminAction } from "@/lib/adminLog";
 import { reportError } from "@/lib/errorLog";
@@ -38,10 +39,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Business not found" }, { status: 404 });
-    const { action, reason, months, source } = await req.json().catch(() => ({}));
+    const { action, reason, months, source, adminId } = await req.json().catch(() => ({}));
     const org = await Organization.findById(id);
     if (!org) return NextResponse.json({ error: "Business not found" }, { status: 404 });
     const memberIds = await getOrgUserIds(org._id);
+
+    // Dedicated support (src/lib/accountManager.ts): { action: "accountManager", adminId } sets the admin who looks
+    // after this business; adminId null removes it. The owner is told when their plan includes Dedicated support.
+    if (action === "accountManager") {
+      let manager: { _id: mongoose.Types.ObjectId; name?: string; email: string } | null = null;
+      if (adminId != null) {
+        if (typeof adminId !== "string" || !mongoose.Types.ObjectId.isValid(adminId)) return NextResponse.json({ error: "Choose an admin" }, { status: 400 });
+        manager = await User.findOne({ _id: adminId, role: "ADMIN", isSupportAccount: { $ne: true } }).select("name email").lean<{ _id: mongoose.Types.ObjectId; name?: string; email: string }>();
+        if (!manager) return NextResponse.json({ error: "That person isn't an admin" }, { status: 400 });
+      }
+      if (String(org.accountManagerId ?? "") === String(manager?._id ?? "")) return NextResponse.json({ ok: true });
+      await Organization.updateOne({ _id: org._id }, manager ? { $set: { accountManagerId: manager._id } } : { $unset: { accountManagerId: 1 } });
+      const owner = await User.findById(org.ownerId).select("plan planExpiresAt").lean<{ plan?: string; planExpiresAt?: Date }>();
+      if (manager && planHas(effectivePlanId(owner?.plan, owner?.planExpiresAt), "dedicatedSupport")) {
+        await notifyOwner(gate.admin._id, org.ownerId,
+          `${manager.name || "A member of the AutoGO team"} is now the account manager for "${org.name}". Messages you send AutoGO Support go straight to them.`);
+      }
+      await logAdminAction(gate.admin, "business.accountManager", { type: "BUSINESS", id: org._id, label: org.name }, manager ? (manager.name || manager.email) : "Removed");
+      return NextResponse.json({ ok: true, accountManager: manager ? { _id: String(manager._id), name: manager.name, email: manager.email } : null });
+    }
 
     if (action === "warn") {
       const why = typeof reason === "string" ? reason.trim() : "";

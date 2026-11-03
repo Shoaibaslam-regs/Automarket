@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BUSINESS_FREE_GRACE_UNTIL, businessFreeUntil, businessPlanStatus, endsInText, everHadPlan, planNotice, reminderStage } from "@/lib/businessPlan";
+import { BUSINESS_FREE_GRACE_UNTIL, businessFreeUntil, businessPlanStatus, endsInText, everHadPlan, planNotice, reminderStage, featurePlanId } from "@/lib/businessPlan";
 
 const DAY = 86_400_000;
 const now = new Date("2026-12-10T07:00:00Z");
@@ -81,5 +81,14 @@ describe("planNotice", () => {
   });
   it("names the free month", () => {
     expect(planNotice({ state: "FREE_START", endsAt: ends, planName: "Free", business: true }, at(3))).toMatchObject({ title: "Your business's free month ends in 3 days", action: "Choose a plan" });
+  });
+});
+
+describe("featurePlanId", () => {
+  it("gives a business's free month Premium's features, and nothing else changes", () => {
+    expect(featurePlanId("FREE", "FREE_START")).toBe("STARTER");
+    expect(featurePlanId("FREE", "LAPSED")).toBe("FREE");
+    expect(featurePlanId("FREE", null)).toBe("FREE");
+    expect(featurePlanId("PRO", "PLAN")).toBe("PRO");
   });
 });

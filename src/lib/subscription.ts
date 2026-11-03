@@ -5,10 +5,10 @@ import { Employee } from "@/models/Employee";
 import { Customer } from "@/models/Customer";
 import { Listing } from "@/models/Listing";
 import { getInventorySellerIds } from "@/lib/business";
-import { PLANS, effectivePlanId, formatLimit, quotaMonthStart, quotaResetsAt, type Plan, type PlanId, type PlanSource } from "@/lib/plans";
+import { PLANS, effectivePlanId, formatLimit, planHas, quotaMonthStart, quotaResetsAt, type Plan, type PlanFeature, type PlanId, type PlanSource } from "@/lib/plans";
 import { ListingLog } from "@/models/ListingLog";
 import { Deal } from "@/models/Deal";
-import { businessPlanStatus, type BusinessPlanStatus } from "@/lib/businessPlan";
+import { businessPlanStatus, featurePlanId, type BusinessPlanStatus } from "@/lib/businessPlan";
 
 type PlanFields = {
   _id: mongoose.Types.ObjectId;
@@ -35,6 +35,14 @@ export type Subscription = {
    */
   business: BusinessPlanStatus | null;
 };
+
+/**
+ * Whether the account's plan includes a feature (PLAN_FEATURES in src/lib/plans.ts). Business members use their
+ * owner's plan, as everywhere else. Nothing calls this to refuse anything yet: each feature switches to it on its own.
+ */
+export function subscriptionHas(sub: Pick<Subscription, "planId" | "business">, feature: PlanFeature): boolean {
+  return planHas(featurePlanId(sub.planId, sub.business?.state), feature);
+}
 
 export type LimitKind = "listings" | "staff" | "customers";
 export type Usage = Record<LimitKind, number>;

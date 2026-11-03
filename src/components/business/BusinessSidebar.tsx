@@ -329,17 +329,19 @@ function SidebarContent({
       {/* Plan + account */}
       <div className="relative space-y-3 border-t border-white/10 px-3 pb-4 pt-3">
         {sub && <PlanCard sub={sub} />}
-        <div className="flex items-center justify-between gap-2 px-1">
+        {/* The plan card, Theme and the account row share the same left and right edges */}
+        <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-slate-500">Theme</span>
           <ThemeToggle tone="dark" compact />
         </div>
-        <div className="flex items-center gap-2.5 px-1">
+        <div className="flex items-center gap-2.5">
           <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold ring-1 ring-inset ring-white/15">
             {session?.user?.image ? <Image src={session.user.image} alt="" fill sizes="32px" className="object-cover" /> : session?.user?.name?.[0]?.toUpperCase() || "?"}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-200">{session?.user?.name}</p>
-            <UserIdBadge id={session?.user?.id} kind="me" className="mt-0.5 !bg-white/5 !px-1.5 !text-[10px] !text-slate-400 !ring-white/10" />
+            <p className="truncate text-xs font-semibold leading-tight text-slate-200">{session?.user?.name}</p>
+            {/* One plain line under the name ("My ID #5357a1"), never a wrapped chip */}
+            <UserIdBadge id={session?.user?.id} kind="me" className="mt-0.5 max-w-full whitespace-nowrap !gap-1 !bg-transparent !px-0 !py-0 !text-[10px] leading-tight !text-slate-400 !ring-0 hover:!text-white" />
           </div>
           <Link
             href="/"

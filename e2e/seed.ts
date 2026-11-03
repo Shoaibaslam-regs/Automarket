@@ -17,6 +17,7 @@ import { FuelPrice } from "../src/models/FuelPrice";
 import { OilMarketPrice } from "../src/models/OilMarketPrice";
 import { OilPriceHistory } from "../src/models/OilPriceHistory";
 import { STARTER_POSTS } from "../src/lib/blogStarter";
+import { Purchase } from "../src/models/Purchase";
 
 export const SEED_FILE = path.join(__dirname, ".data", "seed.json");
 export const PASSWORD = "Drive-Safe-2026!";
@@ -24,7 +25,7 @@ const DAY = 86_400_000;
 
 export type Seed = {
   password: string;
-  users: { owner: string; renterA: string; renterB: string; dealer: string; lapsed: string };
+  users: { owner: string; renterA: string; renterB: string; dealer: string; lapsed: string; ultimate: string };
   names: { renterA: string; renterB: string };
   rentalListingId: string;
   civicId: string;
@@ -80,6 +81,25 @@ export async function seed(uri: string): Promise<Seed> {
   await Employee.create({ organizationId: lapsedOrg._id, userId: lapsed._id, role: "OWNER" });
   await User.updateOne({ _id: lapsed._id }, { organizationId: lapsedOrg._id, organizationRole: "OWNER" });
   await User.updateOne({ _id: dealer._id }, { organizationId: org._id, organizationRole: "OWNER" });
+
+  // An Ultimate business (Advanced reports, Dedicated support) with a sale this month and one two months ago
+  const ultimate = await User.create({ ...person("Umar Ultimate", "ultimate@e2e.test", "03001110006"), plan: "UNLIMITED", planSource: "PAID", planExpiresAt: new Date(Date.now() + 30 * DAY) });
+  // Its Verified badge was approved and is still running (the pricing page's badge card)
+  const ultimateOrg = await Organization.create({
+    name: "Ultimate Motors", slug: "ultimate-motors", type: "DEALER", ownerId: ultimate._id, isActive: true, city: "Islamabad",
+    verification: { verifiedAt: new Date(Date.now() - 5 * DAY), expiresAt: new Date(Date.now() + 25 * DAY), source: "ADMIN_GRANT" },
+  });
+  await Employee.create({ organizationId: ultimateOrg._id, userId: ultimate._id, role: "OWNER" });
+  await User.updateOne({ _id: ultimate._id }, { organizationId: ultimateOrg._id, organizationRole: "OWNER" });
+  const sale = (title: string, make: string, price: number, at: Date) => ({
+    organizationId: ultimateOrg._id, vehicle: { title, make }, buyer: { name: "Walk-in Buyer", phone: "03009990001" },
+    askingPrice: price, agreedPrice: price, amountPaid: price, source: "WALK_IN", status: "COMPLETED", completedAt: at,
+    createdBy: ultimate._id, handledBy: ultimate._id,
+  });
+  await Purchase.create([
+    sale("Honda Civic 2021", "Honda", 6500000, new Date(Date.now() - 3_600_000)),
+    sale("Toyota Corolla 2018", "Toyota", 3800000, new Date(Date.now() - 60 * DAY)),
+  ]);
   const deal = await Deal.create({
     organizationId: org._id, createdBy: dealer._id, title: "Wedding convoy package", dealType: "RENT",
     make: "Toyota", model: "Fortuner", year: 2023, condition: "EXCELLENT", location: "Karachi", address: "Shahrah-e-Faisal",
@@ -125,7 +145,7 @@ export async function seed(uri: string): Promise<Seed> {
 
   const data: Seed = {
     password: PASSWORD,
-    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email, lapsed: lapsed.email },
+    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email, lapsed: lapsed.email, ultimate: ultimate.email },
     names: { renterA: renterA.name, renterB: renterB.name },
     rentalListingId: String(rentalListing._id),
     civicId: String(civics[0]._id),

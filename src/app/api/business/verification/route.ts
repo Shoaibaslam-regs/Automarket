@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { routeToAccountManager } from "@/lib/accountManager";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
@@ -93,6 +94,7 @@ export async function POST() {
       badgeRequestText(org.name, VERIFIED_BADGE.price, { id: session.user.id, email: me?.email, business: { id: String(member.organizationId), name: org.name } }),
       session.user.name
     );
+    await routeToAccountManager(session.user.id);
     return NextResponse.json({ supportUserId }, { status: 201 });
   } catch (error) {
     reportError("Verification request error:", error);

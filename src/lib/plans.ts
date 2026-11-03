@@ -27,7 +27,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: "Get started with a few vehicles and a small team",
     price: 0,
     limits: { listings: 3, staff: 1, customers: 5 },
-    features: ["3 listings or deals a month", "Just you (no staff accounts)", "AI-verified photos", "Buyer messaging", "Up to 5 customer leads"],
+    features: ["3 listings or deals a month", "Just you (no staff accounts)", "AI-verified photos", "Buyer messaging", "Rental management", "Up to 5 customer leads"],
   },
   STARTER: {
     id: "STARTER",
@@ -60,6 +60,35 @@ export const PLANS: Record<PlanId, Plan> = {
 };
 
 export const PLAN_LIST: Plan[] = PLAN_IDS.map(id => PLANS[id]);
+
+/**
+ * What each plan includes besides its limits: the single source for the pricing page's comparison and for any
+ * feature check (`planHas`, and `subscriptionHas` in src/lib/subscription.ts). A higher plan includes everything a
+ * lower one does. Labels match the plans' `features` text.
+ */
+export const PLAN_FEATURES = {
+  aiPhotos: { label: "AI-verified photos", from: "FREE" },
+  messaging: { label: "Buyer messaging", from: "FREE" },
+  // Renting out vehicles and managing bookings is on every plan, private sellers included
+  rentals: { label: "Rental management", from: "FREE" },
+  salesReports: { label: "Sales reports", from: "STARTER" },
+  prioritySupport: { label: "Priority support", from: "PRO" },
+  advancedReports: { label: "Advanced reports", from: "UNLIMITED" },
+  dedicatedSupport: { label: "Dedicated support", from: "UNLIMITED" },
+} as const satisfies Record<string, { label: string; from: PlanId }>;
+
+export type PlanFeature = keyof typeof PLAN_FEATURES;
+export const PLAN_FEATURE_LIST = Object.keys(PLAN_FEATURES) as PlanFeature[];
+
+/** Whether a plan includes a feature (plans are ordered FREE < STARTER < PRO < UNLIMITED). */
+export function planHas(planId: PlanId, feature: PlanFeature): boolean {
+  return PLAN_IDS.indexOf(planId) >= PLAN_IDS.indexOf(PLAN_FEATURES[feature].from);
+}
+
+/** The cheapest plan that includes a feature, for "Available on Premium Plus" prompts. */
+export function planFor(feature: PlanFeature): Plan {
+  return PLANS[PLAN_FEATURES[feature].from];
+}
 
 export function isPlanId(value: unknown): value is PlanId {
   return typeof value === "string" && (PLAN_IDS as readonly string[]).includes(value);

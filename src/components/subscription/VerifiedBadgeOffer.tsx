@@ -135,8 +135,19 @@ export default function VerifiedBadgeOffer() {
       <div className="grid lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600">Add-on for businesses</span>
-            <VerifiedBadge />
+            {status?.business ? (
+              // The signed-in user's own business: its name, and the tick only once an admin has approved the badge
+              // and it hasn't ended (state from badgeState/isVerified). Pending or expired badges show the name alone.
+              <>
+                <span className="min-w-0 max-w-full truncate text-sm font-semibold text-slate-900">{status.business.name}</span>
+                {status.state === "VERIFIED" && <VerifiedBadge />}
+              </>
+            ) : (
+              <>
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600">Add-on for businesses</span>
+                <VerifiedBadge />
+              </>
+            )}
           </div>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">{VERIFIED_BADGE.name}</h2>
           <p className="mt-1 max-w-[520px] text-sm leading-relaxed text-slate-500">

@@ -14,6 +14,9 @@ import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
 import { useTurnstile } from "@/components/ui/Turnstile";
+import { useSubscription } from "@/components/subscription/useSubscription";
+import { planFor } from "@/lib/plans";
+import { PRIORITY_REPLY_HOURS, isPrioritySupport } from "@/lib/supportPriority";
 
 type Org = { _id: string; name: string; isActive?: boolean; suspension?: { reason: string; at: string } };
 
@@ -30,6 +33,14 @@ export default function BusinessSupportPage() {
   const [sending, setSending] = useState(false);
   const human = useTurnstile("support");
   const [error, setError] = useState("");
+  // Premium Plus and up get Priority support (src/lib/supportPriority.ts)
+  const { data: sub } = useSubscription();
+  const priority = !!sub && isPrioritySupport(sub.planId);
+  // Ultimate: Dedicated support, with the account manager's name once one is assigned (src/lib/accountManager.ts)
+  const [dedicated, setDedicated] = useState<{ manager: { name: string } | null } | null>(null);
+  useEffect(() => {
+    fetch("/api/business/account-manager").then(r => r.json()).then(d => setDedicated(d.dedicated ? { manager: d.manager ?? null } : null)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/business/organizations")
@@ -146,7 +157,18 @@ export default function BusinessSupportPage() {
             </Link>
             <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4 text-[12px] text-[var(--gh-57606a)]">
               <p className="flex items-center gap-1.5 font-semibold text-[var(--gh-0d1117)]"><Clock3 size={13} /> Response time</p>
-              <p className="mt-1">Usually within a day. Plan and suspension requests are handled by an admin.</p>
+              {dedicated ? (
+                <p className="mt-1">
+                  <span className="font-semibold text-[var(--gh-7d4e00)]">Dedicated support.</span>{" "}
+                  {dedicated.manager
+                    ? <>Your account manager, <span className="font-semibold text-[var(--gh-0d1117)]">{dedicated.manager.name}</span>, gets your messages here directly and aims to reply within {PRIORITY_REPLY_HOURS} hours.</>
+                    : <>An account manager is being assigned to your business. Until then your messages go to the front of the team&apos;s queue, with replies within {PRIORITY_REPLY_HOURS} hours.</>}
+                </p>
+              ) : priority ? (
+                <p className="mt-1"><span className="font-semibold text-[var(--gh-7d4e00)]">Priority support.</span> Your messages go to the front of the team&apos;s queue, and we aim to reply within {PRIORITY_REPLY_HOURS} hours.</p>
+              ) : (
+                <p className="mt-1">Usually within a day. Plan and suspension requests are handled by an admin.{sub && <> {planFor("prioritySupport").name} and up get Priority support, with replies within {PRIORITY_REPLY_HOURS} hours.</>}</p>
+              )}
               <p className="mt-3 flex items-center gap-1.5 font-semibold text-[var(--gh-0d1117)]"><ShieldCheck size={13} /> Reporting abuse?</p>
               <p className="mt-1">Choose &ldquo;Report a problem or abuse&rdquo; and include links or booking numbers.</p>
             </div>

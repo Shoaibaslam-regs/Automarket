@@ -18,6 +18,7 @@ import DealCard from "@/components/deals/DealCard";
 import { getLiveDeals } from "@/lib/publicDeals";
 import Footer from "@/components/Footer";
 import LiveStats from "@/components/home/LiveStats";
+import { getShowHomeStats } from "@/lib/siteFlags";
 import HomeSearchInput from "@/components/home/HomeSearchInput";
 import RecentlyViewed from "@/components/listings/RecentlyViewed";
 import { getPublicStats } from "@/lib/publicStats";
@@ -84,11 +85,12 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default async function HomePage() {
-  const [{ forSale, forRent }, deals, stats, sponsored] = await Promise.all([
+  const [{ forSale, forRent }, deals, stats, sponsored, showStats] = await Promise.all([
     getData(),
     getLiveDeals({ sort: "discount", limit: 4 }).catch(() => []),
     getPublicStats(),
     getSponsored().catch(err => { console.error("Sponsored ads failed:", err); return []; }),
+    getShowHomeStats(),
   ]);
   const now = new Date().getTime();
 
@@ -197,8 +199,8 @@ export default async function HomePage() {
                   {/* ── Where a returning visitor left off ── */}
                   <RecentlyViewed />
 
-        {/* ── Live numbers ── */}
-        <LiveStats initial={stats} />
+        {/* ── Live numbers, once an admin switches them on (Admin → Overview) ── */}
+        {showStats && <LiveStats initial={stats} />}
 
         {/* ── Why AutoGO ── */}
         <section>

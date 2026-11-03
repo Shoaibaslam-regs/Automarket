@@ -16,7 +16,8 @@ type Stats = {
   inventory: { totalVehicles: number; available: number; sold: number; reserved: number };
   customers: { totalCustomers: number; leads: number; testDrives: number; closedSales: number };
   rentals: { totalBookings: number; activeRentals: number };
-  monthly: { sales: number; revenue: number };
+  /** revenue is null for roles that don't see money (owner and managers do) */
+  monthly: { sales: number; revenue: number | null };
 };
 
 type Organization = {
@@ -245,7 +246,7 @@ export default function BusinessDashboard() {
                   label: "This month sales",
                   value: stats?.monthly.sales || 0,
                   icon: Wallet,
-                  sub: `PKR ${((stats?.monthly.revenue || 0) / 1000000).toFixed(1)}M sold`,
+                  sub: stats?.monthly.revenue != null ? `PKR ${(stats.monthly.revenue / 1000000).toFixed(1)}M sold` : "vehicles sold",
                   color: "var(--gh-7d4e00)",
                 },
                 {
