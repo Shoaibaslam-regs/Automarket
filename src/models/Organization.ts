@@ -43,7 +43,10 @@ export interface IOrganization extends Document {
   verification?: {
     verifiedAt?: Date;
     expiresAt?: Date;
-    source?: "PAID" | "ADMIN_GRANT";
+    /** PLAN: included with the owner's plan (src/lib/planBadge.ts), which keeps a paid badge's end in paidUntil */
+    source?: "PAID" | "ADMIN_GRANT" | "PLAN";
+    paidUntil?: Date;
+    paidSource?: "PAID" | "ADMIN_GRANT";
     by?: mongoose.Types.ObjectId;
     requestedAt?: Date;
     requestedBy?: mongoose.Types.ObjectId;
@@ -110,7 +113,9 @@ const OrganizationSchema = new Schema<IOrganization>(
         {
           verifiedAt: { type: Date },
           expiresAt: { type: Date },
-          source: { type: String, enum: ["PAID", "ADMIN_GRANT"] },
+          source: { type: String, enum: ["PAID", "ADMIN_GRANT", "PLAN"] },
+          paidUntil: { type: Date },
+          paidSource: { type: String, enum: ["PAID", "ADMIN_GRANT"] },
           by: { type: Schema.Types.ObjectId, ref: "User" },
           requestedAt: { type: Date },
           requestedBy: { type: Schema.Types.ObjectId, ref: "User" },

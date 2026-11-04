@@ -90,7 +90,7 @@ export default function VerifiedBadgeOffer() {
         {verified && v && (
           <Note icon={BadgeCheck} tone="sky">
             <strong className="font-semibold">{status.business.name}</strong> is verified
-            {v.expiresAt ? ` until ${fmt(v.expiresAt)}` : ""}.{v.source === "ADMIN_GRANT" && <> <Gift size={12} className="inline" /> Complimentary.</>}
+            {v.expiresAt ? ` until ${fmt(v.expiresAt)}` : ""}.{v.source === "ADMIN_GRANT" && <> <Gift size={12} className="inline" /> Complimentary.</>}{v.source === "PLAN" && <> Included with your plan.</>}
           </Note>
         )}
         {!verified && status.state === "EXPIRED" && v?.expiresAt && (

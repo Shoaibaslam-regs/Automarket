@@ -27,7 +27,7 @@ import AddPhoneCard from "@/components/profile/AddPhoneCard";
 type Oid = mongoose.Types.ObjectId;
 type MyListing = {
   _id: Oid; title: string; make: string; model: string; year: number; price: number; location: string;
-  type: "SALE" | "RENT" | "BOTH"; status: string; images?: string[]; createdAt: Date;
+  type: "SALE" | "RENT" | "BOTH"; status: string; images?: string[]; createdAt: Date; boostedUntil?: Date;
 };
 type UpcomingBooking = {
   _id: Oid; startDate: Date; endDate: Date; status: string; totalAmount: number;
@@ -190,6 +190,7 @@ export default async function DashboardPage() {
               type: l.type,
               status: l.status,
               image: l.images?.[0] ?? null,
+              boostedUntil: l.boostedUntil ? l.boostedUntil.toISOString() : null,
             }))}
           />
 

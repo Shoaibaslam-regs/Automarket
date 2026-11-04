@@ -79,7 +79,7 @@ const TYPE_LABELS: Record<string, string> = { DEALER: "Dealer", RENTAL: "Rental"
 
 type Counts = ReturnType<typeof useNotificationCounts>;
 
-/** Org switcher card with an account menu; dark glass to match the sidebar. */
+/** Org switcher card with an account menu; follows the light/dark theme like the rest of the sidebar. */
 function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts: Counts; onSignOut: () => void }) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
@@ -99,55 +99,55 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 rounded-2xl bg-white/[0.06] p-2.5 text-left ring-1 ring-inset ring-white/10 transition hover:bg-white/10"
+        className="flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50"
       >
         <span className="relative flex-shrink-0 rounded-xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[1.5px]">
           <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[10px] bg-slate-900 text-sm font-extrabold text-white">
             {org?.logo ? <Image src={org.logo} alt="" fill sizes="36px" className="object-cover" /> : org?.name?.[0]?.toUpperCase() || "B"}
           </span>
-          <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-slate-950" />
+          <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-white" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-1">
-            <span className="truncate text-[13px] font-semibold text-white">{org?.name || "My Business"}</span>
+            <span className="truncate text-[13px] font-semibold text-slate-900">{org?.name || "My Business"}</span>
             {org?.verified && <VerifiedBadge variant="icon" size={14} />}
           </span>
-          <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
             <span className="truncate">{TYPE_LABELS[org?.type ?? ""] ?? "Business"}</span>
-            <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-amber-300/10 px-1.5 py-px text-[10px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-200/20">
+            <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-px text-[10px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
               <Crown size={9} /> {plan.name}
             </span>
           </span>
         </span>
-        <ChevronDown size={14} className={`flex-shrink-0 text-slate-500 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`flex-shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-2xl bg-slate-900 p-1.5 shadow-2xl shadow-black/50 ring-1 ring-white/10">
+        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-2xl bg-white p-1.5 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200">
           {/* Who is signed in, then the business and both IDs on their own rows, like the marketplace menus */}
-          <div className="mb-1 border-b border-white/10 px-2.5 pb-3 pt-2">
+          <div className="mb-1 border-b border-slate-100 px-2.5 pb-3 pt-2">
             <div className="flex items-center gap-2.5">
-              <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-sm font-bold text-white ring-1 ring-inset ring-white/15">
+              <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-sm font-bold text-slate-700 ring-1 ring-inset ring-slate-200">
                 {session?.user?.image
                   ? <Image src={session.user.image} alt="" fill sizes="36px" className="object-cover" />
                   : session?.user?.name?.[0]?.toUpperCase() || "?"}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold leading-tight text-white">{session?.user?.name}</p>
-                <p className="mt-0.5 truncate text-[11px] text-slate-400">{session?.user?.email}</p>
+                <p className="truncate text-[13px] font-semibold leading-tight text-slate-900">{session?.user?.name}</p>
+                <p className="mt-0.5 truncate text-[11px] text-slate-500">{session?.user?.email}</p>
               </div>
             </div>
             {/* The business, then both IDs as aligned rows: label on the left, number and copy on the right */}
-            <div className="mt-3 border-t border-white/10 pt-2.5">
+            <div className="mt-3 border-t border-slate-100 pt-2.5">
               {org?.name && (
-                <p className="mb-1.5 flex min-w-0 items-center gap-1 text-[12px] font-semibold text-slate-200">
+                <p className="mb-1.5 flex min-w-0 items-center gap-1 text-[12px] font-semibold text-slate-800">
                   <span className="truncate">{org.name}</span>
                   {org.verified && <VerifiedBadge variant="icon" size={13} />}
                 </p>
               )}
               <div className="space-y-0.5">
-                <UserIdBadge id={org?._id} kind="business" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-300 !ring-0 hover:!bg-white/5 hover:!text-white" />
-                <UserIdBadge id={session?.user?.id} kind="me" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-400 !ring-0 hover:!bg-white/5 hover:!text-white" />
+                <UserIdBadge id={org?._id} kind="business" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-600 !ring-0 hover:!bg-slate-50 hover:!text-slate-900" />
+                <UserIdBadge id={session?.user?.id} kind="me" spread className="!flex w-full !rounded-md !bg-transparent !px-1.5 !py-1 !text-[11px] !text-slate-500 !ring-0 hover:!bg-slate-50 hover:!text-slate-900" />
               </div>
             </div>
           </div>
@@ -162,17 +162,17 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
               <item.icon size={15} strokeWidth={1.8} />
               {item.label}
               {item.href === "/messages" && <CountBadge count={counts.messages} className="ml-auto" />}
             </Link>
           ))}
-          <div className="my-1 h-px bg-white/10" />
+          <div className="my-1 h-px bg-slate-100" />
           <button
             onClick={() => { setOpen(false); onSignOut(); }}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-rose-300 transition hover:bg-rose-500/10"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-rose-600 transition hover:bg-rose-50"
           >
             <LogOut size={15} strokeWidth={1.8} /> Sign out
           </button>
@@ -197,35 +197,35 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
   const pct = limit === null ? 100 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
   const full = limit !== null && used >= limit;
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-3.5 ring-1 ring-inset ring-white/10">
-      <div aria-hidden className={`pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full blur-2xl ${lapsed ? "bg-rose-400/20" : "bg-amber-400/20"}`} />
+    <div className="relative overflow-hidden rounded-2xl bg-white p-3.5 ring-1 ring-inset ring-slate-200">
+      <div aria-hidden className={`pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full blur-2xl ${lapsed ? "bg-rose-400/15" : "bg-amber-400/15"}`} />
       <div className="relative flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-white">
-          <Crown size={13} className={lapsed ? "text-rose-300" : "text-amber-300"} />
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+          <Crown size={13} className={lapsed ? "text-rose-500" : "text-amber-500"} />
           {lapsed ? "Plan ended" : b?.state === "FREE_START" ? "Free month" : `${plan.name} plan`}
           {!lapsed && daysLeft != null && (
-            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${daysLeft <= 7 ? "bg-rose-400/20 text-rose-200" : "bg-white/10 text-slate-300"}`}>
+            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${daysLeft <= 7 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
               {daysLeft <= 1 ? "ends today" : `${daysLeft}d left`}
             </span>
           )}
         </p>
         {!lapsed && (
-          <span className={`text-[11px] tabular-nums ${full ? "font-semibold text-rose-300" : "text-slate-400"}`}>
+          <span className={`text-[11px] tabular-nums ${full ? "font-semibold text-rose-600" : "text-slate-500"}`}>
             {used}/{formatLimit(limit)}
           </span>
         )}
       </div>
       {lapsed ? (
-        <p className="relative mt-1.5 text-[11px] leading-snug text-slate-400">Subscribe to add new listings, deals, staff and customers. Everything else keeps working.</p>
+        <p className="relative mt-1.5 text-[11px] leading-snug text-slate-500">Subscribe to add new listings, deals, staff and customers. Everything else keeps working.</p>
       ) : (
         <>
-          <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div
-              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-400" : pct >= 75 ? "bg-amber-400" : "bg-gradient-to-r from-indigo-400 to-sky-400"}`}
+              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-500" : pct >= 75 ? "bg-amber-400" : "bg-gradient-to-r from-indigo-500 to-sky-400"}`}
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="relative mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-500">
+          <p className="relative mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-slate-400">
             <Tip id="listingQuota" size={11} />Listings & deals this month
           </p>
         </>
@@ -258,15 +258,15 @@ function SidebarContent({
   const navBadge = (href: string) => (href === "/business/bookings" ? counts.ownerBookings : href === "/business/sales" ? counts.sales : href === "/business/updates" ? counts.updates : 0);
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-slate-950 text-white">
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-600/25 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
+    <div className="relative flex h-full flex-col overflow-hidden bg-slate-100 text-slate-900">
+      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-400/10 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-amber-400/10 blur-3xl" />
 
       {/* The business card on top (no logo); the phone drawer adds its close button above it */}
       <div className="relative space-y-3 px-4 pb-4 pt-5">
         {onClose && (
           <div className="flex justify-end">
-            <button onClick={onClose} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
+            <button onClick={onClose} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
               <X size={16} />
             </button>
           </div>
@@ -278,7 +278,7 @@ function SidebarContent({
       <nav className="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-3">
         {NAV_GROUPS.map((group, i) => (
           <div key={group.title} className={`space-y-0.5 ${i > 0 ? "pt-4" : ""}`}>
-            <MenuGroupTitle tone="dark" className="pl-5 pr-2.5">{group.title}</MenuGroupTitle>
+            <MenuGroupTitle className="pl-5 pr-2.5">{group.title}</MenuGroupTitle>
             {group.items.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               const badge = navBadge(href);
@@ -290,11 +290,11 @@ function SidebarContent({
                   aria-current={active ? "page" : undefined}
                   // The current page: a dot on the left and a faint background; hover is only a light tint
                   className={`group relative flex items-center gap-3 rounded-xl py-2.5 pl-5 pr-2.5 text-[13.5px] font-medium transition ${
-                    active ? "bg-white/[0.07] text-white" : "text-slate-400 hover:bg-white/[0.025] hover:text-slate-200"
+                    active ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                   }`}
                 >
-                  {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />}
-                  <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-white" : "text-slate-500 group-hover:text-slate-300"}`} />
+                  {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500" />}
+                  <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-600"}`} />
                   <span className="flex-1 truncate">{label}</span>
                   {badge > 0 && <CountBadge count={badge} />}
                 </Link>
@@ -305,49 +305,49 @@ function SidebarContent({
 
         {org?.slug && (
           <>
-            <MenuGroupTitle tone="dark" className="pl-5 pr-2.5 pt-4">Your shop</MenuGroupTitle>
+            <MenuGroupTitle className="pl-5 pr-2.5 pt-4">Your shop</MenuGroupTitle>
             <a
               href={`/dealers/${org.slug}`}
               target="_blank"
               rel="noreferrer"
               onClick={onClose}
-              className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500/15 to-fuchsia-500/10 px-2.5 py-2 text-[13.5px] font-medium text-indigo-100 ring-1 ring-inset ring-indigo-400/25 transition hover:from-indigo-500/25 hover:to-fuchsia-500/20"
+              className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-50 to-fuchsia-50 px-2.5 py-2 text-[13.5px] font-medium text-indigo-900 ring-1 ring-inset ring-indigo-200 transition hover:from-indigo-500/25 hover:to-fuchsia-500/20"
             >
-              <span className="flex flex-shrink-0 items-center justify-center text-indigo-200">
+              <span className="flex flex-shrink-0 items-center justify-center text-indigo-600">
                 <Globe size={16} strokeWidth={1.9} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate">View public page</span>
-                <span className="block truncate text-[10px] text-indigo-300/70">How customers see you</span>
+                <span className="block truncate text-[10px] text-indigo-600/80">How customers see you</span>
               </span>
-              <ExternalLink size={13} className="flex-shrink-0 text-indigo-300/70 transition group-hover:text-indigo-100" />
+              <ExternalLink size={13} className="flex-shrink-0 text-indigo-500/80 transition group-hover:text-indigo-700" />
             </a>
           </>
         )}
       </nav>
 
       {/* Plan + account */}
-      <div className="relative space-y-3 border-t border-white/10 px-3 pb-4 pt-3">
+      <div className="relative space-y-3 border-t border-slate-200 px-3 pb-4 pt-3">
         {sub && <PlanCard sub={sub} />}
         {/* The plan card, Theme and the account row share the same left and right edges */}
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-slate-500">Theme</span>
-          <ThemeToggle tone="dark" compact />
+          <ThemeToggle compact />
         </div>
         <div className="flex items-center gap-2.5">
-          <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold ring-1 ring-inset ring-white/15">
+          <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-bold text-slate-700 ring-1 ring-inset ring-slate-200">
             {session?.user?.image ? <Image src={session.user.image} alt="" fill sizes="32px" className="object-cover" /> : session?.user?.name?.[0]?.toUpperCase() || "?"}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold leading-tight text-slate-200">{session?.user?.name}</p>
+            <p className="truncate text-xs font-semibold leading-tight text-slate-800">{session?.user?.name}</p>
             {/* One plain line under the name ("My ID #5357a1"), never a wrapped chip */}
-            <UserIdBadge id={session?.user?.id} kind="me" className="mt-0.5 max-w-full whitespace-nowrap !gap-1 !bg-transparent !px-0 !py-0 !text-[10px] leading-tight !text-slate-400 !ring-0 hover:!text-white" />
+            <UserIdBadge id={session?.user?.id} kind="me" className="mt-0.5 max-w-full whitespace-nowrap !gap-1 !bg-transparent !px-0 !py-0 !text-[10px] leading-tight !text-slate-500 !ring-0 hover:!text-slate-900" />
           </div>
           <Link
             href="/"
             title="Back to marketplace"
             aria-label="Back to marketplace"
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 ring-1 ring-inset ring-white/10 transition hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:text-slate-900"
           >
             <ArrowLeftRight size={14} />
           </Link>
@@ -355,7 +355,7 @@ function SidebarContent({
             onClick={onSignOut}
             title="Sign out"
             aria-label="Sign out"
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-rose-300 ring-1 ring-inset ring-white/10 transition hover:bg-rose-500/15"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-rose-600 ring-1 ring-inset ring-slate-200 transition hover:bg-rose-50"
           >
             <LogOut size={14} />
           </button>
@@ -421,25 +421,25 @@ export default function BusinessSidebar() {
       `}</style>
 
       {/* Desktop sidebar */}
-      <aside className="biz-desktop-sidebar sticky top-0 h-screen w-[248px] flex-shrink-0 border-r border-white/5">
+      <aside className="biz-desktop-sidebar sticky top-0 h-screen w-[248px] flex-shrink-0 border-r border-slate-200">
         {content()}
       </aside>
 
-      {/* Mobile top bar: the dark counterpart of the marketplace navbar */}
-      <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl">
+      {/* Mobile top bar: the console's counterpart of the marketplace navbar, following the theme */}
+      <div className="biz-mobile-topbar fixed inset-x-0 top-0 z-50 hidden h-12 items-center justify-between gap-2 border-b border-slate-200 bg-white/90 px-3 backdrop-blur-xl">
         <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-          <BrandLogo tone="dark" height={13} />
+          <BrandLogo height={13} />
         </Link>
         <div className="flex min-w-0 items-center gap-2">
-          <NotificationBell tone="dark" className="!h-9 !w-9" />
+          <NotificationBell className="!h-9 !w-9" />
           <button
             onClick={() => setMobileOpenOn(pathname)}
             aria-label="Open menu"
             aria-expanded={mobileOpen}
-            className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06] ring-1 ring-inset ring-white/15 transition active:scale-95"
+            className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 ring-1 ring-inset ring-slate-200 transition active:scale-95"
           >
-            <NotificationDot show={hasUnread} className="right-1.5 top-1.5 ring-slate-950" />
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[11px] font-bold text-slate-950">
+            <NotificationDot show={hasUnread} className="right-1.5 top-1.5 ring-white" />
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[11px] font-bold text-white">
               {session?.user?.name?.[0]?.toUpperCase() || "?"}
             </span>
           </button>
@@ -447,27 +447,27 @@ export default function BusinessSidebar() {
       </div>
 
       {/* Phone bottom bar: the pages used every day, one tap away; More opens the full menu */}
-      <nav aria-label="Business shortcuts" className="biz-mobile-bottombar fixed inset-x-0 bottom-0 z-[800] hidden grid-cols-5 border-t border-white/10 bg-slate-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+      <nav aria-label="Business shortcuts" className="biz-mobile-bottombar fixed inset-x-0 bottom-0 z-[800] hidden grid-cols-5 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
         {BOTTOM_ITEMS.map(({ href, label, icon: Icon, badge }) => {
           const active = pathname === href || (href !== "/business/dashboard" && pathname.startsWith(href));
           const count = badge ? badge(counts) : 0;
           return (
             <Link key={href} href={href} aria-current={active ? "page" : undefined}
-              className={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold transition ${active ? "text-white" : "text-slate-400"}`}>
-              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-amber-300" />}
+              className={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold transition ${active ? "text-slate-900" : "text-slate-500"}`}>
+              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400" />}
               <span className="relative">
                 <Icon size={19} strokeWidth={active ? 2.3 : 1.9} />
-                <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[9px] ring-2 ring-slate-950" />
+                <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[9px] ring-2 ring-white" />
               </span>
               {label}
             </Link>
           );
         })}
         <button onClick={() => setMobileOpenOn(pathname)} aria-label="More: open the full menu" aria-expanded={mobileOpen}
-          className="relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold text-slate-400">
+          className="relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold text-slate-500">
           <span className="relative">
             <Menu size={19} />
-            <NotificationDot show={counts.messages + counts.updates > 0} className="-right-1 -top-1 ring-slate-950" />
+            <NotificationDot show={counts.messages + counts.updates > 0} className="-right-1 -top-1 ring-white" />
           </span>
           More
         </button>

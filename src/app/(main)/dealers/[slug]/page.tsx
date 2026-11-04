@@ -66,7 +66,8 @@ const loadBusinessPage = (slug: string) =>
       const memberIds = await getOrgUserIds(org._id);
       const [listings, ratingRows, firstReviews, notices] = await Promise.all([
         // Recently sold or rented vehicles stay on show (stamped) after the available ones
-        Listing.find({ sellerId: { $in: memberIds }, ...publicStatusQuery() }).sort({ status: 1, featured: -1, createdAt: -1 }).limit(24).populate(CARD_SELLER_POPULATE).lean(),
+        // Pinned vehicles first (Premium Plus and up, newest pin first), then available before sold and rented
+        Listing.find({ sellerId: { $in: memberIds }, ...publicStatusQuery() }).sort({ pinnedAt: -1, status: 1, createdAt: -1 }).limit(24).populate(CARD_SELLER_POPULATE).lean(),
         BusinessReview.aggregate<{ _id: number; count: number }>([
           { $match: { organizationId: org._id } },
           { $group: { _id: "$rating", count: { $sum: 1 } } },

@@ -7,6 +7,8 @@ import { PLANS, TRIAL_MONTHS, addPlanPeriods, effectivePlanId, isFreeGrant, isPl
 import { logAdminAction } from "@/lib/adminLog";
 
 import { closeTeamRequests } from "@/lib/teamRequests";
+import { syncPlanBadge } from "@/lib/planBadgeSync";
+import { syncBoosts } from "@/lib/boostServer";
 /** Gift lengths, in 30-day plan periods */
 const DURATIONS = [1, 3, 6, 12];
 
@@ -65,6 +67,9 @@ export async function PATCH(
       ).select("name email plan planExpiresAt planSource trialUsedAt trialPlan");
       if (user) {
         await logAdminAction(gate.admin, "user.plan", { type: "USER", id, label: user.name || user.email }, `Started ${PLANS[plan].name} free trial until ${expiresAt.toLocaleDateString("en-PK")}`);
+        // Ultimate comes with the Verified badge (src/lib/planBadge.ts)
+        await syncPlanBadge(id);
+        await syncBoosts(id);
         return NextResponse.json({ user });
       }
       const existing = await User.findById(id).select("trialUsedAt trialPlan").lean<{ trialUsedAt?: Date; trialPlan?: string }>();
@@ -106,6 +111,9 @@ export async function PATCH(
     if (plan !== "FREE") {
       await closeTeamRequests({ kind: "PLAN", userId: id }, { adminId: gate.admin._id, status: "DONE", outcome: `${source === "PAID" ? "Paid" : "Gift"}: ${PLANS[plan].name}${until}` });
     }
+    // Ultimate comes with the Verified badge; another plan takes the included one away (src/lib/planBadge.ts)
+    await syncPlanBadge(id);
+    await syncBoosts(id);
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ error: "Failed to update plan" }, { status: 500 });
@@ -142,6 +150,8 @@ export async function DELETE(
       { returnDocument: "after" }
     ).select("name email plan");
     await logAdminAction(gate.admin, "user.planRevoke", { type: "USER", id, label: updated?.name || updated?.email }, `Revoked ${user.planSource === "TRIAL" ? "free trial" : "gifted plan"}`);
+    await syncPlanBadge(id);
+    await syncBoosts(id);
     return NextResponse.json({ user: updated });
   } catch {
     return NextResponse.json({ error: "Failed to revoke plan" }, { status: 500 });

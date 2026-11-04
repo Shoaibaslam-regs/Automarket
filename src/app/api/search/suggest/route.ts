@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         { $limit: 2 },
       ]),
       Listing.find({ ...active, ...all(["title", "make", "model", "location"]) })
-        .sort({ featured: -1, createdAt: -1 }).limit(4).select("title price type year location").lean<Array<{ _id: unknown; title: string; price: number; type: string; year: number; location: string }>>(),
+        .sort({ createdAt: -1 }).limit(4).select("title price type year location").lean<Array<{ _id: unknown; title: string; price: number; type: string; year: number; location: string }>>(),
     ]);
 
     const suggestions: Suggestion[] = [

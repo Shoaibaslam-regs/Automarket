@@ -108,6 +108,8 @@ export async function PATCH(
     }
 
     if ("status" in update && update.status !== listing.status) update.statusChangedAt = new Date();
+    // Taking a vehicle off sale ends its boost (src/lib/boosts.ts)
+    if ("status" in update && update.status !== "ACTIVE") (update as Record<string, unknown>).boostedUntil = null;
     if ("address" in update) update.address = cleanAddress(update.address);
 
     // Ownership is re-checked in the write itself so the update can never touch someone else's listing

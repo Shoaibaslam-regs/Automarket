@@ -184,6 +184,8 @@ async function badgeReminders(now: Date): Promise<number> {
   const orgs = await Organization.find({
     isActive: { $ne: false },
     "verification.expiresAt": { $gt: new Date(now.getTime() - 3 * DAY), $lte: new Date(now.getTime() + 3 * DAY) },
+    // A badge that comes with the plan ends with it, and the plan's own reminders already say so
+    "verification.source": { $ne: "PLAN" },
   }).select("ownerId verification.expiresAt verification.reminderFor verification.remindersSent").limit(MAX_PER_KIND)
     .lean<Array<{ _id: Oid; ownerId: Oid; verification: { expiresAt: Date; reminderFor?: Date; remindersSent?: number[] } }>>();
 

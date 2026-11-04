@@ -25,6 +25,10 @@ export interface IListing extends Omit<Document, "model"> {
   /** Hidden automatically after REPORTS_TO_HIDE people reported it (src/lib/reportAutoHide.ts); dismissing the reports brings it back */
   autoHiddenAt?: Date;
   featured: boolean;
+  /** Boosted to the top of matching Marketplace results until then (src/lib/boosts.ts) */
+  boostedUntil?: Date;
+  /** Pinned first on its business's shop page (Premium Plus and up) */
+  pinnedAt?: Date;
   sellerId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -60,7 +64,11 @@ const ListingSchema = new Schema<IListing>(
     /** Taken down by an admin (status INACTIVE or PENDING from the admin Listings page): the seller can't switch it back on */
     removedByAdmin: { type: Boolean },
     autoHiddenAt: { type: Date },
+    // No longer read or set: the admin "Feature" switch was replaced by business boosts (boostedUntil). Kept so old
+    // documents still load.
     featured: { type: Boolean, default: false },
+    boostedUntil: { type: Date },
+    pinnedAt: { type: Date },
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
@@ -72,8 +80,11 @@ ListingSchema.index({
   title: "text",
   location: "text",
 });
-// Browse and the home page (status first, then featured and newest), and each seller's or team's vehicles
-ListingSchema.index({ status: 1, featured: -1, createdAt: -1 });
+// Browse and the home page (status first, then newest), and each seller's or team's vehicles. (The old
+// { status, featured, createdAt } index is no longer used; it can be dropped in Atlas.)
+ListingSchema.index({ status: 1, createdAt: -1 });
+// Boosted vehicles still running, for the top of Marketplace
+ListingSchema.index({ boostedUntil: 1 }, { partialFilterExpression: { boostedUntil: { $exists: true } } });
 ListingSchema.index({ status: 1, type: 1, createdAt: -1 });
 ListingSchema.index({ sellerId: 1, createdAt: -1 });
 

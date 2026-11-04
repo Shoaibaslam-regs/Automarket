@@ -8,6 +8,7 @@ import { getBusinessRatings } from "@/lib/reviews";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 import { DEALS_TAG, PUBLIC_CACHE_SECONDS, dealTag } from "@/lib/pageCache";
 import { countByCity, knownCity, nearbyFirst } from "@/lib/dealCities";
+import { boostedFirst } from "@/lib/boosts";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -19,6 +20,8 @@ export type PublicDeal = {
   _id: string;
   title: string;
   description?: string;
+  /** Boosted to the top of the Deals page until then (src/lib/boosts.ts) */
+  boostedUntil?: string;
   /** Older deals have no type and are sales */
   dealType?: "SALE" | "RENT";
   vehicleCount?: number;
@@ -124,7 +127,8 @@ export async function getLiveDealsPage(filters: DealPageFilters, page: number): 
   const { near, ...rest } = filters;
   const pool = await getLiveDeals({ ...rest, limit: DEALS_POOL });
   // Ordered in memory from the same cached pool, so `near` adds no cache entries or database reads
-  const all = near && !rest.city ? nearbyFirst(pool, near) : pool;
+  // Boosted deals lead (src/lib/boosts.ts), then a city's region first for a city without deals of its own
+  const all = boostedFirst(near && !rest.city ? nearbyFirst(pool, near) : pool);
   const start = (Math.max(1, page) - 1) * DEALS_PAGE_SIZE;
   return { deals: all.slice(start, start + DEALS_PAGE_SIZE), total: all.length };
 }

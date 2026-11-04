@@ -40,7 +40,7 @@ async function load(page: SeoPage): Promise<SeoPageData> {
   await connectDB();
   const match = matchFor(page);
   const [listings, priced, byMake, byLocation, deals] = await Promise.all([
-    Listing.find(match).sort({ featured: -1, createdAt: -1 }).limit(SEO_PAGE_SIZE).populate(CARD_SELLER_POPULATE).lean(),
+    Listing.find(match).sort({ createdAt: -1 }).limit(SEO_PAGE_SIZE).populate(CARD_SELLER_POPULATE).lean(),
     Listing.find(match).select("price type").limit(5000).lean<{ _id: mongoose.Types.ObjectId; price: number; type: string }[]>(),
     page.make ? Promise.resolve([]) : Listing.aggregate<{ _id: string; n: number }>([
       { $match: matchFor(page, { withMake: false }) },

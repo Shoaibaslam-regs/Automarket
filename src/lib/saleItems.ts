@@ -126,7 +126,8 @@ export async function finishSale(p: Pick<IPurchase, "_id" | "listingId" | "dealI
   if (p.listingId) {
     const l = await Listing.findById(p.listingId).select("sellerId status").lean<{ sellerId: Oid; status: string }>();
     if (l && l.status !== "SOLD") {
-      await Listing.updateOne({ _id: p.listingId }, { $set: { status: "SOLD", statusChangedAt: new Date() } });
+      // Sold ends a boost (src/lib/boosts.ts)
+      await Listing.updateOne({ _id: p.listingId }, { $set: { status: "SOLD", statusChangedAt: new Date() }, $unset: { boostedUntil: 1 } });
       await invalidateListingAndSeller(p.listingId, l.sellerId);
     }
     others.listingId = p.listingId;

@@ -7,6 +7,8 @@ import { Listing } from "@/models/Listing";
 import { getInventorySellerIds } from "@/lib/business";
 import { PLANS, effectivePlanId, formatLimit, planHas, quotaMonthStart, quotaResetsAt, type Plan, type PlanFeature, type PlanId, type PlanSource } from "@/lib/plans";
 import { ListingLog } from "@/models/ListingLog";
+import { claimQuota, quotaKey, releaseQuota } from "@/lib/quotaCounter";
+import { QuotaCounter } from "@/models/QuotaCounter";
 import { Deal } from "@/models/Deal";
 import { businessPlanStatus, featurePlanId, type BusinessPlanStatus } from "@/lib/businessPlan";
 
@@ -102,12 +104,15 @@ async function listingsThisMonth(sellerIds: mongoose.Types.ObjectId[]): Promise<
 
 export async function getUsage(userId: string, sub: Subscription): Promise<Usage> {
   const sellerIds = await getInventorySellerIds(userId);
-  const [listings, staff, customers] = await Promise.all([
+  const [counted, counter, staff, customers] = await Promise.all([
     listingsThisMonth(sellerIds),
+    // The quota counter (src/lib/quotaCounter.ts) is what reserveListingSlot enforces; it can be ahead of the records
+    // (posts from before the log existed, then deleted), so show the higher number and the meter matches the refusal
+    QuotaCounter.findOne({ key: quotaKey("listings", sub.organizationId ? `org:${sub.organizationId}` : `user:${userId}`) }).select("count").lean<{ count: number }>(),
     sub.organizationId ? Employee.countDocuments({ organizationId: sub.organizationId }) : Promise.resolve(1),
     sub.organizationId ? Customer.countDocuments({ organizationId: sub.organizationId }) : Promise.resolve(0),
   ]);
-  return { listings, staff, customers };
+  return { listings: Math.max(counted, counter?.count ?? 0), staff, customers };
 }
 
 const LIMIT_NOUNS: Record<LimitKind, string> = {
@@ -163,20 +168,29 @@ export async function checkPlanLimit(userId: string, kind: LimitKind) {
 
 /**
  * Takes one slot of the monthly listing quota for a listing or deal that is about to be created (pass the id it
- * will be created with). The ListingLog entry is written first and the month counted after, so requests sent at
- * the same moment can't all pass a count taken before any of them was logged; whoever ends up over the limit
- * removes its own entry and is refused. Call `release()` if the listing or deal then fails to save, so a failed
- * attempt doesn't use up quota. (Entries are otherwise never deleted.)
+ * will be created with). The slot is taken on the account's atomic counter first (src/lib/quotaCounter.ts), so of
+ * requests sent at the same moment exactly the ones within the limit pass; then the ListingLog entry is written.
+ * Call `release()` if the listing or deal then fails to save, so a failed attempt doesn't use up quota. (Log entries
+ * are otherwise never deleted, so deleted listings and deals keep counting.)
  */
 export async function reserveListingSlot(userId: string, target: { listingId: mongoose.Types.ObjectId } | { dealId: mongoose.Types.ObjectId }) {
   const sub = await getSubscription(userId);
   if (sub.business?.state === "LAPSED") return { ok: false as const, error: planLapsed(sub, "listings") };
   const limit = sub.plan.limits.listings;
-  const log = await ListingLog.create({ sellerId: userId, ...target });
-  const release = () => ListingLog.deleteOne({ _id: log._id }).then(() => undefined, () => undefined);
-  if (limit === null) return { ok: true as const, release };
+  // A team shares one quota (getUsage counts every member's posts), so the counter belongs to the business
+  const key = quotaKey("listings", sub.organizationId ? `org:${sub.organizationId}` : `user:${userId}`);
   const used = (await getUsage(userId, sub)).listings;
-  if (used <= limit) return { ok: true as const, release };
-  await release();
-  return { ok: false as const, error: limitReached(sub, "listings", limit, used - 1) };
+  if (!(await claimQuota(key, used, limit))) {
+    return { ok: false as const, error: limitReached(sub, "listings", limit!, Math.max(used, limit!)) };
+  }
+  let log;
+  try {
+    log = await ListingLog.create({ sellerId: userId, ...target });
+  } catch (e) {
+    await releaseQuota(key).catch(() => undefined);
+    throw e;
+  }
+  const release = () =>
+    Promise.all([ListingLog.deleteOne({ _id: log._id }), releaseQuota(key)]).then(() => undefined, () => undefined);
+  return { ok: true as const, release };
 }

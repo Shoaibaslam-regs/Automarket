@@ -45,7 +45,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tagline: "For growing dealerships",
     price: 1199,
     limits: { listings: 35, staff: 6, customers: 199 },
-    features: ["35 listings or deals a month", "Team of 6 (owner + 5 staff)", "Up to 199 customer leads", "Rental management", "Sales reports", "Priority support"],
+    features: ["35 listings or deals a month", "Team of 6 (owner + 5 staff)", "Up to 199 customer leads", "Sales reports", "Money & profit tracking", "12 boosts a month, 7 days each", "Pinned vehicles on your shop", "10% off sponsored ads", "Priority support"],
     highlight: true,
   },
   UNLIMITED: {
@@ -53,9 +53,9 @@ export const PLANS: Record<PlanId, Plan> = {
     accent: "var(--gh-9a6700)",
     name: "Ultimate",
     tagline: "Run your whole business on AutoGO",
-    price: 4999,
-    limits: { listings: null, staff: null, customers: null },
-    features: ["Unlimited listings and deals", "Unlimited staff", "Unlimited customers", "Full business management", "Advanced reports", "Dedicated support"],
+    price: 3999,
+    limits: { listings: 200, staff: 30, customers: 1000 },
+    features: ["200 listings or deals a month", "Team of 30", "Up to 1,000 customer leads", "Verified badge included", "50 boosts a month, 30 days each", "25% off sponsored ads", "Advanced reports", "Dedicated support"],
   },
 };
 
@@ -73,9 +73,26 @@ export const PLAN_FEATURES = {
   rentals: { label: "Rental management", from: "FREE" },
   salesReports: { label: "Sales reports", from: "STARTER" },
   prioritySupport: { label: "Priority support", from: "PRO" },
+  money: { label: "Money & profit tracking", from: "PRO" },
+  boost: { label: "Boost listings", from: "PRO" },
+  pinnedVehicles: { label: "Pinned vehicles on your shop", from: "PRO" },
+  adDiscount: { label: "Sponsored ad discount", from: "PRO" },
+  verifiedIncluded: { label: "Verified badge included", from: "UNLIMITED" },
   advancedReports: { label: "Advanced reports", from: "UNLIMITED" },
   dedicatedSupport: { label: "Dedicated support", from: "UNLIMITED" },
 } as const satisfies Record<string, { label: string; from: PlanId }>;
+
+/**
+ * Boosts (PLAN_FEATURES.boost): how many a plan gives each calendar month (Pakistan time, like the listing quota) and
+ * how long each one keeps a vehicle or deal at the top. A used boost stays used, even if the item is then deleted.
+ */
+export const PLAN_BOOSTS: Partial<Record<PlanId, { perMonth: number; days: number }>> = {
+  PRO: { perMonth: 12, days: 7 },
+  UNLIMITED: { perMonth: 50, days: 30 },
+};
+
+/** Percent off sponsored ads (PLAN_FEATURES.adDiscount). */
+export const AD_DISCOUNT_PCT: Partial<Record<PlanId, number>> = { PRO: 10, UNLIMITED: 25 };
 
 export type PlanFeature = keyof typeof PLAN_FEATURES;
 export const PLAN_FEATURE_LIST = Object.keys(PLAN_FEATURES) as PlanFeature[];
@@ -198,8 +215,10 @@ export const SPONSORED_AD = {
 
 export const AD_TIER_LABEL: Record<AdTier, string> = { STANDARD: "Standard", TOP: "Top" };
 
-export function adPrice(weeks: number, tier: AdTier = "STANDARD"): number {
-  return SPONSORED_AD.pricePerWeek[tier] * weeks;
+export function adPrice(weeks: number, tier: AdTier = "STANDARD", planId?: PlanId): number {
+  const full = SPONSORED_AD.pricePerWeek[tier] * weeks;
+  const pct = (planId && AD_DISCOUNT_PCT[planId]) || 0;
+  return Math.round(full * (1 - pct / 100));
 }
 
 /**
@@ -215,16 +234,17 @@ export function standardShare(standardAds: number, topAds: number): number {
 export type BadgeVerification = {
   verifiedAt?: Date | string | null;
   expiresAt?: Date | string | null;
-  source?: "PAID" | "ADMIN_GRANT" | null;
+  /** PLAN: included with the owner's plan (PLAN_FEATURES.verifiedIncluded, src/lib/planBadge.ts) */
+  source?: "PAID" | "ADMIN_GRANT" | "PLAN" | null;
   requestedAt?: Date | string | null;
   rejectedAt?: Date | string | null;
   rejectionReason?: string | null;
 };
 
 /** Whether the badge is in force right now: approved and not past its end date. */
-export function isVerified(v: BadgeVerification | null | undefined): boolean {
+export function isVerified(v: BadgeVerification | null | undefined, now = new Date()): boolean {
   if (!v?.verifiedAt) return false;
-  return !v.expiresAt || new Date(v.expiresAt).getTime() > Date.now();
+  return !v.expiresAt || new Date(v.expiresAt).getTime() > now.getTime();
 }
 
 export type BadgeState = "NONE" | "VERIFIED" | "EXPIRED";

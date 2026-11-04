@@ -16,7 +16,8 @@ export async function PATCH(
     if (!gate.ok) return gate.response;
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
-    // Only what the admin Listings page changes; never pass the request body straight to the database
+    // Only the status (the old `featured` switch is gone: businesses boost their own vehicles); never pass the
+    // request body straight to the database
     const update: Record<string, unknown> = {};
     if (body.status !== undefined) {
       if (!LISTING_STATUSES.includes(body.status)) return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -25,17 +26,12 @@ export async function PATCH(
       // Taking a listing down sticks: the seller can't switch it back on until an admin does
       update.removedByAdmin = body.status === "INACTIVE" || body.status === "PENDING";
     }
-    if (body.featured !== undefined) {
-      if (typeof body.featured !== "boolean") return NextResponse.json({ error: "Invalid value" }, { status: 400 });
-      update.featured = body.featured;
-    }
     if (!Object.keys(update).length) return NextResponse.json({ error: "Nothing to change" }, { status: 400 });
     await connectDB();
     const listing = await Listing.findByIdAndUpdate(id, { $set: update }, { returnDocument: "after" });
     if (listing) {
       await invalidateListingAndSeller(id, listing.sellerId);
-      const what = [update.status && `status → ${update.status}`, update.featured !== undefined && (update.featured ? "featured" : "unfeatured")].filter(Boolean).join(", ");
-      await logAdminAction(gate.admin, "listing.update", { type: "LISTING", id: listing._id, label: listing.title }, what);
+      await logAdminAction(gate.admin, "listing.update", { type: "LISTING", id: listing._id, label: listing.title }, `status → ${update.status}`);
     }
     return NextResponse.json({ listing });
   } catch {

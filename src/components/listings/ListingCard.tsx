@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Image from "next/image";
-import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2, PhoneCall } from "lucide-react";
+import { isBoosted } from "@/lib/boosts";
+import { Fuel, Gauge, Cog, MapPin, Star, ImageOff, Camera, ArrowUpRight, Building2, PhoneCall, Pin } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { closedTag } from "@/lib/availability";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
@@ -11,6 +12,13 @@ import FavoriteButton from "./FavoriteButton";
 import CompareButton from "./CompareButton";
 
 import AdminBadge from "@/components/AdminBadge";
+/**
+ * The Featured star: a running boost (src/lib/boosts.ts), read from the listing itself so every page shows it, not only
+ * Marketplace. The old admin `featured` flag is no longer read (businesses boost their own vehicles), and there is no
+ * gold border.
+ */
+const showStar = (l: { boosted?: boolean; boostedUntil?: Date | string | null }) => !!l.boosted || isBoosted(l.boostedUntil);
+
 interface Props {
   listing: IListing & { _id: string };
   /** "list" renders a horizontal row with a large photo, for the browse page's list view */
@@ -22,6 +30,8 @@ interface Props {
    * deal and sponsored cards there) and the full card from `sm` up, for the home page's rows.
    */
   compact?: boolean | "phone";
+  /** Shows "Pinned" on the photo: a vehicle its business pinned first on its shop page (Premium Plus and up) */
+  pinned?: boolean;
 }
 
 const TYPE_BADGE: Record<IListing["type"], { label: string; className: string }> = {
@@ -101,8 +111,8 @@ function PriceText({ listing, className }: { listing: Props["listing"]; classNam
   );
 }
 
-export default function ListingCard({ listing, layout = "grid", eager, compact }: Props) {
-  if (layout === "list") return <ListingRow listing={listing} eager={eager} />;
+export default function ListingCard({ listing, layout = "grid", eager, compact, pinned }: Props) {
+  if (layout === "list") return <ListingRow listing={listing} eager={eager} pinned={pinned} />;
 
   const badge = TYPE_BADGE[listing.type] ?? TYPE_BADGE.SALE;
   const photoCount = listing.images?.length ?? 0;
@@ -128,7 +138,7 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
         <article
           className={`flex h-full flex-col rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:rounded-[22px] sm:p-2
             group-hover:shadow-[0_20px_44px_-20px_rgba(15,23,42,0.35)]
-            ${listing.featured ? "ring-amber-300/80" : "ring-slate-200/80 group-hover:ring-slate-300"}`}
+            ring-slate-200/80 group-hover:ring-slate-300`}
         >
           {/* Image tile */}
           <div className={`relative ${short ? "aspect-[16/10]" : phoneShort ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"} overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl`}>
@@ -161,10 +171,16 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide shadow-sm backdrop-blur sm:px-2.5 sm:py-1 sm:text-[11px] ${badge.className}`}>
                 {badge.label}
               </span>
-              {listing.featured && (
+              {showStar(listing) && (
                 <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
                   <Star size={11} strokeWidth={2.5} fill="currentColor" />
                   <span className="hidden lg:inline">Featured</span>
+                </span>
+              )}
+              {pinned && (
+                <span title="Pinned by the business" className="inline-flex items-center gap-1 rounded-full bg-white/95 px-1.5 py-1 text-[10px] font-bold text-slate-900 shadow-sm sm:px-2 sm:text-[11px]">
+                  <Pin size={11} strokeWidth={2.5} />
+                  <span className="hidden sm:inline">Pinned</span>
                 </span>
               )}
             </div>
@@ -236,7 +252,7 @@ export default function ListingCard({ listing, layout = "grid", eager, compact }
   );
 }
 
-function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
+function ListingRow({ listing, eager, pinned }: Pick<Props, "listing" | "eager" | "pinned">) {
   const badge = TYPE_BADGE[listing.type] ?? TYPE_BADGE.SALE;
   const photoCount = listing.images?.length ?? 0;
   const seller = sellerOf(listing);
@@ -256,7 +272,7 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
     <article
       className={`group relative flex gap-3 rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:gap-5 sm:rounded-[22px] sm:p-2
         hover:shadow-[0_20px_44px_-24px_rgba(15,23,42,0.35)]
-        ${listing.featured ? "ring-amber-300/80" : "ring-slate-200/80 hover:ring-slate-300"}`}
+        ring-slate-200/80 hover:ring-slate-300`}
     >
       <div className="relative w-[42%] max-w-[340px] flex-shrink-0 self-start sm:w-[260px] md:w-[300px] lg:w-[320px]">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl">
@@ -283,10 +299,16 @@ function ListingRow({ listing, eager }: Pick<Props, "listing" | "eager">) {
           <ClosedStamp status={listing.status} />
 
           <div className="absolute left-2 top-2 flex items-center gap-1 sm:left-2.5 sm:top-2.5">
-            {listing.featured && (
+            {showStar(listing) && (
               <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
                 <Star size={11} strokeWidth={2.5} fill="currentColor" />
                 <span className="hidden sm:inline">Featured</span>
+              </span>
+            )}
+            {pinned && (
+              <span title="Pinned by the business" className="inline-flex items-center gap-1 rounded-full bg-white/95 px-1.5 py-1 text-[10px] font-bold text-slate-900 shadow-sm sm:px-2 sm:text-[11px]">
+                <Pin size={11} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Pinned</span>
               </span>
             )}
           </div>

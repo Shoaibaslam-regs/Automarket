@@ -11,15 +11,23 @@ import ContactTeam from "@/components/subscription/ContactTeam";
 import UsageMeters from "@/components/subscription/UsageMeters";
 import VerifiedBadgeOffer from "@/components/subscription/VerifiedBadgeOffer";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { PLANS, PLAN_FEATURES, PLAN_FEATURE_LIST, PLAN_LIST, SPONSORED_AD, VERIFIED_BADGE, formatLimit, planHas, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
+import { AD_DISCOUNT_PCT, PLANS, PLAN_BOOSTS, PLAN_FEATURES, PLAN_FEATURE_LIST, PLAN_LIST, type PlanFeature, SPONSORED_AD, VERIFIED_BADGE, formatLimit, planHas, planInfo, planSourceLabel, type Plan } from "@/lib/plans";
 
 const COMPARE_ROWS: { label: string; value: (p: Plan) => string | boolean }[] = [
   { label: "Listings & deals per month", value: p => formatLimit(p.limits.listings) },
   { label: "Team members (incl. owner)", value: p => formatLimit(p.limits.staff) },
   { label: "Customer leads", value: p => formatLimit(p.limits.customers) },
   // What each plan includes comes from PLAN_FEATURES (src/lib/plans.ts), never from its price
-  ...PLAN_FEATURE_LIST.map(f => ({ label: PLAN_FEATURES[f].label, value: (p: Plan) => planHas(p.id, f) })),
+  ...PLAN_FEATURE_LIST.map(f => ({ label: PLAN_FEATURES[f].label, value: (p: Plan) => featureValue(p, f) })),
 ];
+
+/** A feature's cell: the numbers where a plan has them (boosts, discount), else a tick or a dash. */
+function featureValue(p: Plan, f: PlanFeature): string | boolean {
+  if (!planHas(p.id, f)) return false;
+  if (f === "boost" && PLAN_BOOSTS[p.id]) return `${PLAN_BOOSTS[p.id]!.perMonth} a month, ${PLAN_BOOSTS[p.id]!.days} days`;
+  if (f === "adDiscount" && AD_DISCOUNT_PCT[p.id]) return `${AD_DISCOUNT_PCT[p.id]}% off`;
+  return true;
+}
 
 const FAQ = [
   {

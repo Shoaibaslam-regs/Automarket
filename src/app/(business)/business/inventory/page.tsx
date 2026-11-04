@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, Crown, LayoutGrid, List, MapPin, Plus, Search, Trash2 } from "lucide-react";
+import { Car, Crown, LayoutGrid, List, MapPin, Pin, Plus, Search, Trash2 } from "lucide-react";
 import Select from "@/components/ui/Select";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import AvailabilityControl from "@/components/listings/AvailabilityControl";
 import { formatLimit } from "@/lib/plans";
 import { atLimit, useSubscription } from "@/components/subscription/useSubscription";
 import StatusText from "@/components/ui/StatusText";
+import { BoostAllowanceText, BoostButton, PinButton } from "@/components/boosts/BoostControls";
 
 type Vehicle = {
   _id: string;
@@ -29,6 +30,8 @@ type Vehicle = {
   sellerId?: { _id: string; name?: string } | null;
   canManage: boolean;
   canSetAvailability?: boolean;
+  boostedUntil?: string | null;
+  pinnedAt?: string | null;
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
@@ -108,6 +111,14 @@ export default function InventoryPage() {
     { label: "Reserved", count: vehicles.filter(v => v.status === "PENDING").length, color: "var(--gh-7d4e00)" },
   ];
 
+  const patch = (id: string, change: Partial<Vehicle>) => setVehicles(prev => prev.map(x => (x._id === id ? { ...x, ...change } : x)));
+  const promoteButtons = (v: Vehicle, compact = false) => (
+    <>
+      <BoostButton listingId={v._id} boostedUntil={v.boostedUntil} live={v.status === "ACTIVE"} compact={compact} onBoosted={until => patch(v._id, { boostedUntil: until })} />
+      <PinButton listingId={v._id} pinned={!!v.pinnedAt} onChanged={p => patch(v._id, { pinnedAt: p ? new Date().toISOString() : null })} />
+    </>
+  );
+
   const deleteButton = (v: Vehicle, compact = false) =>
     v.canManage ? (
       <button
@@ -149,6 +160,7 @@ export default function InventoryPage() {
               {listingsFull && " · mark a vehicle sold or upgrade to add more"}
             </p>
           )}
+          <BoostAllowanceText className="mt-0.5" />
         </div>
         {listingsFull ? (
           <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2.5 text-[13px] font-bold text-slate-950 transition hover:opacity-90">
@@ -225,6 +237,9 @@ export default function InventoryPage() {
                     <div className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><Car size={25} strokeWidth={1.5} /></div>
                   )}
                   <span className="absolute left-2 top-2"><StatusPill status={v.status} /></span>
+                  {v.pinnedAt && (
+                    <span title="Pinned on your shop page" className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-slate-900 shadow-sm"><Pin size={10} /> Pinned</span>
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col p-3">
                   <p className="truncate text-[13px] font-bold text-[var(--gh-0d1117)]">{v.title}</p>
@@ -247,6 +262,7 @@ export default function InventoryPage() {
                     <Link href={`/listings/${v._id}`} className="flex h-8 flex-1 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] text-[11px] font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-eef1f4)]">
                       View
                     </Link>
+                    {promoteButtons(v, true)}
                     {deleteButton(v)}
                   </div>
                 </div>
@@ -283,6 +299,7 @@ export default function InventoryPage() {
                 )}
                 <div className="flex flex-shrink-0 gap-1.5">
                   <Link href={`/listings/${v._id}`} className="inline-flex h-8 items-center rounded-lg border border-[var(--gh-e1e4e8)] bg-[var(--gh-f6f8fa)] px-2.5 text-[11px] font-semibold text-[var(--gh-0d1117)] hover:bg-[var(--gh-eef1f4)]">View</Link>
+                  <span className="hidden gap-1.5 sm:flex">{promoteButtons(v)}</span>
                   {deleteButton(v, true)}
                 </div>
               </div>

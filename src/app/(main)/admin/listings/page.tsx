@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ExternalLink, ImageOff, Star, Trash2 } from "lucide-react";
+import { isBoosted } from "@/lib/boosts";
 import { PageHeader, Panel, SearchField, SelectField, StatusBadge, btn } from "@/components/admin/ui";
 import Select from "@/components/ui/Select";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
@@ -17,7 +18,7 @@ type Listing = {
   price: number;
   status: string;
   type: string;
-  featured: boolean;
+  boostedUntil?: string | null;
   images: string[];
   sellerId: { name: string; email: string };
   createdAt: string;
@@ -68,13 +69,14 @@ export default function AdminListingsPage() {
     const matchStatus = statusFilter ? l.status === statusFilter : true;
     return matchSearch && matchStatus;
   });
-  const featuredCount = listings.filter(l => l.featured).length;
+  // Businesses boost their own vehicles now (src/lib/boosts.ts); the old admin "Feature" switch was removed
+  const boostedCount = listings.filter(l => isBoosted(l.boostedUntil)).length;
 
   return (
     <>
       <PageHeader
         title="Listings"
-        description={loading ? "Loading…" : `${listings.length.toLocaleString()} total · ${featuredCount} featured`}
+        description={loading ? "Loading…" : `${listings.length.toLocaleString()} total · ${boostedCount} boosted`}
         actions={
           <>
             <SearchField value={search} onChange={setSearch} placeholder="Search title or make…" />
@@ -110,8 +112,8 @@ export default function AdminListingsPage() {
                     <ImageOff size={18} />
                   </div>
                 )}
-                {listing.featured && (
-                  <span className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-amber-950">
+                {isBoosted(listing.boostedUntil) && (
+                  <span title="Boosted by its seller" className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-amber-950">
                     <Star size={9} fill="currentColor" />
                   </span>
                 )}
@@ -141,14 +143,6 @@ export default function AdminListingsPage() {
                   options={STATUS_OPTIONS.map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
                   className="w-auto min-w-[104px] text-slate-700"
                 />
-                <button
-                  onClick={() => updateListing(listing._id, { featured: !listing.featured })}
-                  disabled={!canWrite || updating === listing._id}
-                  className={`${btn.base} ${listing.featured ? btn.warn : btn.secondary}`}
-                >
-                  <Star size={13} fill={listing.featured ? "currentColor" : "none"} />
-                  {listing.featured ? "Featured" : "Feature"}
-                </button>
                 <button
                   onClick={() => deleteListing(listing._id)}
                   disabled={!canWrite || updating === listing._id}

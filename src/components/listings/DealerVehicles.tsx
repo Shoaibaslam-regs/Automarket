@@ -67,7 +67,7 @@ export default function DealerVehicles({ listings, businessName }: { listings: A
         <>
           <div className={view === "list" ? "flex flex-col gap-3 sm:gap-4" : "grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4 lg:grid-cols-3"}>
             {listings.slice(0, shown).map((l, i) => (
-              <ListingCard key={l._id} listing={l} layout={view} eager={i < 2} />
+              <ListingCard key={l._id} listing={l} layout={view} eager={i < 2} pinned={!!l.pinnedAt} />
             ))}
           </div>
           {listings.length > shown && (

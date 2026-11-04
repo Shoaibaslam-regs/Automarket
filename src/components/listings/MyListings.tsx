@@ -8,6 +8,7 @@ import DeleteListing from "./DeleteListing";
 import AvailabilityControl from "./AvailabilityControl";
 import { formatLakh } from "@/lib/format";
 import StatusText, { textTone } from "@/components/ui/StatusText";
+import { BoostAllowanceText, BoostButton } from "@/components/boosts/BoostControls";
 
 export type MyListing = {
   id: string;
@@ -20,6 +21,7 @@ export type MyListing = {
   type: "SALE" | "RENT" | "BOTH";
   status: string;
   image: string | null;
+  boostedUntil?: string | null;
 };
 
 type View = "grid" | "list";
@@ -46,8 +48,10 @@ function Price({ l, className }: { l: MyListing; className: string }) {
 
 /** Inspect and delete; the photo and title already open the listing. */
 function Actions({ l }: { l: MyListing }) {
+  const [boostedUntil, setBoostedUntil] = useState(l.boostedUntil ?? null);
   return (
     <div className="flex items-center gap-1.5">
+      <BoostButton listingId={l.id} boostedUntil={boostedUntil} live={l.status === "ACTIVE"} compact onBoosted={setBoostedUntil} />
       <Link href={`/listings/${l.id}/inspect`} aria-label="AI inspection" title="AI inspection" className="inline-flex h-8 items-center gap-1 rounded-lg bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100">
         <ScanSearch size={13} /> Inspect
       </Link>
@@ -100,6 +104,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
         </div>
       </div>
 
+      {listings.length > 0 && <BoostAllowanceText className="-mt-1 mb-3" />}
       {listings.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white px-6 py-14 text-center">
           <span className="mx-auto flex items-center justify-center text-slate-900">

@@ -39,6 +39,8 @@ export interface IDeal extends Omit<Document, "model"> {
   endsAt: Date;
   /** Paused by the business */
   paused: boolean;
+  /** Boosted to the top of the Deals page until then (src/lib/boosts.ts) */
+  boostedUntil?: Date;
   /** Switched off by an admin; the business can't turn it back on */
   disabledByAdmin: boolean;
   /** Switched off automatically after REPORTS_TO_HIDE people reported it; dismissing the reports switches it back on */
@@ -73,6 +75,7 @@ const DealSchema = new Schema<IDeal>(
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
     paused: { type: Boolean, default: false },
+    boostedUntil: { type: Date },
     disabledByAdmin: { type: Boolean, default: false },
     autoHiddenAt: { type: Date },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },

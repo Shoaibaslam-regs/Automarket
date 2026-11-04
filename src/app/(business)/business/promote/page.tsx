@@ -8,7 +8,8 @@ import StatusText from "@/components/ui/StatusText";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useRateLock } from "@/hooks/useRateLock";
-import { AD_TIER_LABEL, SPONSORED_AD, adPrice, standardShare, type AdTier } from "@/lib/plans";
+import { AD_DISCOUNT_PCT, AD_TIER_LABEL, SPONSORED_AD, adPrice, standardShare, type AdTier } from "@/lib/plans";
+import { useSubscription } from "@/components/subscription/useSubscription";
 import { AD_KIND_LABEL, AD_STATE_LABEL, AD_STATE_TONE, adHref, adState, type AdKind } from "@/lib/ads";
 
 type Ad = {
@@ -42,6 +43,9 @@ export default function PromotePage() {
   const [clearing, setClearing] = useState(false);
   const [clearError, setClearError] = useState("");
   const lock = useRateLock("support");
+  // Premium Plus and Ultimate get a discount on ads (AD_DISCOUNT_PCT); the server charges the same price
+  const planId = useSubscription().data?.planId;
+  const discount = planId ? AD_DISCOUNT_PCT[planId] ?? 0 : 0;
 
   function load() {
     return fetch("/api/business/ads")
@@ -184,13 +188,13 @@ export default function PromotePage() {
                       })()}
                 </p>
 
-                <p className={label}>How long *</p>
+                <p className={label}>How long *{discount > 0 && <span className="ml-1.5 font-semibold normal-case text-[var(--gh-1a7f37)]">{discount}% off on your plan</span>}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {SPONSORED_AD.weeks.map(w => (
                     <button key={w} type="button" onClick={() => setWeeks(w)}
                       className={`rounded-lg px-2 py-2 text-center ring-1 ring-inset transition ${weeks === w ? "bg-[var(--gh-0d1117)] text-white ring-[var(--gh-0d1117)]" : "bg-white text-[var(--gh-0d1117)] ring-[var(--gh-d0d7de)] hover:bg-[var(--gh-f6f8fa)]"}`}>
                       <span className="block text-[13px] font-semibold">{w} week{w > 1 ? "s" : ""}</span>
-                      <span className="block text-[11px] opacity-75">PKR {adPrice(w, tier).toLocaleString()}</span>
+                      <span className="block text-[11px] opacity-75">PKR {adPrice(w, tier, planId).toLocaleString()}</span>
                     </button>
                   ))}
                 </div>
@@ -208,7 +212,7 @@ export default function PromotePage() {
 
                 <button type="submit" disabled={sending || lock.locked}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--gh-0d1117)] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[var(--gh-24292f)] disabled:opacity-50 sm:w-auto sm:px-5">
-                  <Send size={14} /> {lock.locked ? lock.text : sending ? "Sending…" : `Send request · PKR ${adPrice(weeks, tier).toLocaleString()}`}
+                  <Send size={14} /> {lock.locked ? lock.text : sending ? "Sending…" : `Send request · PKR ${adPrice(weeks, tier, planId).toLocaleString()}`}
                 </button>
               </form>
             ) : (

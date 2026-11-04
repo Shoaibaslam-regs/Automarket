@@ -58,7 +58,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "The business is suspended, so listings can't be switched back on." }, { status: 403 });
     }
 
-    await Listing.updateOne({ _id: id }, { $set: { status: next, statusChangedAt: new Date() } });
+    // Sold or rented ends a boost (src/lib/boosts.ts); the boost stays used
+    await Listing.updateOne({ _id: id }, { $set: { status: next, statusChangedAt: new Date() }, ...(next !== "ACTIVE" && { $unset: { boostedUntil: 1 } }) });
     await logBusinessAction({ userId: session.user.id }, "listing.status", { type: "LISTING", id, label: listing.title }, { details: `${listing.status} → ${next}` });
     await invalidateListingAndSeller(id, sellerId);
     return NextResponse.json({ ok: true, status: next });

@@ -13,6 +13,8 @@ import { sendExpiryReminders } from "@/lib/expiryReminders";
 import { pkDay, pkRange } from "@/lib/money";
 import { digestText, type DigestCounts as Counts } from "@/lib/today";
 import { reportError } from "@/lib/errorLog";
+import { syncPlanBadge } from "@/lib/planBadgeSync";
+import { planFor } from "@/lib/plans";
 import { runFuelJobs } from "@/lib/fuelJobs";
 import { requestExpiryCutoff } from "@/lib/bookings";
 
@@ -121,6 +123,21 @@ async function expireStaleRequests(now: Date) {
   return { expired: modifiedCount };
 }
 
+/**
+ * Verified badges that come with a plan (src/lib/planBadge.ts): owners on such a plan whose business has no badge
+ * from it yet (for example, Ultimate before badges were included), and plan badges whose plan has since changed.
+ * At most 200 a day; the plan route keeps them in step otherwise.
+ */
+async function syncPlanBadges(now: Date) {
+  const plan = planFor("verifiedIncluded").id;
+  const owners = await User.find({ plan, planExpiresAt: { $gt: now }, organizationId: { $exists: true } }).select("_id").limit(200).lean<Array<{ _id: unknown }>>();
+  const planBadges = await Organization.find({ "verification.source": "PLAN", "verification.expiresAt": { $gt: now } }).select("ownerId").limit(200).lean<Array<{ ownerId: unknown }>>();
+  const ids = [...new Set([...owners.map(o => String(o._id)), ...planBadges.map(o => String(o.ownerId))])];
+  let changed = 0;
+  for (const id of ids) if (await syncPlanBadge(id)) changed++;
+  return { checked: ids.length, changed };
+}
+
 export async function runDailyJobs(now = new Date()) {
   await connectDB();
   const result: Record<string, unknown> = {};
@@ -142,6 +159,12 @@ export async function runDailyJobs(now = new Date()) {
   } catch (e) {
     reportError("Daily job morning digest failed:", e);
     result.digest = "failed";
+  }
+  try {
+    result.planBadges = await syncPlanBadges(now);
+  } catch (e) {
+    reportError("Daily job plan badges failed:", e);
+    result.planBadges = "failed";
   }
   try {
     // Petroleum Division releases and Brent / WTI (src/lib/fuelJobs.ts; /api/cron/fuel runs it more often)

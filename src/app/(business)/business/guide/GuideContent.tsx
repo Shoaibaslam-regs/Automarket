@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PLANS } from "@/lib/plans";
+import { AD_DISCOUNT_PCT, PLAN_BOOSTS, PLANS } from "@/lib/plans";
 import { BUSINESS_FREE_DAYS } from "@/lib/businessPlan";
 import { BadgeDollarSign, BookOpen, CalendarCheck, Crown, LayoutDashboard, Lightbulb, Tag, User, Users, Wallet, type LucideIcon } from "lucide-react";
 
@@ -196,6 +196,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         tips: [
           "Entries marked “automatic” come from payments and can only be changed by changing the payment.",
           "A car still in stock shows a loss until it is sold or rented. That's normal.",
+          `Money comes with ${PLANS.PRO.name} and ${PLANS.UNLIMITED.name}. On a lower plan it is locked, but payments are still recorded, so everything is there when you upgrade.`,
         ],
         open: { href: "/business/money", label: "Open Money" },
       },
@@ -283,7 +284,9 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         tipsTitle: "Good to know",
         tips: [
           "A week before your plan ends, you get a reminder: a card at the top of the console, a notification, an email, and again 3 days and 1 day before.",
-          "When the plan ends, your live listings stay up and bookings, sales, customers and money keep working. You just can't add new listings, deals, staff or customers.",
+          "When the plan ends, your live listings stay up and bookings, sales and customers keep working. You just can't add new listings, deals, staff or customers.",
+          `${PLANS.PRO.name} gives ${PLAN_BOOSTS.PRO!.perMonth} boosts a month (${PLAN_BOOSTS.PRO!.days} days each) and ${PLANS.UNLIMITED.name} ${PLAN_BOOSTS.UNLIMITED!.perMonth} (${PLAN_BOOSTS.UNLIMITED!.days} days each). Tap “Boost” on a vehicle in Inventory or on a deal to show it first on Marketplace or Deals with a Featured star. A used boost stays used, even if you delete the post; the count starts again on the 1st.`,
+          `On ${PLANS.PRO.name} and up you can also pin vehicles (the pin button in Inventory) so they show first on your shop page, and you get ${AD_DISCOUNT_PCT.PRO!}% off sponsored ads (${AD_DISCOUNT_PCT.UNLIMITED!}% on ${PLANS.UNLIMITED.name}). ${PLANS.UNLIMITED.name} includes the Verified badge for as long as the plan runs.`,
           "Only the owner and managers see the Renew buttons. Other staff see a red bar while the plan has ended.",
           "Ask the team for help anytime from “Help & support”.",
         ],
@@ -451,6 +454,7 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         tips: [
           "“automatic” والی اندراجات ادائیگیوں سے آتی ہیں؛ انہیں بدلنے کے لیے ادائیگی بدلیں۔",
           "اسٹاک میں کھڑی گاڑی بکنے یا کرائے پر جانے تک نقصان دکھاتی ہے۔ یہ عام بات ہے۔",
+          `حساب کتاب ${PLANS.PRO.name} اور ${PLANS.UNLIMITED.name} کے ساتھ ملتا ہے۔ چھوٹے پلان پر یہ بند رہتا ہے، مگر ادائیگیاں لکھی جاتی رہتی ہیں، اس لیے اپ گریڈ کرنے پر سب کچھ موجود ہوگا۔`,
         ],
         open: { href: "/business/money", label: "حساب کتاب کھولیں" },
       },
@@ -538,7 +542,9 @@ const CONTENT: Record<Lang, { title: string; subtitle: string; jump: string; sec
         tipsTitle: "یاد رکھنے کی باتیں",
         tips: [
           "پلان ختم ہونے سے ایک ہفتہ پہلے یاد دہانی آتی ہے: کنسول کے اوپر کارڈ، نوٹیفکیشن، ای میل، اور پھر 3 دن اور 1 دن پہلے۔",
-          "پلان ختم ہونے پر آپ کی لسٹنگز لگی رہتی ہیں اور بکنگز، سیلز، کسٹمرز اور حساب کتاب چلتے رہتے ہیں۔ بس نئی لسٹنگ، ڈیل، اسٹاف یا کسٹمر شامل نہیں ہو سکتے۔",
+          "پلان ختم ہونے پر آپ کی لسٹنگز لگی رہتی ہیں اور بکنگز، سیلز اور کسٹمرز چلتے رہتے ہیں۔ بس نئی لسٹنگ، ڈیل، اسٹاف یا کسٹمر شامل نہیں ہو سکتے۔",
+          `${PLANS.PRO.name} میں مہینے کے ${PLAN_BOOSTS.PRO!.perMonth} بوسٹ (ہر ایک ${PLAN_BOOSTS.PRO!.days} دن) اور ${PLANS.UNLIMITED.name} میں ${PLAN_BOOSTS.UNLIMITED!.perMonth} (ہر ایک ${PLAN_BOOSTS.UNLIMITED!.days} دن) ملتے ہیں۔ Inventory میں گاڑی یا ڈیل پر “Boost” دبائیں تو وہ Marketplace یا Deals پر سب سے اوپر Featured ستارے کے ساتھ آتی ہے۔ استعمال شدہ بوسٹ واپس نہیں آتا، چاہے پوسٹ ڈیلیٹ کر دیں؛ گنتی ہر مہینے کی 1 تاریخ کو نئی شروع ہوتی ہے۔`,
+          `${PLANS.PRO.name} اور اوپر کے پلان پر آپ گاڑیاں پِن بھی کر سکتے ہیں (Inventory میں پِن کا بٹن) تاکہ وہ آپ کے شاپ پیج پر سب سے پہلے نظر آئیں، اور اسپانسرڈ اشتہار ${AD_DISCOUNT_PCT.PRO!}% سستے ملتے ہیں (${PLANS.UNLIMITED.name} پر ${AD_DISCOUNT_PCT.UNLIMITED!}%)۔ ${PLANS.UNLIMITED.name} کے ساتھ Verified بیج پلان چلنے تک مفت ہے۔`,
           "Renew کے بٹن صرف مالک اور مینیجر کو نظر آتے ہیں۔ باقی اسٹاف کو پلان ختم ہونے پر سرخ پٹی نظر آتی ہے۔",
           "کسی بھی وقت “Help & support” سے ٹیم سے مدد لیں۔",
         ],

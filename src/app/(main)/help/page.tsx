@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LifeBuoy } from "lucide-react";
 import Footer from "@/components/Footer";
-import { PLANS, VERIFIED_BADGE } from "@/lib/plans";
+import { PLAN_BOOSTS, PLANS, VERIFIED_BADGE } from "@/lib/plans";
 import { LATE_RULE_TEXT } from "@/lib/bookings";
 import { BUSINESS_FREE_DAYS } from "@/lib/businessPlan";
 import { whatsappLink } from "@/lib/supportContact";
@@ -66,6 +66,7 @@ const SECTIONS: Section[] = [
           <li>Private sellers get {free.listings} free listings a month. Need more, a team or a customer list? See <Link href="/pricing">Plans &amp; pricing</Link>.</li>
           <li>When a vehicle is sold or rented, mark it from your <Link href="/dashboard">Dashboard</Link> so buyers know.</li>
           <li>Showrooms and rental companies can open a business console for bookings, sales, customers and money. A new business gets its first {BUSINESS_FREE_DAYS} days free, once; after that it needs a paid plan to add new listings, deals, staff or customers (everything already there keeps working).</li>
+          <li>On {PLANS.PRO.name} and {PLANS.UNLIMITED.name}, a Boost button puts a vehicle or deal first on Marketplace or Deals with a Featured star ({PLAN_BOOSTS.PRO!.perMonth} boosts a month for {PLAN_BOOSTS.PRO!.days} days, or {PLAN_BOOSTS.UNLIMITED!.perMonth} for {PLAN_BOOSTS.UNLIMITED!.days} days). Those plans also unlock Money (cash book and profit), pinned vehicles on the shop page and money off sponsored ads; {PLANS.UNLIMITED.name} includes the Verified badge.</li>
         </ul>
       </>
     ),

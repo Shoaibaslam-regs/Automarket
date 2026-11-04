@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ExternalLink, ImageOff, MapPin, Pause, Pencil, Play, Plus, Tag, Trash2 } from "lucide-react";
 import ConfirmDialog from "@/components/business/ConfirmDialog";
 import { formatLakh } from "@/lib/format";
+import { BoostAllowanceText, BoostButton } from "@/components/boosts/BoostControls";
 import { DEAL_STATE_STYLE, dealLabel, dealPrice, dealState, type DealState } from "@/lib/deals";
 
 type Deal = {
@@ -26,6 +27,7 @@ type Deal = {
   paused: boolean;
   disabledByAdmin: boolean;
   createdBy?: { name?: string } | null;
+  boostedUntil?: string | null;
 };
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
@@ -102,6 +104,7 @@ export default function BusinessDealsPage() {
           <Link href="/business/dashboard" className="text-xs text-[var(--gh-57606a)] hover:text-[var(--gh-0d1117)]">← Dashboard</Link>
           <h1 className="mt-1 text-lg font-bold text-[var(--gh-0d1117)]">Deals</h1>
           <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Special offers with their own photos, shown on the Deals page and your business page · {count("LIVE")} live now</p>
+          <BoostAllowanceText className="mt-0.5" />
         </div>
         <div className="flex gap-2">
           <Link href="/deals" target="_blank" className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-2.5 text-[13px] font-semibold text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)]">
@@ -187,6 +190,8 @@ export default function BusinessDealsPage() {
                           <Link href={`/business/deals/${d._id}/edit`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--gh-0d1117)] px-3 text-xs font-semibold text-white hover:bg-[var(--gh-24292f)]">
                             <Pencil size={13} /> Edit deal
                           </Link>
+                          <BoostButton dealId={d._id} boostedUntil={d.boostedUntil} live={state === "LIVE"} compact
+                            onBoosted={until => setDeals(prev => prev.map(x => (x._id === d._id ? { ...x, boostedUntil: until } : x)))} />
                           {!d.disabledByAdmin && state !== "EXPIRED" && (
                             <button onClick={() => togglePause(d)} disabled={busy === d._id} aria-label={d.paused ? "Resume deal" : "Pause deal"} title={d.paused ? "Resume" : "Pause"}
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-0d1117)] hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50">

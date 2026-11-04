@@ -84,7 +84,7 @@ export default function VerifyBadgeDialog({ target, onClose, onSave }: {
                   <Dialog.Title className="text-base font-semibold text-slate-900">Verified badge for {target.name}</Dialog.Title>
                   <Dialog.Description className="mt-1 text-sm text-slate-500">
                     {state === "VERIFIED"
-                      ? `Verified${v?.expiresAt ? ` until ${fmtPlanDate(String(v.expiresAt))}` : " with no end date"}${v?.source === "ADMIN_GRANT" ? " (gift)" : ""}.`
+                      ? `Verified${v?.expiresAt ? ` until ${fmtPlanDate(String(v.expiresAt))}` : " with no end date"}${v?.source === "ADMIN_GRANT" ? " (gift)" : v?.source === "PLAN" ? " (included with the Ultimate plan)" : ""}.`
                       : state === "EXPIRED" && v?.expiresAt ? `Badge ended on ${fmtPlanDate(String(v.expiresAt))}.`
                       : "Not verified."}
                     {requested && v?.requestedAt && <> The owner asked for it on {fmtPlanDate(String(v.requestedAt))}.</>}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BOOSTED_SHOWN, pickBoosted } from "@/lib/boosts";
 import {
   ArrowRight,
   CalendarCheck,
@@ -61,10 +62,19 @@ async function getData() {
   try {
     await connectDB();
     const active = { status: "ACTIVE" };
-    const [forSale, forRent] = await Promise.all([
-      Listing.find({ ...active, type: { $in: ["SALE", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(8).populate(CARD_SELLER_POPULATE).lean(),
-      Listing.find({ ...active, type: { $in: ["RENT", "BOTH"] } }).sort({ featured: -1, createdAt: -1 }).limit(4).populate(CARD_SELLER_POPULATE).lean(),
-    ]);
+    // Boosted vehicles (src/lib/boosts.ts) lead each row, a few picked afresh each time the page is rebuilt (every
+    // minute) so they take turns, like the first page of Marketplace; then the newest
+    const row = async (types: string[], limit: number) => {
+      const where = { ...active, type: { $in: types } };
+      const pool = await Listing.find({ ...where, boostedUntil: { $gt: new Date() } }).select("_id").limit(200).lean<Array<{ _id: unknown }>>();
+      const ids = pickBoosted(pool.map(p => p._id), Math.min(BOOSTED_SHOWN, limit));
+      const [lead, rest] = await Promise.all([
+        ids.length ? Listing.find({ _id: { $in: ids } }).populate(CARD_SELLER_POPULATE).lean() : Promise.resolve([]),
+        Listing.find({ ...where, _id: { $nin: ids } }).sort({ createdAt: -1 }).limit(limit - ids.length).populate(CARD_SELLER_POPULATE).lean(),
+      ]);
+      return [...lead, ...rest];
+    };
+    const [forSale, forRent] = await Promise.all([row(["SALE", "BOTH"], 8), row(["RENT", "BOTH"], 4)]);
     return { forSale: forSale as unknown as ListingWithId[], forRent: forRent as unknown as ListingWithId[] };
   } catch (err) {
     // The home page should still render if the database is unreachable

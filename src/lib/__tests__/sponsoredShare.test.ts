@@ -22,5 +22,9 @@ describe("adPrice", () => {
   it("prices by tier and weeks", () => {
     expect(adPrice(2)).toBe(2 * SPONSORED_AD.pricePerWeek.STANDARD);
     expect(adPrice(4, "TOP")).toBe(4 * SPONSORED_AD.pricePerWeek.TOP);
+    // Plan discounts: 10% on Premium Plus, 25% on Ultimate, none below
+    expect(adPrice(1, "STANDARD", "PRO")).toBe(899);
+    expect(adPrice(1, "STANDARD", "UNLIMITED")).toBe(749);
+    expect(adPrice(1, "STANDARD", "STARTER")).toBe(999);
   });
 });

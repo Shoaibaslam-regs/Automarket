@@ -58,6 +58,8 @@ export const RATE_LIMITS = {
   bookings: { limit: 10, windowSec: 60 * 60 },
   purchases: { limit: 10, windowSec: 60 * 60 },
   savedSearches: { limit: 20, windowSec: 60 * 60 },
+  // Boost and pin presses (the monthly boost allowance is the real limit; this only stops a flood)
+  boosts: { limit: 60, windowSec: 60 * 60 },
   /** Browser crash reports sent to the admin Errors page, per IP */
   clientErrors: { limit: 20, windowSec: 60 * 60 },
   /** Send feedback (topic FEEDBACK), per user: two delivered a month. Counted after sending, so a failed send doesn't use one up */

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BadgeDollarSign, Building2, Car, KeyRound, MapPin, Tag, Users, type LucideIcon } from "lucide-react";
 import type { PublicStats } from "@/lib/publicStats";
+import { compactCount } from "@/lib/format";
 
 const TILES: { key: keyof Omit<PublicStats, "at">; label: string; icon: LucideIcon }[] = [
   { key: "listings", label: "Active listings", icon: Car },
@@ -15,7 +16,7 @@ const TILES: { key: keyof Omit<PublicStats, "at">; label: string; icon: LucideIc
 ];
 const POLL_MS = 60_000;
 
-/** A number that counts up to its new value when it changes. */
+/** A number that counts up to its new value when it changes, shown short from a thousand (1.2K, 2.5M; compactCount). */
 function CountUp({ value }: { value: number }) {
   const [shown, setShown] = useState(value);
   const from = useRef(value);
@@ -33,7 +34,13 @@ function CountUp({ value }: { value: number }) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <>{shown.toLocaleString()}</>;
+  // The exact number stays available on hover and to screen readers
+  const exact = value.toLocaleString("en-PK");
+  return (
+    <span title={exact} aria-label={exact}>
+      {compactCount(shown)}
+    </span>
+  );
 }
 
 /**

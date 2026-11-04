@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSubscription } from "@/lib/subscription";
 import { routeToAccountManager } from "@/lib/accountManager";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
@@ -99,7 +100,8 @@ export async function POST(req: NextRequest) {
     if (open >= 5) return NextResponse.json({ error: "You already have 5 requests waiting. Wait for the team to answer them first." }, { status: 400 });
 
     const city = org.city?.trim() || undefined;
-    const price = adPrice(weeks, tier);
+    // Premium Plus and Ultimate pay less (AD_DISCOUNT_PCT); the price is worked out here, never taken from the form
+    const price = adPrice(weeks, tier, (await getSubscription(session.user.id)).planId);
     const ad = await Ad.create({
       organizationId: member.organizationId, requestedBy: session.user.id, kind, targetId, targetLabel,
       weeks, tier, city, price, paymentRef, note: note || undefined,

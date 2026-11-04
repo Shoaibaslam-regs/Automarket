@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { syncPlanBadge } from "@/lib/planBadgeSync";
 import { FollowUp } from "@/models/FollowUp";
 import { LedgerEntry } from "@/models/LedgerEntry";
 import { BusinessLog } from "@/models/BusinessLog";
@@ -96,6 +97,8 @@ export async function POST(req: NextRequest) {
       organizationId: org._id,
       organizationRole: "OWNER",
     });
+    // An owner already on Ultimate gets its included Verified badge straight away (src/lib/planBadge.ts)
+    await syncPlanBadge(session.user.id);
 
     return NextResponse.json({ organization: org }, { status: 201 });
   } catch (error) {

@@ -8,6 +8,7 @@ import "@/models/Organization";
 import { auth } from "@/lib/auth";
 import { buildListingQuery, parseFilters } from "@/lib/listingFilters";
 import { notifySavedSearches } from "@/lib/savedSearchAlerts";
+import { pickBoosted } from "@/lib/boosts";
 import { reserveListingSlot } from "@/lib/subscription";
 import { parseListingFields, parseRentalFields } from "@/lib/listingInput";
 import { isUserBusinessSuspended } from "@/lib/business";
@@ -50,14 +51,27 @@ export async function GET(req: NextRequest) {
       // The seller's business (if any) lets cards show "listed by a business" vs a private seller
       .populate(CARD_SELLER_POPULATE)
       // "ACTIVE" sorts before "RENTED" and "SOLD", so available vehicles always come first
-      .sort({ status: 1, featured: -1, ...sortOrder })
+      .sort({ status: 1, ...sortOrder })
       .skip(skip)
       .limit(limit)
       .lean();
 
+    // Boosted vehicles that match lead the first page, a few at a time picked afresh, so they take turns
+    // (src/lib/boosts.ts). They show with the Featured star (`boosted`); later pages may repeat one, which Browse skips by id.
+    let shown: typeof listings = listings;
+    if (page === 1) {
+      const now = new Date();
+      const pool = await Listing.find({ ...query, status: "ACTIVE", boostedUntil: { $gt: now } }).select("_id").limit(200).lean<Array<{ _id: unknown }>>();
+      const ids = pickBoosted(pool.map(p => p._id)).map(String);
+      if (ids.length) {
+        const boosted = (await Listing.find({ _id: { $in: ids } }).populate(CARD_SELLER_POPULATE).lean()).map(l => ({ ...l, boosted: true }));
+        shown = [...boosted, ...listings.filter(l => !ids.includes(String(l._id)))] as typeof listings;
+      }
+    }
+
     return NextResponse.json(
       {
-        listings,
+        listings: shown,
         pagination: {
           page,
           limit,

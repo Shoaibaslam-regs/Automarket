@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PhotoSkeleton } from "@/components/ui/PageSkeleton";
 import Image from "next/image";
-import { Building2, CarFront, Clock3, Flame, ImageOff, MapPin } from "lucide-react";
+import { Building2, CarFront, Clock3, Flame, ImageOff, MapPin, Star } from "lucide-react";
+import { isBoosted } from "@/lib/boosts";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { formatLakh } from "@/lib/format";
 import { daysLeft, dealLabel, dealPrice, isRentDeal } from "@/lib/deals";
@@ -63,6 +64,12 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
         <span className="theme-static pointer-events-none absolute -left-6 top-[11px] z-[2] flex w-20 -rotate-45 items-center justify-center gap-0.5 bg-gradient-to-r from-rose-600 to-orange-500 py-px text-[7px] font-extrabold uppercase leading-[10px] tracking-[0.12em] text-white shadow-sm shadow-rose-600/30 sm:-left-7 sm:top-3.5 sm:w-24 sm:text-[8px]">
           <Flame className="h-[7px] w-[7px] sm:h-2 sm:w-2" /> Deal
         </span>
+        {/* Boosted to the top of the Deals page (src/lib/boosts.ts): the same gold star as featured vehicles */}
+        {isBoosted(deal.boostedUntil, new Date(now)) && (
+          <span title="Featured" className="absolute right-1.5 top-1.5 z-[2] inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 text-[10px] font-bold text-amber-950 shadow-sm sm:right-2 sm:top-2">
+            <Star size={10} strokeWidth={2.5} fill="currentColor" /><span className="hidden sm:inline">Featured</span>
+          </span>
+        )}
         {cars > 1 && (
           <span className={`${PHOTO_TAG} bottom-1.5 right-1.5 bg-black/55 sm:bottom-2 sm:right-2`}>
             <CarFront className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {cars} cars

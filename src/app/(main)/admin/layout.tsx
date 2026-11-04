@@ -23,14 +23,14 @@ const NAV_GROUPS = [
   {
     title: "Review",
     items: [
-      { href: "/admin/reports", label: "Reports", icon: Flag },
+      { href: "/admin/requests", label: "Plan queue", icon: Inbox },
       { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-      { href: "/admin/requests", label: "Requests", icon: Inbox },
       { href: "/admin/support", label: "Support inbox", icon: Headset },
-      { href: "/admin/ads", label: "Ad requests", icon: Rocket },
-      { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/admin/ads", label: "Ad queue", icon: Rocket },
+      { href: "/admin/reports", label: "Reports", icon: Flag },
       { href: "/admin/blog", label: "Blog", icon: Newspaper },
       { href: "/admin/fuel", label: "Fuel prices", icon: Fuel },
+      { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
     ],
   },
   {
@@ -57,15 +57,15 @@ function AccessCard() {
   const { access, owner } = useAdminAccess();
   if (access === "MANAGER") {
     return (
-      <div className="mt-auto rounded-xl bg-white/5 p-3 ring-1 ring-inset ring-white/10">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-200"><BriefcaseBusiness size={13} className="text-sky-300" /> Manager access</p>
+      <div className="mt-auto rounded-xl bg-white p-3 ring-1 ring-inset ring-slate-200">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-800"><BriefcaseBusiness size={13} className="text-sky-600" /> Manager access</p>
         <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{ADMIN_ACCESS_HINT.MANAGER}</p>
       </div>
     );
   }
   return (
-    <div className="mt-auto rounded-xl bg-white/5 p-3 ring-1 ring-inset ring-white/10">
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-200"><ShieldCheck size={13} className="text-indigo-300" /> {owner ? "Platform owner" : "Full admin access"}</p>
+    <div className="mt-auto rounded-xl bg-white p-3 ring-1 ring-inset ring-slate-200">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-800"><ShieldCheck size={13} className="text-indigo-600" /> {owner ? "Platform owner" : "Full admin access"}</p>
       <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Changes here affect every user on the platform.</p>
     </div>
   );
@@ -135,13 +135,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
       {/* Desktop sidebar */}
-      <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-950 px-3 py-5 lg:flex">
+      <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 flex-shrink-0 flex-col border-r border-slate-200 bg-slate-100 px-3 py-5 lg:flex">
         <div className="mb-6 flex items-center gap-2.5 px-3">
           <span className="flex items-center justify-center text-indigo-600">
             <ShieldCheck size={16} strokeWidth={2.25} />
           </span>
           <div>
-            <p className="text-sm font-bold text-white">Admin Console</p>
+            <p className="text-sm font-bold text-slate-900">Admin Console</p>
             <p className="text-[11px] text-slate-500">AutoGO</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         <nav className="-mx-1 flex flex-col overflow-y-auto px-1 pb-3">
           {NAV_GROUPS.map((group, i) => (
             <div key={group.title} className={`flex flex-col gap-0.5 ${i > 0 ? "pt-4" : ""}`}>
-              <MenuGroupTitle tone="dark" className="px-3">{group.title}</MenuGroupTitle>
+              <MenuGroupTitle className="px-3">{group.title}</MenuGroupTitle>
               {group.items.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -158,10 +158,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                      active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                      active ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                     }`}
                   >
-                    <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-300" : "text-slate-500 group-hover:text-slate-300"} />
+                    <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"} />
                     {label}
                     {badge(href)}
                   </Link>

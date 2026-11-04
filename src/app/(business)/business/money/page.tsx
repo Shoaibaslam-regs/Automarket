@@ -156,7 +156,8 @@ export default function MoneyPage() {
   const [data, setData] = useState<{ entries: Entry[]; totals: Totals; vehicles: Vehicle[] } | null>(null);
   const [profit, setProfit] = useState<{ vehicles: ProfitRow[]; totals: { costs: number; income: number; profit: number } } | null>(null);
   const [error, setError] = useState("");
-  const [forbidden, setForbidden] = useState(false);
+  // "role" (owner and managers only) or the plan that includes Money (PLAN_FEATURES.money)
+  const [forbidden, setForbidden] = useState<false | "role" | { plan: string }>(false);
   const [adding, setAdding] = useState<"IN" | "OUT" | null>(null);
   useQuickNew("expense", () => setAdding("OUT"));
   useQuickNew("income", () => setAdding("IN"));
@@ -167,7 +168,7 @@ export default function MoneyPage() {
   useEffect(() => {
     if (tab === "profit") {
       fetch("/api/business/money/profit")
-        .then(async r => { const d = await r.json(); if (r.status === 403) setForbidden(true); if (!r.ok) throw new Error(d.error); setProfit(d); })
+        .then(async r => { const d = await r.json(); if (r.status === 403) { setForbidden(d.code === "PLAN_FEATURE" ? { plan: d.plan } : "role"); return; } if (!r.ok) throw new Error(d.error); setProfit(d); })
         .catch(e => setError(e.message || "Couldn't load"));
       return;
     }
@@ -175,7 +176,7 @@ export default function MoneyPage() {
       ? new URLSearchParams({ from: day, to: day })
       : new URLSearchParams({ from: `${month}-01`, to: monthEnd(month), kind: "expenses", ...(vehicleFilter ? { listing: vehicleFilter } : {}) });
     fetch(`/api/business/money/entries?${p}`)
-      .then(async r => { const d = await r.json(); if (r.status === 403) setForbidden(true); if (!r.ok) throw new Error(d.error); setData(d); })
+      .then(async r => { const d = await r.json(); if (r.status === 403) { setForbidden(d.code === "PLAN_FEATURE" ? { plan: d.plan } : "role"); return; } if (!r.ok) throw new Error(d.error); setData(d); })
       .catch(e => setError(e.message || "Couldn't load"));
   }, [tab, day, month, vehicleFilter, reload]);
 
@@ -201,8 +202,18 @@ export default function MoneyPage() {
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <div className="max-w-sm rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-8 text-center">
           <Lock size={26} className="mx-auto mb-3 text-[var(--gh-8c959f)]" />
-          <p className="text-sm font-semibold text-[var(--gh-0d1117)]">Money is for the owner and managers</p>
-          <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Ask your business owner if you need to see expenses or the cash book.</p>
+          {forbidden === "role" ? (
+            <>
+              <p className="text-sm font-semibold text-[var(--gh-0d1117)]">Money is for the owner and managers</p>
+              <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">Ask your business owner if you need to see expenses or the cash book.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-[var(--gh-0d1117)]">Money & profit tracking is on {forbidden.plan} and up</p>
+              <p className="mt-1 text-[13px] text-[var(--gh-57606a)]">The cash book, expenses and profit per vehicle. Your payments are still recorded, so everything is here when you upgrade.</p>
+              <Link href="/pricing" className="mt-4 inline-block rounded-lg bg-[var(--gh-0d1117)] px-4 py-2 text-xs font-semibold text-[var(--gh-ffffff)]">See plans</Link>
+            </>
+          )}
         </div>
       </div>
     );

@@ -66,9 +66,9 @@ export default function UserMenuDropdown({
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const account: Item[] = [
-    { href: "/profile", label: "Profile & settings", icon: Settings },
     { href: "/help", label: "Help & safety", icon: LifeBuoy },
     { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
+    { href: "/profile", label: "Profile & settings", icon: Settings },
   ];
 
   const row = ({ href, label, icon: Icon, count, action }: Item, extra = "") => {
