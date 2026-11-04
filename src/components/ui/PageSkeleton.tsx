@@ -21,11 +21,10 @@ export function SkeletonPage({ children, className = "" }: { children: React.Rea
   );
 }
 
-/** The dark glow header used by Browse, Deals and dealer pages. */
+/** The dark header used by Browse, Deals and dealer pages (flat, no glow). */
 export function DarkHero({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <section className={`theme-static relative overflow-hidden bg-slate-950 ${className}`}>
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.3),transparent_55%)]" />
       <div className="relative">{children}</div>
     </section>
   );

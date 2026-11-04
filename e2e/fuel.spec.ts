@@ -1,7 +1,7 @@
 import { devices, expect, test } from "@playwright/test";
 
 // The public Fuel prices page (approved test prices from e2e/seed.ts) and the doors that must stay shut.
-test("the fuel page shows approved Pakistani prices with their change, crude oil and the trends", async ({ page }) => {
+test("the fuel page shows approved Pakistani prices with their change and the trends, and no crude oil", async ({ page }) => {
   await page.goto("/fuel-prices");
   await expect(page.getByRole("heading", { level: 1, name: "Fuel prices" })).toBeVisible();
   await expect(page.getByText(/^Updated \d{1,2} \w{3} \d{4}$/).first()).toBeVisible();
@@ -9,9 +9,9 @@ test("the fuel page shows approved Pakistani prices with their change, crude oil
   await expect(main.getByText("396.65").first()).toBeVisible();
   await expect(main.getByText("394.94").first()).toBeVisible();
   await expect(main.getByText("+PKR 1.82").first()).toBeVisible();
-  await expect(main.getByText("64.12")).toBeVisible();
-  await expect(main.getByText(/a few days after the trading day; not real-time/)).toBeVisible();
   await expect(main.getByRole("heading", { name: "Price changes" })).toBeVisible();
+  // Brent and WTI were removed (no free source gave current prices)
+  await expect(main.getByText(/Brent|WTI|per barrel/)).toHaveCount(0);
   // Crypto-style charts: a series tab, ranges, and the area drawn
   await expect(main.locator(".recharts-area").first()).toBeVisible();
   await main.getByRole("tab", { name: "Diesel" }).click();

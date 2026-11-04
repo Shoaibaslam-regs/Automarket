@@ -167,11 +167,11 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div ref={frameRef} className="slip-frame mx-auto max-w-[703px]">
-      <article ref={cardRef} style={{ width: SHEET_WIDTH, zoom: fit, "--print-zoom": printZoom } as React.CSSProperties} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
+      <article ref={cardRef} style={{ width: SHEET_WIDTH, zoom: fit, "--print-zoom": printZoom } as React.CSSProperties} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
         {/* Letterhead */}
         <header className="flex items-start justify-between gap-6 bg-slate-950 px-6 py-5 text-white">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-lg font-extrabold text-slate-950">
+            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-extrabold text-slate-950">
               {org?.name?.[0]?.toUpperCase() || "B"}
             </span>
             <div>
@@ -191,7 +191,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider" style={{ background: status.bg, color: status.color }}>{status.text}</span>
             <span className="text-xs text-slate-500">
-              {deal && <span className="mr-2 inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
+              {deal && <span className="mr-2 inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
               {b.source === "WALK_IN" ? "Walk-in booking" : "Online booking via AutoGO"} · created {dateTime(b.createdAt)}
               {b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
             </span>

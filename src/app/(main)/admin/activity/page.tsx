@@ -18,7 +18,7 @@ type Entry = {
 };
 type Filter = "" | Entry["targetType"];
 
-const TONE: Record<Entry["targetType"], Tone> = { USER: "blue", BUSINESS: "violet", LISTING: "neutral", DEAL: "orange", REPORT: "red", ANNOUNCEMENT: "green", AD: "amber", SETTINGS: "neutral", REQUEST: "amber", BLOG: "violet", FUEL: "orange" };
+const TONE: Record<Entry["targetType"], Tone> = { USER: "blue", BUSINESS: "indigo", LISTING: "neutral", DEAL: "orange", REPORT: "red", ANNOUNCEMENT: "green", AD: "amber", SETTINGS: "neutral", REQUEST: "amber", BLOG: "indigo", FUEL: "orange" };
 const fmt = (d: string) => new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 const CLEAR_CHOICES = [

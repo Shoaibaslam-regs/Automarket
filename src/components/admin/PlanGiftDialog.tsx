@@ -82,7 +82,7 @@ export default function PlanGiftDialog({ target, onClose, onSave }: {
                 {([["PAID", "Paid", `${PLAN_PERIOD_DAYS} days per payment`], ["ADMIN_GRANT", "Gift", "Free, you choose how long"]] as const).map(([v, label, hint]) => (
                   <button key={v} type="button" role="radio" aria-checked={source === v} onClick={() => setSource(v)}
                     className={`flex items-start gap-2.5 rounded-xl p-3 text-left ring-1 ring-inset transition ${source === v ? "bg-amber-50 ring-2 ring-amber-500" : "ring-slate-200 hover:bg-slate-50"}`}>
-                    {v === "PAID" ? <Crown size={16} className="mt-0.5 flex-shrink-0 text-amber-600" /> : <Gift size={16} className="mt-0.5 flex-shrink-0 text-violet-600" />}
+                    {v === "PAID" ? <Crown size={16} className="mt-0.5 flex-shrink-0 text-amber-600" /> : <Gift size={16} className="mt-0.5 flex-shrink-0 text-indigo-600" />}
                     <span>
                       <span className="block text-sm font-semibold text-slate-900">{label}</span>
                       <span className="block text-xs text-slate-500">{hint}</span>

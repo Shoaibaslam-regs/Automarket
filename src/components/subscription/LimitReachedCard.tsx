@@ -25,9 +25,7 @@ export default function LimitReachedCard({
   // The request goes out for the next plan up, which is the natural upgrade from here
   const nextPlan = PLAN_LIST[PLAN_LIST.findIndex(p => p.id === plan.id) + 1] ?? null;
   return (
-    <div className="relative overflow-hidden rounded-[22px] bg-slate-950 p-6 text-white shadow-[0_30px_60px_-30px_rgba(15,23,42,0.6)] sm:p-8">
-      <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[22px] bg-slate-950 p-6 text-white shadow-sm sm:p-8">
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-4">
           <span className="flex flex-shrink-0 items-center justify-center text-amber-300">
@@ -43,7 +41,7 @@ export default function LimitReachedCard({
         </div>
         <Link
           href="/pricing"
-          className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-300 to-amber-500 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:opacity-90"
+          className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl theme-static bg-amber-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg transition hover:opacity-90"
         >
           <Crown size={16} /> View plans <ArrowRight size={15} />
         </Link>

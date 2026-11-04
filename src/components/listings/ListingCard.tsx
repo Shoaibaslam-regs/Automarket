@@ -137,7 +137,7 @@ export default function ListingCard({ listing, layout = "grid", eager, compact, 
       >
         <article
           className={`flex h-full flex-col rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:rounded-[22px] sm:p-2
-            group-hover:shadow-[0_20px_44px_-20px_rgba(15,23,42,0.35)]
+            group-hover:shadow-md
             ring-slate-200/80 group-hover:ring-slate-300`}
         >
           {/* Image tile */}
@@ -172,7 +172,7 @@ export default function ListingCard({ listing, layout = "grid", eager, compact, 
                 {badge.label}
               </span>
               {showStar(listing) && (
-                <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
+                <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
                   <Star size={11} strokeWidth={2.5} fill="currentColor" />
                   <span className="hidden lg:inline">Featured</span>
                 </span>
@@ -271,7 +271,7 @@ function ListingRow({ listing, eager, pinned }: Pick<Props, "listing" | "eager" 
   return (
     <article
       className={`group relative flex gap-3 rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:gap-5 sm:rounded-[22px] sm:p-2
-        hover:shadow-[0_20px_44px_-24px_rgba(15,23,42,0.35)]
+        hover:shadow-md
         ring-slate-200/80 hover:ring-slate-300`}
     >
       <div className="relative w-[42%] max-w-[340px] flex-shrink-0 self-start sm:w-[260px] md:w-[300px] lg:w-[320px]">
@@ -300,7 +300,7 @@ function ListingRow({ listing, eager, pinned }: Pick<Props, "listing" | "eager" 
 
           <div className="absolute left-2 top-2 flex items-center gap-1 sm:left-2.5 sm:top-2.5">
             {showStar(listing) && (
-              <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
+              <span title="Featured" className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-1.5 py-1 text-[10px] font-bold text-amber-950 shadow-sm sm:px-2 sm:text-[11px]">
                 <Star size={11} strokeWidth={2.5} fill="currentColor" />
                 <span className="hidden sm:inline">Featured</span>
               </span>

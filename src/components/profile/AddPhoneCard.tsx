@@ -50,7 +50,7 @@ export default function AddPhoneCard({ userId, hasPassword }: { userId: string; 
 
   if (!show) return null;
   return (
-    <section className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_30px_-22px_rgba(79,70,229,0.45)] sm:p-5">
+    <section className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
       {saved ? (
         <div className="flex items-start gap-3">
           <Phone size={18} className="mt-0.5 flex-shrink-0 text-emerald-600" />

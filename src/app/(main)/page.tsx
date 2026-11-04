@@ -135,13 +135,13 @@ export default async function HomePage() {
                 </label>
               ))}
             </div>
-            <div className="flex items-center gap-2 rounded-2xl rounded-tl-none bg-white p-2 pl-4 shadow-2xl shadow-indigo-950/40">
+            <div className="flex items-center gap-2 rounded-2xl rounded-tl-none bg-white p-2 pl-4 shadow-2xl">
               <Search size={19} className="flex-shrink-0 text-slate-400" />
               <HomeSearchInput />
               <button
                 type="submit"
                 aria-label="Search"
-                className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-500 px-3.5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:brightness-110 sm:px-6"
+                className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:px-6"
               >
                 <span className="hidden sm:inline">Search</span>
                 <ArrowRight size={17} />
@@ -219,7 +219,7 @@ export default async function HomePage() {
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
-                className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.3)] sm:p-6"
+                className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md sm:p-6"
               >
                 <div className="flex items-center justify-center text-indigo-600">
                   <Icon size={20} strokeWidth={1.9} />
@@ -250,7 +250,6 @@ export default async function HomePage() {
 
         {/* ── CTA ── */}
         <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-10 sm:px-12 sm:py-14">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.45),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(16,185,129,0.25),transparent_50%)]" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-lg">
               <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">

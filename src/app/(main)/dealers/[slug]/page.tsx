@@ -130,19 +130,17 @@ export default async function DealerPage({ params }: Props) {
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
-        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
         <div className="relative mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10">
           {/* The logo beside the name, details (ending with Report) and the rating with Share, vertically centred */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:gap-x-5">
             {org.logo ? (
-              <span className="flex-shrink-0 rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px] shadow-lg shadow-indigo-950/40">
+              <span className="flex-shrink-0 rounded-2xl bg-white/20 p-[2px]">
                 <span className="relative block h-16 w-16 overflow-hidden rounded-[14px] bg-slate-900 sm:h-20 sm:w-20">
                   <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
                 </span>
               </span>
             ) : (
-              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-2xl font-extrabold text-slate-950 shadow-lg shadow-indigo-950/40 sm:h-20 sm:w-20 sm:text-3xl">
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
                 {org.name[0]?.toUpperCase()}
               </span>
             )}

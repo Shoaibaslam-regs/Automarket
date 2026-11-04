@@ -49,7 +49,7 @@ export default function LaunchAnimation({ title, subtitle, onDone }: { title: st
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1.1] }}
         // Follows the theme (white in light mode, dark slate in dark mode), like the site's dialogs
-        className="relative w-[min(340px,100%)] overflow-hidden rounded-3xl bg-white px-6 pb-5 pt-8 text-center shadow-[0_30px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/80"
+        className="relative w-[min(340px,100%)] overflow-hidden rounded-3xl bg-white px-6 pb-5 pt-8 text-center shadow-lg ring-1 ring-slate-200/80"
       >
 
         {/* Tick with a confetti burst */}
@@ -74,7 +74,7 @@ export default function LaunchAnimation({ title, subtitle, onDone }: { title: st
             initial={reduce ? false : { scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={pop}
-            className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 via-sky-400 to-emerald-400 text-white shadow-[0_10px_30px_-8px_rgba(56,189,248,0.6)]"
+            className="relative flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 text-white"
           >
             <Check size={30} strokeWidth={3} />
           </motion.div>

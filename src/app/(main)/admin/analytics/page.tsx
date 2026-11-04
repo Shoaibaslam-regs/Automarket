@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
             <StatCard label="New users" value={(summary.newUsersThisMonth ?? 0).toLocaleString()} icon={Users} tone="blue" hint="Last 30 days" />
             <StatCard label="New listings" value={(summary.newListingsThisMonth ?? 0).toLocaleString()} icon={Car} tone="orange" hint="Last 30 days" />
             <StatCard label="New bookings" value={(summary.newBookingsThisMonth ?? 0).toLocaleString()} icon={Calendar} tone="green" hint="Last 30 days" />
-            <StatCard label="Total messages" value={(summary.totalMessages ?? 0).toLocaleString()} icon={MessageSquare} tone="violet" hint="All time" />
+            <StatCard label="Total messages" value={(summary.totalMessages ?? 0).toLocaleString()} icon={MessageSquare} tone="indigo" hint="All time" />
           </>
         ) : (
           Array.from({ length: 4 }).map((_, i) => (

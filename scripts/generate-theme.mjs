@@ -47,6 +47,7 @@ export const GH = {
   "#ffe7a3": "#4a3b14", "#ffd666": "#6b5414",
   "#953800": "#f0883e", "#ffdfb6": "#3d2412",
   "#8250df": "#b392f0", "#fbefff": "#271b3a", "#6e40c9": "#a371f7",
+  "#4f46e5": "#818cf8", "#eef2ff": "#1b1f3a",
 };
 
 export const STATIC_SELECTORS = [

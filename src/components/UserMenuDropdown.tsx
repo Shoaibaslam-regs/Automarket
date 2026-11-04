@@ -23,7 +23,7 @@ type Item = { href: string; label: string; icon: LucideIcon; count?: number; act
 /** Avatar with the gradient ring shared by the account menu, mobile drawer and business sidebar. */
 export function RingAvatar({ name, image, size = 30 }: { name?: string | null; image?: string | null; size?: number }) {
   return (
-    <span className="inline-flex flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2px]">
+    <span className="inline-flex flex-shrink-0 rounded-full bg-slate-200 p-[2px]">
       <span
         className="relative flex items-center justify-center overflow-hidden rounded-full bg-slate-900 font-bold text-white ring-2 ring-white"
         style={{ width: size, height: size, fontSize: size * 0.4 }}
@@ -94,7 +94,7 @@ export default function UserMenuDropdown({
           active ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50"
         } ${extra}`}
       >
-        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />}
+        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-indigo-600" />}
         <Icon size={15} strokeWidth={active ? 2.2 : 1.9} className={`flex-shrink-0 transition ${active ? "text-slate-900" : "text-slate-500 group-hover:text-slate-700"}`} />
         <span className="flex-1 truncate">{label}</span>
         <CountBadge count={count ?? 0} />
@@ -105,38 +105,37 @@ export default function UserMenuDropdown({
   return (
     <div
       role="menu"
-      className="absolute right-0 top-[calc(100%+10px)] z-[200] max-h-[calc(100vh-80px)] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-y-auto overscroll-contain rounded-[22px] bg-white shadow-[0_24px_60px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+      className="absolute right-0 top-[calc(100%+10px)] z-[200] max-h-[calc(100vh-80px)] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-y-auto overscroll-contain rounded-[22px] bg-white shadow-lg ring-1 ring-slate-200/80"
     >
       <style>{`@keyframes umIn { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
 
       {/* Header */}
-      <div className="relative overflow-hidden bg-slate-950 px-4 pb-4 pt-4 text-white">
-        <div aria-hidden className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-indigo-500/35 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-8 h-32 w-32 rounded-full bg-amber-400/20 blur-3xl" />
+      {/* White in light mode and dark in dark mode (plain neutrals, which the theme inverts) */}
+      <div className="relative overflow-hidden border-b border-slate-200 bg-white px-4 pb-4 pt-4 text-slate-900">
         <div className="relative flex items-center gap-3">
           <RingAvatar name={user.name} image={user.image} size={42} />
           <div className="min-w-0 flex-1">
             <p className="flex min-w-0 items-center gap-1 text-sm font-semibold"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
-            <p className="truncate text-xs text-slate-400">{user.email}</p>
+            <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
         </div>
         {/* Plan, admin, business and ID on their own row with room between them (plain text, no chips), like MobileNavDrawer */}
-        <div className="relative mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-white/10 pt-2.5 text-[11px] font-semibold">
-          <span className="inline-flex items-center gap-1 text-amber-200"><Crown size={12} /> {plan ? plan.name : "…"}</span>
+        <div className="relative mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] font-semibold">
+          <span className="inline-flex items-center gap-1 text-amber-700"><Crown size={12} /> {plan ? plan.name : "…"}</span>
           {user.role === "ADMIN" && user.adminPortal && (
             <>
-              <span aria-hidden className="text-slate-600">·</span>
-              <span className="inline-flex items-center gap-1 text-amber-300"><ShieldCheck size={12} /> Admin</span>
+              <span aria-hidden className="text-slate-300">·</span>
+              <span className="inline-flex items-center gap-1 text-amber-700"><ShieldCheck size={12} /> Admin</span>
             </>
           )}
           {hasBusiness && (
             <>
-              <span aria-hidden className="text-slate-600">·</span>
-              <span className="inline-flex items-center gap-1 text-indigo-200"><Briefcase size={11} /> Business</span>
+              <span aria-hidden className="text-slate-300">·</span>
+              <span className="inline-flex items-center gap-1 text-indigo-600"><Briefcase size={11} /> Business</span>
             </>
           )}
-          <span aria-hidden className="text-slate-600">·</span>
-          <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
+          <span aria-hidden className="text-slate-300">·</span>
+          <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-500 !ring-0 hover:!text-slate-900" />
         </div>
       </div>
 
@@ -156,9 +155,9 @@ export default function UserMenuDropdown({
 
       <div className="space-y-0.5 p-2">
         {hasBusiness && !inBusiness ? (
-          <Link href="/business" onClick={onClose} role="menuitem" className="block rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 p-[1.5px]">
+          <Link href="/business" onClick={onClose} role="menuitem" className="block rounded-xl bg-indigo-600 p-[1.5px]">
             <span className="flex items-center gap-3 rounded-[10.5px] bg-white px-2 py-1.5">
-              <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white">
+              <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-indigo-600 text-sm font-bold text-white">
                 {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="32px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={14} />)}
               </span>
               <span className="min-w-0 flex-1">
@@ -189,9 +188,8 @@ export default function UserMenuDropdown({
         <Link
           href="/pricing"
           onClick={onClose}
-          className="relative mx-2 mb-2 flex items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 p-3 text-white"
+          className="relative mx-2 mb-2 flex items-center gap-3 overflow-hidden rounded-2xl bg-slate-900 p-3 text-white"
         >
-          <div aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-amber-400/30 blur-2xl" />
           <span className="relative flex flex-shrink-0 items-center justify-center text-amber-500">
             <Sparkles size={15} />
           </span>

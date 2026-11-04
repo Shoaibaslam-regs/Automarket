@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  checkNotice, findNoticeFile, latestOilQuote, parseAdminPrices, parseAlphaSeries, parseNoticeCalendar, petroleumUrl, priceChange,
+  checkNotice, findNoticeFile, ograUrl, parseAdminPrices, parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl,
+  priceChange,
 } from "@/lib/fuelPrices";
 
 const now = new Date("2026-10-09T06:00:00Z");
@@ -87,26 +88,48 @@ describe("prices an admin types", () => {
   });
 });
 
-describe("Alpha Vantage answers", () => {
-  // Shaped like its real BRENT answer: newest first, "." for a missing day
-  const brent = { name: "Crude Oil Prices Brent", interval: "daily", unit: "dollars per barrel", data: [
-    { date: "2026-10-27", value: "123.1" }, { date: "2026-10-26", value: "128.12" }, { date: "2026-10-25", value: "." }, { date: "2026-10-23", value: "128.3" },
-  ] };
 
-  it("reads daily closes oldest first, skipping missing days", () => {
-    expect(parseAlphaSeries(brent).points).toEqual([
-      { date: "2026-10-23", close: 128.3 }, { date: "2026-10-26", close: 128.12 }, { date: "2026-10-27", close: 123.1 },
+// Shaped like OGRA's Price Publications page (5 Nov 2026): a label per effective day, then English and Urdu links
+const ograPage = `
+  <h4>Price Publications (Period November 2026)</h4>
+  <p>Price Publication Effective Dated November 05, 2026 <a href="https://ogra.org.pk/index.php/download/17955?lang=en">EN</a>
+     <a href="https://ogra.org.pk/index.php/download/17955?lang=ur">UR</a></p>
+  <p>Price Publications Effective Dated November 04, 2026 <a href="/index.php/download/17909?lang=en">EN</a> <a href="/index.php/download/17909?lang=ur">UR</a></p>
+  <p>Price Publications Effective Dated November 07, 2026 <a href="https://ogra.org.pk/index.php/download/18000?lang=en">EN</a></p>
+  <p>Price Publications Effective Dated October 31, 2026 <a href="https://evil.example/index.php/download/1?lang=en">EN</a>
+     <a href="https://ogra.org.pk/index.php/download/17814?lang=en">EN</a></p>`;
+
+// The text unpdf gives for OGRA's 5 Nov 2026 publication (shortened; the totals and headings as printed)
+const ograPdf = `Price Components Unit 5-Nov-26 Formula Explanation Petrol Platts Arab Gulf Mean Average USD/BBL A 111.45 ...
+Total Petrol Price (excl. Secondary Freight*) RS/LTR V={P+S+T+U} 362.00
+PETROL (MS) Price Effective November 05,2026
+Diesel Platts ... USD/BBL A 128.61 ... Total Diesel Price (excl. Secondary Freight*) RS/LTR W={U+V} 387.81
+Diesel (HSD) Price Effective November 05,2026`;
+
+describe("OGRA price publications", () => {
+  const at = new Date("2026-11-05T06:00:00Z");
+  it("lists each effective day with its English PDF, newest first, on OGRA's site only", () => {
+    expect(parseOgraList(ograPage, at)).toEqual([
+      { day: "2026-11-05", url: "https://ogra.org.pk/index.php/download/17955?lang=en" },
+      { day: "2026-11-04", url: "https://ogra.org.pk/index.php/download/17909?lang=en" },
+      { day: "2026-10-31", url: "https://ogra.org.pk/index.php/download/17814?lang=en" },
     ]);
   });
-
-  it("gives the latest close and its change from the one before", () => {
-    expect(latestOilQuote(parseAlphaSeries(brent).points!)).toEqual({ price: 123.1, previousClose: 128.12, change: -5.02, percentChange: -3.92, date: "2026-10-27" });
-    expect(latestOilQuote([])).toBeNull();
+  it("keeps tomorrow (posted the evening before) but not later days", () => {
+    expect(parseOgraList(ograPage, new Date("2026-11-06T15:00:00Z"))[0].day).toBe("2026-11-07");
   });
-
-  it("passes on Alpha Vantage's own messages and rejects nonsense", () => {
-    expect(parseAlphaSeries({ Information: "We have detected your API key as invalid" }).error).toMatch(/invalid/);
-    expect(parseAlphaSeries({ "Error Message": "Invalid API call" }).error).toMatch(/Invalid/);
-    expect(parseAlphaSeries({ data: [{ date: "2026-10-27", value: "0.01" }] }).error).toBeTruthy();
+  it("only accepts OGRA addresses", () => {
+    expect(ograUrl("https://www.ogra.org.pk/x")).toBe("https://www.ogra.org.pk/x");
+    expect(ograUrl("https://ogra.org.pk.evil.com/x")).toBeNull();
+  });
+  it("reads the petrol and diesel totals and the effective day from the PDF text", () => {
+    const raw = parseOgraPdfText(ograPdf);
+    expect(raw).toMatchObject({ isPriceNotice: true, effectiveDate: "2026-11-05", petrol: { revised: "362.00" }, diesel: { revised: "387.81" } });
+    expect(checkNotice(raw, at).data).toMatchObject({ petrol: 362, diesel: 387.81 });
+  });
+  it("refuses a PDF whose two headings name different days, or that has no totals", () => {
+    expect(parseOgraPdfText(ograPdf.replace("Diesel (HSD) Price Effective November 05", "Diesel (HSD) Price Effective November 04")).isPriceNotice).toBe(false);
+    expect(parseOgraPdfText("LPG price notification November 2026").isPriceNotice).toBe(false);
   });
 });
+

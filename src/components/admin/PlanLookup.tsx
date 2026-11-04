@@ -108,7 +108,7 @@ export default function PlanLookup() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="truncate text-sm font-semibold text-slate-900">{r.name}</p>
                       <span className="font-mono text-[10px] text-slate-400">#{r.id.slice(-6)}</span>
-                      {r.role === "ADMIN" && <Badge tone="violet">ADMIN</Badge>}
+                      {r.role === "ADMIN" && <Badge tone="indigo">ADMIN</Badge>}
                     </div>
                     <p className="truncate text-xs text-slate-500">{r.email}</p>
                     {r.business && (

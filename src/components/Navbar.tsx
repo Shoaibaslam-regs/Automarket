@@ -120,10 +120,10 @@ export default function Navbar() {
         .nav-link:hover { color: var(--gh-0d1117); background: rgb(var(--tw-c-slate-950) / 0.05); }
         .nav-link { position: relative; }
         .nav-link.is-active { color: var(--gh-0d1117); font-weight: 600; }
-        /* The current page: a small indigo → fuchsia dot under the word, like the menus' dot */
+        /* The current page: a small solid indigo dot under the word, like the menus' dot */
         .nav-link.is-active::after {
           content: ""; position: absolute; left: 50%; bottom: -1px; width: 5px; height: 5px; margin-left: -2.5px;
-          border-radius: 9999px; background: linear-gradient(90deg, rgb(var(--tw-c-indigo-500)), rgb(var(--tw-c-fuchsia-500)));
+          border-radius: 9999px; background: rgb(var(--tw-c-indigo-600));
         }
         @media (min-width: 769px) and (max-width: 960px) {
           .nav-link { padding: 6px 7px; font-size: 13px; }
@@ -225,7 +225,7 @@ export default function Navbar() {
             >
               <NotificationDot show={hasUnread} className="right-1.5 top-1.5" />
               {session?.user ? (
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-xs font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-xs font-bold text-white">
                   {session.user.name?.[0]?.toUpperCase() || "?"}
                 </span>
               ) : (

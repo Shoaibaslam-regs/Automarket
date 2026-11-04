@@ -109,7 +109,7 @@ export default function ShareButton({ path, title, label = "Share", variant = "p
         {variant !== "pill" && <> {label}</>}
       </button>
       {open && (
-        <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200 ${MENU_POSITION[variant]}`}>
+        <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200 ${MENU_POSITION[variant]}`}>
           <a role="menuitem" href={`https://wa.me/?text=${encodeURIComponent(`${text}: ${url()}`)}`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={item}>
             <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
           </a>

@@ -74,7 +74,7 @@ function AccessDialog({ user, onClose, onSave }: {
       {user && (
         <>
           <div className="flex gap-4">
-            <span className="flex flex-shrink-0 items-center justify-center text-violet-700">
+            <span className="flex flex-shrink-0 items-center justify-center text-indigo-700">
               <UserCog size={20} />
             </span>
             <div className="min-w-0">
@@ -99,15 +99,15 @@ function AccessDialog({ user, onClose, onSave }: {
                   aria-checked={active}
                   onClick={() => setChoice(opt.value)}
                   className={`flex w-full gap-3 rounded-xl p-4 text-left ring-1 ring-inset transition ${
-                    active ? "bg-violet-50 ring-2 ring-violet-500" : "ring-slate-200 hover:bg-slate-50"
+                    active ? "bg-indigo-50 ring-2 ring-indigo-500" : "ring-slate-200 hover:bg-slate-50"
                   }`}
                 >
-                  <Icon size={18} className={`mt-0.5 flex-shrink-0 ${active ? "text-violet-600" : "text-slate-400"}`} />
+                  <Icon size={18} className={`mt-0.5 flex-shrink-0 ${active ? "text-indigo-600" : "text-slate-400"}`} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-slate-900">{opt.title}</span>
                     <span className="mt-0.5 block text-[13px] leading-snug text-slate-500">{opt.description}</span>
                   </span>
-                  <span className={`mt-0.5 h-4 w-4 flex-shrink-0 rounded-full border-2 ${active ? "border-violet-600 bg-violet-600 shadow-[inset_0_0_0_2px_white]" : "border-slate-300"}`} />
+                  <span className={`mt-0.5 h-4 w-4 flex-shrink-0 rounded-full border-2 ${active ? "border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_2px_white]" : "border-slate-300"}`} />
                 </button>
               );
             })}
@@ -123,7 +123,7 @@ function AccessDialog({ user, onClose, onSave }: {
               type="button"
               onClick={save}
               disabled={busy || !selected || (!promoting && selected === normalizeAdminAccess(user.adminAccess))}
-              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? "Saving…" : promoting ? "Make admin" : "Save access"}
             </button>
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
                     {user.effectivePlan === "UNLIMITED" && <Crown size={13} />}
                     {plan.name}
                     {isFreeGrant(user.planSource) && user.effectivePlan !== "FREE" && (
-                      <Gift size={12} className="text-violet-500" aria-label="Gifted by an admin" />
+                      <Gift size={12} className="text-indigo-500" aria-label="Gifted by an admin" />
                     )}
                   </p>
                   {user.effectivePlan !== "FREE" && (
@@ -346,7 +346,7 @@ export default function AdminUsersPage() {
                 {user.isOwner ? <Badge tone="amber">OWNER</Badge> : <StatusBadge status={user.role} />}
                 {user.bannedAt && <span title={user.banReason}><Badge tone="red">BANNED</Badge></span>}
                 {user.role === "ADMIN" && !user.isOwner && (
-                  <Badge tone={normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "neutral" : "violet"}>
+                  <Badge tone={normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "neutral" : "indigo"}>
                     {normalizeAdminAccess(user.adminAccess) === "MANAGER" ? "MANAGER" : "FULL"}
                   </Badge>
                 )}

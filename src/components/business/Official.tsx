@@ -95,7 +95,7 @@ export function OfficialDashboardCard() {
   const latest = unread[0] ?? data.announcements[0];
 
   return (
-    <div className={`mb-5 flex flex-col gap-3 rounded-2xl border bg-gradient-to-r from-indigo-100/70 via-sky-50/60 to-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:gap-5 ${unread.length ? "border-indigo-200 ring-1 ring-inset ring-indigo-100" : "border-[var(--gh-e1e4e8)]"}`}>
+    <div className={`mb-5 flex flex-col gap-3 rounded-2xl border bg-slate-50 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:gap-5 ${unread.length ? "border-indigo-200 ring-1 ring-inset ring-indigo-100" : "border-[var(--gh-e1e4e8)]"}`}>
       {/* Phones and tablets: the logo and the buttons share one row that never wraps; from lg the row dissolves (contents) and
           its parts take their places in the single line: logo, divider, text, buttons */}
       <div className="flex items-center justify-between gap-2 lg:contents">

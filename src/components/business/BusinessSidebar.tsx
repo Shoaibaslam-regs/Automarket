@@ -101,7 +101,7 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
         aria-expanded={open}
         className="flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50"
       >
-        <span className="relative flex-shrink-0 rounded-xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[1.5px]">
+        <span className="relative flex-shrink-0 rounded-xl bg-slate-200 p-[1.5px]">
           <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[10px] bg-slate-900 text-sm font-extrabold text-white">
             {org?.logo ? <Image src={org.logo} alt="" fill sizes="36px" className="object-cover" /> : org?.name?.[0]?.toUpperCase() || "B"}
           </span>
@@ -198,7 +198,6 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
   const full = limit !== null && used >= limit;
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white p-3.5 ring-1 ring-inset ring-slate-200">
-      <div aria-hidden className={`pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full blur-2xl ${lapsed ? "bg-rose-400/15" : "bg-amber-400/15"}`} />
       <div className="relative flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
           <Crown size={13} className={lapsed ? "text-rose-500" : "text-amber-500"} />
@@ -221,7 +220,7 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
         <>
           <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div
-              className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-500" : pct >= 75 ? "bg-amber-400" : "bg-gradient-to-r from-indigo-500 to-sky-400"}`}
+              className={`h-full rounded-full ${limit === null ? "theme-static bg-amber-400" : full ? "bg-rose-500" : pct >= 75 ? "bg-amber-400" : "bg-indigo-500"}`}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -233,7 +232,7 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
       {(lapsed || sub.planId !== "UNLIMITED") && (
         <Link
           href="/pricing"
-          className="relative mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-amber-500 py-2 text-xs font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:opacity-90"
+          className="relative mt-3 flex items-center justify-center gap-1.5 rounded-xl theme-static bg-amber-400 py-2 text-xs font-bold text-slate-950 shadow-lg transition hover:opacity-90"
         >
           <Sparkles size={13} /> {lapsed ? "Subscribe" : b?.state === "FREE_START" ? "Choose a plan" : "Upgrade plan"}
         </Link>
@@ -259,8 +258,6 @@ function SidebarContent({
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-slate-100 text-slate-900">
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-400/10 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-amber-400/10 blur-3xl" />
 
       {/* The business card on top (no logo); the phone drawer adds its close button above it */}
       <div className="relative space-y-3 px-4 pb-4 pt-5">
@@ -293,7 +290,7 @@ function SidebarContent({
                     active ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                   }`}
                 >
-                  {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500" />}
+                  {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-indigo-600" />}
                   <Icon size={17} strokeWidth={active ? 2.1 : 1.8} className={`flex-shrink-0 transition ${active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-600"}`} />
                   <span className="flex-1 truncate">{label}</span>
                   {badge > 0 && <CountBadge count={badge} />}
@@ -311,7 +308,7 @@ function SidebarContent({
               target="_blank"
               rel="noreferrer"
               onClick={onClose}
-              className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-50 to-fuchsia-50 px-2.5 py-2 text-[13.5px] font-medium text-indigo-900 ring-1 ring-inset ring-indigo-200 transition hover:from-indigo-500/25 hover:to-fuchsia-500/20"
+              className="group flex items-center gap-3 rounded-xl bg-indigo-50 px-2.5 py-2 text-[13.5px] font-medium text-indigo-900 ring-1 ring-inset ring-indigo-200 transition hover:from-indigo-500/25 hover:to-indigo-500/20"
             >
               <span className="flex flex-shrink-0 items-center justify-center text-indigo-600">
                 <Globe size={16} strokeWidth={1.9} />
@@ -454,7 +451,7 @@ export default function BusinessSidebar() {
           return (
             <Link key={href} href={href} aria-current={active ? "page" : undefined}
               className={`relative flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold transition ${active ? "text-slate-900" : "text-slate-500"}`}>
-              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400" />}
+              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-indigo-600" />}
               <span className="relative">
                 <Icon size={19} strokeWidth={active ? 2.3 : 1.9} />
                 <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[9px] ring-2 ring-white" />

@@ -100,10 +100,10 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
       </div>
 
       <div ref={frameRef} className="slip-frame mx-auto max-w-[703px]">
-        <article style={{ width: SHEET_WIDTH, zoom: fit }} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)]">
+        <article style={{ width: SHEET_WIDTH, zoom: fit }} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
           <header className="flex items-start justify-between gap-6 bg-slate-950 px-6 py-5 text-white">
             <div className="flex items-start gap-4">
-              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 text-lg font-extrabold text-slate-950">
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-extrabold text-slate-950">
                 {org?.name?.[0]?.toUpperCase() || "B"}
               </span>
               <div>

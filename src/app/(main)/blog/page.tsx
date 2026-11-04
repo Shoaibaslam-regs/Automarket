@@ -47,8 +47,6 @@ export default async function BlogPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-12 pt-12 text-white sm:pt-16">
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl" />
         <div className="relative mx-auto max-w-[1180px]">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10">
             <Newspaper size={13} /> AutoGO Blog
@@ -73,7 +71,7 @@ export default async function BlogPage({ searchParams }: Props) {
                 {/* Only when checked on another day than the prices took effect, so the date isn't repeated */}
                 {fuelDate(latestCheck(fuel) ?? petrol.effectiveDate) !== fuelDate(petrol.effectiveDate) && <UpdatedTag at={latestCheck(fuel)} />}
               </>
-            ) : <span>Pakistan&apos;s official petrol and diesel prices, with Brent and WTI crude</span>}
+            ) : <span>Pakistan&apos;s official petrol and diesel prices, updated daily</span>}
           </span>
           <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-600">See prices &amp; trends <ArrowRight size={14} className="transition group-hover:translate-x-0.5" /></span>
         </Link>

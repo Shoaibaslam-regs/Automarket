@@ -205,7 +205,7 @@ export default function OnboardingPage() {
                   <button key={plan.id} type="button" role="radio" aria-checked={selected} onClick={() => setSelectedPlan(plan.id)}
                     style={{ textAlign: "left", fontFamily: "inherit", cursor: "pointer", padding: "18px 20px", background: selected ? "var(--gh-0d1117)" : "var(--gh-ffffff)", color: selected ? "var(--gh-ffffff)" : "var(--gh-0d1117)", border: `${selected ? 2 : 1}px solid ${selected ? "var(--gh-0d1117)" : "var(--gh-e1e4e8)"}`, borderRadius: "12px", position: "relative" }}>
                     {current && (
-                      <span style={{ position: "absolute", top: "-10px", left: "20px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "var(--gh-0d1117)", fontSize: "10px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px" }}>
+                      <span style={{ position: "absolute", top: "-10px", left: "20px", background: "#fbbf24", color: "var(--gh-0d1117)", fontSize: "10px", fontWeight: 700, padding: "2px 10px", borderRadius: "20px" }}>
                         YOUR PLAN
                       </span>
                     )}

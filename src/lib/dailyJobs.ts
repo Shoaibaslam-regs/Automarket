@@ -167,7 +167,7 @@ export async function runDailyJobs(now = new Date()) {
     result.planBadges = "failed";
   }
   try {
-    // Petroleum Division releases and Brent / WTI (src/lib/fuelJobs.ts; /api/cron/fuel runs it more often)
+    // Official Pakistani prices (OGRA, src/lib/fuelJobs.ts; /api/cron/fuel runs it more often)
     result.fuel = await runFuelJobs(now);
   } catch (e) {
     reportError("Daily job fuel prices failed:", e);

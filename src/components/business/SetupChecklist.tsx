@@ -57,7 +57,7 @@ export default function SetupChecklist() {
         <button onClick={hide} aria-label="Hide checklist" title="Hide" className="rounded-md p-1 text-[var(--gh-8c959f)] hover:bg-[var(--gh-f6f8fa)]"><X size={16} /></button>
       </div>
       <div className="mx-4 mt-3 h-2 overflow-hidden rounded-full bg-[var(--gh-f6f8fa)]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
       </div>
       <ul className="mt-3 divide-y divide-[var(--gh-f6f8fa)] border-t border-[var(--gh-f6f8fa)]">
         {STEPS.map(s => {

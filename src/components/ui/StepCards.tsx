@@ -30,7 +30,7 @@ function Arrow() {
     <div aria-hidden className="flex h-9 items-center justify-center sm:h-auto sm:w-12 sm:flex-shrink-0">
       {/* One horizontal arrow, turned to point down on phones */}
       <div className="flex w-9 rotate-90 items-center sm:w-10 sm:rotate-0">
-        <span className="h-[2px] flex-1 rounded-full bg-gradient-to-r from-slate-200 to-sky-300" />
+        <span className="h-[2px] flex-1 rounded-full bg-slate-300" />
         <svg viewBox="0 0 10 12" className="-ml-px h-3.5 w-3 flex-shrink-0 text-sky-400">
           <path d="M1.5 1.5l6.5 4.5-6.5 4.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

@@ -163,7 +163,7 @@ export default function InventoryPage() {
           <BoostAllowanceText className="mt-0.5" />
         </div>
         {listingsFull ? (
-          <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2.5 text-[13px] font-bold text-slate-950 transition hover:opacity-90">
+          <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg theme-static bg-amber-400 px-4 py-2.5 text-[13px] font-bold text-slate-950 transition hover:opacity-90">
             <Crown size={15} strokeWidth={2} /> Upgrade to add more
           </Link>
         ) : (
@@ -229,7 +229,7 @@ export default function InventoryPage() {
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
             {filtered.map(v => (
-              <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white transition hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]">
+              <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white transition hover:shadow-md">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gh-f6f8fa)]">
                   {v.images?.[0] ? (
                     <Image src={v.images[0]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />

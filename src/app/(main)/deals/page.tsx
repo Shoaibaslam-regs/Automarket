@@ -33,8 +33,6 @@ export default async function DealsPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-12 pt-10 text-white sm:pt-14">
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-rose-600/30 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-amber-500/20 blur-3xl" />
         <div className="relative mx-auto max-w-[1200px]">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-rose-200 ring-1 ring-inset ring-white/10">
             <Flame size={13} /> Limited-time offers

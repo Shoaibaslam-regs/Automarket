@@ -46,7 +46,7 @@ export default function Toaster() {
         key={item.id}
         role="status"
         aria-live="polite"
-        className="theme-static pointer-events-auto flex items-center gap-2.5 rounded-full bg-slate-900 py-2.5 pl-4 pr-2.5 text-sm font-medium text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.55)]"
+        className="theme-static pointer-events-auto flex items-center gap-2.5 rounded-full bg-slate-900 py-2.5 pl-4 pr-2.5 text-sm font-medium text-white shadow-lg"
         style={{ animation: leaving ? `amToastOut ${LEAVE_MS}ms ease-in forwards` : "amToastIn 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2)" }}
       >
         <Icon

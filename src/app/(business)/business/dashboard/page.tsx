@@ -254,7 +254,7 @@ export default function BusinessDashboard() {
                   value: stats?.rentals.activeRentals || 0,
                   icon: KeyRound,
                   sub: `${stats?.rentals.totalBookings || 0} total bookings`,
-                  color: "var(--gh-6e40c9)",
+                  color: "var(--gh-4f46e5)",
                 },
               ].map(s => (
                 <div
@@ -368,7 +368,7 @@ export default function BusinessDashboard() {
                       total: stats?.inventory.totalVehicles || 1,
                       color: "",
                       // The AutoGO indigo → sky gradient (it was green)
-                      bar: "bg-gradient-to-r from-indigo-500 to-sky-400",
+                      bar: "bg-indigo-500",
                     },
                     {
                       label: "Sold",

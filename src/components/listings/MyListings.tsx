@@ -119,7 +119,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4">
           {listings.map(l => (
-            <article key={l.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_-22px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 sm:rounded-3xl">
+            <article key={l.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 sm:rounded-3xl">
               <Link href={`/listings/${l.id}`} className="relative block aspect-[4/3] bg-slate-100 sm:aspect-[16/10]">
                 {l.image ? (
                   <Image src={l.image} alt="" fill sizes="(max-width: 640px) 50vw, 340px" className="object-cover" />
@@ -148,7 +148,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
       ) : (
         <div className="flex flex-col gap-3">
           {listings.map(l => (
-            <article key={l.id} className="flex gap-3 overflow-hidden rounded-2xl bg-white p-2.5 shadow-[0_8px_30px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 sm:gap-4 sm:p-3">
+            <article key={l.id} className="flex gap-3 overflow-hidden rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/70 sm:gap-4 sm:p-3">
               <Link href={`/listings/${l.id}`} className="relative h-24 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-28 sm:w-44">
                 {l.image ? (
                   <Image src={l.image} alt="" fill sizes="176px" className="object-cover" />

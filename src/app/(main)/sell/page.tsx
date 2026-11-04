@@ -433,7 +433,7 @@ export default function SellPage() {
 
                     {i < STEPS.length - 1 && (
                       <span aria-hidden className="mx-2 mt-5 h-0.5 min-w-4 flex-1 overflow-hidden rounded-full bg-slate-200 sm:mx-4 sm:mt-[21px]">
-                        <span className={`block h-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-all duration-500 ${done ? "w-full" : "w-0"}`} />
+                        <span className={`block h-full rounded-full bg-indigo-500 transition-all duration-500 ${done ? "w-full" : "w-0"}`} />
                       </span>
                     )}
                   </li>

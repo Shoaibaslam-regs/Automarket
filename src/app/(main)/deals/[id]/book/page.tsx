@@ -54,7 +54,7 @@ export default async function BookDealPage({ params, searchParams }: {
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-400"><ImageOff size={20} strokeWidth={1.5} /></div>
                   )}
-                  <span className="theme-static absolute left-2 top-2 hidden rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white lg:inline-block">
+                  <span className="theme-static absolute left-2 top-2 hidden rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white lg:inline-block">
                     {dealLabel(deal)}
                   </span>
                 </div>

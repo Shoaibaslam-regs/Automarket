@@ -60,7 +60,7 @@ export function ShareCard({ mark, photo, eyebrow, title, price, detail, badge }:
       <div
         style={{
           display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, padding: "52px 56px",
-          backgroundImage: "radial-gradient(circle at 85% 0%, rgba(99,102,241,0.45), transparent 55%), radial-gradient(circle at 0% 100%, rgba(217,70,239,0.18), transparent 50%)",
+          backgroundImage: "radial-gradient(circle at 85% 0%, rgba(99,102,241,0.45), transparent 55%)",
         }}
       >
         <Brand mark={mark} />

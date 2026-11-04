@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Check, Copy, Search, type LucideIcon } from "lucide-react";
 import Select from "@/components/ui/Select";
 
-export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "violet" | "orange";
+export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "indigo" | "orange";
 
 const BADGE_TONES: Record<Tone, string> = {
   neutral: "bg-slate-100 text-slate-600 ring-slate-200",
@@ -13,7 +13,7 @@ const BADGE_TONES: Record<Tone, string> = {
   green: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   amber: "bg-amber-50 text-amber-800 ring-amber-200",
   red: "bg-rose-50 text-rose-700 ring-rose-200",
-  violet: "bg-violet-50 text-violet-700 ring-violet-200",
+  indigo: "bg-indigo-50 text-indigo-700 ring-indigo-200",
   orange: "bg-orange-50 text-orange-700 ring-orange-200",
 };
 
@@ -23,7 +23,7 @@ const ICON_TONES: Record<Tone, string> = {
   green: "text-emerald-600",
   amber: "text-amber-600",
   red: "text-rose-600",
-  violet: "text-violet-600",
+  indigo: "text-indigo-600",
   orange: "text-orange-600",
 };
 
@@ -36,13 +36,13 @@ export const STATUS_TONE: Record<string, Tone> = {
   SOLD: "blue",
   RENTED: "orange",
   CANCELLED: "red",
-  ADMIN: "violet",
+  ADMIN: "indigo",
   USER: "neutral",
   FREE: "neutral",
   STARTER: "blue",
-  PRO: "violet",
+  PRO: "indigo",
   UNLIMITED: "amber",
-  FULL: "violet",
+  FULL: "indigo",
   READ_ONLY: "neutral",
   MANAGER: "neutral",
 };
@@ -147,14 +147,8 @@ export function StatusBadge({ status }: { status: string }) {
   return <Badge tone={STATUS_TONE[status] ?? "neutral"}>{status}</Badge>;
 }
 
-const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-violet-500",
-  "from-sky-500 to-indigo-500",
-  "from-fuchsia-500 to-indigo-500",
-  "from-amber-500 to-orange-500",
-  "from-rose-500 to-pink-500",
-  "from-slate-600 to-slate-800",
-];
+// Solid initials colours (no gradients), picked by the name so each person keeps theirs
+const AVATAR_GRADIENTS = ["bg-indigo-600", "bg-sky-600", "bg-slate-700", "bg-amber-600", "bg-rose-600", "bg-emerald-600"];
 
 export function Avatar({ name, size = 36 }: { name?: string; size?: number }) {
   const label = name?.trim() || "?";
@@ -168,7 +162,7 @@ export function Avatar({ name, size = 36 }: { name?: string; size?: number }) {
     <span
       aria-hidden
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
-      className={`flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-semibold text-white ring-2 ring-white shadow-sm ${AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length]}`}
+      className={`flex flex-shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-white shadow-sm ${AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length]}`}
     >
       {initials}
     </span>

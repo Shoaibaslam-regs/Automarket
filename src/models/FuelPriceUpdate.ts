@@ -29,6 +29,8 @@ export interface IFuelPriceUpdate extends Document {
   reviewNote?: string;
   reviewedBy?: mongoose.Types.ObjectId;
   reviewedAt?: Date;
+  /** Cleared from Admin → Fuel prices' "Recently reviewed" card. Kept (not deleted) so the checker never reads the release again */
+  hiddenFromTrail?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +54,7 @@ const FuelPriceUpdateSchema = new Schema<IFuelPriceUpdate>(
     reviewNote: { type: String, maxlength: 300 },
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
     reviewedAt: { type: Date },
+    hiddenFromTrail: { type: Boolean },
   },
   { timestamps: true }
 );

@@ -1,38 +1,34 @@
-// Fuel Price Tracker rules: Pakistan's official petrol and diesel prices (Petroleum Division press releases, which an
-// admin approves before anyone sees them) and Brent and WTI crude (Alpha Vantage). Client-safe and unit-tested
+// Fuel Price Tracker rules: Pakistan's official petrol and diesel prices (OGRA price publications, the Petroleum
+// Division's releases as a fallback), which an admin approves before anyone sees them. (Brent and WTI crude were removed
+// at the owner's request: no free source gave current prices.) Client-safe and unit-tested
 // (src/lib/__tests__/fuelPrices.test.ts); the jobs that fetch and store them are in src/lib/fuelJobs.ts.
 //
-// The Petroleum Division publishes one press release image a day (since mid-2026 prices change daily) on its
-// "Petroleum Notifications" page, a hand-edited calendar whose day numbers link to NewsDetail pages that hold a JPEG
-// of the release. There is no PDF or text to parse, so the prices are read from the image (Gemini vision) and always
-// wait for an admin.
+// Since mid-2026 prices change daily. The main source is OGRA's "Price Publications" page, which lists one PDF per
+// effective day ("Price Publication Effective Dated November 05, 2026") with the full price build-up of petrol and
+// diesel; the PDFs carry real text, so the totals are read exactly (`parseOgraPdfText`), with no AI. The Petroleum
+// Division's "Petroleum Notifications" calendar (a JPEG press release per day, read with Gemini vision) is only the
+// fallback: it is edited by hand and fell a week behind OGRA (it stopped at 30 Oct while OGRA had 3–5 Nov), which
+// showed old prices as current. Either way every price waits for an admin.
 
 export type FuelType = "PETROL" | "DIESEL";
-export type Commodity = "BRENT" | "WTI";
 
 export const FUEL_LABEL: Record<FuelType, { name: string; short: string }> = {
   PETROL: { name: "Petrol (Motor Spirit)", short: "Petrol" },
   DIESEL: { name: "High Speed Diesel (HSD)", short: "Diesel" },
 };
 
-export const COMMODITY_LABEL: Record<Commodity, string> = { BRENT: "Brent Crude", WTI: "WTI Crude" };
-
-/**
- * Alpha Vantage's commodity functions (free plan): daily Brent and WTI spot closes, which Alpha Vantage takes from the
- * U.S. Energy Information Administration and which arrive a few days after the trading day. (Twelve Data has them
- * too, but only on its paid Grow plan.)
- */
-export const ALPHA_VANTAGE_FUNCTIONS: Record<Commodity, string> = { BRENT: "BRENT", WTI: "WTI" };
-export const OIL_SOURCE = "Alpha Vantage (U.S. EIA data)";
-
 /** The official notices page and the hosts it serves (www.petroleum.gov.pk has a broken certificate). */
 export const PETROLEUM_HOSTS = ["petroleum.gov.pk", "www.petroleum.gov.pk"];
 export const PETROLEUM_NOTICES_URL = "https://petroleum.gov.pk/Detail/MDQwOGNiMTMtYWYxOC00M2Y2LWIxNTEtMGVkZTUxNjE2YzQy";
 
+/** OGRA's price publications page, the main source (see the top of this file). */
+export const OGRA_HOSTS = ["ogra.org.pk", "www.ogra.org.pk"];
+export const OGRA_PRICES_URL = "https://ogra.org.pk/index.php/price-publications";
+/** OGRA publications read per run: plain text, no AI call, so a week can be caught up in one run */
+export const OGRA_PER_RUN = 7;
+
 /** PKR per litre outside this band is a misread, not a price */
 export const PK_PRICE_RANGE = { min: 100, max: 1500 };
-/** USD per barrel outside this band is bad data */
-export const OIL_PRICE_RANGE = { min: 5, max: 500 };
 /** existing + change must equal revised within this (rounding in the release) */
 export const CONSISTENCY_TOLERANCE = 0.05;
 /** Notices newer than this many days back are looked at; older ones are history */
@@ -77,6 +73,76 @@ export function parseDay(value: unknown): Date | null {
 }
 
 export type NoticeLink = { url: string; day: string };
+
+/** A https address on OGRA's site, or null. */
+export function ograUrl(value: string, base = "https://ogra.org.pk/"): string | null {
+  try {
+    const url = new URL(value.trim().replace(/&amp;/g, "&"), base);
+    if (!OGRA_HOSTS.includes(url.hostname)) return null;
+    url.protocol = "https:";
+    url.port = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+const dayOf = (month: string, date: string, year: string) => {
+  const m = MONTHS.indexOf(month.toLowerCase());
+  return m < 0 ? null : `${year}-${String(m + 1).padStart(2, "0")}-${date.padStart(2, "0")}`;
+};
+
+/**
+ * The publications on OGRA's Price Publications page, newest first: each "Effective Dated <Month DD, YYYY>" label
+ * and the English download link after it. Days more than one day ahead are skipped (OGRA posts the next day's
+ * prices the evening before).
+ */
+export function parseOgraList(html: string, now = new Date()): NoticeLink[] {
+  const token = /Effective\s+Dated\s+([A-Za-z]+)\s+(\d{1,2}),\s*(20\d\d)|href="([^"]*\/download\/[^"]*)"/gi;
+  const latest = pkDayKey(new Date(now.getTime() + DAY));
+  const found = new Map<string, NoticeLink>();
+  let day: string | null = null;
+  for (const m of html.matchAll(token)) {
+    if (m[1]) {
+      day = dayOf(m[1], m[2], m[3]);
+      continue;
+    }
+    if (!day) continue;
+    const url = ograUrl(m[4]);
+    // Each label has an English and an Urdu link: keep the English one (or the first, when unmarked)
+    if (!url || /lang=ur/i.test(url)) continue;
+    if (parseDay(day) && day <= latest && !found.has(url)) found.set(url, { url, day });
+    day = null;
+  }
+  return [...found.values()].sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
+}
+
+/**
+ * The prices in the text of an OGRA price publication PDF: "Total Petrol Price (excl. Secondary Freight*) RS/LTR
+ * V={P+S+T+U} 362.00", the same for diesel, and "PETROL (MS) Price Effective November 05,2026" (diesel's heading must
+ * name the same day). Returned in the shape checkNotice takes, so both sources are checked the same way.
+ */
+export function parseOgraPdfText(text: string): RawNotice {
+  const flat = text.replace(/\s+/g, " ");
+  const total = (fuel: string) => flat.match(new RegExp(`Total ${fuel} Price[^0-9]{0,90}?(\\d{2,4}(?:,\\d{3})*\\.\\d{1,2})`, "i"))?.[1] ?? null;
+  const effective = (fuel: string) => {
+    const m = flat.match(new RegExp(`${fuel}\\s*\\((?:MS|HSD)\\)\\s*Price Effective\\s+([A-Za-z]+)\\s+(\\d{1,2}),\\s*(20\\d\\d)`, "i"));
+    return m ? dayOf(m[1], m[2], m[3]) : null;
+  };
+  const petrolDay = effective("Petrol");
+  const dieselDay = effective("Diesel");
+  const petrol = total("Petrol");
+  const diesel = total("Diesel");
+  const sameDay = petrolDay && (!dieselDay || dieselDay === petrolDay);
+  return {
+    isPriceNotice: !!(petrol && diesel && sameDay),
+    effectiveDate: sameDay ? petrolDay : null,
+    releaseDate: null,
+    previousEffectiveDate: null,
+    petrol: { existing: null, revised: petrol, change: null },
+    diesel: { existing: null, revised: diesel, change: null },
+  };
+}
 
 /**
  * The day links on the notices calendar, newest first. The page lists months (headings such as "October, 2026",
@@ -212,35 +278,6 @@ export function priceChange(previous: number | null | undefined, current: number
   if (previous == null || !Number.isFinite(previous) || previous === 0) return null;
   const diff = price2(current - previous);
   return { diff, pct: Math.round((diff / previous) * 10_000) / 100 };
-}
-
-export type OilQuote = { price: number; previousClose: number | null; change: number | null; percentChange: number | null; date: string };
-
-/**
- * Daily closes from an Alpha Vantage commodity answer ({ data: [{ date, value }] }, newest first, "." for a missing
- * day), oldest first, or the reason it's unusable: Alpha Vantage reports problems in "Error Message", "Information"
- * (a bad key or the daily limit) or "Note".
- */
-export function parseAlphaSeries(json: unknown): { points?: { date: string; close: number }[]; error?: string } {
-  const s = json as { data?: { date?: string; value?: string }[]; "Error Message"?: string; Information?: string; Note?: string } | null;
-  if (!s || typeof s !== "object") return { error: "Empty answer" };
-  const problem = s["Error Message"] || s.Information || s.Note;
-  if (problem) return { error: String(problem).slice(0, 300) };
-  if (!Array.isArray(s.data)) return { error: "No price data in the answer" };
-  const points = s.data
-    .map(v => ({ date: String(v.date ?? "").slice(0, 10), close: num(v.value) }))
-    .filter(p => /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.close >= OIL_PRICE_RANGE.min && p.close <= OIL_PRICE_RANGE.max)
-    .sort((a, b) => (a.date < b.date ? -1 : 1));
-  return points.length ? { points } : { error: "No usable prices in the answer" };
-}
-
-/** The latest close with its change from the close before it. */
-export function latestOilQuote(points: { date: string; close: number }[]): OilQuote | null {
-  const last = points[points.length - 1];
-  if (!last) return null;
-  const before = points[points.length - 2];
-  const change = priceChange(before?.close, last.close);
-  return { price: last.close, previousClose: before?.close ?? null, change: change?.diff ?? null, percentChange: change?.pct ?? null, date: last.date };
 }
 
 /** "8 Oct 2026" in Pakistan time. */

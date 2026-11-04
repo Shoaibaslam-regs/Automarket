@@ -127,13 +127,13 @@ export default function MobileNavDrawer({
           active ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50 active:bg-slate-50"
         }`}
       >
-        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />}
+        {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-indigo-600" />}
         <span className={`flex flex-shrink-0 items-center justify-center ${active ? "text-slate-900" : "text-slate-500"}`}>
           <Icon size={14} strokeWidth={active ? 2.2 : 1.9} />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {item.hint && (
-          <span className="rounded-full bg-gradient-to-r from-amber-300 to-amber-500 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-slate-950">{item.hint}</span>
+          <span className="rounded-full theme-static bg-amber-400 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-slate-950">{item.hint}</span>
         )}
         <CountBadge count={item.count ?? 0} />
         <ChevronRight size={13} className={active ? "text-slate-400" : "text-slate-300"} />
@@ -157,18 +157,16 @@ export default function MobileNavDrawer({
         @keyframes mnFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes mnSlide { from { transform: translateX(100%) } to { transform: translateX(0) } }
         @keyframes mnFlame { 0%, 100% { transform: scale(1) rotate(-4deg) } 50% { transform: scale(1.18) rotate(5deg) } }
-        @keyframes mnShine { from { transform: translateX(-120%) skewX(-20deg) } to { transform: translateX(320%) skewX(-20deg) } }
         @media (prefers-reduced-motion: reduce) { .mn-hot, .mn-hot * { animation: none !important } }
       `}</style>
 
       <aside className="absolute inset-y-0 right-0 flex w-[min(80vw,300px)] animate-[mnSlide_0.28s_cubic-bezier(0.22,1,0.36,1)] flex-col bg-white shadow-2xl shadow-slate-950/40">
         {/* Header */}
-        <div className="relative overflow-hidden bg-slate-950 px-4 pb-3.5 pt-3 text-white">
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
+        {/* White in light mode and dark in dark mode (plain neutrals, which the theme inverts) */}
+        <div className="relative overflow-hidden border-b border-slate-200 bg-white px-4 pb-3.5 pt-3 text-slate-900">
 
           <div className="relative flex items-center justify-end">
-            <button onClick={onClose} aria-label="Close menu" className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-slate-200 ring-1 ring-inset ring-white/15 transition hover:bg-white/20">
+            <button onClick={onClose} aria-label="Close menu" className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-200">
               <X size={14} />
             </button>
           </div>
@@ -177,40 +175,40 @@ export default function MobileNavDrawer({
             <div className="relative mt-4">
               {/* Who: a larger avatar beside the name and email */}
               <div className="flex items-center gap-3">
-                <span className={`flex-shrink-0 rounded-full p-[2px] ${hasBusiness ? "bg-gradient-to-br from-indigo-400 to-fuchsia-500" : "bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300"}`}>
-                  <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-base font-bold">
+                <span className="flex-shrink-0 rounded-full bg-slate-200 p-[2px]">
+                  <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-base font-bold text-white">
                     {user.image ? <Image src={user.image} alt="" fill sizes="44px" className="object-cover" /> : user.name?.[0]?.toUpperCase() || "?"}
                   </span>
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex min-w-0 items-center gap-1 text-sm font-semibold leading-tight"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
-                  <p className="mt-0.5 truncate text-[11px] text-slate-400">{user.email}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">{user.email}</p>
                 </div>
               </div>
               {/* Plan, business and ID on their own row with room between them (plain text, no chips) */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-white/10 pt-2.5 text-[11px] font-semibold">
+              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] font-semibold">
                 {plan && (
-                  <span className="inline-flex items-center gap-1 text-amber-200"><Crown size={12} /> {plan.name}</span>
+                  <span className="inline-flex items-center gap-1 text-amber-700"><Crown size={12} /> {plan.name}</span>
                 )}
                 {hasBusiness && (
                   <>
-                    <span aria-hidden className="text-slate-600">·</span>
-                    <span className="inline-flex items-center gap-1 text-indigo-200"><Briefcase size={11} /> Business</span>
+                    <span aria-hidden className="text-slate-300">·</span>
+                    <span className="inline-flex items-center gap-1 text-indigo-600"><Briefcase size={11} /> Business</span>
                   </>
                 )}
-                <span aria-hidden className="text-slate-600">·</span>
-                <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-300 !ring-0 hover:!text-white" />
+                <span aria-hidden className="text-slate-300">·</span>
+                <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-500 !ring-0 hover:!text-slate-900" />
               </div>
             </div>
           ) : (
             <div className="relative mt-3">
               <p className="text-sm font-semibold">Welcome to AutoGO</p>
-              <p className="mt-0.5 text-xs text-slate-400">Buy, sell and rent cars and bikes across Pakistan.</p>
+              <p className="mt-0.5 text-xs text-slate-500">Buy, sell and rent cars and bikes across Pakistan.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <SignInLink onClick={onClose} className="rounded-lg bg-white/10 py-2 text-center text-xs font-semibold ring-1 ring-inset ring-white/15 transition hover:bg-white/15">
+                <SignInLink onClick={onClose} className="rounded-lg bg-white py-2 text-center text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
                   Sign in
                 </SignInLink>
-                <Link href="/register" onClick={onClose} className="rounded-lg bg-white py-2 text-center text-xs font-semibold text-slate-950 transition hover:bg-slate-200">
+                <Link href="/register" onClick={onClose} className="rounded-lg bg-slate-900 py-2 text-center text-xs font-semibold text-white transition hover:bg-slate-800">
                   Create account
                 </Link>
               </div>
@@ -260,7 +258,6 @@ export default function MobileNavDrawer({
               className="mn-hot mb-1 block rounded-lg"
             >
               <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg py-1.5 pl-5 pr-2 transition hover:bg-slate-50">
-                <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-[mnShine_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/50 to-transparent" />
                 <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
                   <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />
                 </span>
@@ -283,10 +280,10 @@ export default function MobileNavDrawer({
             <Link
               href="/business"
               onClick={onClose}
-              className="block rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 p-[1.5px]"
+              className="block rounded-xl bg-indigo-600 p-[1.5px]"
             >
               <span className="flex items-center gap-2.5 rounded-[10.5px] bg-white px-2.5 py-2">
-                <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white">
+                <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-indigo-600 text-sm font-bold text-white">
                   {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="36px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={15} />)}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -316,12 +313,11 @@ export default function MobileNavDrawer({
             <Link
               href="/pricing"
               onClick={onClose}
-              className="relative block overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 to-indigo-950 p-3 text-white"
+              className="relative block overflow-hidden rounded-xl bg-slate-900 p-3 text-white"
             >
-              <div aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-amber-400/30 blur-2xl" />
               <p className="relative flex items-center gap-1.5 text-[13px] font-bold"><Sparkles size={13} className="text-amber-300" /> Go Premium</p>
               <p className="relative mt-0.5 text-[11px] leading-snug text-slate-300">More listings, a bigger team and full showroom tools from PKR 500 for 30 days.</p>
-              <span className="relative mt-2 inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-300 to-amber-500 px-2.5 py-1 text-[11px] font-bold text-slate-950">
+              <span className="relative mt-2 inline-flex items-center gap-1 rounded-md theme-static bg-amber-400 px-2.5 py-1 text-[11px] font-bold text-slate-950">
                 See plans <ChevronRight size={13} />
               </span>
             </Link>

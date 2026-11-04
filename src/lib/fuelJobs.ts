@@ -2,27 +2,25 @@ import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/gen
 import { connectDB } from "@/lib/mongodb";
 import { FuelPrice } from "@/models/FuelPrice";
 import { FuelPriceUpdate } from "@/models/FuelPriceUpdate";
-import { OilMarketPrice } from "@/models/OilMarketPrice";
-import { OilPriceHistory } from "@/models/OilPriceHistory";
 import { SiteSetting } from "@/models/SiteSetting";
 import { generateCounted } from "@/lib/usageTracker";
 import { hitRateLimit } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 import { invalidateFuel } from "@/lib/pageCache";
 import {
-  ALPHA_VANTAGE_FUNCTIONS, FRESH_NOTICE_DAYS, NOTICES_PER_RUN, OIL_SOURCE, PETROLEUM_NOTICES_URL, checkNotice, findNoticeFile,
-  latestOilQuote, parseAlphaSeries, parseNoticeCalendar, petroleumUrl, pkDayKey, type Commodity, type RawNotice,
+  FRESH_NOTICE_DAYS, NOTICES_PER_RUN, OGRA_PER_RUN, OGRA_PRICES_URL, PETROLEUM_NOTICES_URL, checkNotice, findNoticeFile, ograUrl,
+  parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl, pkDayKey, type RawNotice,
 } from "@/lib/fuelPrices";
 
-// The Fuel Price Tracker's jobs (rules in src/lib/fuelPrices.ts). runFuelJobs is called by the daily cron and by
-// /api/cron/fuel (for an outside scheduler every 6 hours) and Admin → Fuel prices → Check now (which forces the oil update). Neither job ever
-// deletes or overwrites approved prices or saved market data: a failure only records its error in the status.
+// The Fuel Price Tracker's job (rules in src/lib/fuelPrices.ts). runFuelJobs is called by the daily cron, by
+// /api/cron/fuel (for an outside scheduler every 6 hours) and by Admin → Fuel prices → Check now. It never deletes or
+// overwrites approved prices: a failure only records its error in the status.
 
 const MODEL = process.env.GEMINI_FUEL_MODEL || process.env.GEMINI_VISION_MODEL || "gemini-3.5-flash-lite";
 const STATUS_KEY = "fuelStatus";
 
 export type JobStatus = { lastRunAt?: string; lastSuccessAt?: string; lastError?: string; lastResult?: string };
-export type FuelStatus = { notices?: JobStatus; oil?: JobStatus };
+export type FuelStatus = { notices?: JobStatus };
 
 async function setStatus(part: keyof FuelStatus, value: JobStatus) {
   const doc = await SiteSetting.findOne({ key: STATUS_KEY }).lean<{ value?: FuelStatus }>();
@@ -60,6 +58,37 @@ async function fetchPetroleum(url: string, kind: "html" | "image") {
     return { buf, type };
   }
   throw new Error("The address left the Petroleum Division site");
+}
+
+/** The same for OGRA's site: its price publications page and the PDFs it links to. */
+async function fetchOgra(url: string, kind: "html" | "pdf") {
+  let target = ograUrl(url);
+  const maxBytes = kind === "html" ? 3_000_000 : 4_000_000;
+  for (let hop = 0; target && hop < 4; hop++) {
+    const res = await fetch(target, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+      headers: { "User-Agent": "AutoGO fuel price checker", Accept: kind === "html" ? "text/html" : "application/pdf" },
+    });
+    if (res.status >= 300 && res.status < 400) {
+      target = ograUrl(res.headers.get("location") ?? "", target);
+      continue;
+    }
+    if (!res.ok) throw new Error(`OGRA's site answered ${res.status}`);
+    const type = res.headers.get("content-type")?.split(";")[0].trim() ?? "";
+    if (kind === "pdf" ? type !== "application/pdf" : !type.includes("html")) throw new Error(`Unexpected ${type || "unknown"} content`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.byteLength > maxBytes) throw new Error("The file is too large");
+    return buf;
+  }
+  throw new Error("The address left OGRA's site");
+}
+
+/** The text of a PDF (unpdf, loaded only when a publication is read). */
+async function pdfText(buf: Buffer): Promise<string> {
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const { text } = await extractText(await getDocumentProxy(new Uint8Array(buf)), { mergePages: true });
+  return text;
 }
 
 const PRODUCT_ROW: ResponseSchema = {
@@ -125,9 +154,9 @@ async function approvedFor(day: Date) {
  * each becomes a PENDING update for an admin, FAILED when it can't be read (the admin enters it by hand), or SKIPPED
  * when its prices already match the approved ones for that day. It stops starting new releases after `budgetMs`.
  */
-export async function checkFuelNotices(now = new Date(), budgetMs = 15_000) {
+async function checkPetroleumNotices(now: Date, budgetMs: number) {
   const started = Date.now();
-  const counts = { found: 0, pending: 0, failed: 0, skipped: 0 };
+  const counts: NoticeCounts = { found: 0, pending: 0, failed: 0, skipped: 0, source: "Petroleum Division" };
   const listUrl = process.env.PETROLEUM_NOTICES_URL || PETROLEUM_NOTICES_URL;
   const { buf } = await fetchPetroleum(listUrl, "html");
   const links = parseNoticeCalendar(buf.toString("utf8"), now);
@@ -155,24 +184,7 @@ export async function checkFuelNotices(now = new Date(), budgetMs = 15_000) {
       if (!reads.ok) break; // the day's reading budget is spent: try again next run
       const image = await fetchPetroleum(file.url, "image");
       const raw = await readNoticeImage(image.buf, image.type);
-      const checked = checkNotice(raw, now);
-      if (!checked.data) {
-        await FuelPriceUpdate.create({ ...base, fileUrl: file.url, status: "FAILED", extractionDetails: { model: MODEL, error: checked.error, warnings: checked.warnings, raw } });
-        counts.failed++;
-        continue;
-      }
-      const d = checked.data;
-      const approved = await approvedFor(d.effectiveDate);
-      const same = approved && approved.petrol === d.petrol && approved.diesel === d.diesel;
-      await FuelPriceUpdate.create({
-        ...base, fileUrl: file.url, status: same ? "SKIPPED" : "PENDING",
-        notificationDate: d.releaseDate ?? undefined, effectiveDate: d.effectiveDate,
-        extractedPetrolPrice: d.petrol, extractedDieselPrice: d.diesel,
-        previousPetrolPrice: d.previousPetrol ?? undefined, previousDieselPrice: d.previousDiesel ?? undefined,
-        extractionDetails: { model: MODEL, warnings: checked.warnings, raw, ...(same && { error: "Same prices as the ones already approved for this day" }) },
-      });
-      if (same) counts.skipped++;
-      else counts.pending++;
+      await saveChecked(base, file.url, raw, MODEL, now, counts);
     } catch (error) {
       // A duplicate key means another run took this release at the same moment: nothing to do
       if ((error as { code?: number }).code === 11000) continue;
@@ -184,97 +196,100 @@ export async function checkFuelNotices(now = new Date(), budgetMs = 15_000) {
   return counts;
 }
 
-async function alphaVantage(fn: string) {
-  const key = process.env.ALPHA_VANTAGE_API_KEY?.trim();
-  if (!key) throw new Error("ALPHA_VANTAGE_API_KEY is not set");
-  const url = new URL("https://www.alphavantage.co/query");
-  url.searchParams.set("function", fn);
-  url.searchParams.set("interval", "daily");
-  url.searchParams.set("apikey", key);
-  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-  if (!res.ok) throw new Error(`Alpha Vantage answered ${res.status}`);
-  return res.json().catch(() => null);
-}
+type NoticeCounts = { found: number; pending: number; failed: number; skipped: number; source?: string };
 
-const COMMODITIES: Commodity[] = ["BRENT", "WTI"];
-/** A year of closes is saved once (the charts go back to 1 year); after that each update only refreshes the latest */
-const HISTORY_DAYS = 400;
-const RECENT_DAYS = 15;
-/** The data changes once a day and the free plan allows 25 requests a day: a run this soon after the last is skipped */
-const OIL_REFRESH_MS = 4 * 3_600_000;
-
-/**
- * Brent and WTI daily closes from Alpha Vantage (one request each): the latest close (with its change from the one
- * before) saved over the previous quote, and the history filled with a year of closes once (then the latest RECENT_DAYS
- * each time). A commodity that
- * fails keeps its saved data; its error is recorded. Nothing is invented: only Alpha Vantage's own closes are stored.
- */
-export async function updateOilPrices() {
-  const errors: string[] = [];
-  let saved = 0;
-  for (const [i, c] of COMMODITIES.entries()) {
-    // Alpha Vantage's free plan also limits bursts: space the two requests out
-    if (i > 0) await new Promise(r => setTimeout(r, 1500));
-    const { points, error } = parseAlphaSeries(await alphaVantage(ALPHA_VANTAGE_FUNCTIONS[c]));
-    const quote = points && latestOilQuote(points);
-    if (!quote) {
-      errors.push(`${c}: ${error ?? "no price"}`);
-      continue;
-    }
-    const marketTimestamp = new Date(`${quote.date}T00:00:00Z`);
-    await OilMarketPrice.updateOne(
-      { commodity: c },
-      { $set: { price: quote.price, previousClose: quote.previousClose, change: quote.change, percentChange: quote.percentChange, marketTimestamp, symbol: ALPHA_VANTAGE_FUNCTIONS[c], source: OIL_SOURCE, currency: "USD", unit: "barrel" } },
-      { upsert: true }
-    );
-    const full = (await OilPriceHistory.countDocuments({ commodity: c })) >= 300;
-    await OilPriceHistory.bulkWrite(points!.slice(full ? -RECENT_DAYS : -HISTORY_DAYS).map(p => ({
-      updateOne: { filter: { commodity: c, date: p.date }, update: { $set: { price: p.close, marketTimestamp: new Date(`${p.date}T00:00:00Z`) } }, upsert: true },
-    })));
-    saved++;
+/** Saves one checked release: PENDING for an admin, or SKIPPED when the same prices are already approved for that day. */
+async function saveChecked(base: { notificationUrl: string; listedDay: string; method: "AUTO" }, fileUrl: string, raw: RawNotice, model: string, now: Date, counts: NoticeCounts) {
+  const checked = checkNotice(raw, now);
+  if (!checked.data) {
+    await FuelPriceUpdate.create({ ...base, fileUrl, status: "FAILED", extractionDetails: { model, error: checked.error, warnings: checked.warnings, raw } });
+    counts.failed++;
+    return;
   }
-  if (!saved) throw new Error(errors.join(" · ") || "No prices in Alpha Vantage's answer");
-  return { saved, errors };
+  const d = checked.data;
+  const approved = await approvedFor(d.effectiveDate);
+  const same = approved && approved.petrol === d.petrol && approved.diesel === d.diesel;
+  await FuelPriceUpdate.create({
+    ...base, fileUrl, status: same ? "SKIPPED" : "PENDING",
+    notificationDate: d.releaseDate ?? undefined, effectiveDate: d.effectiveDate,
+    extractedPetrolPrice: d.petrol, extractedDieselPrice: d.diesel,
+    previousPetrolPrice: d.previousPetrol ?? undefined, previousDieselPrice: d.previousDiesel ?? undefined,
+    extractionDetails: { model, warnings: checked.warnings, raw, ...(same && { error: "Same prices as the ones already approved for this day" }) },
+  });
+  if (same) counts.skipped++;
+  else counts.pending++;
 }
 
 /**
- * Both jobs, each on its own (one failing never stops the other), with their status recorded for the admin page.
- * A lock stops two runs overlapping.
+ * OGRA's price publications (the main source): the newest PDFs of the last FRESH_NOTICE_DAYS not read yet (at most
+ * OGRA_PER_RUN), their totals read from the PDF text. No AI call, so nothing counts toward the Gemini budget.
  */
-export async function runFuelJobs(now = new Date(), { forceOil = false } = {}) {
+async function checkOgraNotices(now: Date, budgetMs: number): Promise<NoticeCounts> {
+  const started = Date.now();
+  const counts: NoticeCounts = { found: 0, pending: 0, failed: 0, skipped: 0, source: "OGRA" };
+  const links = parseOgraList((await fetchOgra(process.env.OGRA_PRICES_URL || OGRA_PRICES_URL, "html")).toString("utf8"), now);
+  if (!links.length) throw new Error("No publications found on OGRA's Price Publications page (its layout may have changed)");
+  counts.found = links.length;
+  const seen = new Set((await FuelPriceUpdate.find({ notificationUrl: { $in: links.map(l => l.url) }, method: "AUTO" }).select("notificationUrl").lean<{ notificationUrl: string }[]>()).map(u => u.notificationUrl));
+  const since = pkDayKey(new Date(now.getTime() - FRESH_NOTICE_DAYS * 86_400_000));
+  // Oldest first, so the days are approved in order and each one's change is against the day before
+  const fresh = links.filter(l => l.day >= since && !seen.has(l.url)).slice(0, OGRA_PER_RUN).reverse();
+  for (const link of fresh) {
+    if (Date.now() - started > budgetMs) break;
+    const base = { notificationUrl: link.url, listedDay: link.day, method: "AUTO" as const };
+    try {
+      const raw = parseOgraPdfText(await pdfText(await fetchOgra(link.url, "pdf")));
+      // The PDF must be for the day it is listed under
+      if (raw.effectiveDate && raw.effectiveDate !== link.day) raw.isPriceNotice = false;
+      await saveChecked(base, link.url, raw, "OGRA PDF text", now, counts);
+    } catch (error) {
+      if ((error as { code?: number }).code === 11000) continue;
+      reportError("OGRA publication read failed:", link.url, error);
+      await FuelPriceUpdate.create({ ...base, status: "FAILED", extractionDetails: { error: error instanceof Error ? error.message.slice(0, 300) : "Couldn't read the publication" } }).catch(() => {});
+      counts.failed++;
+    }
+  }
+  return counts;
+}
+
+/**
+ * Looks for new official prices: OGRA first; if OGRA's site can't be read, the Petroleum Division's calendar (whose
+ * hand-edited page can lag OGRA by a week). OGRA's error is kept in the result so the admin sees it.
+ */
+export async function checkFuelNotices(now = new Date(), budgetMs = 15_000): Promise<NoticeCounts & { ograError?: string }> {
+  try {
+    return await checkOgraNotices(now, budgetMs);
+  } catch (error) {
+    reportError("OGRA check failed, falling back to the Petroleum Division:", error);
+    const counts = await checkPetroleumNotices(now, budgetMs);
+    return { ...counts, source: "Petroleum Division", ograError: error instanceof Error ? error.message.slice(0, 200) : "OGRA couldn't be read" };
+  }
+}
+
+/**
+ * The price check, with its status recorded for the admin page. A lock stops two runs overlapping. (The Brent and
+ * WTI update was removed at the owner's request: no free source gave current prices.)
+ */
+export async function runFuelJobs(now = new Date()) {
   await connectDB();
   const lock = await hitRateLimit("fuelJobLock", "run");
   if (!lock.ok) return { skipped: "Another fuel check ran a moment ago" };
   const result: Record<string, unknown> = {};
   const at = now.toISOString();
-
   try {
     const counts = await checkFuelNotices(now);
     result.notices = counts;
-    await setStatus("notices", { lastRunAt: at, lastSuccessAt: at, lastError: "", lastResult: `${counts.pending} new, ${counts.failed} couldn't be read, ${counts.skipped} unchanged` });
+    await setStatus("notices", {
+      lastRunAt: at, lastSuccessAt: at,
+      lastError: counts.ograError ? `OGRA couldn't be read (${counts.ograError}); used the Petroleum Division page instead` : "",
+      lastResult: `${counts.source}: ${counts.pending} new, ${counts.failed} couldn't be read, ${counts.skipped} unchanged`,
+    });
     if (counts.pending || counts.failed) invalidateFuel();
   } catch (error) {
     reportError("Fuel notice check failed:", error);
     const message = error instanceof Error ? error.message.slice(0, 300) : "Check failed";
     result.notices = { error: message };
     await setStatus("notices", { lastRunAt: at, lastError: message });
-  }
-
-  const lastOil = (await getFuelStatus()).oil?.lastSuccessAt;
-  if (!forceOil && lastOil && now.getTime() - new Date(lastOil).getTime() < OIL_REFRESH_MS) {
-    result.oil = { skipped: "Updated less than 4 hours ago" };
-    return result;
-  }
-  try {
-    const oil = await updateOilPrices();
-    result.oil = oil;
-    await setStatus("oil", { lastRunAt: at, lastSuccessAt: at, lastError: oil.errors.join(" · "), lastResult: `${oil.saved} of 2 prices updated` });
-    invalidateFuel();
-  } catch (error) {
-    reportError("Oil price update failed:", error);
-    const message = error instanceof Error ? error.message.slice(0, 300) : "Update failed";
-    result.oil = { error: message };
-    await setStatus("oil", { lastRunAt: at, lastError: message });
   }
   return result;
 }

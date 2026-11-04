@@ -15,7 +15,7 @@ const ICON: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   bookingUpdate: { icon: CalendarCheck, tone: "text-sky-700" },
   purchaseUpdate: { icon: ShoppingBag, tone: "text-emerald-700" },
   saleRequest: { icon: BadgeDollarSign, tone: "text-amber-700" },
-  official: { icon: Megaphone, tone: "text-fuchsia-600" },
+  official: { icon: Megaphone, tone: "text-indigo-600" },
   plan: { icon: Crown, tone: "text-amber-600" },
 };
 

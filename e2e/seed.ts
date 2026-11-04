@@ -14,8 +14,6 @@ import { Deal } from "../src/models/Deal";
 import { BlogPost } from "../src/models/BlogPost";
 import { Announcement } from "../src/models/Announcement";
 import { FuelPrice } from "../src/models/FuelPrice";
-import { OilMarketPrice } from "../src/models/OilMarketPrice";
-import { OilPriceHistory } from "../src/models/OilPriceHistory";
 import { STARTER_POSTS } from "../src/lib/blogStarter";
 import { Purchase } from "../src/models/Purchase";
 
@@ -111,7 +109,7 @@ export async function seed(uri: string): Promise<Seed> {
   // A post on AutoGO Official, unread by E2E Motors (which follows it): the dashboard's update banner
   await Announcement.create({ kind: "UPDATE", title: "Booking calendar is now on every rental", body: "Renters can see free days and book from the calendar.", status: "PUBLISHED", createdBy: owner._id });
 
-  // Fuel prices, test values only (this database is thrown away): two approved days and two weeks of Brent / WTI
+  // Fuel prices, test values only (this database is thrown away): a month of approved days
   const pkDay = (n: number) => new Date(`${new Date(Date.now() + 5 * 3_600_000 - n * DAY).toISOString().slice(0, 10)}T00:00:00+05:00`);
   const approved = { approvedBy: owner._id, approvedAt: new Date(), source: "Petroleum Division press release", notificationUrl: "https://petroleum.gov.pk/NewsDetail/TEST" };
   // Older days first (prices that held for a few days, then changed), then the two newest the tests check
@@ -126,19 +124,6 @@ export async function seed(uri: string): Promise<Seed> {
     { ...approved, fuelType: "PETROL", price: 396.65, effectiveDate: pkDay(0) },
     { ...approved, fuelType: "DIESEL", price: 394.94, effectiveDate: pkDay(0) },
   ]);
-  await OilMarketPrice.create([
-    { commodity: "BRENT", symbol: "BRENT", price: 64.12, previousClose: 63.5, change: 0.62, percentChange: 0.98, marketTimestamp: new Date(Date.now() - 3_600_000) },
-    { commodity: "WTI", symbol: "WTI", price: 60.4, previousClose: 60.9, change: -0.5, percentChange: -0.82, marketTimestamp: new Date(Date.now() - 3_600_000) },
-  ]);
-  // 120 days of made-up closes that wander a little, ending at the quotes above
-  await OilPriceHistory.create(Array.from({ length: 120 }, (_, i) => {
-    const date = new Date(Date.now() - (119 - i) * DAY).toISOString().slice(0, 10);
-    const wave = Math.sin(i / 9) * 2.4 + Math.sin(i / 3.1) * 0.7;
-    return [
-      { commodity: "BRENT", date, price: Math.round((64.12 + wave - (119 - i) * 0.01) * 100) / 100 },
-      { commodity: "WTI", date, price: Math.round((60.4 + wave * 0.9 - (119 - i) * 0.008) * 100) / 100 },
-    ];
-  }).flat());
 
   // The blog's starter guides, as `npm run seed-blog` adds them
   await BlogPost.create(STARTER_POSTS.map((p, i) => ({ ...p, status: "PUBLISHED", publishedAt: new Date(Date.now() - (STARTER_POSTS.length - i) * DAY) })));

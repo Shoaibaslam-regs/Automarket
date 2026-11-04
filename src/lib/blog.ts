@@ -21,7 +21,7 @@ export const BLOG_CATEGORY: Record<BlogCategory, { label: string; text: string }
   RENTING: { label: "Renting", text: "text-sky-600" },
   SAFETY: { label: "Safety", text: "text-rose-600" },
   MONEY: { label: "Money & finance", text: "text-amber-600" },
-  NEWS: { label: "AutoGO news", text: "text-fuchsia-600" },
+  NEWS: { label: "AutoGO news", text: "text-indigo-600" },
 };
 
 export const BLOG_LIMITS = { titleMin: 5, title: 120, excerpt: 300, bodyMin: 80, body: 20_000, slug: 80 };

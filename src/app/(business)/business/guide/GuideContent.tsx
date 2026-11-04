@@ -27,7 +27,7 @@ type Section = {
 const TONE = {
   slate: "bg-[var(--gh-f6f8fa)] text-[var(--gh-57606a)] ring-[var(--gh-e1e4e8)]",
   blue: "bg-[var(--gh-ddf4ff)] text-[var(--gh-0550ae)] ring-[var(--gh-d0d7de)]",
-  purple: "bg-[var(--gh-fbefff)] text-[var(--gh-6e40c9)] ring-[var(--gh-d0d7de)]",
+  purple: "bg-[var(--gh-eef2ff)] text-[var(--gh-4f46e5)] ring-[var(--gh-d0d7de)]",
   amber: "bg-[var(--gh-fff8c5)] text-[var(--gh-7d4e00)] ring-[var(--gh-f0d97a)]",
   green: "bg-[var(--gh-dafbe1)] text-[var(--gh-1a7f37)] ring-[var(--gh-d0d7de)]",
   red: "bg-[var(--gh-fff0f0)] text-[var(--gh-cf222e)] ring-[var(--gh-ffcdd2)]",

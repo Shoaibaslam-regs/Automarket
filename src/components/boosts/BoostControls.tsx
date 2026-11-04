@@ -124,7 +124,7 @@ export function BoostButton({
       onClick={boost}
       disabled={busy || out}
       title={out ? "No boosts left this month. They come back on the 1st." : `Show it first for ${b.days} days`}
-      className={`${base} bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
+      className={`${base} theme-static bg-amber-400 text-slate-950 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
     >
       <Rocket size={13} /> {busy ? "Boosting…" : "Boost"}
     </button>

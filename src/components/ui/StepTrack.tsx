@@ -17,7 +17,7 @@ export default function StepTrack({ steps, reached, animate = false, className =
           <span className="relative h-1 overflow-hidden rounded-full bg-slate-200">
             {i <= reached && (
               <span
-                className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 ${animate && i === reached ? "st-fill" : "w-full"}`}
+                className={`absolute inset-y-0 left-0 rounded-full bg-indigo-600 ${animate && i === reached ? "st-fill" : "w-full"}`}
               />
             )}
           </span>

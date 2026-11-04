@@ -516,7 +516,7 @@ export default function BusinessSalesPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[var(--gh-57606a)]">
                         <span className="font-mono font-bold">{purchaseNumber(s._id)}</span>
                         <span aria-hidden>·</span>
-                        {s.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online request</span>}
+                        {s.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-4f46e5)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online request</span>}
                         <span aria-hidden>·</span>
                         <span>{fmt(s.createdAt)}</span>
                       </p>

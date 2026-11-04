@@ -369,7 +369,7 @@ function CustomersContent() {
         </div>
         {permissions.canEdit && (customersFull ? (
           <Link href="/pricing"
-            style={{ padding: "9px 18px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "var(--gh-0d1117)", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
+            style={{ padding: "9px 18px", background: "#fbbf24", color: "var(--gh-0d1117)", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
             Upgrade plan to add more
           </Link>
         ) : (
@@ -409,7 +409,7 @@ function CustomersContent() {
         {/* Pipeline summary */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "10px", marginBottom: "16px" }}>
           <button onClick={() => setStarOnly(v => !v)} aria-pressed={starOnly}
-            style={{ padding: "10px", background: starOnly ? "linear-gradient(135deg,var(--gh-fff8c5),var(--gh-ffe7a3))" : "var(--gh-ffffff)", border: `1px solid ${starOnly ? "var(--gh-d4a72c)" : "var(--gh-e1e4e8)"}`, borderRadius: "8px", cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "10px", background: starOnly ? "var(--gh-fff8c5)" : "var(--gh-ffffff)", border: `1px solid ${starOnly ? "var(--gh-d4a72c)" : "var(--gh-e1e4e8)"}`, borderRadius: "8px", cursor: "pointer", fontFamily: "inherit" }}>
             <p style={{ fontSize: "18px", fontWeight: 800, color: "var(--gh-9a6700)", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
               <Star size={15} fill="#eac54f" color="#bf8700" /> {starCount}
             </p>
@@ -453,11 +453,11 @@ function CustomersContent() {
             const iconBtn = "inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-white transition hover:bg-[var(--gh-f6f8fa)]";
             return (
               <div key={c._id} className={`px-4 py-3 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[var(--gh-f6f8fa)]" : ""}`}
-                style={{ background: c.starred ? "linear-gradient(90deg,var(--gh-fffbeb),var(--gh-ffffff) 60%)" : "var(--gh-ffffff)", boxShadow: c.starred ? "inset 3px 0 0 #eac54f" : "none" }}>
+                style={{ background: c.starred ? "var(--gh-fffbeb)" : "var(--gh-ffffff)", boxShadow: c.starred ? "inset 3px 0 0 #eac54f" : "none" }}>
                 {/* Phones put the status under the name so the name and phone stay readable */}
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]">
                   <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white"
-                    style={{ background: c.starred ? "linear-gradient(135deg,#f5c542,var(--gh-bf8700))" : "var(--gh-0d1117)", boxShadow: c.starred ? "0 0 0 2px white, 0 0 0 3.5px #eac54f" : "none" }}>
+                    style={{ background: c.starred ? "var(--gh-bf8700)" : "var(--gh-0d1117)", boxShadow: c.starred ? "0 0 0 2px white, 0 0 0 3.5px #eac54f" : "none" }}>
                     {c.name[0].toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">

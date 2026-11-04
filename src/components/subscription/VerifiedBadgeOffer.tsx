@@ -131,7 +131,7 @@ export default function VerifiedBadgeOffer() {
   }
 
   return (
-    <section className="mt-12 overflow-hidden rounded-[26px] bg-white ring-1 ring-slate-200/80 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.35)]">
+    <section className="mt-12 overflow-hidden rounded-[26px] bg-white ring-1 ring-slate-200/80 shadow-sm">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">

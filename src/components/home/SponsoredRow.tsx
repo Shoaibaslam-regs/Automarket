@@ -13,7 +13,7 @@ import type { SponsoredItem } from "@/lib/sponsored";
 /** The gold "Sponsored" ribbon across the photo's top-left corner (smaller on the list layout's small photo). */
 function Ribbon({ small = false }: { small?: boolean }) {
   return (
-    <span className={`theme-static pointer-events-none absolute z-[2] -rotate-45 bg-gradient-to-r from-amber-300 to-amber-500 text-center font-extrabold uppercase text-slate-950 shadow-md ${
+    <span className={`theme-static pointer-events-none absolute z-[2] -rotate-45 theme-static bg-amber-400 text-center font-extrabold uppercase text-slate-950 shadow-md ${
       small ? "-left-7 top-3.5 w-24 py-px text-[7px] tracking-[0.12em]" : "-left-8 top-5 w-32 py-0.5 text-[9px] tracking-[0.14em]"
     }`}>
       Sponsored
@@ -37,11 +37,10 @@ function useViewTracking(adId: string) {
 }
 
 /**
- * A compact sponsored card (with a thin gold border among listings, `highlight`): photo with the ribbon and a light gold shimmer (`lp-sponsor-shimmer`, staggered by
- * `index`), title and price, and a link to the business's shop page. Counts its views and taps. `layout="list"`
+ * A compact sponsored card (with a thin gold border among listings, `highlight`): photo with the ribbon, title and price, and a link to the business's shop page. Counts its views and taps. `layout="list"`
  * is the Browse list view's row: a small photo beside the details.
  */
-export function SponsoredCard({ item, index = 0, layout = "grid", highlight = true }: { item: SponsoredItem; index?: number; layout?: "grid" | "list"; highlight?: boolean }) {
+export function SponsoredCard({ item, layout = "grid", highlight = true }: { item: SponsoredItem; layout?: "grid" | "list"; highlight?: boolean }) {
   // The gold border marks an ad among listings (Browse); the home row is all ads, so it keeps the plain border there
   const frame = highlight ? "ring-[1.5px] ring-amber-300/80 hover:ring-amber-400" : "ring-1 ring-slate-200/80 hover:ring-slate-300";
   const shop = `/dealers/${item.business.slug}`;
@@ -84,9 +83,9 @@ export function SponsoredCard({ item, index = 0, layout = "grid", highlight = tr
   }
 
   return (
-    <div ref={ref} className={`group flex h-full flex-col overflow-hidden rounded-2xl bg-white transition hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] ${frame}`}>
+    <div ref={ref} className={`group flex h-full flex-col overflow-hidden rounded-2xl bg-white transition hover:shadow-md ${frame}`}>
       <Link href={item.href} onClick={tap} className="block">
-        <div className="lp-sponsor-shimmer relative aspect-[4/3] overflow-hidden bg-slate-100" style={{ "--lp-shimmer-delay": `${index * 0.9}s` } as React.CSSProperties}>
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           {item.kind === "SHOP" ? (
             item.image ? (
               <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 50vw, 280px" className="object-cover transition duration-500 group-hover:scale-105" />
@@ -132,7 +131,7 @@ export function SponsoredCard({ item, index = 0, layout = "grid", highlight = tr
 export default function SponsoredRow({ items }: { items: SponsoredItem[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-      {items.map((item, i) => <SponsoredCard key={item.adId} item={item} index={i} highlight={false} />)}
+      {items.map(item => <SponsoredCard key={item.adId} item={item} highlight={false} />)}
     </div>
   );
 }

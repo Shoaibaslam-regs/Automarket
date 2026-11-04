@@ -14,7 +14,7 @@ export default function CrashScene() {
   return (
     <div aria-hidden className="crash relative mx-auto h-16 w-full max-w-md">
       {/* The road: a soft line with lane dashes, which move only while the car is driving */}
-      <div className="absolute inset-x-0 bottom-3 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+      <div className="absolute inset-x-0 bottom-3 h-px bg-slate-300" />
       <div className="crash-road absolute inset-x-8 bottom-[11px] h-[2px] bg-[repeating-linear-gradient(90deg,rgb(var(--tw-c-slate-400))_0_14px,transparent_14px_28px)] [mask-image:linear-gradient(90deg,transparent,black_20%,black_80%,transparent)]" />
 
       {/* The rock */}

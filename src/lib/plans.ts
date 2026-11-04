@@ -40,7 +40,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
   PRO: {
     id: "PRO",
-    accent: "var(--gh-8250df)",
+    accent: "var(--gh-4f46e5)",
     name: "Premium Plus",
     tagline: "For growing dealerships",
     price: 1199,

@@ -21,7 +21,7 @@ export const SPONSORED_TAG = "sponsored";
 /** Every blog list (/blog, the sitemap); each post also has blogTag(slug) */
 export const BLOG_TAG = "blog";
 export const blogTag = (slug: string) => `blog:${slug}`;
-/** The public fuel prices (approved Pakistani prices and the saved Brent / WTI quotes) */
+/** The public fuel prices (approved Pakistani prices) */
 export const FUEL_TAG = "fuel";
 /** The home page's "AutoGO in numbers" switch (src/lib/siteFlags.ts) */
 export const HOME_STATS_TAG = "home-stats";
@@ -48,7 +48,7 @@ export function invalidateBlog(...slugs: (string | undefined)[]) {
   for (const slug of new Set(slugs)) if (slug) expire(blogTag(slug));
 }
 
-/** Approved fuel prices or the saved oil quotes changed: the fuel page and the blog's fuel card read again. */
+/** Approved fuel prices changed: the fuel page and the blog's fuel card read again. */
 export function invalidateFuel() {
   expire(FUEL_TAG);
 }

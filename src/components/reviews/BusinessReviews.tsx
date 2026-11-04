@@ -20,7 +20,7 @@ function ReviewItem({ r, businessName, mine }: { r: ReviewView; businessName: st
   return (
     <li className="py-5 first:pt-0 last:pb-0">
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-sm font-bold text-white">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white">
           {r.reviewer.name[0]?.toUpperCase()}
         </span>
         <div className="min-w-0 flex-1">

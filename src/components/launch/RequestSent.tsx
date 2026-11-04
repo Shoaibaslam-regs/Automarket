@@ -25,9 +25,9 @@ export default function RequestSent({ title, subtitle, track, children }: {
       <svg viewBox="0 0 64 64" className="h-16 w-16" aria-hidden>
         <defs>
           <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#818cf8" />
-            <stop offset="50%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#34d399" />
+            <stop offset="0%" stopColor="#4f46e5" />
+            <stop offset="50%" stopColor="#4f46e5" />
+            <stop offset="100%" stopColor="#4f46e5" />
           </linearGradient>
         </defs>
         <circle cx="32" cy="32" r="29" fill="none" stroke={`url(#${gradient})`} strokeWidth="3" opacity="0.18" />

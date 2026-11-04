@@ -452,7 +452,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 <>
                   {business ? (
                     <Link href={`/dealers/${business.slug}`} className="group -m-2 flex items-center gap-3 rounded-xl p-2 transition hover:bg-slate-50">
-                      <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-base font-bold text-white">
+                      <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900 text-base font-bold text-white">
                         {business.logo ? <Image src={business.logo} alt="" fill sizes="44px" className="object-cover" /> : business.name[0]?.toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">

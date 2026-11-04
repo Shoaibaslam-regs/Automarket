@@ -193,8 +193,6 @@ export default function BusinessSettingsPage() {
 
         {/* Plan */}
         <div className="relative overflow-hidden rounded-xl bg-slate-950 p-5 text-white sm:p-6">
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-24 left-8 h-48 w-48 rounded-full bg-amber-400/15 blur-3xl" />
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="flex items-center justify-center text-amber-300">
@@ -210,7 +208,7 @@ export default function BusinessSettingsPage() {
                 )}
               </div>
             </div>
-            <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2 text-xs font-bold text-slate-950 no-underline transition hover:opacity-90">
+            <Link href="/pricing" className="inline-flex items-center gap-1.5 rounded-lg theme-static bg-amber-400 px-4 py-2 text-xs font-bold text-slate-950 no-underline transition hover:opacity-90">
               {plan.id === "UNLIMITED" ? "View plans" : "Upgrade plan"}
             </Link>
           </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 /**
- * A section's heading: the title, then a thin indigo→fuchsia line across (like the menu group headings, so the
+ * A section's heading: the title, then a thin grey line across (like the menu group headings, so the
  * sections read as clearly divided), and a quiet "View all" when the section has a page of its own.
  */
 export default function SectionHeader({ title, href, line = true }: { title: string; href?: string; line?: boolean }) {
@@ -10,7 +10,7 @@ export default function SectionHeader({ title, href, line = true }: { title: str
     <div className="mb-4 flex items-center gap-3">
       <h2 className="min-w-0 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{title}</h2>
       {line ? (
-        <span aria-hidden className="h-px min-w-6 flex-1 bg-gradient-to-r from-indigo-500/40 via-fuchsia-500/20 to-transparent" />
+        <span aria-hidden className="h-px min-w-6 flex-1 bg-slate-200" />
       ) : (
         <span className="flex-1" />
       )}

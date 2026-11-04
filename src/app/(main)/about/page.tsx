@@ -54,8 +54,6 @@ export default async function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-14 pt-12 text-white sm:pt-16">
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-emerald-500/15 blur-3xl" />
         <div className="relative mx-auto max-w-[1080px]">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-200">About AutoGO</p>
           <h1 className="mt-4 max-w-[720px] text-3xl font-extrabold tracking-tight sm:text-4xl">

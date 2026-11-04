@@ -346,53 +346,9 @@ body {
 .lp-float       { animation: lp-float 6s ease-in-out infinite; }
 .lp-marquee     { animation: lp-marquee 32s linear infinite; }
 .lp-marquee:hover { animation-play-state: paused; }
-.lp-shine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-  animation: lp-shine 3.2s ease-in-out infinite;
-}
-/* Hot deal cards: a slow warm light sweeping across the whole card, staggered per card with --lp-shimmer-delay */
-@keyframes lp-deal-shimmer {
-  0%   { transform: translateX(-160%) skewX(-18deg); }
-  45%, 100% { transform: translateX(360%) skewX(-18deg); }
-}
-.lp-deal-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  width: 55%;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255, 237, 213, 0.12) 25%, rgba(255, 255, 255, 0.42) 50%, rgba(253, 164, 175, 0.16) 75%, transparent);
-  mix-blend-mode: soft-light;
-  animation: lp-deal-shimmer 4.8s ease-in-out infinite;
-  animation-delay: var(--lp-shimmer-delay, 0s);
-}
-.lp-deal-shimmer:hover::after { animation-duration: 2.4s; }
-/* Sponsored cards (home page): a faint gold light sweeping across the photo now and then, staggered per card
-   with --lp-shimmer-delay. Lighter and slower than the deal shimmer so the row doesn't flicker. */
-.lp-sponsor-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 45%;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(253, 230, 138, 0.10) 30%, rgba(255, 255, 255, 0.30) 50%, rgba(253, 230, 138, 0.10) 70%, transparent);
-  animation: lp-deal-shimmer 7s ease-in-out infinite;
-  animation-delay: var(--lp-shimmer-delay, 0s);
-}
 .lp-scan        { animation: lp-scan 3.6s ease-in-out infinite; }
 .lp-pulse-ring  { animation: lp-pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
-/* Rotating conic border */
-.lp-border-spin {
-  background: conic-gradient(from var(--lp-angle), #6366f1, #0ea5e9, #10b981, #f472b6, #6366f1);
-  animation: lp-spin 6s linear infinite;
-}
 
 /* Scroll reveal: elements start hidden and fade up when [data-visible] is set */
 .lp-reveal {
@@ -404,14 +360,6 @@ body {
 .lp-reveal[data-visible="true"] { opacity: 1; transform: none; }
 .lp-reveal[data-visible="true"] .lp-pop { animation: lp-pop 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
-/* Cursor spotlight on cards (vars set from JS) */
-.lp-spotlight {
-  background-image: radial-gradient(
-    420px circle at var(--mx, -999px) var(--my, -999px),
-    rgba(129, 140, 248, 0.16),
-    transparent 45%
-  );
-}
 
 @media (prefers-reduced-motion: reduce) {
   .lp-aurora, .lp-gradient-text, .lp-float, .lp-marquee, .lp-scan, .lp-pulse-ring, .lp-border-spin,

@@ -48,7 +48,7 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
     <Link
       href={`/deals/${deal._id}`}
       title={dealLabel(deal)}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] hover:ring-slate-300"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-slate-300"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-[4/3]">
         {deal.images[0] ? (
@@ -61,12 +61,12 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
           <span className="flex h-full items-center justify-center text-slate-300"><ImageOff size={24} /></span>
         )}
         {/* A tiny tilted "Deal" ribbon across the top-left corner, the same place and angle as Sponsored, in the hot-deal colours */}
-        <span className="theme-static pointer-events-none absolute -left-6 top-[11px] z-[2] flex w-20 -rotate-45 items-center justify-center gap-0.5 bg-gradient-to-r from-rose-600 to-orange-500 py-px text-[7px] font-extrabold uppercase leading-[10px] tracking-[0.12em] text-white shadow-sm shadow-rose-600/30 sm:-left-7 sm:top-3.5 sm:w-24 sm:text-[8px]">
+        <span className="theme-static pointer-events-none absolute -left-6 top-[11px] z-[2] flex w-20 -rotate-45 items-center justify-center gap-0.5 bg-rose-600 py-px text-[7px] font-extrabold uppercase leading-[10px] tracking-[0.12em] text-white shadow-sm sm:-left-7 sm:top-3.5 sm:w-24 sm:text-[8px]">
           <Flame className="h-[7px] w-[7px] sm:h-2 sm:w-2" /> Deal
         </span>
         {/* Boosted to the top of the Deals page (src/lib/boosts.ts): the same gold star as featured vehicles */}
         {isBoosted(deal.boostedUntil, new Date(now)) && (
-          <span title="Featured" className="absolute right-1.5 top-1.5 z-[2] inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-1.5 py-0.5 text-[10px] font-bold text-amber-950 shadow-sm sm:right-2 sm:top-2">
+          <span title="Featured" className="absolute right-1.5 top-1.5 z-[2] inline-flex items-center gap-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-amber-950 shadow-sm sm:right-2 sm:top-2">
             <Star size={10} strokeWidth={2.5} fill="currentColor" /><span className="hidden sm:inline">Featured</span>
           </span>
         )}

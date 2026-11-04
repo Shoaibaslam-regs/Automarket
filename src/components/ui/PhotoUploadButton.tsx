@@ -35,9 +35,9 @@ export default function PhotoUploadButton({ endpoint, hasPhoto, onUploaded, onEr
         // ! beats UploadThing's own blue button styles
         button: [
           "!h-10 !w-auto !rounded-xl !px-4 !text-[13px] !font-semibold !text-white",
-          "!bg-gradient-to-b !from-slate-800 !to-slate-900",
-          "shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_2px_rgba(15,23,42,0.25),0_8px_20px_-8px_rgba(15,23,42,0.55)]",
-          "ring-1 ring-inset ring-white/10 transition hover:!from-slate-700 hover:!to-slate-900 active:scale-[0.98]",
+          "!bg-slate-900",
+          "shadow-sm",
+          "transition hover:!bg-slate-800 active:scale-[0.98]",
           "focus-within:!ring-2 focus-within:!ring-indigo-400/60 ut-uploading:cursor-wait data-[state=disabled]:!opacity-50",
         ].join(" "),
         container: "!flex-row items-start",

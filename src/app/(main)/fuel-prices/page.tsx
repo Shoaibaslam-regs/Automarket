@@ -4,16 +4,16 @@ import { ArrowDownRight, ArrowUpRight, ExternalLink, Fuel, Info, Minus, Newspape
 import Footer from "@/components/Footer";
 import FuelCharts from "@/components/fuel/FuelCharts";
 import UpdatedTag from "@/components/fuel/UpdatedTag";
-import { getFuelPageData, latestCheck, type OilQuoteView, type PkPrice } from "@/lib/publicFuel";
-import { COMMODITY_LABEL, FUEL_LABEL, fuelDate, fuelTime, pkDayKey, priceChange } from "@/lib/fuelPrices";
+import { getFuelPageData, latestCheck, type PkPrice } from "@/lib/publicFuel";
+import { FUEL_LABEL, fuelDate, fuelTime, pkDayKey, priceChange } from "@/lib/fuelPrices";
 import { reportError } from "@/lib/errorLog";
 
-// Cached for everyone and cleared on every approval and oil update (invalidateFuel); never reads the session
+// Cached for everyone and cleared on every approval, edit and removal (invalidateFuel); never reads the session
 export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Petrol & diesel prices in Pakistan today",
-  description: "Pakistan's official petrol and diesel prices from the Petroleum Division, with Brent and WTI crude oil prices and trends.",
+  description: "Pakistan's official petrol and diesel prices from OGRA, with the latest changes and trends.",
   alternates: { canonical: "/fuel-prices" },
 };
 
@@ -61,35 +61,7 @@ function PkCard({ type, p, today }: { type: "PETROL" | "DIESEL"; p?: PkPrice; to
   );
 }
 
-function OilCard({ name, q }: { name: string; q?: OilQuoteView }) {
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <p className="text-[13px] font-semibold text-slate-500">{name}</p>
-      {q ? (
-        <>
-          <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-tight text-slate-900">
-            <span className="mr-1 text-base font-semibold text-slate-400">$</span>{q.price.toFixed(2)}<span className="ml-1 text-sm font-medium text-slate-400">/ barrel</span>
-          </p>
-          <p className="mt-2 text-sm">
-            {/* For crude, show the move neutrally: indigo up, sky down */}
-            {q.change == null ? <span className="text-slate-400">No change data</span> : (
-              <span className={`inline-flex items-center gap-1 font-semibold ${q.change > 0 ? "text-indigo-600" : q.change < 0 ? "text-sky-600" : "text-slate-500"}`}>
-                {q.change > 0 ? <ArrowUpRight size={15} /> : q.change < 0 ? <ArrowDownRight size={15} /> : <Minus size={14} />}
-                {q.change > 0 ? "+" : q.change < 0 ? "−" : ""}{Math.abs(q.change).toFixed(2)}{q.percentChange != null && <span className="font-medium"> ({q.percentChange > 0 ? "+" : ""}{q.percentChange.toFixed(2)}%)</span>}
-              </span>
-            )}
-            {q.previousClose != null && <span className="text-slate-400"> from ${q.previousClose.toFixed(2)}</span>}
-          </p>
-          <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">Daily close on {fuelDate(q.marketTimestamp)}</p>
-        </>
-      ) : (
-        <p className="mt-3 text-sm text-slate-500">Not available right now.</p>
-      )}
-    </div>
-  );
-}
-
-/** /fuel-prices: Pakistan's approved petrol and diesel prices, Brent and WTI, trends and the latest changes. */
+/** /fuel-prices: Pakistan's approved petrol and diesel prices, their trend and the latest changes. */
 export default async function FuelPricesPage() {
   const data = await getFuelPageData().catch(err => {
     reportError("Fuel page failed:", err);
@@ -100,8 +72,6 @@ export default async function FuelPricesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-12 pt-12 text-white sm:pt-16">
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl" />
         <div className="relative mx-auto max-w-[1180px]">
           <Link href="/blog" className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10 hover:bg-white/10">
             <Newspaper size={13} /> AutoGO Blog
@@ -109,7 +79,7 @@ export default async function FuelPricesPage() {
           <h1 className="mt-4 flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices</h1>
           <p className="mt-1.5"><UpdatedTag dark at={latestCheck(data)} /></p>
           <p className="mt-2 max-w-[640px] text-sm leading-relaxed text-slate-400">
-            Pakistan&apos;s official petrol and diesel prices, checked by the AutoGO team against each Petroleum Division release, with international crude oil prices.
+            Pakistan&apos;s official petrol and diesel prices, checked by the AutoGO team against each OGRA price publication.
           </p>
         </div>
       </section>
@@ -131,18 +101,8 @@ export default async function FuelPricesPage() {
               </div>
             </section>
 
-            <section>
-              <h2 className="mb-3 text-lg font-bold text-slate-900">International crude <span className="text-sm font-medium text-slate-400">USD per barrel</span></h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <OilCard name={COMMODITY_LABEL.BRENT} q={data.oil.BRENT} />
-                <OilCard name={COMMODITY_LABEL.WTI} q={data.oil.WTI} />
-              </div>
-              <p className="mt-2 text-xs text-slate-500">
-                Daily closing prices from Alpha Vantage (U.S. Energy Information Administration data), published a few days after the trading day; not real-time.{data.oilUpdatedAt && ` Last checked ${fuelTime(data.oilUpdatedAt)}.`}
-              </p>
-            </section>
 
-            <FuelCharts pkHistory={data.pkHistory} oilHistory={data.oilHistory} />
+            <FuelCharts pkHistory={data.pkHistory} />
 
             <section>
               <h2 className="mb-3 text-lg font-bold text-slate-900">Price changes</h2>
@@ -180,9 +140,10 @@ export default async function FuelPricesPage() {
             <p className="flex gap-2 rounded-2xl bg-white p-4 text-xs leading-relaxed text-slate-500 ring-1 ring-inset ring-slate-200/80">
               <Info size={15} className="mt-0.5 flex-shrink-0 text-slate-400" />
               <span>
-                Pakistani prices are taken from the Ministry of Energy (Petroleum Division) releases at{" "}
-                <a href="https://petroleum.gov.pk/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">petroleum.gov.pk</a>{" "}
-                and published only after the AutoGO team checks them. Pump prices can differ slightly by city and company. Crude oil prices are for information only.
+                Pakistani prices are taken from OGRA&apos;s daily price publications at{" "}
+                <a href="https://ogra.org.pk/index.php/price-publications" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">ogra.org.pk</a>{" "}
+                (the Petroleum Division&apos;s releases when OGRA can&apos;t be reached){" "}
+                and published only after the AutoGO team checks them. Pump prices can differ slightly by city and company.
               </span>
             </p>
           </>

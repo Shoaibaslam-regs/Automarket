@@ -8,7 +8,7 @@ import {
   type CollectionUsage, type ServiceUsage, type SystemUsage, type UsageFailure, type UsageLevel,
 } from "@/lib/usageMeter";
 
-const BAR: Record<UsageLevel, string> = { ok: "bg-gradient-to-r from-indigo-500 to-sky-400", warn: "bg-amber-500", danger: "bg-rose-600", unknown: "bg-slate-300" };
+const BAR: Record<UsageLevel, string> = { ok: "bg-indigo-500", warn: "bg-amber-500", danger: "bg-rose-600", unknown: "bg-slate-300" };
 const LEVEL_TEXT: Record<UsageLevel, string> = { ok: "text-emerald-600", warn: "text-amber-600", danger: "text-rose-600", unknown: "text-slate-500" };
 
 function ago(iso: string): string {

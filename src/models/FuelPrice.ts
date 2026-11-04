@@ -13,7 +13,7 @@ export interface IFuelPrice extends Document {
   country: "PK";
   effectiveDate: Date;
   notificationDate?: Date;
-  /** "Petroleum Division press release", or the admin's source for a manual entry */
+  /** "OGRA price publication", "Petroleum Division press release", or the admin's source for a manual entry */
   source: string;
   notificationUrl?: string;
   updateId?: mongoose.Types.ObjectId;

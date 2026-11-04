@@ -64,7 +64,7 @@ export default function AdminBookingsPage() {
         <StatCard label="Total bookings" value={bookings.length.toLocaleString()} icon={CalendarDays} tone="blue" />
         <StatCard label="Pending" value={bookings.filter(b => b.status === "PENDING").length} icon={Clock} tone="amber" />
         <StatCard label="Completed" value={bookings.filter(b => b.status === "COMPLETED").length} icon={CircleCheck} tone="green" />
-        <StatCard label="Rental revenue" value={`PKR ${totalRevenue.toLocaleString()}`} icon={Wallet} tone="violet" hint="From completed bookings" />
+        <StatCard label="Rental revenue" value={`PKR ${totalRevenue.toLocaleString()}`} icon={Wallet} tone="indigo" hint="From completed bookings" />
       </div>
 
       <DataTable

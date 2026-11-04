@@ -27,7 +27,7 @@ type AdminReport = {
 };
 
 type Status = "OPEN" | "RESOLVED" | "DISMISSED";
-const REASON_TONE: Record<string, Tone> = { SCAM: "red", FAKE: "red", WRONG_INFO: "amber", UNAVAILABLE: "neutral", OFFENSIVE: "violet", OTHER: "neutral" };
+const REASON_TONE: Record<string, Tone> = { SCAM: "red", FAKE: "red", WRONG_INFO: "amber", UNAVAILABLE: "neutral", OFFENSIVE: "indigo", OTHER: "neutral" };
 const fmt = (d: string) => new Date(d).toLocaleString("en-PK", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 /** Where an admin goes to act on a reported item (remove a listing, switch off a deal, warn or suspend a business). */

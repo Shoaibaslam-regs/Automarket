@@ -52,7 +52,7 @@ export async function approveFuelUpdate(id: string, admin: Admin, body: Record<s
     { returnDocument: "after" }
   );
   if (!update) return { ok: false, status: 409, error: "This update was already reviewed" };
-  await savePrices(p, { admin, updateId: update._id as mongoose.Types.ObjectId, source: "Petroleum Division press release", notificationUrl: update.notificationUrl, notificationDate: update.notificationDate });
+  await savePrices(p, { admin, updateId: update._id as mongoose.Types.ObjectId, source: /ogra\.org\.pk/i.test(update.notificationUrl) ? "OGRA price publication" : "Petroleum Division press release", notificationUrl: update.notificationUrl, notificationDate: update.notificationDate });
   await logAdminAction(admin, "fuel.approve", { type: "FUEL", id: update._id, label: `Fuel prices w.e.f. ${fuelDate(p.effectiveDate)}` },
     `Petrol ${p.petrol}, Diesel ${p.diesel}${corrected ? " (corrected from the read prices)" : ""}${p.note ? ` · ${p.note}` : ""}`);
   return { ok: true, update };
@@ -139,4 +139,15 @@ export async function deleteFuelDay(day: string, admin: Admin, note: unknown): P
   await logAdminAction(admin, "fuel.delete", { type: "FUEL", label: `Fuel prices w.e.f. ${fuelDate(old.date)}` },
     `Petrol ${old.petrol ?? "—"}, Diesel ${old.diesel ?? "—"} · ${reason}`);
   return { ok: true };
+}
+
+/**
+ * Clears Admin → Fuel prices' "Recently reviewed" card: finished reviews (approved, rejected, unchanged) are hidden,
+ * not deleted, so the checker doesn't read those releases again and published prices keep their link to the review.
+ * Waiting and unreadable releases stay. The Activity log keeps every approval.
+ */
+export async function clearFuelReviewHistory(admin: Admin) {
+  const r = await FuelPriceUpdate.updateMany({ status: { $in: ["APPROVED", "REJECTED", "SKIPPED"] }, hiddenFromTrail: { $ne: true } }, { $set: { hiddenFromTrail: true } });
+  await logAdminAction(admin, "fuel.clearHistory", { type: "FUEL", label: "Fuel review history" }, `${r.modifiedCount} entries cleared`);
+  return r.modifiedCount;
 }

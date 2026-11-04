@@ -21,11 +21,10 @@ const shortDay = (d: string) => new Date(`${d}T00:00:00+05:00`).toLocaleDateStri
 
 /**
  * A crypto-style price chart: one series at a time (tabs), a big price that follows the finger or mouse along the
- * line (the latest price otherwise) with the change over the chosen range, a gradient area in the AutoGO indigo →
- * sky, a dashed crosshair, prices on the right and 7D / 30D / 90D / 1Y. `step` draws prices that hold until the next
- * change (Pakistan's official prices). `riseIsBad` colours a rise rose (fuel prices) instead of emerald.
+ * line (the latest price otherwise) with the change over the chosen range, a solid indigo line with a faint fade
+ * under it, a dashed crosshair, prices on the right and 7D / 30D / 90D / 1Y.
  */
-export default function PriceChart({ title, subtitle, series, prefix, unit, step = false, riseIsBad = false }: {
+export default function PriceChart({ title, subtitle, series, prefix, unit, riseIsBad = false }: {
   title: string;
   subtitle: string;
   series: ChartSeries[];
@@ -33,14 +32,13 @@ export default function PriceChart({ title, subtitle, series, prefix, unit, step
   prefix: string;
   /** After it: "/ litre", "/ barrel" */
   unit: string;
-  step?: boolean;
   riseIsBad?: boolean;
 }) {
   const id = useId().replace(/:/g, "");
   const dark = useTheme().resolved === "dark";
   const c = dark
-    ? { from: "#818cf8", to: "#38bdf8", tick: "#64748b", cursor: "#475569" }
-    : { from: "#4f46e5", to: "#0ea5e9", tick: "#94a3b8", cursor: "#cbd5e1" };
+    ? { from: "#818cf8", to: "#818cf8", tick: "#64748b", cursor: "#475569" }
+    : { from: "#4f46e5", to: "#4f46e5", tick: "#94a3b8", cursor: "#cbd5e1" };
 
   const [active, setActive] = useState(series[0]?.key ?? "");
   const [range, setRange] = useState<RangeKey>("30D");
@@ -131,7 +129,7 @@ export default function PriceChart({ title, subtitle, series, prefix, unit, step
                 tickFormatter={(v: number) => v.toLocaleString("en-US", { maximumFractionDigits: v >= 100 ? 0 : 1 })} />
               {/* The crosshair only: the price above shows the value */}
               <Tooltip content={() => null} cursor={{ stroke: c.cursor, strokeWidth: 1, strokeDasharray: "4 4" }} />
-              <Area type={step ? "stepAfter" : "monotone"} dataKey="value" stroke={`url(#${id}-line)`} strokeWidth={2.25} fill={`url(#${id}-fill)`}
+              <Area type="monotone" dataKey="value" stroke={`url(#${id}-line)`} strokeWidth={2.25} fill={`url(#${id}-fill)`}
                 dot={false} activeDot={{ r: 5, fill: c.from, stroke: dark ? "#0f172a" : "#ffffff", strokeWidth: 2 }} isAnimationActive={false} />
             </AreaChart>
           </ResponsiveContainer>

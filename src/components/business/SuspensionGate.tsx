@@ -80,7 +80,7 @@ export default function SuspensionGate({
 
   return (
     <div className="flex min-h-[calc(100vh-48px)] items-center justify-center bg-[var(--gh-f6f8fa)] p-4 md:min-h-screen">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--gh-ffcdd2)] bg-white text-center shadow-[0_20px_50px_-30px_rgba(207,34,46,0.45)]">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--gh-ffcdd2)] bg-white text-center shadow-sm">
         <div className="bg-[var(--gh-fff0f0)] px-6 py-6">
           <span className="mx-auto flex items-center justify-center text-[var(--gh-cf222e)]"><ShieldAlert size={22} /></span>
           <h1 className="mt-3 text-lg font-bold text-[var(--gh-0d1117)]">{suspension.name} is suspended</h1>

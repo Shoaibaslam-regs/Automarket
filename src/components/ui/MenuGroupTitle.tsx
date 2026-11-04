@@ -21,7 +21,7 @@ export default function MenuGroupTitle({
       {children}
       <span
         aria-hidden
-        className={`h-px flex-1 bg-gradient-to-r ${dark ? "from-indigo-400/50 via-fuchsia-400/25" : "from-indigo-500/40 via-fuchsia-500/20"} to-transparent`}
+        className={`h-px flex-1 ${dark ? "bg-white/10" : "bg-slate-200"}`}
       />
     </p>
   );

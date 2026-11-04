@@ -265,6 +265,8 @@
   --gh-8250df: #8250df;
   --gh-fbefff: #fbefff;
   --gh-6e40c9: #6e40c9;
+  --gh-4f46e5: #4f46e5;
+  --gh-eef2ff: #eef2ff;
 }
 
 .dark {
@@ -532,6 +534,8 @@
   --gh-8250df: #b392f0;
   --gh-fbefff: #271b3a;
   --gh-6e40c9: #a371f7;
+  --gh-4f46e5: #818cf8;
+  --gh-eef2ff: #1b1f3a;
 }
 
 /* Same in both themes: dark-by-design sections, gold buttons, photo overlays, printable pages */
@@ -803,4 +807,6 @@
   --gh-8250df: #8250df;
   --gh-fbefff: #fbefff;
   --gh-6e40c9: #6e40c9;
+  --gh-4f46e5: #4f46e5;
+  --gh-eef2ff: #eef2ff;
 }

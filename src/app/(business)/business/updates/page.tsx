@@ -71,7 +71,7 @@ export default function UpdatesPage() {
                   ) : <span className="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto rounded-lg bg-white/10 px-3.5 py-2 text-[13px] font-semibold"><Check size={14} /> Following</span>
                 ) : feed.canChange ? (
                   <button onClick={() => change(true)} disabled={busy}
-                    className="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-4 py-2 text-[13px] font-bold text-slate-950 disabled:opacity-60">
+                    className="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto rounded-lg theme-static bg-amber-400 px-4 py-2 text-[13px] font-bold text-slate-950 disabled:opacity-60">
                     <BellRing size={14} /> {busy ? "Following…" : "Follow"}
                   </button>
                 ) : null}

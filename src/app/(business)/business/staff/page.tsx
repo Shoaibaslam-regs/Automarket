@@ -197,7 +197,7 @@ export default function StaffPage() {
         </div>
         {canManage && (teamFull ? (
           <Link href="/pricing"
-            style={{ padding: "9px 18px", background: "linear-gradient(90deg,#fcd34d,#f59e0b)", color: "var(--gh-0d1117)", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
+            style={{ padding: "9px 18px", background: "#fbbf24", color: "var(--gh-0d1117)", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}>
             Upgrade plan to add more
           </Link>
         ) : (

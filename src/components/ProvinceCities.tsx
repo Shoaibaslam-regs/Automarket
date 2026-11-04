@@ -34,12 +34,7 @@ export default function ProvinceCities() {
     <div ref={rootRef}>
       <style>{`
         @keyframes pcDrop { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes pcGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45), 0 10px 30px -12px rgba(244, 63, 94, 0.45) }
-          50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0), 0 14px 36px -10px rgba(244, 63, 94, 0.6) }
-        }
         @keyframes pcFlame { 0%, 100% { transform: scale(1) rotate(-4deg) } 50% { transform: scale(1.18) rotate(5deg) } }
-        @keyframes pcShine { from { transform: translateX(-120%) skewX(-20deg) } to { transform: translateX(320%) skewX(-20deg) } }
         @media (prefers-reduced-motion: reduce) { .pc-anim, .pc-anim * { animation: none !important } }
       `}</style>
 
@@ -82,7 +77,7 @@ export default function ProvinceCities() {
         <div
           id="province-cities"
           key={open.id}
-          className="pc-anim mt-3 animate-[pcDrop_0.22s_ease-out] rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_24px_50px_-28px_rgba(15,23,42,0.35)] sm:p-4"
+          className="pc-anim mt-3 animate-[pcDrop_0.22s_ease-out] rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm sm:p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3 px-1">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Cities in {open.name}</p>
@@ -94,10 +89,9 @@ export default function ProvinceCities() {
           {/* Capital, pinned on top */}
           <Link
             href={cityHref(open.capital)}
-            className="group relative mb-2.5 flex items-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 p-[1.5px] animate-[pcGlow_2.2s_ease-in-out_infinite]"
+            className="group relative mb-2.5 flex items-center gap-3 overflow-hidden rounded-xl bg-amber-400 p-[1.5px]"
           >
             <span className="relative flex w-full items-center gap-3 overflow-hidden rounded-[10.5px] bg-white px-3.5 py-3 sm:px-4">
-              <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-amber-200/50 to-transparent animate-[pcShine_2.8s_ease-in-out_infinite]" />
               <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
                 <Flame size={17} className="animate-[pcFlame_1.1s_ease-in-out_infinite]" />
               </span>

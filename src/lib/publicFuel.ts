@@ -2,22 +2,20 @@ import { unstable_cache } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { FuelPrice } from "@/models/FuelPrice";
 import { FuelPriceUpdate } from "@/models/FuelPriceUpdate";
-import { OilMarketPrice } from "@/models/OilMarketPrice";
-import { OilPriceHistory } from "@/models/OilPriceHistory";
-import { getFuelStatus, type FuelStatus } from "@/lib/fuelJobs";
+import { getFuelStatus } from "@/lib/fuelJobs";
 import { FUEL_TAG } from "@/lib/pageCache";
-import { pkDayKey, priceChange, type Commodity, type FuelType } from "@/lib/fuelPrices";
+import { pkDayKey, priceChange, type FuelType } from "@/lib/fuelPrices";
 
 // What the fuel pages show, read from MongoDB only (never from the outside sources while someone waits): approved
-// Pakistani prices and the last saved Brent / WTI quotes. Public reads are cached for everyone (FUEL_TAG, cleared by
-// invalidateFuel on every approval, manual entry and oil update), so the pages add no database load per visitor.
+// Pakistani prices. Public reads are cached for everyone (FUEL_TAG, cleared by invalidateFuel on every approval,
+// manual entry, edit and removal), so the pages add no database load per visitor. (Brent and WTI were removed at the
+// owner's request: no free source gave current prices.)
 
 const REVALIDATE = 300;
 
 export type PkPrice = { price: number; effectiveDate: string; previous: number | null; diff: number | null; pct: number | null; source: string; notificationUrl?: string; approvedAt: string };
 export type PkDay = { date: string; petrol: number | null; diesel: number | null; notificationUrl?: string };
 export type FuelNews = PkDay & { previousPetrol: number | null; previousDiesel: number | null };
-export type OilQuoteView = { price: number; previousClose: number | null; change: number | null; percentChange: number | null; marketTimestamp: string; updatedAt: string; symbol: string };
 
 export type FuelPageData = {
   pk: Partial<Record<FuelType, PkPrice>>;
@@ -25,22 +23,13 @@ export type FuelPageData = {
   pkHistory: PkDay[];
   /** The latest approved changes, newest first */
   news: FuelNews[];
-  oil: Partial<Record<Commodity, OilQuoteView>>;
-  /** Daily closes, oldest first, up to a year */
-  oilHistory: Record<Commodity, { date: string; price: number }[]>;
-  oilUpdatedAt: string | null;
 };
 
 type PriceRow = { fuelType: FuelType; price: number; effectiveDate: Date; source: string; notificationUrl?: string; approvedAt: Date };
 
 async function load(): Promise<FuelPageData> {
   await connectDB();
-  const [rows, quotes, history, status] = await Promise.all([
-    FuelPrice.find().sort({ effectiveDate: -1 }).limit(800).lean<PriceRow[]>(),
-    OilMarketPrice.find().lean<(OilQuoteView & { commodity: Commodity; marketTimestamp: Date; updatedAt: Date })[]>(),
-    OilPriceHistory.find({ date: { $gte: pkDayKey(new Date(Date.now() - 370 * 86_400_000)) } }).sort({ date: 1 }).lean<{ commodity: Commodity; date: string; price: number }[]>(),
-    getFuelStatus(),
-  ]);
+  const rows = await FuelPrice.find().sort({ effectiveDate: -1 }).limit(800).lean<PriceRow[]>();
 
   // Days with both prices, newest first
   const days = new Map<string, PkDay>();
@@ -69,17 +58,7 @@ async function load(): Promise<FuelPageData> {
     ...d, previousPetrol: newestFirst[i + 1]?.petrol ?? null, previousDiesel: newestFirst[i + 1]?.diesel ?? null,
   }));
 
-  const oil: FuelPageData["oil"] = {};
-  for (const q of quotes) {
-    oil[q.commodity] = {
-      price: q.price, previousClose: q.previousClose ?? null, change: q.change ?? null, percentChange: q.percentChange ?? null,
-      marketTimestamp: new Date(q.marketTimestamp).toISOString(), updatedAt: new Date(q.updatedAt).toISOString(), symbol: q.symbol,
-    };
-  }
-  const oilHistory: FuelPageData["oilHistory"] = { BRENT: [], WTI: [] };
-  for (const h of history) oilHistory[h.commodity].push({ date: h.date, price: h.price });
-
-  return { pk, pkHistory: newestFirst.slice(0, 370).reverse(), news, oil, oilHistory, oilUpdatedAt: (status as FuelStatus).oil?.lastSuccessAt ?? null };
+  return { pk, pkHistory: newestFirst.slice(0, 370).reverse(), news };
 }
 
 /** When the team last checked the Pakistani prices shown (the newer of the two approvals), for "Updated …". */
@@ -99,11 +78,11 @@ export async function getFuelAdminData() {
   const [data, waiting, reviewed, status] = await Promise.all([
     load(),
     FuelPriceUpdate.find({ status: { $in: ["PENDING", "FAILED"] } }).sort({ listedDay: -1, createdAt: -1 }).limit(30).lean(),
-    FuelPriceUpdate.find({ status: { $in: ["APPROVED", "REJECTED", "SKIPPED"] } }).sort({ updatedAt: -1 }).limit(20).populate("reviewedBy", "name email").lean(),
+    FuelPriceUpdate.find({ status: { $in: ["APPROVED", "REJECTED", "SKIPPED"] }, hiddenFromTrail: { $ne: true } }).sort({ updatedAt: -1 }).limit(20).populate("reviewedBy", "name email").lean(),
     getFuelStatus(),
   ]);
   return JSON.parse(JSON.stringify({
     ...data, waiting, reviewed, status,
-    config: { oilKey: !!process.env.ALPHA_VANTAGE_API_KEY, gemini: !!process.env.GEMINI_API_KEY, cron: !!process.env.CRON_SECRET },
+    config: { gemini: !!process.env.GEMINI_API_KEY, cron: !!process.env.CRON_SECRET },
   }));
 }

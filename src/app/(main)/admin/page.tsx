@@ -123,7 +123,7 @@ function RowMenu({ items, label }: { items: MenuItem[]; label: string }) {
         {dot && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-sky-500 ring-2 ring-white" />}
       </button>
       {pos && (
-        <div role="menu" style={{ top: pos.top, bottom: pos.bottom, right: pos.right }} className="fixed z-[60] w-56 overflow-hidden rounded-xl bg-white p-1 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+        <div role="menu" style={{ top: pos.top, bottom: pos.bottom, right: pos.right }} className="fixed z-[60] w-56 overflow-hidden rounded-xl bg-white p-1 shadow-lg ring-1 ring-slate-200">
           {items.map(i => {
             const cls = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition ${toneClass(i.tone)}`;
             const body = <><i.icon size={14} className="flex-shrink-0" /> <span className="flex-1">{i.label}</span>{i.dot && <span className="h-2 w-2 rounded-full bg-sky-500" />}</>;
@@ -315,7 +315,7 @@ export default function AdminPage() {
           {stats && (
             <StatGrid>
               <StatCard label="Total users" value={stats.totalUsers.toLocaleString()} icon={Users} tone="blue" />
-              <StatCard label="Total listings" value={stats.totalListings.toLocaleString()} icon={Car} tone="violet" />
+              <StatCard label="Total listings" value={stats.totalListings.toLocaleString()} icon={Car} tone="indigo" />
               <StatCard
                 label="Active listings"
                 value={stats.activeListings.toLocaleString()}
@@ -496,7 +496,7 @@ export default function AdminPage() {
                     : null;
                   return (
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-sm font-bold text-white">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
                         {org.name[0]}
                       </span>
                       <div className="min-w-0">
@@ -539,7 +539,7 @@ export default function AdminPage() {
                       <p className="flex items-center gap-1.5 truncate text-sm font-semibold" style={{ color: plan.accent }}>
                         {org.plan !== "FREE" && <Crown size={13} />}
                         {plan.name}
-                        {isFreeGrant(org.planSource) && org.plan !== "FREE" && <Gift size={12} className="text-violet-500" aria-label={org.planSource === "TRIAL" ? "Free trial" : "Gifted by an admin"} />}
+                        {isFreeGrant(org.planSource) && org.plan !== "FREE" && <Gift size={12} className="text-indigo-500" aria-label={org.planSource === "TRIAL" ? "Free trial" : "Gifted by an admin"} />}
                       </p>
                       <p className="truncate text-xs text-slate-400">
                         {TYPE_NAME[org.type] ?? org.type}

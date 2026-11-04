@@ -259,7 +259,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
               <span className="flex h-full flex-col items-center justify-center gap-1 text-xs text-slate-400"><ImageOff size={24} /> Main photo</span>
             )}
             {discount.discountValue > 0 && (
-              <span className="theme-static absolute left-2 top-2 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white">
+              <span className="theme-static absolute left-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white">
                 {dealLabel(discount)}
               </span>
             )}

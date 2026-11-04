@@ -107,7 +107,7 @@ export default function AdminAnnouncementsPage() {
         <div className="flex flex-wrap items-center gap-1.5">
           {draft && <Badge tone="neutral"><FileText size={10} /> Draft</Badge>}
           <Badge tone={KIND_TONE[p.kind]}>{ANNOUNCEMENT_LABEL[p.kind]}</Badge>
-          {p.pinned && <Badge tone="violet"><Pin size={10} /> Pinned</Badge>}
+          {p.pinned && <Badge tone="indigo"><Pin size={10} /> Pinned</Badge>}
           {p.endsAt && <span className="text-[11px] text-slate-500">ends {fmt(p.endsAt)}</span>}
           <span className="ml-auto text-[11px] text-slate-400">
             {draft ? `saved ${fmt(p.updatedAt ?? p.createdAt)}` : fmt(p.createdAt)}{p.createdBy ? ` · ${p.createdBy.name || p.createdBy.email}` : ""}

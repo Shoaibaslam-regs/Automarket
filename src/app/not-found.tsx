@@ -24,7 +24,7 @@ export default function NotFound() {
 
         {/* The 404 shudders when the car hits the rock (crash-shudder) */}
         <div className="crash-shudder mt-6">
-          <p aria-hidden className="select-none bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 bg-clip-text text-[110px] font-black leading-none tracking-tighter text-transparent sm:text-[160px]">
+          <p aria-hidden className="select-none text-indigo-600 text-[110px] font-black leading-none tracking-tighter text-transparent sm:text-[160px]">
             404
           </p>
         </div>

@@ -108,13 +108,11 @@ export default async function DashboardPage() {
         {/* Accounts without a phone (Google sign-ups) are asked for one; nothing shows once it's saved or snoozed */}
         {user && !user.phone?.trim() && <AddPhoneCard userId={userId} hasPassword={!!user.password} />}
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_20px_50px_-32px_rgba(79,70,229,0.35)] ring-1 ring-slate-200/80 sm:p-8">
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-200/60 to-fuchsia-100/50 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-amber-100/60 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-200/80 sm:p-8">
 
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
-              <span className="flex-shrink-0 rounded-full bg-gradient-to-br from-indigo-400 via-fuchsia-400 to-amber-300 p-[2.5px]">
+              <span className="flex-shrink-0 rounded-full bg-slate-200 p-[2.5px]">
                 <span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-xl font-bold text-white ring-2 ring-white sm:h-16 sm:w-16">
                   {user?.image ? <Image src={user.image} alt="" fill sizes="64px" className="object-cover" /> : firstName[0]?.toUpperCase()}
                 </span>
@@ -158,7 +156,7 @@ export default async function DashboardPage() {
             </div>
             <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white ring-1 ring-inset ring-slate-200">
               <div
-                className={`h-full rounded-full ${limit === null ? "bg-gradient-to-r from-amber-300 to-amber-500" : full ? "bg-rose-500" : "bg-gradient-to-r from-indigo-500 to-fuchsia-500"}`}
+                className={`h-full rounded-full ${limit === null ? "theme-static bg-amber-400" : full ? "bg-rose-500" : "bg-indigo-600"}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -168,7 +166,7 @@ export default async function DashboardPage() {
         {/* Stats */}
         <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map(s => (
-            <Link key={s.label} href={s.href} className="group rounded-3xl bg-white p-4 shadow-[0_8px_30px_-20px_rgba(15,23,42,0.25)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:ring-indigo-200 sm:p-5">
+            <Link key={s.label} href={s.href} className="group rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:ring-indigo-200 sm:p-5">
               <s.icon size={20} className={s.tint} />
               <p className="mt-3 text-2xl font-extrabold tabular-nums text-slate-900 sm:text-3xl">{s.value}</p>
               <p className="text-xs font-medium text-slate-500">{s.label}</p>
@@ -230,7 +228,7 @@ export default async function DashboardPage() {
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-[13px] font-semibold text-slate-900">
-                              {b.dealId && <span className="theme-static mr-1.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px align-middle text-[9px] font-extrabold text-white">DEAL</span>}
+                              {b.dealId && <span className="theme-static mr-1.5 rounded-full bg-rose-600 px-1.5 py-px align-middle text-[9px] font-extrabold text-white">DEAL</span>}
                               {v?.title ?? "Vehicle removed"}
                             </span>
                             <span className="block text-[11px] text-slate-500">{day(b.startDate)} → {day(b.endDate)}</span>
@@ -246,7 +244,6 @@ export default async function DashboardPage() {
 
             {business ? (
               <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-lg shadow-slate-900/20">
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-indigo-500/30 blur-2xl" />
                 <p className="relative flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300"><Store size={13} /> Your business</p>
                 <p className="relative mt-1 text-lg font-bold">{business.name}</p>
                 <div className="relative mt-4 flex flex-wrap gap-2">
@@ -260,7 +257,6 @@ export default async function DashboardPage() {
               </section>
             ) : (
               <section className="relative overflow-hidden rounded-3xl bg-white p-5 ring-1 ring-slate-200/70">
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-indigo-100/80 blur-2xl" />
                 <p className="relative flex items-center gap-1.5 text-sm font-bold text-slate-900"><Sparkles size={15} className="text-indigo-600" /> Sell professionally?</p>
                 <p className="relative mt-1 text-xs leading-relaxed text-slate-500">
                   Open a free business account for a public shop page, customer reviews, deals, a team and booking slips.

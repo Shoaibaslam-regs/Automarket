@@ -754,9 +754,9 @@ export default function BusinessBookingsPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                         <span className="font-mono font-bold">{bookingNumber(b._id)}</span>
                         <span aria-hidden>·</span>
-                        {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-8250df)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online</span>}
+                        {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-4f46e5)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online</span>}
                         {b.dealId && (
-                          <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white"><Tag size={9} /> DEAL</span>
+                          <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-rose-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white"><Tag size={9} /> DEAL</span>
                         )}
                       </p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-[var(--gh-0d1117)]">

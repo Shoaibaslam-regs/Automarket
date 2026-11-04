@@ -431,7 +431,7 @@ export default function BookingsContent() {
                         </div>
                         <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                           {isDeal && (
-                            <span className="theme-static inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">
+                            <span className="theme-static inline-flex items-center rounded-full bg-rose-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">
                               DEAL{(booking.dealId?.vehicleCount ?? 1) > 1 ? ` · ${booking.dealId!.vehicleCount} CARS` : ""}
                             </span>
                           )}

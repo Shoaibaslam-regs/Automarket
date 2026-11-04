@@ -310,7 +310,7 @@ export default function ReportsPage() {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(180deg, var(--gh-f8fafc) 0%, var(--gh-f6f8fa) 100%)",
+          "var(--gh-f8fafc)",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: "var(--gh-0d1117)",

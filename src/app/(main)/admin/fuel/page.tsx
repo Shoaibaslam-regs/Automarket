@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Check, ExternalLink, Fuel, Pencil, RefreshCw, Trash2, X } from "lucide-react";
 import { Badge, ConfirmDialog, PageHeader, Panel, btn } from "@/components/admin/ui";
 import { useAdminAccess } from "@/components/admin/AdminAccess";
-import { COMMODITY_LABEL, FUEL_LABEL, fuelDate, fuelTime, pkDayKey } from "@/lib/fuelPrices";
+import { FUEL_LABEL, fuelDate, fuelTime, pkDayKey } from "@/lib/fuelPrices";
 import type { FuelPageData } from "@/lib/publicFuel";
 
 type Update = {
@@ -16,11 +16,10 @@ type Update = {
   reviewNote?: string; reviewedAt?: string; reviewedBy?: { name?: string; email?: string } | null; createdAt: string; updatedAt: string;
 };
 type Job = { lastRunAt?: string; lastSuccessAt?: string; lastError?: string; lastResult?: string };
-type Data = FuelPageData & { waiting: Update[]; reviewed: Update[]; status: { notices?: Job; oil?: Job }; config: { oilKey: boolean; gemini: boolean; cron: boolean } };
+type Data = FuelPageData & { waiting: Update[]; reviewed: Update[]; status: { notices?: Job; oil?: Job }; config: { gemini: boolean; cron: boolean } };
 
 const field = "w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 const pkr = (n?: number | null) => (n == null ? "—" : `PKR ${n.toFixed(2)}`);
-const usd = (n?: number | null) => (n == null ? "—" : `$${n.toFixed(2)}`);
 const dayOf = (iso?: string) => (iso ? pkDayKey(new Date(iso)) : "");
 
 /** The next daily cron: 03:00 UTC (08:00 in Pakistan). */
@@ -47,6 +46,7 @@ export default function AdminFuelPage() {
   // A published day being corrected, or about to be removed
   const [editing, setEditing] = useState<{ day: string; petrol: string; diesel: string; effectiveDate: string; note: string } | null>(null);
   const [removing, setRemoving] = useState<{ day: string; note: string } | null>(null);
+  const [clearing, setClearing] = useState(false);
   const [nextRun] = useState(() => nextDailyRun());
 
   useEffect(() => {
@@ -83,15 +83,14 @@ export default function AdminFuelPage() {
     if (!res?.ok) { setError(d?.error || "The check failed"); return; }
     if (d.skipped) { setNotice(d.skipped); return; }
     const n = d.notices?.error ? `Notices: ${d.notices.error}` : `Notices: ${d.notices?.pending ?? 0} new, ${d.notices?.failed ?? 0} couldn't be read, ${d.notices?.skipped ?? 0} unchanged`;
-    const o = d.oil?.error ? `Oil: ${d.oil.error}` : `Oil: ${d.oil?.saved ?? 0} of 2 updated`;
-    setNotice(`${n}. ${o}.`);
+    setNotice(`${n}.`);
     setReload(x => x + 1);
   }
 
   const st = data?.status ?? {};
   return (
     <div>
-      <PageHeader title="Fuel prices" description="Pakistan's official petrol and diesel prices (approved here before anyone sees them) and Brent and WTI crude."
+      <PageHeader title="Fuel prices" description="Pakistan's official petrol and diesel prices (approved here before anyone sees them)."
         actions={canWrite && (
           <button type="button" onClick={checkNow} disabled={busy === "check"} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
             <RefreshCw size={14} className={busy === "check" ? "animate-spin" : ""} /> {busy === "check" ? "Checking…" : "Check now"}
@@ -104,9 +103,9 @@ export default function AdminFuelPage() {
       {!data ? <div className="h-64 animate-pulse rounded-2xl bg-white" /> : (
         <div className="space-y-5">
           {/* Automation status */}
-          <Panel title="Automation" description="The daily cron runs both checks; /api/cron/fuel can run them more often from an outside scheduler">
+          <Panel title="Automation" description="The daily cron runs the check; /api/cron/fuel can run it more often from an outside scheduler">
             <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-              {([["notices", "Petroleum Division notices"], ["oil", "Alpha Vantage (Brent, WTI)"]] as const).map(([k, label]) => {
+              {([["notices", "Pakistan prices (OGRA)"]] as const).map(([k, label]) => {
                 const j = st[k];
                 return (
                   <div key={k} className="text-sm">
@@ -123,8 +122,7 @@ export default function AdminFuelPage() {
               <p className="text-xs text-slate-500 sm:col-span-2">
                 Next daily check: {fuelTime(nextRun)}.{" "}
                 {!data.config.cron && <span className="text-rose-600">CRON_SECRET isn&apos;t set, so the daily check doesn&apos;t run. </span>}
-                {!data.config.gemini && <span className="text-rose-600">GEMINI_API_KEY isn&apos;t set, so releases can&apos;t be read. </span>}
-                {!data.config.oilKey && <span className="text-rose-600">ALPHA_VANTAGE_API_KEY isn&apos;t set, so oil prices aren&apos;t fetched.</span>}
+                {!data.config.gemini && <span className="text-rose-600">GEMINI_API_KEY isn&apos;t set, so the fallback Petroleum Division images can&apos;t be read. </span>}
               </p>
             </div>
           </Panel>
@@ -153,7 +151,7 @@ export default function AdminFuelPage() {
           </div>
 
           {/* Waiting for review */}
-          <Panel title={`Waiting for review (${data.waiting.length})`} description="Check each against its release image before approving. You can correct the numbers.">
+          <Panel title={`Waiting for review (${data.waiting.length})`} description="Check each against its official publication before approving. You can correct the numbers.">
             {data.waiting.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-500">Nothing waiting.</p> : (
               <ul className="divide-y divide-slate-100">
                 {data.waiting.map(u => {
@@ -165,8 +163,8 @@ export default function AdminFuelPage() {
                         <Badge tone={failed ? "red" : "amber"}>{failed ? "Couldn't be read" : "Waiting"}</Badge>
                         {u.listedDay && <span className="text-slate-500">Filed {fuelDate(u.listedDay)}</span>}
                         {u.notificationDate && <span className="text-slate-500">· Released {fuelDate(u.notificationDate)}</span>}
-                        <a href={u.notificationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline">Notice page <ExternalLink size={11} /></a>
-                        {u.fileUrl && <a href={u.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline">Release image <ExternalLink size={11} /></a>}
+                        <a href={u.notificationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline">{/ogra\.org\.pk/i.test(u.notificationUrl) ? "OGRA publication (PDF)" : "Notice page"} <ExternalLink size={11} /></a>
+                        {u.fileUrl && u.fileUrl !== u.notificationUrl && <a href={u.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline">Release image <ExternalLink size={11} /></a>}
                       </div>
                       {u.extractionDetails?.error && <p className="text-[13px] text-rose-600">{u.extractionDetails.error}</p>}
                       {u.extractionDetails?.warnings?.map(w => <p key={w} className="flex gap-1.5 text-[13px] text-amber-700"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /> {w}</p>)}
@@ -209,32 +207,13 @@ export default function AdminFuelPage() {
                 <label className="text-xs text-slate-500">Petrol (PKR/litre)<input required inputMode="decimal" value={manual.petrol} onChange={e => setManual(m => ({ ...m, petrol: e.target.value }))} className={`${field} mt-1`} /></label>
                 <label className="text-xs text-slate-500">Diesel (PKR/litre)<input required inputMode="decimal" value={manual.diesel} onChange={e => setManual(m => ({ ...m, diesel: e.target.value }))} className={`${field} mt-1`} /></label>
                 <label className="text-xs text-slate-500">Effective from<input required type="date" value={manual.effectiveDate} onChange={e => setManual(m => ({ ...m, effectiveDate: e.target.value }))} className={`${field} mt-1`} /></label>
-                <label className="text-xs text-slate-500">Official notification link<input required type="url" placeholder="https://petroleum.gov.pk/NewsDetail/…" value={manual.sourceUrl} onChange={e => setManual(m => ({ ...m, sourceUrl: e.target.value }))} className={`${field} mt-1`} /></label>
+                <label className="text-xs text-slate-500">Official notification link<input required type="url" placeholder="https://ogra.org.pk/index.php/download/…" value={manual.sourceUrl} onChange={e => setManual(m => ({ ...m, sourceUrl: e.target.value }))} className={`${field} mt-1`} /></label>
                 <label className="text-xs text-slate-500 sm:col-span-2 lg:col-span-3">Note (optional)<input maxLength={300} value={manual.note} onChange={e => setManual(m => ({ ...m, note: e.target.value }))} className={`${field} mt-1`} /></label>
                 <div className="flex items-end"><button type="submit" disabled={busy === "manual"} className="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50">{busy === "manual" ? "Saving…" : "Save and publish"}</button></div>
               </form>
             </Panel>
           )}
 
-          {/* International market */}
-          <Panel title="International market" description={data.oilUpdatedAt ? `Last successful update ${fuelTime(data.oilUpdatedAt)} · daily closes from Alpha Vantage (U.S. EIA data, a few days behind)` : "Not fetched yet"}>
-            <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-              {(["BRENT", "WTI"] as const).map(c => {
-                const q = data.oil[c];
-                return (
-                  <div key={c}>
-                    <p className="text-sm font-semibold text-slate-900">{COMMODITY_LABEL[c]} <span className="font-normal text-slate-400">{q?.symbol}</span></p>
-                    {q ? (
-                      <>
-                        <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{usd(q.price)} <span className="text-sm font-medium text-slate-400">/ barrel</span></p>
-                        <p className="text-xs text-slate-500">{q.change != null && `${q.change > 0 ? "+" : ""}${q.change.toFixed(2)} (${q.percentChange?.toFixed(2)}%) · `}close on {fuelDate(q.marketTimestamp)} · {data.oilHistory[c].length} days of history</p>
-                      </>
-                    ) : <p className="mt-1 text-sm text-slate-500">No data yet.</p>}
-                  </div>
-                );
-              })}
-            </div>
-          </Panel>
 
           {/* History */}
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -276,7 +255,12 @@ export default function AdminFuelPage() {
                 </table>
               )}
             </Panel>
-            <Panel title="Recently reviewed" description="The audit trail of approvals, rejections and skipped releases">
+            <Panel title="Recently reviewed" description="The audit trail of approvals, rejections and skipped releases"
+              action={canWrite && data.reviewed.length > 0 && (
+                <button type="button" onClick={() => setClearing(true)} className={`${btn.base} ${btn.secondary}`}>
+                  <Trash2 size={13} /> Clear history
+                </button>
+              )}>
               {data.reviewed.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-500">Nothing reviewed yet.</p> : (
                 <ul className="divide-y divide-slate-100">
                   {data.reviewed.map(u => (
@@ -310,7 +294,12 @@ export default function AdminFuelPage() {
         )}
         confirmLabel="Remove prices" loadingLabel="Removing…" loading={!!removing && busy === `remove:${removing.day}`}
         onConfirm={async () => { if (removing && await call(`remove:${removing.day}`, `/api/admin/fuel/day/${removing.day}`, "DELETE", { note: removing.note }, "Removed from the public page.")) setRemoving(null); }} />
-      <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-400"><Fuel size={13} /> The public page is /fuel-prices. Releases come from petroleum.gov.pk; oil prices from Alpha Vantage.</p>
+      <ConfirmDialog open={clearing} onOpenChange={setClearing} tone="danger" icon={Trash2}
+        title="Clear the review history?"
+        description="The approved, rejected and unchanged entries leave this list. Published prices, the price history and the public page don't change, waiting releases stay, and every approval is still in Activity."
+        confirmLabel="Clear history" loadingLabel="Clearing…" loading={busy === "clearHistory"}
+        onConfirm={async () => { if (await call("clearHistory", "/api/admin/fuel", "DELETE", undefined, "Review history cleared.")) setClearing(false); }} />
+      <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-400"><Fuel size={13} /> The public page is /fuel-prices. Pakistani prices come from OGRA&apos;s price publications (petroleum.gov.pk as a fallback).</p>
     </div>
   );
 }

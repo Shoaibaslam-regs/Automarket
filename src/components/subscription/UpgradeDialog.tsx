@@ -19,8 +19,6 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
           {plan && (
             <>
               <div className="relative overflow-hidden bg-slate-950 px-6 pb-6 pt-7 text-white">
-                <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-amber-400/25 blur-3xl" />
-                <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
                 <Dialog.Close aria-label="Close" className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white">
                   <X size={16} />
                 </Dialog.Close>

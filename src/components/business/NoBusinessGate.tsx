@@ -18,7 +18,7 @@ export default function NoBusinessGate({ noBusiness, children }: { noBusiness: b
 
   return (
     <div className="flex min-h-[calc(100vh-48px)] items-center justify-center bg-[var(--gh-f6f8fa)] p-4 md:min-h-screen">
-      <div className="w-full max-w-md rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-8 text-center shadow-[0_20px_50px_-30px_rgba(15,23,42,0.35)]">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-8 text-center shadow-sm">
         <span className="mx-auto flex items-center justify-center text-[var(--gh-57606a)]"><Building2 size={24} /></span>
         <h1 className="mt-3 text-lg font-bold text-[var(--gh-0d1117)]">No business registered</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-[var(--gh-57606a)]">

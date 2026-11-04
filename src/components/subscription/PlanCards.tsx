@@ -34,16 +34,16 @@ export default function PlanCards({
             key={plan.id}
             className={`relative flex flex-col rounded-[26px] p-[1.5px] transition duration-300 hover:-translate-y-1 ${
               dark
-                ? "bg-gradient-to-b from-indigo-400 via-violet-500 to-fuchsia-500 shadow-[0_30px_60px_-25px_rgba(99,102,241,0.6)]"
+                ? "bg-indigo-600"
                 : premium
-                ? "bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 shadow-[0_30px_60px_-28px_rgba(217,119,6,0.55)]"
-                : "bg-slate-200/80 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.35)]"
+                ? "bg-amber-400"
+                : "bg-slate-200/80 shadow-sm"
             }`}
           >
             {(dark || premium) && (
               <span
                 className={`absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-lg ${
-                  dark ? "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-indigo-500/30" : "bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 shadow-amber-500/30"
+                  dark ? "bg-indigo-600 text-white" : "theme-static bg-amber-400 text-slate-950"
                 }`}
               >
                 {dark ? "Most popular" : "Best value"}
@@ -57,7 +57,7 @@ export default function PlanCards({
                     dark
                       ? "bg-white/10 text-indigo-200 ring-1 ring-inset ring-white/15"
                       : premium
-                      ? "bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950"
+                      ? "theme-static bg-amber-400 text-slate-950"
                       : "bg-slate-100 text-slate-700"
                   }`}
                 >
@@ -127,7 +127,7 @@ export default function PlanCards({
                 ) : !signedIn ? (
                   <SignInLink
                     className={`block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
-                      dark ? "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:opacity-90" : premium ? "bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 hover:opacity-90" : "bg-slate-900 text-white hover:bg-slate-800"
+                      dark ? "bg-indigo-600 text-white hover:opacity-90" : premium ? "theme-static bg-amber-400 text-slate-950 hover:opacity-90" : "bg-slate-900 text-white hover:bg-slate-800"
                     }`}
                   >
                     Sign in to upgrade
@@ -137,9 +137,9 @@ export default function PlanCards({
                     onClick={() => onUpgrade(plan)}
                     className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
                       dark
-                        ? "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/25 hover:opacity-90"
+                        ? "bg-indigo-600 text-white shadow-lg hover:opacity-90"
                         : premium
-                        ? "bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:opacity-90"
+                        ? "theme-static bg-amber-400 text-slate-950 shadow-lg hover:opacity-90"
                         : "bg-slate-900 text-white hover:bg-slate-800"
                     }`}
                   >

@@ -698,7 +698,6 @@ export default function ListingsPage({
           <div className="lg:flex lg:items-end lg:justify-between lg:gap-10">
             <div className="flex items-start justify-between gap-3">
             <div>
-              {/* The marketplace's brand gradient (indigo → fuchsia, as on avatars and menu dots) */}
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]">Marketplace</h1>
               <p className="mt-1 text-sm text-slate-500">Browse cars and bikes for sale and rent across Pakistan.</p>
             </div>
@@ -1059,7 +1058,7 @@ export default function ListingsPage({
       <div
         ref={barRef}
         inert={!barShown}
-        className={`fixed inset-x-0 top-[57px] z-[90] border-b border-slate-200/80 bg-white/95 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.35)] backdrop-blur-md transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-x-0 top-[57px] z-[90] border-b border-slate-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-transform duration-300 ease-out lg:hidden ${
           barShown ? "translate-y-0" : "-translate-y-[calc(100%+60px)]"
         }`}
       >

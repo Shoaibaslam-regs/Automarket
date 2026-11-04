@@ -68,8 +68,6 @@ export default function PricingPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
       <section className="relative overflow-hidden bg-slate-950 pb-40 pt-16 text-center sm:pt-20">
-        <div aria-hidden className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-indigo-600/25 blur-[120px]" />
-        <div aria-hidden className="pointer-events-none absolute -right-20 top-24 h-72 w-72 rounded-full bg-amber-500/15 blur-[100px]" />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" />
 
         <div className="relative mx-auto max-w-[760px] px-4">
@@ -78,7 +76,7 @@ export default function PricingPage() {
           </span>
           <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Sell more with{" "}
-            <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">AutoGO Premium</span>
+            <span className="text-white">AutoGO Premium</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
             Start free with {PLANS.FREE.limits.listings} listings or deals a month. Upgrade when you need more listings, staff accounts for your team and full showroom management.
@@ -165,7 +163,7 @@ export default function PricingPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {(sub.source === "ADMIN_GRANT" || sub.source === "TRIAL") && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">
                     <Gift size={13} /> {planSourceLabel(sub.source)}
                   </span>
                 )}
@@ -225,8 +223,6 @@ export default function PricingPage() {
 
         {/* Talk to the team */}
         <section className="relative mt-12 overflow-hidden rounded-[26px] bg-slate-950 p-6 text-white sm:p-10">
-          <div aria-hidden className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/25 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl" />
           <div className="relative grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-white/10">
