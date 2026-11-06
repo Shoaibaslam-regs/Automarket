@@ -2,5 +2,5 @@
 export const TERMS_UPDATED = "14 October 2026";
 export const TERMS_PATH = "/terms";
 // Bump PRIVACY_UPDATED whenever the text on /privacy changes
-export const PRIVACY_UPDATED = "21 October 2026";
+export const PRIVACY_UPDATED = "6 November 2026";
 export const PRIVACY_PATH = "/privacy";

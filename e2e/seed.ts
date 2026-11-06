@@ -14,6 +14,7 @@ import { Deal } from "../src/models/Deal";
 import { BlogPost } from "../src/models/BlogPost";
 import { Announcement } from "../src/models/Announcement";
 import { FuelPrice } from "../src/models/FuelPrice";
+import { SiteSetting } from "../src/models/SiteSetting";
 import { STARTER_POSTS } from "../src/lib/blogStarter";
 import { Purchase } from "../src/models/Purchase";
 
@@ -23,7 +24,7 @@ const DAY = 86_400_000;
 
 export type Seed = {
   password: string;
-  users: { owner: string; renterA: string; renterB: string; dealer: string; lapsed: string; ultimate: string };
+  users: { owner: string; renterA: string; renterB: string; dealer: string; lapsed: string; ultimate: string; newbiz: string };
   names: { renterA: string; renterB: string };
   rentalListingId: string;
   civicId: string;
@@ -45,6 +46,10 @@ export async function seed(uri: string): Promise<Seed> {
     // Premium ended yesterday: a lapsed business can't add anything new
     { ...person("Laila Lapsed", "lapsed@e2e.test", "03001110005"), plan: "STARTER", planSource: "PAID", planExpiresAt: new Date(Date.now() - DAY) },
   ]);
+  // Has never had a business or a plan: registers one in e2e/onboarding.spec.ts
+  const newbiz = await User.create(person("Nadia Newbiz", "newbiz@e2e.test", "03001110007"));
+  // The account people pay into (Admin → Overview), so the "How to pay" cards show
+  await SiteSetting.create({ key: "payment", value: { accountTitle: "AutoGO Test Account", bankName: "Test Bank", iban: "PK00TEST0000000000000000", jazzcash: "0300 0000000" } });
 
   const photos = ["/car/body.png", "/icons/icon-512.png"];
   const base = { condition: "GOOD", status: "ACTIVE", images: photos, sellerId: owner._id, fuelType: "Petrol" };
@@ -130,7 +135,7 @@ export async function seed(uri: string): Promise<Seed> {
 
   const data: Seed = {
     password: PASSWORD,
-    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email, lapsed: lapsed.email, ultimate: ultimate.email },
+    users: { owner: owner.email, renterA: renterA.email, renterB: renterB.email, dealer: dealer.email, lapsed: lapsed.email, ultimate: ultimate.email, newbiz: newbiz.email },
     names: { renterA: renterA.name, renterB: renterB.name },
     rentalListingId: String(rentalListing._id),
     civicId: String(civics[0]._id),

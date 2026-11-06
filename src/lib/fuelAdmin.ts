@@ -3,7 +3,7 @@ import { FuelPrice } from "@/models/FuelPrice";
 import { FuelPriceUpdate, type IFuelPriceUpdate } from "@/models/FuelPriceUpdate";
 import { logAdminAction } from "@/lib/adminLog";
 import { invalidateFuel } from "@/lib/pageCache";
-import { fuelDate, parseAdminPrices, parseDay, pkDayKey } from "@/lib/fuelPrices";
+import { fuelDate, historyStart, parseAdminPrices, parseDay, pkDayKey } from "@/lib/fuelPrices";
 
 // Admin → Fuel prices: approving or rejecting a release the checker read, and entering prices by hand. Only these
 // functions create approved prices (FuelPrice); every change is logged (Admin → Activity, target type FUEL).
@@ -141,6 +141,25 @@ export async function deleteFuelDay(day: string, admin: Admin, note: unknown): P
   await logAdminAction(admin, "fuel.delete", { type: "FUEL", label: `Fuel prices w.e.f. ${fuelDate(old.date)}` },
     `Petrol ${old.petrol ?? "—"}, Diesel ${old.diesel ?? "—"} · ${reason}`);
   return { ok: true };
+}
+
+/**
+ * Removes published prices older than `days` (Pakistan days before today; FUEL_HISTORY_DAYS from the admin page).
+ * The latest published day of each fuel always stays, so the current price can't disappear. Logged with the range.
+ */
+export async function clearOldFuelPrices(admin: Admin, days: number, now = new Date()) {
+  const cutoff = parseDay(historyStart(pkDayKey(now), days))!;
+  const latest = await Promise.all((["PETROL", "DIESEL"] as const).map(fuelType =>
+    FuelPrice.findOne({ fuelType }).sort({ effectiveDate: -1 }).select("effectiveDate").lean<{ effectiveDate: Date }>()));
+  const keep = latest.filter((r): r is { effectiveDate: Date } => !!r).map(r => r.effectiveDate);
+  const filter = { effectiveDate: { $lt: cutoff, $nin: keep } };
+  const removedDays = (await FuelPrice.distinct("effectiveDate", filter)).length;
+  if (!removedDays) return 0;
+  await FuelPrice.deleteMany(filter);
+  invalidateFuel();
+  await logAdminAction(admin, "fuel.clearPrices", { type: "FUEL", label: "Fuel price history" },
+    `${removedDays} day${removedDays === 1 ? "" : "s"} before ${fuelDate(cutoff)} removed`);
+  return removedDays;
 }
 
 /**

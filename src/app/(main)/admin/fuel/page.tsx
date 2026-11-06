@@ -17,7 +17,7 @@ type Update = {
   reviewNote?: string; reviewedAt?: string; reviewedBy?: { name?: string; email?: string } | null; createdAt: string; updatedAt: string;
 };
 type Job = { lastRunAt?: string; lastSuccessAt?: string; lastError?: string; lastResult?: string };
-type Data = FuelPageData & { waiting: Update[]; reviewed: Update[]; status: { notices?: Job; oil?: Job }; config: { gemini: boolean; cron: boolean } };
+type Data = FuelPageData & { waiting: Update[]; reviewed: Update[]; status: { notices?: Job; oil?: Job }; config: { gemini: boolean; cron: boolean }; olderHistory: { days: number; keepDays: number } };
 
 const field = "w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
 const pkr = (n?: number | null) => (n == null ? "—" : `PKR ${n.toFixed(2)}`);
@@ -48,6 +48,7 @@ export default function AdminFuelPage() {
   const [editing, setEditing] = useState<{ day: string; petrol: string; diesel: string; effectiveDate: string; note: string } | null>(null);
   const [removing, setRemoving] = useState<{ day: string; note: string } | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [pruning, setPruning] = useState(false);
   const [nextRun] = useState(() => nextDailyRun());
 
   useEffect(() => {
@@ -219,12 +220,18 @@ export default function AdminFuelPage() {
 
           {/* History */}
           <div className="grid items-start gap-5 lg:grid-cols-2">
-            <Panel title="Pakistan price history" description="Approved prices, newest first">
+            <Panel title="Pakistan price history" description="The last two months of approved prices, newest first"
+              action={canWrite && data.olderHistory.days > 0 && (
+                <button type="button" onClick={() => setPruning(true)} className={`${btn.base} ${btn.secondary}`}>
+                  <Trash2 size={13} /> Remove older history
+                </button>
+              )}>
               {data.pkHistory.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-500">No approved prices yet.</p> : (
+                <div className="max-h-[520px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-xs text-slate-400"><th className="px-4 py-2 font-medium sm:px-5">Effective</th><th className="px-2 py-2 font-medium">Petrol</th><th className="px-2 py-2 font-medium">Diesel</th>{canWrite && <th className="px-4 py-2 sm:px-5"><span className="sr-only">Actions</span></th>}</tr></thead>
                   <tbody className="divide-y divide-slate-100">
-                    {[...data.pkHistory].reverse().slice(0, 20).map(d => editing?.day === d.date ? (
+                    {[...data.pkHistory].reverse().map(d => editing?.day === d.date ? (
                       <tr key={d.date}>
                         <td colSpan={4} className="px-4 py-3 sm:px-5">
                           <form onSubmit={async ev => { ev.preventDefault(); if (await call(`edit:${d.date}`, `/api/admin/fuel/day/${d.date}`, "PATCH", editing, "Saved. The public page shows the corrected prices.")) setEditing(null); }}
@@ -255,6 +262,7 @@ export default function AdminFuelPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </Panel>
             <Panel title="Recently reviewed" description="The audit trail of approvals, rejections and skipped releases"
@@ -296,6 +304,11 @@ export default function AdminFuelPage() {
         )}
         confirmLabel="Remove prices" loadingLabel="Removing…" loading={!!removing && busy === `remove:${removing.day}`}
         onConfirm={async () => { if (removing && await call(`remove:${removing.day}`, `/api/admin/fuel/day/${removing.day}`, "DELETE", { note: removing.note }, "Removed from the public page.")) setRemoving(null); }} />
+      <ConfirmDialog open={pruning} onOpenChange={setPruning} tone="danger" icon={Trash2}
+        title="Remove the older price history?"
+        description={`${data?.olderHistory.days ?? 0} published day${data?.olderHistory.days === 1 ? "" : "s"} older than ${data?.olderHistory.keepDays ?? 60} days will be deleted for good. The last two months, and today's prices, stay on the public page. The removal is kept in Activity.`}
+        confirmLabel="Remove older history" loadingLabel="Removing…" loading={busy === "prune"}
+        onConfirm={async () => { if (await call("prune", "/api/admin/fuel/history", "DELETE", undefined, "Older price history removed.")) setPruning(false); }} />
       <ConfirmDialog open={clearing} onOpenChange={setClearing} tone="danger" icon={Trash2}
         title="Clear the review history?"
         description="The approved, rejected and unchanged entries leave this list. Published prices, the price history and the public page don't change, waiting releases stay, and every approval is still in Activity."

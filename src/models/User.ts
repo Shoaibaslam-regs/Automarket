@@ -70,6 +70,8 @@ export interface IUser extends Document {
   trialPhone?: string;
   /** Last time this user opened Business → Updates; newer official posts count as unread */
   officialSeenAt?: Date;
+  /** Last time the Notifications page listed the updates of the shops they follow (src/lib/shopFollowServer.ts) */
+  shopUpdatesSeenAt?: Date;
   resetTokenHash?: string;
   resetTokenExpires?: Date;
   trialPlan?: PlanId;
@@ -127,6 +129,7 @@ const UserSchema = new Schema<IUser>(
     phoneVerifiedAt: { type: Date },
     trialPhone: { type: String, index: true, sparse: true },
     officialSeenAt: { type: Date },
+    shopUpdatesSeenAt: { type: Date },
     resetTokenHash: { type: String, index: true, sparse: true },
     resetTokenExpires: { type: Date },
     trialPlan: { type: String, enum: PLAN_IDS },

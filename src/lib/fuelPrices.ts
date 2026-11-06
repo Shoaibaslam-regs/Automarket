@@ -63,6 +63,15 @@ export function pkDayKey(d: Date): string {
   return new Date(d.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
 }
 
+/** How far back the fuel price history goes: the public chart shows this many days, and Admin → Fuel prices can
+ * remove anything older (the latest day always stays, so the current price never disappears). */
+export const FUEL_HISTORY_DAYS = 60;
+
+/** The first day ("YYYY-MM-DD") of the history ending on `lastDay`: `days` days before it. */
+export function historyStart(lastDay: string, days = FUEL_HISTORY_DAYS): string {
+  return new Date(new Date(`${lastDay}T00:00:00Z`).getTime() - days * DAY).toISOString().slice(0, 10);
+}
+
 /** A real calendar day "YYYY-MM-DD", as a Date at its start in Pakistan time, or null. */
 export function parseDay(value: unknown): Date | null {
   // A full timestamp ("2026-10-07T00:00:00Z") counts as its date

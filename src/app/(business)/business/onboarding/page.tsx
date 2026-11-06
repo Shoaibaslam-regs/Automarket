@@ -14,6 +14,7 @@ import { useSubscription } from "@/components/subscription/useSubscription";
 
 import { useFormDraft } from "@/hooks/useFormDraft";
 import DraftNote from "@/components/ui/DraftNote";
+import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
 
 export default function OnboardingPage() {
@@ -79,7 +80,9 @@ export default function OnboardingPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--gh-f6f8fa)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-      <LaunchOverlay show={launched} {...LAUNCH_TEXT.business(form.name.trim() || undefined)} onDone={() => router.push("/business/dashboard")} />
+      {/* A full load, not router.push: the console's layout was rendered here while there was no business yet, and a
+          client-side move kept that answer, so every page but the dashboard said "No business registered" */}
+      <LaunchOverlay show={launched} {...LAUNCH_TEXT.business(form.name.trim() || undefined)} onDone={() => window.location.assign("/business/dashboard")} />
 
       {/* Header */}
       <div style={{ background: "var(--gh-ffffff)", borderBottom: "1px solid var(--gh-e1e4e8)", padding: "16px 24px", display: "flex", alignItems: "center", gap: "12px" }}>
@@ -232,11 +235,13 @@ export default function OnboardingPage() {
             </div>
             <p style={{ marginTop: "16px", padding: "12px 14px", borderRadius: "10px", fontSize: "12px", lineHeight: 1.6, background: requestsPlan ? "var(--gh-fff8c5)" : "var(--gh-f6f8fa)", color: requestsPlan ? "var(--gh-7d4e00)" : "var(--gh-57606a)", border: `1px solid ${requestsPlan ? "var(--gh-e3b341)" : "var(--gh-e1e4e8)"}` }}>
               {requestsPlan
-                ? <>When you launch, we&apos;ll send your request for <strong>{chosenPlan.name}</strong> ({formatPlanPrice(chosenPlan.price)}/month) to the AutoGO team. They&apos;ll reply in Messages to arrange payment and switch it on. Your business starts on {currentPlan.name} until then.</>
+                ? <>Your business goes live as soon as you launch, and your request for <strong>{chosenPlan.name}</strong> ({formatPlanPrice(chosenPlan.price)}/month) goes to the AutoGO team. Pay now or later to the account below, then send the receipt in Messages; the team switches {chosenPlan.name} on once it&apos;s confirmed.</>
                 : chosenPlan.id === currentPlan.id
                   ? <>Your business starts on {currentPlan.name}. You can upgrade anytime from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>
                   : <>You already have {currentPlan.name}, so your business keeps it. Plans can be changed later from <Link href="/pricing" style={{ color: "var(--gh-0d1117)", fontWeight: 600 }}>Pricing</Link>.</>}
             </p>
+            {/* Where to pay, right here: they used to have to find Promote or wait for the team's reply */}
+            {requestsPlan && <PaymentDetailsCard compact className="mt-3" amount={{ label: chosenPlan.name, price: chosenPlan.price }} />}
           </div>
         )}
 

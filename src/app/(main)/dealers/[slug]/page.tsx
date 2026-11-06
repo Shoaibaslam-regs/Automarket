@@ -13,7 +13,7 @@ import { unstable_cache } from "next/cache";
 import { PUBLIC_CACHE_SECONDS, businessTag } from "@/lib/pageCache";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
-import { Building2, CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
+import { CalendarDays, Car, KeyRound, Mail, MapPin, Phone, Star, Tag } from "lucide-react";
 import { connectDB } from "@/lib/mongodb";
 import { Organization } from "@/models/Organization";
 import { Listing, type IListing } from "@/models/Listing";
@@ -24,6 +24,7 @@ import { publicStatusQuery } from "@/lib/listingFilters";
 import DealCard from "@/components/deals/DealCard";
 import { isVerified, type BadgeVerification } from "@/lib/plans";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import FollowShopButton from "@/components/business/FollowShopButton";
 import DealerVehicles from "@/components/listings/DealerVehicles";
 import StarRating from "@/components/reviews/StarRating";
 import { DealerReportButton, DealerReviews, DealerViewerProvider } from "@/components/reviews/DealerViewer";
@@ -131,67 +132,65 @@ export default async function DealerPage({ params }: Props) {
       {/* Hero */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div className="relative mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10">
-          {/* The logo beside the name, details (ending with Report) and the rating with Share, vertically centred */}
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:gap-x-5">
-            {org.logo ? (
-              <span className="flex-shrink-0 rounded-xl bg-white/20 p-[2px]">
-                <span className="relative block h-16 w-16 overflow-hidden rounded-xl bg-slate-900 sm:h-20 sm:w-20">
-                  <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
-                </span>
-              </span>
-            ) : (
-              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-white text-2xl font-bold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
-                {org.name[0]?.toUpperCase()}
-              </span>
-            )}
-
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
-                  {isVerified(org.verification) ? <NameWithTick name={org.name} /> : org.name}
-                </h1>
-                {isVerified(org.verification) ? (
-                  // Phones show the tick glued to the name (above); the pill would wrap onto a line of its own there
-                  <VerifiedBadge tone="dark" className="hidden px-2.5 py-1 sm:inline-flex" />
+          {/* Three groups with room between them: who (logo, name, type · city), standing (rating, since) and what to
+              do (Follow, Share; full width on phones, on the right from sm). One subtitle line, three weights. */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+            {/* A grid, so the rating line runs full width under the logo on phones and sits under the name from sm */}
+            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:items-start sm:gap-x-5">
+                {org.logo ? (
+                  <span className="relative block h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/15 sm:row-span-2 sm:h-20 sm:w-20">
+                    <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
+                  </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-200">
-                    <Building2 size={13} /> Business account
+                  <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-white text-2xl font-bold text-slate-950 sm:row-span-2 sm:h-20 sm:w-20 sm:text-3xl">
+                    {org.name[0]?.toUpperCase()}
                   </span>
                 )}
-              </div>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-2 text-[13px] text-slate-400 sm:text-sm">
-                <span className="flex items-center gap-1.5"><Building2 size={14} /> {TYPE_LABEL[org.type]}</span>
-                {org.city && <><span aria-hidden className="hidden text-slate-600 sm:inline">·</span><span className="flex items-center gap-1.5"><MapPin size={14} /> {org.city}</span></>}
-                <span aria-hidden className="hidden text-slate-600 sm:inline">·</span>
-                <span className="flex items-center gap-1.5"><CalendarDays size={14} /> On AutoGO since {since}</span>
-                <span className="sm:ml-1"><DealerReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} tone="dark" /></span>
-              </p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-7 gap-y-2">
-                <a href="#reviews" className="inline-flex items-center gap-2 text-sm transition hover:text-white">
+                <div className="min-w-0">
+                  <h1 className="break-words text-[26px] font-bold leading-[1.15] tracking-tight sm:text-3xl">
+                    {isVerified(org.verification) ? <NameWithTick name={org.name} /> : org.name}
+                  </h1>
+                  <p className="mt-1.5 text-sm text-slate-400">
+                    {TYPE_LABEL[org.type]}{org.city ? <><span aria-hidden className="mx-1.5 text-slate-600">·</span>{org.city}</> : null}
+                  </p>
+                </div>
+
+              <div className="col-span-2 mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-400 sm:col-span-1 sm:col-start-2 sm:mt-3">
+                <a href="#reviews" className="inline-flex items-center gap-2 transition hover:text-white">
                   <StarRating value={average} size={14} />
-                  <span className="font-semibold">{count ? average.toFixed(1) : "New"}</span>
-                  <span className="text-slate-400 underline-offset-2 hover:underline">{count} review{count !== 1 ? "s" : ""}</span>
+                  <span className="font-semibold text-white">{count ? average.toFixed(1) : "New"}</span>
+                  <span className="underline-offset-2 hover:underline">{count} review{count !== 1 ? "s" : ""}</span>
                 </a>
-                <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name}
-                  className="!px-0 !py-0 !ring-0 hover:!bg-transparent hover:text-white" />
+                <span className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> On AutoGO since {since}</span>
+                {isVerified(org.verification) && <VerifiedBadge tone="dark" className="hidden px-2.5 py-1 sm:inline-flex" />}
               </div>
             </div>
 
+            <div className="flex flex-shrink-0 items-center gap-2.5">
+              <FollowShopButton slug={org.slug} name={org.name} className="flex-1 sm:flex-none" />
+              <ShareButton variant="dark" path={`/dealers/${org.slug}`} title={org.name} menuAlign="right"
+                className="min-h-10 !rounded-lg !px-4 !text-sm !text-white !ring-white/20" />
+            </div>
           </div>
 
-          {/* What the shop has, as one strip with dividers */}
-          <dl className="mt-7 grid max-w-lg grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-inset ring-white/10">
-            {[
-              { label: "For sale", value: forSale, icon: Car },
-              { label: "For rent", value: forRent, icon: KeyRound },
-              { label: "Live deals", value: deals.length, icon: Tag },
-            ].map(s => (
-              <div key={s.label} className="px-3 py-3 sm:px-4">
-                <dt className="flex items-center gap-1.5 text-[11px] text-slate-400"><s.icon size={12} /> {s.label}</dt>
-                <dd className="mt-0.5 text-xl font-bold tabular-nums">{s.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/* What the shop has, as one strip with dividers; Report sits quietly at the end of the hero */}
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <dl className="grid w-full max-w-lg grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-xl bg-white/[0.04] ring-1 ring-inset ring-white/10">
+              {[
+                { label: "For sale", value: forSale, icon: Car },
+                { label: "For rent", value: forRent, icon: KeyRound },
+                { label: "Live deals", value: deals.length, icon: Tag },
+              ].map(s => (
+                <div key={s.label} className="px-4 py-3.5">
+                  <dt className="flex items-center gap-1.5 text-xs text-slate-400"><s.icon size={13} /> {s.label}</dt>
+                  <dd className="mt-1 text-xl font-semibold tabular-nums">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+            <span className="self-start sm:self-auto">
+              <DealerReportButton targetType="BUSINESS" targetId={String(org._id)} label={org.name} tone="dark" />
+            </span>
+          </div>
         </div>
       </section>
 

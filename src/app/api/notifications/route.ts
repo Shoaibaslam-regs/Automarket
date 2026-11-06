@@ -12,6 +12,7 @@ import { Purchase } from "@/models/Purchase";
 import { User } from "@/models/User";
 import { Organization } from "@/models/Organization";
 import { Announcement, PUBLISHED_POSTS } from "@/models/Announcement";
+import { markShopUpdatesSeen, shopUpdatesFor } from "@/lib/shopFollowServer";
 import { can, getMembership } from "@/lib/business";
 import { getOrgDealIds } from "@/lib/dealBookings";
 import { CANCEL_REASON_TEXT, bookingNumber, cancelReasonOf } from "@/lib/bookings";
@@ -146,6 +147,12 @@ export async function GET() {
         });
       }
     }
+
+    // New deals, announcements and vehicles from the shops they follow (src/lib/shopFollowServer.ts); listing them
+    // here counts as seen, so the bell drops them and the next post is new again
+    const shopItems = await shopUpdatesFor(session.user.id);
+    items.push(...shopItems);
+    if (shopItems.length) await markShopUpdatesSeen(session.user.id);
 
     items.sort((a, b) => b.at.localeCompare(a.at));
     return NextResponse.json({ items });

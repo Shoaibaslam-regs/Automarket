@@ -3,7 +3,7 @@
 import PriceChart from "@/components/fuel/PriceChart";
 import type { FuelPageData } from "@/lib/publicFuel";
 
-/** The fuel page's chart (PriceChart): Pakistan's approved petrol and diesel prices, with series tabs and 7D–1Y ranges. */
+/** The fuel page's chart (PriceChart): Pakistan's approved petrol and diesel prices, with series tabs and 7D, 30D and 2M ranges. */
 export default function FuelCharts({ pkHistory }: Pick<FuelPageData, "pkHistory">) {
   const pk = (k: "petrol" | "diesel") => pkHistory.flatMap(d => (d[k] == null ? [] : [{ date: d.date, value: d[k]! }]));
   return (

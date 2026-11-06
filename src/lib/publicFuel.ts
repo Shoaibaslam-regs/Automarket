@@ -4,7 +4,7 @@ import { FuelPrice } from "@/models/FuelPrice";
 import { FuelPriceUpdate } from "@/models/FuelPriceUpdate";
 import { getFuelStatus } from "@/lib/fuelJobs";
 import { FUEL_TAG } from "@/lib/pageCache";
-import { pkDayKey, priceChange, type FuelType } from "@/lib/fuelPrices";
+import { FUEL_HISTORY_DAYS, historyStart, parseDay, pkDayKey, priceChange, type FuelType } from "@/lib/fuelPrices";
 
 // What the fuel pages show, read from MongoDB only (never from the outside sources while someone waits): approved
 // Pakistani prices. Public reads are cached for everyone (FUEL_TAG, cleared by invalidateFuel on every approval,
@@ -19,7 +19,7 @@ export type FuelNews = PkDay & { previousPetrol: number | null; previousDiesel: 
 
 export type FuelPageData = {
   pk: Partial<Record<FuelType, PkPrice>>;
-  /** Approved days, oldest first, for the chart */
+  /** Approved days of the last FUEL_HISTORY_DAYS (2 months), oldest first, for the chart */
   pkHistory: PkDay[];
   /** The latest approved changes, newest first */
   news: FuelNews[];
@@ -58,7 +58,8 @@ async function load(): Promise<FuelPageData> {
     ...d, previousPetrol: newestFirst[i + 1]?.petrol ?? null, previousDiesel: newestFirst[i + 1]?.diesel ?? null,
   }));
 
-  return { pk, pkHistory: newestFirst.slice(0, 370).reverse(), news };
+  const since = newestFirst[0] ? historyStart(newestFirst[0].date) : "";
+  return { pk, pkHistory: newestFirst.filter(d => d.date >= since).reverse(), news };
 }
 
 /** When the team last checked the Pakistani prices shown (the newer of the two approvals), for "Updated …". */
@@ -75,14 +76,18 @@ export function getFuelPageData(): Promise<FuelPageData> {
 /** Admin → Fuel prices: the public data (read live), waiting and recent reviews, and the jobs' status. */
 export async function getFuelAdminData() {
   await connectDB();
-  const [data, waiting, reviewed, status] = await Promise.all([
+  const cutoff = parseDay(historyStart(pkDayKey(new Date())))!;
+  const [data, waiting, reviewed, status, olderDays] = await Promise.all([
     load(),
     FuelPriceUpdate.find({ status: { $in: ["PENDING", "FAILED"] } }).sort({ listedDay: -1, createdAt: -1 }).limit(30).lean(),
     FuelPriceUpdate.find({ status: { $in: ["APPROVED", "REJECTED", "SKIPPED"] }, hiddenFromTrail: { $ne: true } }).sort({ updatedAt: -1 }).limit(20).populate("reviewedBy", "name email").lean(),
     getFuelStatus(),
+    FuelPrice.distinct("effectiveDate", { effectiveDate: { $lt: cutoff } }),
   ]);
   return JSON.parse(JSON.stringify({
     ...data, waiting, reviewed, status,
+    // Published days older than FUEL_HISTORY_DAYS, which "Remove older history" would delete (the latest day is kept)
+    olderHistory: { days: olderDays.length, keepDays: FUEL_HISTORY_DAYS },
     config: { gemini: !!process.env.GEMINI_API_KEY, cron: !!process.env.CRON_SECRET },
   }));
 }

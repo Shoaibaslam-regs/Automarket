@@ -36,6 +36,7 @@ const SECTIONS: Section[] = [
         <li><strong>Listings and deals:</strong> vehicle details, photos, price, city and the address where the vehicle can be seen.</li>
         <li><strong>Bookings and purchases:</strong> dates, prices, payments recorded by the owner or business, and the details needed at handover: your CNIC number, the vehicle&apos;s number plate, odometer and condition photos. A CNIC number is optional when you ask to buy from a business.</li>
         <li><strong>Messages, reviews and reports</strong> that you send through AutoGO.</li>
+        <li><strong>Shops you follow:</strong> which business pages you follow and whether you muted them. A business sees only how many people follow it, never who.</li>
         <li><strong>Business information</strong> if you run a business account: business name, logo, address, staff, customers, sales and cash book entries.</li>
         <li><strong>Technical information:</strong> your IP address (used to stop abuse such as repeated sign-in attempts) and, if you turn on phone notifications, a device address used to deliver them.</li>
         <li><strong>Stored in your browser:</strong> your sign-in cookie and small preferences such as the light or dark theme, a draft listing, recently viewed vehicles and the grid or list view. These stay on your device.</li>
@@ -98,7 +99,7 @@ const SECTIONS: Section[] = [
     body: (
       <ul>
         <li>Change your name, phone and picture in <Link href="/profile">Profile &amp; settings</Link>.</li>
-        <li>Turn off saved-search emails in <Link href="/saved">Saved</Link>, and phone notifications on <Link href="/notifications">Notifications</Link> or in your phone&apos;s settings.</li>
+        <li>Turn off saved-search emails, and mute or unfollow shops, in <Link href="/saved">Saved</Link>, and phone notifications on <Link href="/notifications">Notifications</Link> or in your phone&apos;s settings.</li>
         <li>Delete your account at any time from <Link href="/profile">Profile &amp; settings</Link>.</li>
         <li>Clear the preferences stored in your browser through your browser settings.</li>
       </ul>

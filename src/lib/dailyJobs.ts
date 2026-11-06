@@ -14,6 +14,7 @@ import { pkDay, pkRange } from "@/lib/money";
 import { digestText, type DigestCounts as Counts } from "@/lib/today";
 import { reportError } from "@/lib/errorLog";
 import { syncPlanBadge } from "@/lib/planBadgeSync";
+import { sendShopVehicleDigest } from "@/lib/shopFollowServer";
 import { planFor } from "@/lib/plans";
 import { runFuelJobs } from "@/lib/fuelJobs";
 import { requestExpiryCutoff } from "@/lib/bookings";
@@ -165,6 +166,13 @@ export async function runDailyJobs(now = new Date()) {
   } catch (e) {
     reportError("Daily job plan badges failed:", e);
     result.planBadges = "failed";
+  }
+  try {
+    // The morning summary of new vehicles from the shops people follow (src/lib/shopFollowServer.ts)
+    result.shopVehicleDigest = await sendShopVehicleDigest(now);
+  } catch (e) {
+    reportError("Daily job shop vehicle digest failed:", e);
+    result.shopVehicleDigest = "failed";
   }
   try {
     // Official Pakistani prices (OGRA, src/lib/fuelJobs.ts; /api/cron/fuel runs it more often)

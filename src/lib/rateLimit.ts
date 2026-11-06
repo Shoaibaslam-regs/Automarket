@@ -64,6 +64,8 @@ export const RATE_LIMITS = {
   clientErrors: { limit: 20, windowSec: 60 * 60 },
   /** Send feedback (topic FEEDBACK), per user: two delivered a month. Counted after sending, so a failed send doesn't use one up */
   feedback: { limit: 2, windowSec: 30 * 24 * 60 * 60 },
+  // Follow, unfollow, mute and unmute of shops (per account): enough for real use, not for inflating a count
+  follows: { limit: 60, windowSec: 60 * 60 },
   /** Sponsored ad views and taps (POST /api/sponsored/track), per IP: generous, since one page shows several ads */
   adTrack: { limit: 300, windowSec: 60 * 60 },
   /** Admin System usage "Refresh" (reads the database's size and calls UploadThing), per admin */

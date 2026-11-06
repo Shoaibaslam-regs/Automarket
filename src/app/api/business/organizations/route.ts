@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ShopFollow } from "@/models/ShopFollow";
+import { followerCounts } from "@/lib/shopFollowServer";
 import { syncPlanBadge } from "@/lib/planBadgeSync";
 import { FollowUp } from "@/models/FollowUp";
 import { LedgerEntry } from "@/models/LedgerEntry";
@@ -54,7 +56,9 @@ export async function GET() {
     // The caller's role lets the settings page show only what they may change
     const member = await getMembership(session.user.id);
     // verified: the console shows the Verified tick beside the business name
-    return NextResponse.json({ organization: { ...org, plan: sub.planId, verified: isVerified(org.verification) }, myRole: member?.role ?? null });
+    // followers: people following the shop page (src/lib/shopFollowServer.ts), shown in the sidebar
+    const followers = await followerCounts(org._id as never);
+    return NextResponse.json({ organization: { ...org, plan: sub.planId, verified: isVerified(org.verification), followers }, myRole: member?.role ?? null });
   } catch (error) {
     reportError("Get org error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
@@ -178,6 +182,7 @@ export async function DELETE(req: NextRequest) {
     await Deal.deleteMany({ organizationId: org._id });
     await Purchase.deleteMany({ organizationId: org._id });
     await BusinessReview.deleteMany({ organizationId: org._id });
+    await ShopFollow.deleteMany({ organizationId: org._id });
     await Promise.all([FollowUp, LedgerEntry, BusinessLog, Ad].map(M => (M as typeof FollowUp).deleteMany({ organizationId: org._id })));
     await User.updateMany(
       { organizationId: org._id },

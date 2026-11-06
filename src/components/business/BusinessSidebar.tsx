@@ -33,6 +33,8 @@ type Organization = {
   slug?: string;
   logo?: string;
   verified?: boolean;
+  /** People following the shop page */
+  followers?: { total: number; thisMonth: number };
 };
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -315,7 +317,7 @@ function SidebarContent({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate">View public page</span>
-                <span className="block truncate text-[10px] text-indigo-600/80">How customers see you</span>
+                <span className="block truncate text-[11px] text-indigo-600/80">{org?.followers?.total ? `${org.followers.total.toLocaleString("en-PK")} follower${org.followers.total === 1 ? "" : "s"}${org.followers.thisMonth ? ` · +${org.followers.thisMonth} this month` : ""}` : "How customers see you"}</span>
               </span>
               <ExternalLink size={13} className="flex-shrink-0 text-indigo-500/80 transition group-hover:text-indigo-700" />
             </a>

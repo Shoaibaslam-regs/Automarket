@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
@@ -10,6 +10,7 @@ import { rateLimitResponse } from "@/lib/rateLimit";
 import { invalidateBusinessSlug } from "@/lib/pageCache";
 import { MAX_SHOP_NOTICES, SHOP_NOTICE_KIND, parseShopNotice, type ShopNoticeKind } from "@/lib/shopNotices";
 import { reportError } from "@/lib/errorLog";
+import { notifyShopFollowers } from "@/lib/shopFollowServer";
 
 type Oid = mongoose.Types.ObjectId;
 
@@ -61,7 +62,12 @@ export async function POST(req: NextRequest) {
 
     const notice = await ShopNotice.create({ ...parsed.data, organizationId: member.organizationId, createdBy: session.user.id });
     const org = await Organization.findById(member.organizationId).select("slug").lean<{ slug: string }>();
-    if (org) invalidateBusinessSlug(org.slug);
+    if (org) {
+      invalidateBusinessSlug(org.slug);
+      // The shop's followers hear about it, and a tap opens the shop page where it sits at the top
+      const orgId = member.organizationId;
+      after(() => notifyShopFollowers(orgId, "notice", { title: notice.title, url: `/dealers/${org.slug}`, body: notice.body?.slice(0, 120) }));
+    }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "notice.post",
       { type: "BUSINESS", id: notice._id, label: notice.title }, { details: SHOP_NOTICE_KIND[notice.kind as ShopNoticeKind].label });
     return NextResponse.json({ notice }, { status: 201 });

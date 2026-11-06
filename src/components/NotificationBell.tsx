@@ -8,7 +8,7 @@ import { CountBadge } from "@/components/NotificationBadge";
 /** Total of everything the menu badges count, so the bell and the badges always agree. */
 export function useNotificationTotal() {
   const c = useNotificationCounts();
-  return c.messages + c.bookings + c.purchases + c.sales + c.updates;
+  return c.messages + c.bookings + c.purchases + c.sales + c.updates + c.shops;
 }
 
 /** Bell that opens /notifications, with the number of things waiting. `tone="dark"` for the business console bar. */

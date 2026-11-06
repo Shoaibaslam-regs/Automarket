@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { PlanBanner } from "@/components/business/PlanReminder";
+import PlanRequestNote from "@/components/business/PlanRequestNote";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, Car, ClipboardList, KeyRound, User, Users, Wallet } from "lucide-react";
@@ -223,6 +224,7 @@ export default function BusinessDashboard() {
 
           <div className="biz-dash-body" style={{ padding: "24px" }}>
             <PlanBanner />
+            <PlanRequestNote />
             <OfficialDashboardCard />
             <TodayCard />
             {/* Main stats */}

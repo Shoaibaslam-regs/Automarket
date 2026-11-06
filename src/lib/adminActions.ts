@@ -38,6 +38,7 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   "fuel.delete": "Removed published fuel prices",
   "fuel.check": "Checked fuel prices now",
   "fuel.clearHistory": "Cleared the fuel review history",
+  "fuel.clearPrices": "Removed old fuel price history",
   "activity.clear": "Deleted activity history",
   "ad.approve": "Approved sponsored ad",
   "ad.reject": "Refused sponsored ad",

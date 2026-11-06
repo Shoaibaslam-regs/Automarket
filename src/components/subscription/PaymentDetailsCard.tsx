@@ -30,17 +30,23 @@ function CopyValue({ value }: { value: string }) {
  * "How to pay": the AutoGO bank account and wallet numbers an admin set on the admin Overview.
  * Shows nothing until they are set. Used on the pricing page, the upgrade dialog, Business → Promote and support.
  */
-export default function PaymentDetailsCard({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+/** `amount` adds what to pay ("Premium: PKR 499 for 30 days") above the account, where someone just picked a plan. */
+export default function PaymentDetailsCard({ className = "", compact = false, amount }: { className?: string; compact?: boolean; amount?: { label: string; price: number } }) {
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   useEffect(() => { loadDetails().then(setDetails); }, []);
   if (!details) return null;
 
   const rows = PAYMENT_FIELDS.filter(f => f.key !== "note" && details[f.key]);
   return (
-    <section className={`rounded-2xl border border-slate-200/80 bg-white ${compact ? "p-4" : "p-5 sm:p-6"} ${className}`}>
+    <section className={`rounded-xl border border-slate-200/80 bg-white ${compact ? "p-4" : "p-5 sm:p-6"} ${className}`}>
       <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
         <Landmark size={16} className="text-indigo-600" /> How to pay
       </p>
+      {amount && (
+        <p className="mt-2 text-sm text-slate-700">
+          {amount.label}: <strong className="font-semibold tabular-nums text-slate-900">PKR {amount.price.toLocaleString("en-PK")}</strong> for 30 days
+        </p>
+      )}
       <p className="mt-1 text-xs leading-relaxed text-slate-500">
         Send the payment to this account, then send the team the transaction ID so they can switch it on.
       </p>

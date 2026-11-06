@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import SignInLink from "@/components/auth/SignInLink";
 import Link from "next/link";
-import { BadgeDollarSign, Bell, CalendarCheck, CalendarPlus, ChevronRight, Crown, Megaphone, MessageCircle, ShoppingBag, type LucideIcon } from "lucide-react";
+import { BadgeDollarSign, Bell, CalendarCheck, CalendarPlus, ChevronRight, Crown, Megaphone, MessageCircle, ShoppingBag, Store, type LucideIcon } from "lucide-react";
 import { refreshNotificationCounts } from "@/hooks/useNotificationCounts";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 import PushCard from "@/components/pwa/PushCard";
@@ -17,6 +17,7 @@ const ICON: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   saleRequest: { icon: BadgeDollarSign, tone: "text-amber-700" },
   official: { icon: Megaphone, tone: "text-indigo-600" },
   plan: { icon: Crown, tone: "text-amber-600" },
+  shop: { icon: Store, tone: "text-slate-700" },
 };
 
 function ago(iso: string) {

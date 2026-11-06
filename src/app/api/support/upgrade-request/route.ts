@@ -3,9 +3,11 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Message } from "@/models/Message";
 import { User } from "@/models/User";
-import { getSupportAdmin, notifyAdminsOfSupport, triggerPusher } from "@/lib/support";
+import { getSupportAdmin, notifyAdminsOfSupport, sendChatMessage, triggerPusher } from "@/lib/support";
 import { isPlanId, PLANS } from "@/lib/plans";
-import { upgradeRequestText } from "@/lib/supportContact";
+import { paymentInstructionsText, upgradeRequestText } from "@/lib/supportContact";
+import { getPaymentDetails } from "@/lib/paymentSettings";
+import { TeamRequest } from "@/models/TeamRequest";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 import { getMembership } from "@/lib/business";
@@ -56,11 +58,43 @@ export async function POST(req: NextRequest) {
       const adminId = admin._id.toString();
       await triggerPusher(`chat-${[session.user.id, adminId].sort().join("-")}`, "new-message", populated);
       await notifyAdminsOfSupport(session.user.name, content, session.user.id);
+      // AutoGO Support answers at once with the amount and where to pay (Admin → Overview's payment details), so
+      // they are on record in the chat; the team still checks the receipt and activates the plan. Without saved
+      // payment details nothing is sent and the team replies as before.
+      const details = await getPaymentDetails().catch(() => null);
+      if (details) await sendChatMessage(adminId, session.user.id, paymentInstructionsText(PLANS[plan].name, PLANS[plan].price, details), "AutoGO Support");
     }
 
     return NextResponse.json({ supportUserId: admin._id.toString() }, { status: recent ? 200 : 201 });
   } catch (error) {
     reportError("Upgrade request error:", error);
     return NextResponse.json({ error: "Failed to send your request" }, { status: 500 });
+  }
+}
+
+/**
+ * The plan request still waiting for the team, for the person's own account or their business (a business runs on
+ * its owner's plan): `{ pending: { plan, planName, price, requestedAt } | null, supportUserId }`. The dashboard shows
+ * it with the payment details until an admin activates the plan or refuses the request.
+ */
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await connectDB();
+    const member = await getMembership(session.user.id);
+    const query = member ? { kind: "PLAN", status: "WAITING", organizationId: member.organizationId } : { kind: "PLAN", status: "WAITING", userId: session.user.id };
+    const [request, admin] = await Promise.all([
+      TeamRequest.findOne(query).sort({ createdAt: -1 }).select("plan price createdAt").lean<{ plan?: string; price: number; createdAt: Date }>(),
+      getSupportAdmin(),
+    ]);
+    const plan = request?.plan && isPlanId(request.plan) ? request.plan : null;
+    return NextResponse.json({
+      pending: request && plan ? { plan, planName: PLANS[plan].name, price: request.price, requestedAt: request.createdAt } : null,
+      supportUserId: admin._id.toString(),
+    }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    reportError("Upgrade request GET error:", error);
+    return NextResponse.json({ pending: null }, { status: 500 });
   }
 }

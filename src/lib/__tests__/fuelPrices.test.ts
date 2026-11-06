@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   autoPublishHold, checkNotice, findNoticeFile, ograUrl, parseAdminPrices, parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl,
-  priceChange,
+  priceChange, historyStart, FUEL_HISTORY_DAYS,
 } from "@/lib/fuelPrices";
 
 const now = new Date("2026-10-09T06:00:00Z");
@@ -145,5 +145,13 @@ describe("autoPublishHold", () => {
     expect(autoPublishHold({ petrol: 362, diesel: 387.81 }, { petrol: 369.06, diesel: null })).toMatch(/No earlier/);
     expect(autoPublishHold({ petrol: 402, diesel: 387.81 }, before)).toMatch(/Petrol moved 8\.9%/);
     expect(autoPublishHold({ petrol: 362, diesel: 350 }, before)).toMatch(/Diesel moved/);
+  });
+});
+
+describe("historyStart", () => {
+  it("goes back two months from the last day", () => {
+    expect(FUEL_HISTORY_DAYS).toBe(60);
+    expect(historyStart("2026-11-05")).toBe("2026-09-06");
+    expect(historyStart("2026-03-01", 7)).toBe("2026-02-22");
   });
 });

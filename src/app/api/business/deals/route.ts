@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
@@ -9,6 +9,7 @@ import { invalidateDeal } from "@/lib/pageCache";
 import { reserveListingSlot } from "@/lib/subscription";
 import { logBusinessAction } from "@/lib/businessLog";
 import { reportError } from "@/lib/errorLog";
+import { notifyShopFollowers } from "@/lib/shopFollowServer";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,13 @@ export async function POST(req: NextRequest) {
       throw e;
     }
     await invalidateDeal(deal._id, member.organizationId);
+    // The shop's followers hear about a deal that is live now (a scheduled one isn't announced; it would point to
+    // a deal they can't open yet)
+    const nowMs = Date.now();
+    if (!deal.paused && new Date(deal.startsAt).getTime() <= nowMs && new Date(deal.endsAt).getTime() > nowMs) {
+      const orgId = member.organizationId;
+      after(() => notifyShopFollowers(orgId, "deal", { title: deal.title, url: `/deals/${deal._id}` }));
+    }
     await logBusinessAction({ userId: session.user.id, organizationId: member.organizationId }, "deal.create",
       { type: "DEAL", id: deal._id, label: deal.title });
     return NextResponse.json({ deal }, { status: 201 });

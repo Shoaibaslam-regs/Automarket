@@ -37,13 +37,15 @@ const MENU_POSITION: Record<Variant, string> = {
  * WhatsApp, Facebook and Copy link. The link carries the page's preview card (opengraph-image), so it shows the
  * photo, title and price wherever it is pasted.
  */
-export default function ShareButton({ path, title, label = "Share", variant = "pill", className = "" }: {
+export default function ShareButton({ path, title, label = "Share", variant = "pill", className = "", menuAlign }: {
   /** The page to share, e.g. "/listings/123" */
   path: string;
   title: string;
   label?: string;
   variant?: Variant;
   className?: string;
+  /** "right" opens the menu leftwards from the button's right edge, for a button at the right of the screen */
+  menuAlign?: "right";
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -109,7 +111,7 @@ export default function ShareButton({ path, title, label = "Share", variant = "p
         {variant !== "pill" && <> {label}</>}
       </button>
       {open && (
-        <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200 ${MENU_POSITION[variant]}`}>
+        <div role="menu" className={`absolute z-30 w-52 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200 ${menuAlign === "right" ? "right-0 top-full mt-2" : MENU_POSITION[variant]}`}>
           <a role="menuitem" href={`https://wa.me/?text=${encodeURIComponent(`${text}: ${url()}`)}`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={item}>
             <WhatsAppIcon size={16} className="text-emerald-600" /> WhatsApp
           </a>

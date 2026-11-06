@@ -11,6 +11,8 @@ import ListingCard from "@/components/listings/ListingCard";
 import SavedSearchList, { type SavedSearchView } from "@/components/listings/SavedSearchList";
 import type { IListing } from "@/models/Listing";
 import { CARD_SELLER_POPULATE } from "@/lib/cardSeller";
+import { followedShops } from "@/lib/shopFollowServer";
+import FollowedShopsList from "@/components/business/FollowedShopsList";
 
 export const metadata: Metadata = { title: "Saved", robots: { index: false } };
 
@@ -20,11 +22,12 @@ export default async function SavedPage() {
   const session = await requireAuth();
   await connectDB();
 
-  const [favorites, searches] = await Promise.all([
+  const [favorites, searches, shops] = await Promise.all([
     Favorite.find({ userId: session.user.id }).sort({ createdAt: -1 }).lean<{ listingId: unknown }[]>(),
     SavedSearch.find({ userId: session.user.id }).sort({ createdAt: -1 }).lean<
       { _id: unknown; name: string; filters: Record<string, unknown>; emailAlerts: boolean; createdAt: Date }[]
     >(),
+    followedShops(session.user.id),
   ]);
 
   // Keep the order the user saved them in; listings deleted since are dropped
@@ -50,6 +53,14 @@ export default async function SavedPage() {
           <h2 className="mb-1 text-base font-bold text-slate-900">Saved searches</h2>
           <p className="mb-4 text-sm text-slate-500">We&apos;ll email you when new vehicles match a search with alerts on.</p>
           <SavedSearchList initial={savedSearches} />
+        </section>
+
+        <section id="shops" className="mt-10 scroll-mt-20">
+          <h2 className="mb-1 text-base font-bold text-slate-900">
+            Shops you follow {shops.length > 0 && <span className="font-medium text-slate-400">({shops.length})</span>}
+          </h2>
+          <p className="mb-4 text-sm text-slate-500">Their new deals and announcements reach you, and new vehicles in a morning summary. Mute a shop to keep it here without notifications.</p>
+          <FollowedShopsList initial={shops} />
         </section>
 
         <section className="mt-10">

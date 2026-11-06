@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ShopFollow } from "@/models/ShopFollow";
 import { UTApi } from "uploadthing/server";
 import { User } from "@/models/User";
 import { Listing } from "@/models/Listing";
@@ -112,6 +113,7 @@ export async function deleteAccount(userId: string): Promise<void> {
     Favorite.deleteMany({ $or: [{ userId: id }, { listingId: { $in: listingIds } }] }),
     Rental.deleteMany({ _id: { $in: rentalIds } }),
     SavedSearch.deleteMany({ userId: id }),
+    ShopFollow.deleteMany({ userId: id }),
     PushSubscription.deleteMany({ userId: id }),
     Message.deleteMany({ $or: [{ senderId: id }, { receiverId: id }] }),
     Customer.updateMany({ userId: id }, { $unset: { userId: "" } }),

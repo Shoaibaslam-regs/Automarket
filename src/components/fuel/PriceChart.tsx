@@ -11,8 +11,8 @@ export type ChartSeries = { key: string; label: string; points: { date: string; 
 const RANGES = [
   { key: "7D", days: 7 },
   { key: "30D", days: 30 },
-  { key: "90D", days: 90 },
-  { key: "1Y", days: 365 },
+  // The page keeps two months of history (FUEL_HISTORY_DAYS)
+  { key: "2M", days: 60 },
 ] as const;
 type RangeKey = (typeof RANGES)[number]["key"];
 
@@ -22,7 +22,7 @@ const shortDay = (d: string) => new Date(`${d}T00:00:00+05:00`).toLocaleDateStri
 /**
  * A crypto-style price chart: one series at a time (tabs), a big price that follows the finger or mouse along the
  * line (the latest price otherwise) with the change over the chosen range, a solid indigo line with a faint fade
- * under it, a dashed crosshair, prices on the right and 7D / 30D / 90D / 1Y.
+ * under it, a dashed crosshair, prices on the right and 7D / 30D / 2M.
  */
 export default function PriceChart({ title, subtitle, series, prefix, unit, riseIsBad = false }: {
   title: string;

@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FuelPrice } from "@/models/FuelPrice";
 import { FuelPriceUpdate } from "@/models/FuelPriceUpdate";
 import { checkFuelNotices } from "@/lib/fuelJobs";
+import mongoose from "mongoose";
 import { parseDay } from "@/lib/fuelPrices";
+import { clearOldFuelPrices } from "@/lib/fuelAdmin";
+import { AdminLog } from "@/models/AdminLog";
 
 // The OGRA price check (src/lib/fuelJobs.ts) with OGRA's site replaced by saved copies of its 4 and 5 Nov 2026
 // publications: normal days go live by themselves, odd ones wait for an admin, and nothing is read twice.
@@ -69,5 +72,28 @@ describe("OGRA price check", () => {
     await approve("2026-11-03", 374.51, 395.2);
     expect(await checkFuelNotices(now)).toMatchObject({ pending: 2 });
     expect(await FuelPrice.countDocuments({ autoPublished: true })).toBe(0);
+  });
+});
+
+describe("Removing old price history", () => {
+  const admin = { _id: new mongoose.Types.ObjectId(), email: "admin@e2e.test" };
+
+  it("deletes days older than two months, keeps the rest, and logs it", async () => {
+    await approve("2026-08-01", 300, 310);
+    await approve("2026-09-05", 320, 330);
+    await approve("2026-09-06", 321, 331);
+    await approve("2026-11-04", 369.06, 390);
+    expect(await clearOldFuelPrices(admin, 60, now)).toBe(2);
+    const left = (await FuelPrice.distinct("effectiveDate")).map(d => new Date(d).toISOString()).sort();
+    expect(left).toEqual([parseDay("2026-09-06")!.toISOString(), parseDay("2026-11-04")!.toISOString()]);
+    expect(await AdminLog.countDocuments({ action: "fuel.clearPrices" })).toBe(1);
+    expect(await clearOldFuelPrices(admin, 60, now)).toBe(0);
+  });
+
+  it("never removes the latest published day, however old", async () => {
+    await approve("2026-07-01", 300, 310);
+    await approve("2026-07-02", 301, 311);
+    expect(await clearOldFuelPrices(admin, 60, now)).toBe(1);
+    expect(await price("2026-07-02", "PETROL")).toMatchObject({ price: 301 });
   });
 });

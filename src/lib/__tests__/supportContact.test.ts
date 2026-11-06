@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { badgeRequestText, upgradeRequestText } from "@/lib/supportContact";
+import { badgeRequestText, paymentInstructionsText, upgradeRequestText } from "@/lib/supportContact";
 
 const user = { id: "6ae1cb05c845093aa5366abc", email: "owner@shop.pk", business: { id: "6ae1cb05c845093aa53def12", name: "Lahore Motors" } };
 
@@ -20,5 +20,17 @@ describe("support request texts", () => {
     expect(text).not.toContain("Business");
     expect(text).toContain("My ID is #366abc");
     expect(badgeRequestText("Lahore Motors", 500, { id: user.id })).toContain('Business: "Lahore Motors"');
+  });
+});
+
+describe("paymentInstructionsText", () => {
+  it("names the plan and amount and lists only the filled-in payment fields", () => {
+    const text = paymentInstructionsText("Premium", 499, { accountTitle: "AutoGO Pvt Ltd", bankName: "Meezan Bank", iban: " PK36MEZN0000000000000000 ", jazzcash: "", note: "Use your Business ID as the reference" });
+    expect(text).toContain("pay PKR 499 for 30 days");
+    expect(text).toContain("Thanks for choosing Premium");
+    expect(text).toContain("IBAN: PK36MEZN0000000000000000");
+    expect(text).not.toContain("JazzCash");
+    expect(text).toContain("Use your Business ID as the reference");
+    expect(text.split("\n").at(-1)).toMatch(/send the payment receipt/);
   });
 });

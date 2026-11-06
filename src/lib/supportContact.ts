@@ -30,3 +30,21 @@ export function badgeRequestText(businessName: string, price: number, user?: Req
 export function whatsappLink(text: string): string | null {
   return SUPPORT_WHATSAPP ? `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(text)}` : null;
 }
+
+/**
+ * AutoGO Support's automatic reply to a plan request: the amount and where to pay (the account set in Admin →
+ * Overview, `PaymentDetails`), so the details are on record in the chat and the team doesn't have to type them.
+ * Only the fields that are filled in are listed.
+ */
+export function paymentInstructionsText(planName: string, price: number, details: Partial<Record<"accountTitle" | "bankName" | "iban" | "accountNumber" | "jazzcash" | "easypaisa" | "note", string>>) {
+  const lines = [
+    ["Account title", details.accountTitle], ["Bank", details.bankName], ["IBAN", details.iban], ["Account number", details.accountNumber],
+    ["JazzCash", details.jazzcash], ["EasyPaisa", details.easypaisa],
+  ].filter(([, v]) => v && v.trim()).map(([k, v]) => `${k}: ${v!.trim()}`);
+  return [
+    `Thanks for choosing ${planName}. To switch it on, please pay PKR ${price.toLocaleString("en-PK")} for 30 days to:`,
+    ...lines,
+    ...(details.note?.trim() ? [details.note.trim()] : []),
+    "Then send the payment receipt or transaction ID here, and we'll activate your plan.",
+  ].join("\n");
+}
