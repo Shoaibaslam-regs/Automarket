@@ -119,7 +119,7 @@ export default function SearchSuggest({ value, onChange, onPick, smart = false, 
         className={inputClassName}
       />
       {showList && (
-        <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1.5 text-left shadow-2xl">
+        <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1.5 text-left shadow-2xl">
           {understood && (
             <li id={`${listId}-smart`} role="option" aria-selected={smartActive}
               onPointerDown={e => { e.preventDefault(); pickSmart(); }} onMouseEnter={() => setActive(0)}

@@ -83,19 +83,19 @@ export default function BusinessReviewsPage() {
 
       <div className="px-4 py-5 sm:px-6">
         <div className="mb-5 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+          <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
             <p className="text-[11px] text-[var(--gh-8c959f)]">Average rating</p>
-            <p className="mt-1 flex items-center gap-2 text-xl font-extrabold text-[var(--gh-0d1117)]">
+            <p className="mt-1 flex items-center gap-2 text-xl font-bold text-[var(--gh-0d1117)]">
               {summary.count ? summary.average.toFixed(1) : "—"} <Star size={16} className="text-amber-400" fill="currentColor" />
             </p>
           </div>
-          <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+          <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
             <p className="text-[11px] text-[var(--gh-8c959f)]">Reviews</p>
-            <p className="mt-1 text-xl font-extrabold text-[var(--gh-0d1117)]">{summary.count}</p>
+            <p className="mt-1 text-xl font-bold text-[var(--gh-0d1117)]">{summary.count}</p>
           </div>
-          <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+          <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
             <p className="text-[11px] text-[var(--gh-8c959f)]">Awaiting reply</p>
-            <p className={`mt-1 text-xl font-extrabold ${unanswered ? "text-[var(--gh-bf8700)]" : "text-[var(--gh-1a7f37)]"}`}>{unanswered}</p>
+            <p className={`mt-1 text-xl font-bold ${unanswered ? "text-[var(--gh-bf8700)]" : "text-[var(--gh-1a7f37)]"}`}>{unanswered}</p>
           </div>
         </div>
 
@@ -111,7 +111,7 @@ export default function BusinessReviewsPage() {
         {error && <div role="alert" className="mb-4 rounded-xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] px-4 py-3 text-[13px] text-[var(--gh-cf222e)]">{error}</div>}
 
         {loading ? (
-          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 animate-pulse rounded-2xl bg-white" />)}</div>
+          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 animate-pulse rounded-xl bg-white" />)}</div>
         ) : shown.length === 0 ? (
           <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
             <div className="mb-3 flex justify-center text-[var(--gh-8c959f)]"><MessageSquareText size={30} strokeWidth={1.5} /></div>

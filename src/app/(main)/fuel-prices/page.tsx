@@ -40,7 +40,7 @@ function PkCard({ type, p, today }: { type: "PETROL" | "DIESEL"; p?: PkPrice; to
       <p className="text-[13px] font-semibold text-slate-500">{FUEL_LABEL[type].name}</p>
       {p ? (
         <>
-          <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-tight text-slate-900">
+          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900">
             <span className="mr-1 text-base font-semibold text-slate-400">PKR</span>{p.price.toFixed(2)}<span className="ml-1 text-sm font-medium text-slate-400">/ litre</span>
           </p>
           <p className="mt-2 text-sm"><Change diff={p.diff} pct={p.pct} unit="PKR" /></p>
@@ -76,10 +76,10 @@ export default async function FuelPricesPage() {
           <Link href="/blog" className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10 hover:bg-white/10">
             <Newspaper size={13} /> AutoGO Blog
           </Link>
-          <h1 className="mt-4 flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices</h1>
+          <h1 className="mt-4 flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices</h1>
           <p className="mt-1.5"><UpdatedTag dark at={latestCheck(data)} /></p>
           <p className="mt-2 max-w-[640px] text-sm leading-relaxed text-slate-400">
-            Pakistan&apos;s official petrol and diesel prices, checked by the AutoGO team against each OGRA price publication.
+            Pakistan&apos;s official petrol and diesel prices, taken from OGRA&apos;s daily price publications.
           </p>
         </div>
       </section>
@@ -109,7 +109,7 @@ export default async function FuelPricesPage() {
               {data.news.length === 0 ? (
                 <p className="rounded-2xl bg-white px-5 py-8 text-center text-sm text-slate-500 ring-1 ring-inset ring-slate-200">No verified price changes yet.</p>
               ) : (
-                <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-inset ring-slate-200/80">
+                <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl bg-white ring-1 ring-inset ring-slate-200/80">
                   {data.news.map(n => (
                     <li key={n.date} className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:gap-6 sm:px-5">
                       <div className="min-w-0 sm:w-44">
@@ -137,13 +137,13 @@ export default async function FuelPricesPage() {
               )}
             </section>
 
-            <p className="flex gap-2 rounded-2xl bg-white p-4 text-xs leading-relaxed text-slate-500 ring-1 ring-inset ring-slate-200/80">
+            <p className="flex gap-2 rounded-xl bg-white p-4 text-xs leading-relaxed text-slate-500 ring-1 ring-inset ring-slate-200/80">
               <Info size={15} className="mt-0.5 flex-shrink-0 text-slate-400" />
               <span>
                 Pakistani prices are taken from OGRA&apos;s daily price publications at{" "}
                 <a href="https://ogra.org.pk/index.php/price-publications" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">ogra.org.pk</a>{" "}
                 (the Petroleum Division&apos;s releases when OGRA can&apos;t be reached){" "}
-                and published only after the AutoGO team checks them. Pump prices can differ slightly by city and company.
+                and updated daily; unusual changes are checked by the AutoGO team before they appear. Pump prices can differ slightly by city and company.
               </span>
             </p>
           </>

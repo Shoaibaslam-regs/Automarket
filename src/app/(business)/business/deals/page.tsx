@@ -133,7 +133,7 @@ export default function BusinessDealsPage() {
         )}
 
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map(i => <div key={i} className="h-80 animate-pulse rounded-2xl bg-white" />)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map(i => <div key={i} className="h-80 animate-pulse rounded-xl bg-white" />)}</div>
         ) : deals.length === 0 ? (
           <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
             <div className="mb-3 flex justify-center text-rose-500"><Tag size={30} strokeWidth={1.5} /></div>
@@ -155,14 +155,14 @@ export default function BusinessDealsPage() {
               const state = stateOf(d);
               const st = DEAL_STATE_STYLE[state];
               return (
-                <div key={d._id} className="flex flex-col overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white">
+                <div key={d._id} className="flex flex-col overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
                   <div className="relative aspect-[16/10] bg-[var(--gh-f6f8fa)]">
                     {d.images[0] ? (
                       <Image src={d.images[0]} alt={d.title} fill sizes="(max-width: 640px) 100vw, 380px" className={`object-cover ${state === "LIVE" || state === "SCHEDULED" ? "" : "opacity-60 grayscale"}`} />
                     ) : (
                       <span className="flex h-full items-center justify-center text-[var(--gh-8c959f)]"><ImageOff size={26} /></span>
                     )}
-                    <span className="theme-static absolute left-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white">{dealLabel(d)}</span>
+                    <span className="theme-static absolute left-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase text-white">{dealLabel(d)}</span>
                     <span className="absolute right-2 top-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                   </div>
                   <div className="flex flex-1 flex-col p-4">
@@ -176,7 +176,7 @@ export default function BusinessDealsPage() {
                       {d.title} <ExternalLink size={12} className="inline align-baseline text-[var(--gh-8c959f)]" />
                     </Link>
                     <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(dealPrice(d.price, d))}{d.dealType === "RENT" && <span className="text-xs font-semibold">/day</span>}</span>
+                      <span className="text-lg font-bold text-rose-600">PKR {formatLakh(dealPrice(d.price, d))}{d.dealType === "RENT" && <span className="text-xs font-semibold">/day</span>}</span>
                       <span className="text-xs text-[var(--gh-8c959f)] line-through">{formatLakh(d.price)}</span>
                     </p>
                     <p className="mt-1.5 flex min-w-0 items-center gap-1 text-xs text-[var(--gh-57606a)]">

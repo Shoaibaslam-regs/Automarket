@@ -290,8 +290,7 @@ export default function SellPage() {
             <span className="mx-auto flex items-center justify-center text-emerald-600">
               <CheckCircle2 size={28} strokeWidth={2} />
             </span>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Published</p>
-            <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Your listing is live</h1>
+            <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Your listing is live</h1>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
               Buyers{published.type !== "SALE" && " and renters"} can now find your vehicle on AutoGO.
               {published.type !== "SALE" && " Booking requests will show up in your Bookings."}
@@ -299,7 +298,7 @@ export default function SellPage() {
           </div>
 
           {/* Summary of what was published */}
-          <div className="mt-7 rounded-[22px] bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80">
+          <div className="mt-7 rounded-xl bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80">
             <div className="flex gap-3 p-1.5 sm:gap-4">
               <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-24 sm:w-32">
                 {form.images[0] ? (
@@ -324,7 +323,7 @@ export default function SellPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-1.5 flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2.5">
+            <div className="mt-1.5 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
               <span className="min-w-0 flex-1 truncate text-xs text-slate-500">{listingUrl}</span>
               <button type="button" onClick={copyLink}
                 className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300">
@@ -351,7 +350,7 @@ export default function SellPage() {
 
           <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
             <Link href={`${listingUrl}/inspect`}
-              className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
+              className="group flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
               <span className="flex flex-shrink-0 items-center justify-center text-indigo-600"><Sparkles size={16} strokeWidth={1.75} /></span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold text-slate-900">Run AI inspection</span>
@@ -359,7 +358,7 @@ export default function SellPage() {
               </span>
             </Link>
             <Link href="/dashboard"
-              className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
+              className="group flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 transition hover:border-slate-300">
               <span className="flex flex-shrink-0 items-center justify-center text-slate-700"><LayoutDashboard size={16} strokeWidth={1.75} /></span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold text-slate-900">Go to dashboard</span>
@@ -377,8 +376,7 @@ export default function SellPage() {
       {/* Header */}
       <section className="border-b border-slate-200/80 bg-white">
         <div className="mx-auto max-w-[1120px] px-4 pb-6 pt-7 sm:px-6 sm:pb-8 sm:pt-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Sell or rent</p>
-          <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">List your vehicle</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">List your vehicle</h1>
           <p className="mt-1.5 text-sm text-slate-500">A few details and your listing is live on AutoGO.</p>
           {sub && (
             <p className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full bg-slate-50 px-3 py-1.5 text-xs text-slate-600 ring-1 ring-inset ring-slate-200">
@@ -459,7 +457,7 @@ export default function SellPage() {
         <div className={`grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] ${listingsFull ? "hidden" : ""}`}>
           <form ref={formRef} onSubmit={handleSubmit} className="min-w-0">
             {draftOffer && (
-              <div role="status" className="mb-4 flex flex-col gap-3 rounded-2xl bg-indigo-50 p-4 ring-1 ring-inset ring-indigo-200 sm:flex-row sm:items-center">
+              <div role="status" className="mb-4 flex flex-col gap-3 rounded-xl bg-indigo-50 p-4 ring-1 ring-inset ring-indigo-200 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-indigo-900">You have an unfinished listing</p>
                   <p className="truncate text-xs text-indigo-700">
@@ -472,7 +470,7 @@ export default function SellPage() {
                 </div>
               </div>
             )}
-            <div className="rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
                 <span className="flex flex-shrink-0 items-center justify-center text-slate-700">
                   {(() => { const Icon = STEPS[step - 1].icon; return <Icon size={17} strokeWidth={1.75} />; })()}
@@ -514,7 +512,7 @@ export default function SellPage() {
                               role="radio"
                               aria-checked={selected}
                               onClick={() => setField("type", value)}
-                              className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left transition min-[480px]:flex-col min-[480px]:items-start min-[480px]:gap-2.5 ${
+                              className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition min-[480px]:flex-col min-[480px]:items-start min-[480px]:gap-2.5 ${
                                 selected
                                   ? "border-slate-900 bg-slate-900 text-white shadow-sm"
                                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
@@ -691,8 +689,8 @@ export default function SellPage() {
           {/* Live preview */}
           <aside className="hidden lg:sticky lg:top-24 lg:block">
             <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Live preview</p>
-            <div className="rounded-[22px] bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
+            <div className="rounded-xl bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100">
                 {form.images[0] ? (
                   <Image src={form.images[0]} alt="Main photo" fill sizes="320px" className="object-cover" />
                 ) : (

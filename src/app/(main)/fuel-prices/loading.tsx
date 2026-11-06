@@ -22,7 +22,7 @@ export default function FuelPricesLoading() {
       </DarkHero>
       <div className="mx-auto max-w-[1180px] space-y-8 px-4 py-8 sm:py-10">
         <div className="grid gap-4 sm:grid-cols-2">{[0, 1].map(card)}</div>
-        <Skeleton className="h-72 w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
       </div>
     </SkeletonPage>
   );

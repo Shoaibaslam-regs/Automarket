@@ -158,7 +158,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                      active ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
+                      active ? "bg-white text-slate-900 shadow-sm shadow-black/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                     }`}
                   >
                     <Icon size={17} strokeWidth={1.9} className={active ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"} />

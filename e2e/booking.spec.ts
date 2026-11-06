@@ -26,11 +26,11 @@ test.describe.serial("two renters ask for the same dates", () => {
     const page = await signedIn(browser, users.owner);
     await page.goto("/bookings");
     await page.getByRole("button", { name: /Received requests/ }).click();
-    const card = page.locator("div.overflow-hidden.rounded-2xl").filter({ hasText: names.renterA });
+    const card = page.locator("div.overflow-hidden.rounded-xl").filter({ hasText: names.renterA });
     await card.getByRole("button", { name: "Confirm", exact: true }).click();
     await expect(card.getByText("Confirmed", { exact: true })).toBeVisible();
     // The other request for those days was closed by the confirmation
-    const other = page.locator("div.overflow-hidden.rounded-2xl").filter({ hasText: names.renterB });
+    const other = page.locator("div.overflow-hidden.rounded-xl").filter({ hasText: names.renterB });
     await expect(other.getByText("Cancelled", { exact: true })).toBeVisible();
   });
 

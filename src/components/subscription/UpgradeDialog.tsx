@@ -15,7 +15,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
     <Dialog.Root open={plan !== null} onOpenChange={o => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 max-h-[calc(100dvh-32px)] overflow-y-auto rounded-3xl bg-white shadow-2xl shadow-slate-950/30 focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 max-h-[calc(100dvh-32px)] overflow-y-auto rounded-2xl bg-white shadow-2xl shadow-black/30 focus:outline-none">
           {plan && (
             <>
               <div className="relative overflow-hidden bg-slate-950 px-6 pb-6 pt-7 text-white">
@@ -32,7 +32,7 @@ export default function UpgradeDialog({ plan, onClose }: { plan: Plan | null; on
               </div>
 
               <div className="space-y-4 px-6 py-6">
-                <div className="flex gap-3 rounded-2xl bg-amber-50 p-4 ring-1 ring-inset ring-amber-200">
+                <div className="flex gap-3 rounded-xl bg-amber-50 p-4 ring-1 ring-inset ring-amber-200">
                   <Clock3 size={18} className="mt-0.5 flex-shrink-0 text-amber-600" />
                   <div>
                     <p className="text-sm font-semibold text-amber-900">Online payments are coming soon</p>

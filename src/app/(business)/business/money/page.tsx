@@ -267,7 +267,7 @@ export default function MoneyPage() {
                 ].map(s => (
                   <div key={s.label} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-3">
                     <p className="flex items-center gap-1 text-[11px] text-[var(--gh-8c959f)]">{s.label} {s.label === "Opening balance" && <Tip id="openingBalance" size={11} />}</p>
-                    <p className="mt-1 text-[15px] font-extrabold tabular-nums" style={{ color: s.c }}>{pkr(s.v)}</p>
+                    <p className="mt-1 text-[15px] font-bold tabular-nums" style={{ color: s.c }}>{pkr(s.v)}</p>
                   </div>
                 ))}
               </div>
@@ -295,7 +295,7 @@ export default function MoneyPage() {
               {tab === "expenses" && data.entries.length > 0 && (
                 <div className="mb-3 rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-3">
                   <p className="text-[11px] text-[var(--gh-8c959f)]">Spent in {monthLabel(month)}</p>
-                  <p className="text-lg font-extrabold tabular-nums text-[var(--gh-cf222e)]">{pkr(data.totals.out)}</p>
+                  <p className="text-lg font-bold tabular-nums text-[var(--gh-cf222e)]">{pkr(data.totals.out)}</p>
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                     {byCategory.map(([c, v]) => (
                       <span key={c} className="text-[11px] text-[var(--gh-57606a)]">{MONEY_LABEL[c] ?? c} · <strong className="text-[var(--gh-0d1117)]">PKR {formatLakh(v)}</strong></span>
@@ -335,7 +335,7 @@ export default function MoneyPage() {
                 {[["Earned", profit.totals.income, "var(--gh-1a7f37)"], ["Spent", profit.totals.costs, "var(--gh-cf222e)"], ["Profit", profit.totals.profit, profit.totals.profit < 0 ? "var(--gh-cf222e)" : "var(--gh-0d1117)"]].map(([l, v, c]) => (
                   <div key={l as string} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-3">
                     <p className="text-[11px] text-[var(--gh-8c959f)]">{l}</p>
-                    <p className="mt-1 text-[15px] font-extrabold tabular-nums" style={{ color: c as string }}>{(v as number) < 0 ? "−" : ""}PKR {formatLakh(Math.abs(v as number))}</p>
+                    <p className="mt-1 text-[15px] font-bold tabular-nums" style={{ color: c as string }}>{(v as number) < 0 ? "−" : ""}PKR {formatLakh(Math.abs(v as number))}</p>
                   </div>
                 ))}
               </div>
@@ -348,7 +348,7 @@ export default function MoneyPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="truncate text-[13px] font-bold text-[var(--gh-0d1117)]">{v.title}</p>
-                        <p className={`flex-shrink-0 text-[14px] font-extrabold tabular-nums ${v.profit < 0 ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-1a7f37)]"}`}>{v.profit < 0 ? "−" : "+"}PKR {formatLakh(Math.abs(v.profit))}</p>
+                        <p className={`flex-shrink-0 text-[14px] font-bold tabular-nums ${v.profit < 0 ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-1a7f37)]"}`}>{v.profit < 0 ? "−" : "+"}PKR {formatLakh(Math.abs(v.profit))}</p>
                       </div>
                       <p className="mt-1 text-[11px] leading-relaxed text-[var(--gh-57606a)]">
                         {v.purchase > 0 && <>Bought {pkr(v.purchase)} · </>}

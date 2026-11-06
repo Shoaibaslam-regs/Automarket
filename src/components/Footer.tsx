@@ -77,7 +77,7 @@ export default function Footer() {
 
         {/* Popular cars and bikes by origin: one dropdown per group (plain <details>, no script) */}
         <div className="mb-5 border-t border-gray-200 pt-4">
-          <p className="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-900 md:text-left">Popular cars &amp; bikes</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-900">Popular cars &amp; bikes</p>
           <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-5">
             {POPULAR_CARS.map(group => (
               <details key={group.title} className="group border-b border-gray-100 lg:border-0">
@@ -97,11 +97,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mb-5 border-t border-gray-200 pt-4 text-center md:text-left">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-900">Popular searches</p>
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:justify-start">
+        {/* Phones: a two-column list with room to tap; from md the links flow in one wrapping row */}
+        <div className="mb-5 border-t border-gray-200 pt-4">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-gray-900">Popular searches</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[13px] md:flex md:flex-wrap md:gap-x-5 md:gap-y-2 md:text-xs">
             {POPULAR.map(p => (
-              <Link key={seoPath(p)} href={seoPath(p)} className="text-gray-500 transition hover:text-gray-900">{seoHeading(p)}</Link>
+              <Link key={seoPath(p)} href={seoPath(p)} className="min-w-0 leading-snug text-gray-500 transition hover:text-gray-900">{seoHeading(p)}</Link>
             ))}
           </div>
         </div>

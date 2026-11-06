@@ -20,11 +20,11 @@ export default function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-16">
       <div className="w-full max-w-xl text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Error 404 · Wrong turn</p>
+        <p className="text-sm font-medium text-slate-500">Error 404 · Wrong turn</p>
 
         {/* The 404 shudders when the car hits the rock (crash-shudder) */}
         <div className="crash-shudder mt-6">
-          <p aria-hidden className="select-none text-indigo-600 text-[110px] font-black leading-none tracking-tighter text-transparent sm:text-[160px]">
+          <p aria-hidden className="select-none text-indigo-600 text-[110px] font-bold leading-none tracking-tighter text-transparent sm:text-[160px]">
             404
           </p>
         </div>

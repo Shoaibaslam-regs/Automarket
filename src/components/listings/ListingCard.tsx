@@ -91,7 +91,7 @@ function ClosedStamp({ status }: { status: string }) {
   return (
     <div className="theme-static pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-slate-950/45 backdrop-grayscale">
       <span
-        className={`-rotate-12 rounded-lg border-2 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] shadow-lg sm:text-base ${
+        className={`-rotate-12 rounded-lg border-2 px-3 py-1 text-sm font-bold uppercase tracking-[0.18em] shadow-lg sm:text-base ${
           tag.tone === "sold" ? "border-rose-200 bg-rose-600/90 text-white" : "border-sky-200 bg-sky-600/90 text-white"
         }`}
       >
@@ -133,15 +133,15 @@ export default function ListingCard({ listing, layout = "grid", eager, compact, 
     <div className="group relative h-full">
       <Link
         href={`/listings/${id}`}
-        className="block h-full rounded-2xl sm:rounded-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+        className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
       >
         <article
-          className={`flex h-full flex-col rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:rounded-[22px] sm:p-2
+          className={`flex h-full flex-col rounded-xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:p-2
             group-hover:shadow-md
             ring-slate-200/80 group-hover:ring-slate-300`}
         >
           {/* Image tile */}
-          <div className={`relative ${short ? "aspect-[16/10]" : phoneShort ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"} overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl`}>
+          <div className={`relative ${short ? "aspect-[16/10]" : phoneShort ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"} overflow-hidden rounded-lg bg-slate-100 `}>
             {listing.images?.[0] ? (
               <>
               {/* The faded AutoGO mark shows while the photo downloads; the photo covers it once it arrives */}
@@ -270,12 +270,12 @@ function ListingRow({ listing, eager, pinned }: Pick<Props, "listing" | "eager" 
   // without being nested inside an <a>; the photo link is hidden from keyboard and screen readers
   return (
     <article
-      className={`group relative flex gap-3 rounded-2xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:gap-5 sm:rounded-[22px] sm:p-2
+      className={`group relative flex gap-3 rounded-xl bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 transition duration-300 ease-out sm:gap-5 sm:p-2
         hover:shadow-md
         ring-slate-200/80 hover:ring-slate-300`}
     >
       <div className="relative w-[42%] max-w-[340px] flex-shrink-0 self-start sm:w-[260px] md:w-[300px] lg:w-[320px]">
-        <Link href={href} tabIndex={-1} aria-hidden="true" className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl">
+        <Link href={href} tabIndex={-1} aria-hidden="true" className="relative block aspect-[4/3] overflow-hidden rounded-lg bg-slate-100 ">
           {listing.images?.[0] ? (
             <>
             <PhotoSkeleton className="absolute inset-0" />

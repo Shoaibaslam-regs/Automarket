@@ -131,7 +131,7 @@ export default function PromotePage() {
         <PaymentDetailsCard />
 
         {!data ? (
-          !error && <div className="h-64 animate-pulse rounded-2xl bg-white" />
+          !error && <div className="h-64 animate-pulse rounded-xl bg-white" />
         ) : (
           <>
             {data.canPromote ? (

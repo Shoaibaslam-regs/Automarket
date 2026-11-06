@@ -61,7 +61,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="min-w-[140px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-lg shadow-slate-900/10">
+    <div className="min-w-[140px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-lg shadow-black/10">
       <p className="mb-1.5 text-[11px] font-medium text-slate-500">{label}</p>
       {payload.map(p => (
         <div key={String(p.dataKey)} className="flex items-center justify-between gap-4 py-0.5">
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
           </>
         ) : (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[124px] animate-pulse rounded-2xl border border-slate-200/80 bg-white" />
+            <div key={i} className="h-[124px] animate-pulse rounded-xl border border-slate-200/80 bg-white" />
           ))
         )}
       </div>

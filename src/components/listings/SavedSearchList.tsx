@@ -36,7 +36,7 @@ export default function SavedSearchList({ initial }: { initial: SavedSearchView[
 
   if (searches.length === 0) {
     return (
-      <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
         <div className="mx-auto mb-3 flex items-center justify-center text-slate-400">
           <Bell size={22} strokeWidth={1.75} />
         </div>
@@ -56,7 +56,7 @@ export default function SavedSearchList({ initial }: { initial: SavedSearchView[
     <div className="space-y-2.5">
       {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
       {searches.map(s => (
-        <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 pl-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div key={s.id} className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 pl-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <Search size={16} className="flex-shrink-0 text-slate-400" />
           <Link href={`/listings?${s.query}`} className="group min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-900 group-hover:underline">{s.name}</p>

@@ -32,7 +32,7 @@ export default function PlanCards({
         return (
           <div
             key={plan.id}
-            className={`relative flex flex-col rounded-[26px] p-[1.5px] transition duration-300 hover:-translate-y-1 ${
+            className={`relative flex flex-col rounded-xl p-[1.5px] transition duration-300 hover:-translate-y-1 ${
               dark
                 ? "bg-indigo-600"
                 : premium
@@ -50,10 +50,10 @@ export default function PlanCards({
               </span>
             )}
 
-            <div className={`flex h-full flex-col rounded-[24.5px] p-6 ${dark ? "bg-slate-950 text-white" : "bg-white text-slate-900"}`}>
+            <div className={`flex h-full flex-col rounded-2xl p-6 ${dark ? "bg-slate-950 text-white" : "bg-white text-slate-900"}`}>
               <div className="flex items-center justify-between">
                 <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
                     dark
                       ? "bg-white/10 text-indigo-200 ring-1 ring-inset ring-white/15"
                       : premium
@@ -75,12 +75,12 @@ export default function PlanCards({
 
               <div className="mt-5 flex items-baseline gap-1.5">
                 <span className={`text-sm font-semibold ${dark ? "text-slate-400" : "text-slate-500"}`}>PKR</span>
-                <span className="text-4xl font-extrabold tracking-tight tabular-nums">{plan.price.toLocaleString()}</span>
+                <span className="text-4xl font-bold tracking-tight tabular-nums">{plan.price.toLocaleString()}</span>
                 <span className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{plan.price === 0 ? "forever" : "/ 30 days"}</span>
               </div>
 
               {/* Limits */}
-              <div className={`mt-5 grid grid-cols-3 gap-2 rounded-2xl p-3 ${dark ? "bg-white/5 ring-1 ring-inset ring-white/10" : "bg-slate-50 ring-1 ring-inset ring-slate-200/70"}`}>
+              <div className={`mt-5 grid grid-cols-3 gap-2 rounded-xl p-3 ${dark ? "bg-white/5 ring-1 ring-inset ring-white/10" : "bg-slate-50 ring-1 ring-inset ring-slate-200/70"}`}>
                 {([
                   ["listings", "Listings", Car],
                   ["staff", "Team", Users],

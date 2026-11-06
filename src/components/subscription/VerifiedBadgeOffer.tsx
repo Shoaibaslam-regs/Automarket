@@ -131,7 +131,7 @@ export default function VerifiedBadgeOffer() {
   }
 
   return (
-    <section className="mt-12 overflow-hidden rounded-[26px] bg-white ring-1 ring-slate-200/80 shadow-sm">
+    <section className="mt-12 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80 shadow-sm">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +155,7 @@ export default function VerifiedBadgeOffer() {
           </p>
           <div className="mt-4 flex items-baseline gap-1.5">
             <span className="text-sm font-semibold text-slate-500">PKR</span>
-            <span className="text-4xl font-extrabold tracking-tight tabular-nums text-slate-900">{VERIFIED_BADGE.price.toLocaleString()}</span>
+            <span className="text-4xl font-bold tracking-tight tabular-nums text-slate-900">{VERIFIED_BADGE.price.toLocaleString()}</span>
             <span className="text-sm text-slate-500">/ month</span>
           </div>
           <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">

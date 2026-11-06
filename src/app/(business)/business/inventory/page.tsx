@@ -216,7 +216,7 @@ export default function InventoryPage() {
 
         {loading ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3.5">
-            {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-[240px] animate-pulse rounded-2xl bg-white" />)}
+            {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-[240px] animate-pulse rounded-xl bg-white" />)}
           </div>
         ) : loadError ? (
           <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)]">{loadError}</div>
@@ -229,7 +229,7 @@ export default function InventoryPage() {
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
             {filtered.map(v => (
-              <div key={v._id} className="flex flex-col overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white transition hover:shadow-md">
+              <div key={v._id} className="flex flex-col overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white transition hover:shadow-md">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gh-f6f8fa)]">
                   {v.images?.[0] ? (
                     <Image src={v.images[0]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
@@ -247,7 +247,7 @@ export default function InventoryPage() {
                     {v.make} {v.model} · {v.year}{v.mileage != null && ` · ${v.mileage.toLocaleString()} km`}
                   </p>
                   <div className="mb-2.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-extrabold text-[var(--gh-0d1117)]">PKR {v.price.toLocaleString()}</span>
+                    <span className="truncate text-sm font-bold text-[var(--gh-0d1117)]">PKR {v.price.toLocaleString()}</span>
                     <span className="flex-shrink-0 text-[10px] text-[var(--gh-8c959f)]">{v.condition}</span>
                   </div>
                   {!v.canManage && v.sellerId?.name && (
@@ -270,7 +270,7 @@ export default function InventoryPage() {
             ))}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white">
+          <div className="overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
             {filtered.map((v, i) => (
               <div key={v._id} className={`flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 ${i < filtered.length - 1 ? "border-b border-[var(--gh-f0f2f4)]" : ""}`}>
                 <div className="relative h-11 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--gh-f6f8fa)] sm:w-16">

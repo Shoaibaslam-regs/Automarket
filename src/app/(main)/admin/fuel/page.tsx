@@ -12,7 +12,8 @@ type Update = {
   extractedPetrolPrice?: number; extractedDieselPrice?: number; previousPetrolPrice?: number; previousDieselPrice?: number;
   approvedPetrolPrice?: number; approvedDieselPrice?: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "FAILED" | "SKIPPED"; method: "AUTO" | "MANUAL";
-  extractionDetails?: { warnings?: string[]; error?: string };
+  extractionDetails?: { warnings?: string[]; error?: string; held?: string };
+  autoPublished?: boolean;
   reviewNote?: string; reviewedAt?: string; reviewedBy?: { name?: string; email?: string } | null; createdAt: string; updatedAt: string;
 };
 type Job = { lastRunAt?: string; lastSuccessAt?: string; lastError?: string; lastResult?: string };
@@ -82,7 +83,7 @@ export default function AdminFuelPage() {
     setBusy(null);
     if (!res?.ok) { setError(d?.error || "The check failed"); return; }
     if (d.skipped) { setNotice(d.skipped); return; }
-    const n = d.notices?.error ? `Notices: ${d.notices.error}` : `Notices: ${d.notices?.pending ?? 0} new, ${d.notices?.failed ?? 0} couldn't be read, ${d.notices?.skipped ?? 0} unchanged`;
+    const n = d.notices?.error ? `Notices: ${d.notices.error}` : `Prices: ${d.notices?.published ? `${d.notices.published} published automatically, ` : ""}${d.notices?.pending ?? 0} waiting for review, ${d.notices?.failed ?? 0} couldn't be read, ${d.notices?.skipped ?? 0} unchanged`;
     setNotice(`${n}.`);
     setReload(x => x + 1);
   }
@@ -100,7 +101,7 @@ export default function AdminFuelPage() {
       {error && <p role="alert" className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>}
       {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">{notice}</p>}
 
-      {!data ? <div className="h-64 animate-pulse rounded-2xl bg-white" /> : (
+      {!data ? <div className="h-64 animate-pulse rounded-xl bg-white" /> : (
         <div className="space-y-5">
           {/* Automation status */}
           <Panel title="Automation" description="The daily cron runs the check; /api/cron/fuel can run it more often from an outside scheduler">
@@ -151,7 +152,7 @@ export default function AdminFuelPage() {
           </div>
 
           {/* Waiting for review */}
-          <Panel title={`Waiting for review (${data.waiting.length})`} description="Check each against its official publication before approving. You can correct the numbers.">
+          <Panel title={`Waiting for review (${data.waiting.length})`} description="OGRA days go live by themselves; these were held (a warning, a big jump, the first price) or came from the fallback source. Check each against its official publication. You can correct the numbers.">
             {data.waiting.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-500">Nothing waiting.</p> : (
               <ul className="divide-y divide-slate-100">
                 {data.waiting.map(u => {
@@ -167,6 +168,7 @@ export default function AdminFuelPage() {
                         {u.fileUrl && u.fileUrl !== u.notificationUrl && <a href={u.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline">Release image <ExternalLink size={11} /></a>}
                       </div>
                       {u.extractionDetails?.error && <p className="text-[13px] text-rose-600">{u.extractionDetails.error}</p>}
+                      {u.extractionDetails?.held && <p className="flex gap-1.5 text-[13px] text-amber-700"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /> Held for review: {u.extractionDetails.held}</p>}
                       {u.extractionDetails?.warnings?.map(w => <p key={w} className="flex gap-1.5 text-[13px] text-amber-700"><AlertTriangle size={14} className="mt-0.5 flex-shrink-0" /> {w}</p>)}
                       {canWrite && (
                         <div className="grid gap-2 sm:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.5fr)]">
@@ -266,7 +268,7 @@ export default function AdminFuelPage() {
                   {data.reviewed.map(u => (
                     <li key={u._id} className="px-4 py-3 text-[13px] sm:px-5">
                       <p className="flex flex-wrap items-center gap-2">
-                        <Badge tone={u.status === "APPROVED" ? "green" : u.status === "REJECTED" ? "red" : "neutral"}>{u.status === "SKIPPED" ? "Unchanged" : u.status === "APPROVED" ? (u.method === "MANUAL" ? "Entered" : "Approved") : "Rejected"}</Badge>
+                        <Badge tone={u.status === "APPROVED" ? "green" : u.status === "REJECTED" ? "red" : "neutral"}>{u.status === "SKIPPED" ? "Unchanged" : u.status === "APPROVED" ? (u.method === "MANUAL" ? "Entered" : u.autoPublished ? "Published automatically" : "Approved") : "Rejected"}</Badge>
                         {u.effectiveDate && <span className="text-slate-600">w.e.f. {fuelDate(u.effectiveDate)}</span>}
                         <span className="tabular-nums text-slate-900">Petrol {(u.approvedPetrolPrice ?? u.extractedPetrolPrice)?.toFixed(2) ?? "—"} · Diesel {(u.approvedDieselPrice ?? u.extractedDieselPrice)?.toFixed(2) ?? "—"}</span>
                       </p>

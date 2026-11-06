@@ -6,7 +6,6 @@ import {
   MessageCircle,
   ScanSearch,
   Search,
-  Sparkles,
 } from "lucide-react";
 import { connectDB } from "@/lib/mongodb";
 import { Listing, IListing } from "@/models/Listing";
@@ -112,7 +111,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
 
         <div className="relative mx-auto max-w-[1180px] px-4 pb-10 pt-10 text-center sm:pb-14 sm:pt-16">
-          <h1 className="mx-auto max-w-3xl text-[2rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto max-w-3xl text-[2rem] font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
             Buy, sell &amp; rent vehicles you want
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-400 sm:text-lg">
@@ -135,7 +134,7 @@ export default async function HomePage() {
                 </label>
               ))}
             </div>
-            <div className="flex items-center gap-2 rounded-2xl rounded-tl-none bg-white p-2 pl-4 shadow-2xl">
+            <div className="flex items-center gap-2 rounded-xl rounded-tl-none bg-white p-2 pl-4 shadow-2xl">
               <Search size={19} className="flex-shrink-0 text-slate-400" />
               <HomeSearchInput />
               <button
@@ -249,14 +248,10 @@ export default async function HomePage() {
         </section>
 
         {/* ── CTA ── */}
-        <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-10 sm:px-12 sm:py-14">
+        <section className="relative overflow-hidden rounded-2xl bg-slate-950 px-6 py-10 sm:px-12 sm:py-14">
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-lg">
-              <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
-                <Sparkles size={14} />
-                Sell faster
-              </p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                 Ready to sell your vehicle?
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-400 sm:text-base">

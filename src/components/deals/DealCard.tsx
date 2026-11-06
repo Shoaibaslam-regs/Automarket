@@ -26,7 +26,7 @@ function endsShort(endsAt: string, now: number): string {
 }
 
 /** Small label over the photo: tiny and light on phones, a little bolder from `sm` up. */
-const PHOTO_TAG = "theme-static absolute inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[9px] font-medium text-white backdrop-blur sm:gap-1 sm:px-2 sm:py-0.5 sm:text-[10px] sm:font-semibold";
+const PHOTO_TAG = "theme-static absolute inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-medium text-white backdrop-blur sm:gap-1 sm:px-2 sm:py-0.5 sm:text-[10px] sm:font-semibold";
 
 /** "20% off", or an amount kept short ("1.5 lakh off") so it fits beside the price */
 function offText(deal: PublicDeal): string {
@@ -48,7 +48,7 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
     <Link
       href={`/deals/${deal._id}`}
       title={dealLabel(deal)}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-slate-300"
+      className="group flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-slate-300"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-[4/3]">
         {deal.images[0] ? (
@@ -61,7 +61,7 @@ export default function DealCard({ deal, now, showBusiness = true }: { deal: Pub
           <span className="flex h-full items-center justify-center text-slate-300"><ImageOff size={24} /></span>
         )}
         {/* A tiny tilted "Deal" ribbon across the top-left corner, the same place and angle as Sponsored, in the hot-deal colours */}
-        <span className="theme-static pointer-events-none absolute -left-6 top-[11px] z-[2] flex w-20 -rotate-45 items-center justify-center gap-0.5 bg-rose-600 py-px text-[7px] font-extrabold uppercase leading-[10px] tracking-[0.12em] text-white shadow-sm sm:-left-7 sm:top-3.5 sm:w-24 sm:text-[8px]">
+        <span className="theme-static pointer-events-none absolute -left-6 top-[11px] z-[2] flex w-20 -rotate-45 items-center justify-center gap-0.5 bg-rose-600 py-px text-[10px] font-bold uppercase leading-[10px] tracking-[0.12em] text-white shadow-sm sm:-left-7 sm:top-3.5 sm:w-24 sm:text-[10px]">
           <Flame className="h-[7px] w-[7px] sm:h-2 sm:w-2" /> Deal
         </span>
         {/* Boosted to the top of the Deals page (src/lib/boosts.ts): the same gold star as featured vehicles */}

@@ -307,7 +307,7 @@ export default function AdminPage() {
       {loading ? (
         <StatGrid>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[108px] animate-pulse rounded-2xl border border-slate-200/80 bg-white" />
+            <div key={i} className="h-[108px] animate-pulse rounded-xl border border-slate-200/80 bg-white" />
           ))}
         </StatGrid>
       ) : activeTab === "overview" ? (
@@ -431,7 +431,7 @@ export default function AdminPage() {
             </div>
           )}
           {/* One compact strip instead of seven cards; Active, Suspended and Verified also filter the list */}
-          <div className="mb-4 grid grid-cols-4 divide-x divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 sm:grid-cols-7 sm:divide-y-0">
+          <div className="mb-4 grid grid-cols-4 divide-x divide-y divide-slate-100 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80 sm:grid-cols-7 sm:divide-y-0">
             {[
               { label: "Businesses", value: organizations.length, filter: "" },
               { label: "Active", value: organizations.filter(o => o.isActive).length, filter: "Active", color: "text-emerald-600" },

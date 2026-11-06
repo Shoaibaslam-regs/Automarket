@@ -57,8 +57,8 @@ export default function BusinessProfileCard({ name, slug, logo, canEditLogo, onL
 
       {/* Picture */}
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <span className="relative flex-shrink-0 self-start rounded-2xl bg-slate-200 p-[2px]">
-          <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[14px] bg-slate-900 text-3xl font-extrabold text-white">
+        <span className="relative flex-shrink-0 self-start rounded-xl bg-slate-200 p-[2px]">
+          <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-slate-900 text-3xl font-bold text-white">
             {logo ? <Image src={logo} alt={`${name} picture`} fill sizes="80px" className="object-cover" /> : name[0]?.toUpperCase() || "B"}
             {busy && <span className="absolute inset-0 animate-pulse bg-white/40" />}
           </span>

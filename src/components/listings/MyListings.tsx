@@ -106,7 +106,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
 
       {listings.length > 0 && <BoostAllowanceText className="-mt-1 mb-3" />}
       {listings.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white px-6 py-14 text-center">
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 py-14 text-center">
           <span className="mx-auto flex items-center justify-center text-slate-900">
             <Car size={24} />
           </span>
@@ -119,7 +119,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4">
           {listings.map(l => (
-            <article key={l.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 sm:rounded-3xl">
+            <article key={l.id} className="flex min-w-0 flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
               <Link href={`/listings/${l.id}`} className="relative block aspect-[4/3] bg-slate-100 sm:aspect-[16/10]">
                 {l.image ? (
                   <Image src={l.image} alt="" fill sizes="(max-width: 640px) 50vw, 340px" className="object-cover" />
@@ -136,7 +136,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
               <div className="flex flex-1 flex-col p-2.5 sm:p-4">
                 <Link href={`/listings/${l.id}`} className="truncate text-[13px] font-semibold text-slate-900 hover:underline sm:text-base">{l.title}</Link>
                 <p className="mt-0.5 truncate text-[11px] text-slate-500 sm:text-xs">{l.make} {l.model} · {l.year}</p>
-                <Price l={l} className="mt-1.5 text-base font-extrabold text-slate-900 sm:text-lg" />
+                <Price l={l} className="mt-1.5 text-base font-bold text-slate-900 sm:text-lg" />
                 <div className="mt-auto space-y-2 border-t border-slate-100 pt-2.5 sm:pt-3">
                   <AvailabilityControl id={l.id} type={l.type} status={l.status} />
                   <Actions l={l} />
@@ -148,7 +148,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
       ) : (
         <div className="flex flex-col gap-3">
           {listings.map(l => (
-            <article key={l.id} className="flex gap-3 overflow-hidden rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/70 sm:gap-4 sm:p-3">
+            <article key={l.id} className="flex gap-3 overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/70 sm:gap-4 sm:p-3">
               <Link href={`/listings/${l.id}`} className="relative h-24 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-28 sm:w-44">
                 {l.image ? (
                   <Image src={l.image} alt="" fill sizes="176px" className="object-cover" />
@@ -165,7 +165,7 @@ export default function MyListings({ listings }: { listings: MyListing[] }) {
                   {l.make} {l.model} · {l.year} · {TYPE_LABEL[l.type]}
                   <span className="hidden items-center gap-0.5 sm:inline-flex">· <MapPin size={11} />{l.location}</span>
                 </p>
-                <Price l={l} className="mt-1 text-lg font-extrabold text-slate-900" />
+                <Price l={l} className="mt-1 text-lg font-bold text-slate-900" />
                 <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
                   <AvailabilityControl id={l.id} type={l.type} status={l.status} />
                   <div className="min-w-0 flex-1"><Actions l={l} /></div>

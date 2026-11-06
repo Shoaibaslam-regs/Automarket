@@ -95,7 +95,7 @@ export default function PlanReminder() {
           style={{ animation: `${toast === "in" ? "am-plan-in" : "am-plan-out"} 380ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards` }}
           onAnimationEnd={() => toast === "out" && setToast(null)}
         >
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15">
+          <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-black/15">
             <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${TONE[notice.tone].bar}`} />
             <div className="flex gap-3 py-3.5 pl-5 pr-3">
               <Crown size={18} className={`mt-0.5 flex-shrink-0 ${TONE[notice.tone].icon}`} aria-hidden />
@@ -129,7 +129,7 @@ export function PlanBanner() {
   const { notice, plan } = r;
   return (
     <>
-      <div className="relative mb-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <div className="relative mb-4 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
         <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${TONE[notice.tone].bar}`} />
         <div className="flex flex-col gap-3 py-4 pl-5 pr-4 sm:flex-row sm:items-center sm:pl-6">
           <Crown size={20} className={`flex-shrink-0 ${TONE[notice.tone].icon}`} aria-hidden />

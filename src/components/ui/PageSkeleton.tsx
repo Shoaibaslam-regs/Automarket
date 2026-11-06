@@ -64,7 +64,7 @@ export function PhotoSkeleton({ className = "", size = "sm" }: { className?: str
 
 export function VehicleCard() {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+    <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
       <PhotoSkeleton className="aspect-[4/3]" />
       <div className="space-y-2 p-3">
         <Skeleton className="h-2.5 w-1/3" />
@@ -79,8 +79,8 @@ export function VehicleCard() {
 /** A list-layout ListingCard: photo on the left, details beside it (Browse on phones). */
 export function VehicleRow() {
   return (
-    <div className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80">
-      <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-xl" />
+    <div className="flex gap-3 rounded-xl bg-white p-1.5 ring-1 ring-slate-200/80">
+      <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-lg" />
       <div className="flex-1 space-y-2.5 py-2 pr-2">
         <Skeleton className="h-2.5 w-1/3" />
         <Skeleton className="h-4 w-4/5" />
@@ -94,7 +94,7 @@ export function VehicleRow() {
 /** A compact record card (booking, purchase): thumbnail, three lines, the price, then a footer of buttons. */
 export function RecordCard() {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+    <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
       <div className="p-3.5 sm:p-4">
         <div className="flex gap-3">
           <Skeleton className="h-14 w-16 flex-shrink-0 rounded-xl sm:h-16 sm:w-20" />
@@ -138,7 +138,7 @@ export function StatCards({ count = 4, className = "grid-cols-2 lg:grid-cols-4" 
   return (
     <div className={`grid gap-3 ${className}`}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+        <div key={i} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
           <div className="flex items-center justify-between">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-4 w-4 rounded" />

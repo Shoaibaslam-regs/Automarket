@@ -83,7 +83,7 @@ export default function BusinessSupportPage() {
 
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">
         {suspended && (
-          <div role="alert" className="mb-5 flex gap-3 rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-4">
+          <div role="alert" className="mb-5 flex gap-3 rounded-xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-4">
             <AlertTriangle size={20} className="mt-0.5 flex-shrink-0 text-[var(--gh-cf222e)]" />
             <div className="text-[13px] text-[var(--gh-82071e)]">
               <p className="font-bold">{org?.name} is suspended</p>
@@ -140,7 +140,7 @@ export default function BusinessSupportPage() {
 
           <div className="space-y-3">
             {SUPPORT_WHATSAPP && wa && (
-              <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl bg-[#25D366] p-4 text-white transition hover:bg-[#1ebe5b]">
+              <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl bg-[#25D366] p-4 text-white transition hover:bg-[#1ebe5b]">
                 <WhatsAppIcon size={18} />
                 <span>
                   <span className="block text-sm font-bold">WhatsApp us</span>
@@ -148,14 +148,14 @@ export default function BusinessSupportPage() {
                 </span>
               </a>
             )}
-            <Link href="/messages" className="flex items-center gap-3 rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4 transition hover:bg-[var(--gh-f6f8fa)]">
+            <Link href="/messages" className="flex items-center gap-3 rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4 transition hover:bg-[var(--gh-f6f8fa)]">
               <MessageSquare size={18} className="text-[var(--gh-0d1117)]" />
               <span>
                 <span className="block text-sm font-semibold text-[var(--gh-0d1117)]">Past conversations</span>
                 <span className="block text-[11px] text-[var(--gh-57606a)]">Replies from the team are in Messages</span>
               </span>
             </Link>
-            <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4 text-[12px] text-[var(--gh-57606a)]">
+            <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4 text-[12px] text-[var(--gh-57606a)]">
               <p className="flex items-center gap-1.5 font-semibold text-[var(--gh-0d1117)]"><Clock3 size={13} /> Response time</p>
               {dedicated ? (
                 <p className="mt-1">

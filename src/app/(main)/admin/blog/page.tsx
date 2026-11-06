@@ -184,10 +184,10 @@ export default function AdminBlogPage() {
           {view === "preview" ? (
             <article className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
               <p className={`text-xs font-semibold ${BLOG_CATEGORY[form.category].text}`}>{BLOG_CATEGORY[form.category].label} · {readingMinutes(form.body)} min read</p>
-              <h1 className="mt-2 text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl">{form.title || "Your title"}</h1>
+              <h1 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">{form.title || "Your title"}</h1>
               {form.excerpt && <p className="mt-3 text-base text-slate-500">{form.excerpt}</p>}
               {form.coverImage && (
-                <span className="relative mt-5 block aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100"><Image src={form.coverImage} alt="" fill sizes="672px" className="object-cover" /></span>
+                <span className="relative mt-5 block aspect-[16/9] overflow-hidden rounded-xl bg-slate-100"><Image src={form.coverImage} alt="" fill sizes="672px" className="object-cover" /></span>
               )}
               <div className="mt-6"><BlogBody body={form.body || "Your post's text appears here."} /></div>
             </article>

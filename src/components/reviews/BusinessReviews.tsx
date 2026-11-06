@@ -160,7 +160,7 @@ export default function BusinessReviews({
   const total = Math.max(1, dist.reduce((a, b) => a + b, 0));
 
   return (
-    <section id="reviews" className="scroll-mt-24 rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80 sm:p-7">
+    <section id="reviews" className="scroll-mt-24 rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 sm:p-7">
       <div className="flex items-center gap-2">
         <MessageSquareText size={18} className="text-slate-500" />
         <h2 className="text-lg font-bold text-slate-900">Customer reviews</h2>
@@ -169,7 +169,7 @@ export default function BusinessReviews({
       {/* Summary */}
       <div className="mt-5 grid gap-6 sm:grid-cols-[180px_minmax(0,1fr)]">
         <div className="text-center sm:text-left">
-          <p className="text-5xl font-extrabold tracking-tight text-slate-900">{summary.count ? summary.average.toFixed(1) : "—"}</p>
+          <p className="text-5xl font-bold tracking-tight text-slate-900">{summary.count ? summary.average.toFixed(1) : "—"}</p>
           <div className="mt-1 flex justify-center sm:justify-start"><StarRating value={summary.average} size={16} /></div>
           <p className="mt-1 text-xs text-slate-500">{summary.count} review{summary.count !== 1 ? "s" : ""}</p>
         </div>

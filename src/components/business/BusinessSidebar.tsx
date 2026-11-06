@@ -99,10 +99,10 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50"
+        className="flex w-full items-center gap-3 rounded-xl bg-white p-2.5 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50"
       >
         <span className="relative flex-shrink-0 rounded-xl bg-slate-200 p-[1.5px]">
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[10px] bg-slate-900 text-sm font-extrabold text-white">
+          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-slate-900 text-sm font-bold text-white">
             {org?.logo ? <Image src={org.logo} alt="" fill sizes="36px" className="object-cover" /> : org?.name?.[0]?.toUpperCase() || "B"}
           </span>
           <NotificationDot show={counts.messages > 0} className="-right-1 -top-1 ring-white" />
@@ -123,7 +123,7 @@ function OrgCard({ org, counts, onSignOut }: { org: Organization | null; counts:
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-2xl bg-white p-1.5 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200">
+        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-[200] animate-[bsFade_0.15s_ease] rounded-xl bg-white p-1.5 shadow-2xl shadow-black/15 ring-1 ring-slate-200">
           {/* Who is signed in, then the business and both IDs on their own rows, like the marketplace menus */}
           <div className="mb-1 border-b border-slate-100 px-2.5 pb-3 pt-2">
             <div className="flex items-center gap-2.5">
@@ -197,13 +197,13 @@ function PlanCard({ sub }: { sub: SubscriptionInfo }) {
   const pct = limit === null ? 100 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
   const full = limit !== null && used >= limit;
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white p-3.5 ring-1 ring-inset ring-slate-200">
+    <div className="relative overflow-hidden rounded-xl bg-white p-3.5 ring-1 ring-inset ring-slate-200">
       <div className="relative flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
           <Crown size={13} className={lapsed ? "text-rose-500" : "text-amber-500"} />
           {lapsed ? "Plan ended" : b?.state === "FREE_START" ? "Free month" : `${plan.name} plan`}
           {!lapsed && daysLeft != null && (
-            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[9px] font-bold ${daysLeft <= 7 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
+            <span className={`ml-0.5 rounded-full px-1.5 py-px text-[10px] font-bold ${daysLeft <= 7 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
               {daysLeft <= 1 ? "ends today" : `${daysLeft}d left`}
             </span>
           )}
@@ -287,7 +287,7 @@ function SidebarContent({
                   aria-current={active ? "page" : undefined}
                   // The current page: a dot on the left and a faint background; hover is only a light tint
                   className={`group relative flex items-center gap-3 rounded-xl py-2.5 pl-5 pr-2.5 text-[13.5px] font-medium transition ${
-                    active ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
+                    active ? "bg-white text-slate-900 shadow-sm shadow-black/5" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                   }`}
                 >
                   {active && <span aria-hidden className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-indigo-600" />}
@@ -454,7 +454,7 @@ export default function BusinessSidebar() {
               {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-indigo-600" />}
               <span className="relative">
                 <Icon size={19} strokeWidth={active ? 2.3 : 1.9} />
-                <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[9px] ring-2 ring-white" />
+                <CountBadge count={count} hidden max={9} className="absolute -right-2.5 -top-1.5 h-4 min-w-4 px-1 text-[10px] ring-2 ring-white" />
               </span>
               {label}
             </Link>

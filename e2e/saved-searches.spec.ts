@@ -28,7 +28,7 @@ test("a saved search is listed, can be switched off and on, isn't saved twice, a
   // /saved lists both, and the alert switch works
   await page.goto("/saved");
   // Each saved search is one rounded card
-  const row = (make: string) => page.locator("div.rounded-2xl").filter({ hasText: make }).filter({ has: page.getByRole("button", { name: "Delete saved search" }) });
+  const row = (make: string) => page.locator("div.rounded-xl").filter({ hasText: make }).filter({ has: page.getByRole("button", { name: "Delete saved search" }) });
   const kia = row("Kia");
   await expect(kia.getByText("Email alerts on")).toBeVisible();
   await kia.getByRole("button", { name: "Turn off email alerts" }).click();
@@ -58,8 +58,8 @@ test("a saved search is listed, can be switched off and on, isn't saved twice, a
   await page.goto("/saved");
   await row("BMW").getByRole("button", { name: "Delete saved search" }).click();
   await expect(page.getByRole("link", { name: /BMW/ })).toHaveCount(0);
-  list = (await (await page.request.get("/api/saved-searches")).json()).searches;
-  expect(list.some(x => x.filters.make === "BMW")).toBe(false);
+  // The row leaves the screen at once; wait for the server to have deleted it too
+  await expect.poll(async () => ((await (await page.request.get("/api/saved-searches")).json()).searches as Saved[]).some(x => x.filters.make === "BMW"), { timeout: 10_000 }).toBe(false);
 });
 
 test("signed-out visitors are sent to sign in, and come back to the same search", async ({ page }) => {

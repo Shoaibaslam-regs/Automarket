@@ -108,7 +108,7 @@ export default async function DashboardPage() {
         {/* Accounts without a phone (Google sign-ups) are asked for one; nothing shows once it's saved or snoozed */}
         {user && !user.phone?.trim() && <AddPhoneCard userId={userId} hasPassword={!!user.password} />}
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-200/80 sm:p-8">
+        <section className="relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 sm:p-8">
 
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
@@ -132,17 +132,17 @@ export default async function DashboardPage() {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-              <Link href="/sell" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800">
+              <Link href="/sell" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:bg-slate-800">
                 <Plus size={16} /> Post a listing
               </Link>
-              <Link href="/listings" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
+              <Link href="/listings" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50">
                 <Compass size={16} /> Browse vehicles
               </Link>
             </div>
           </div>
 
           {/* Plan usage */}
-          <div className="relative mt-6 rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/80">
+          <div className="relative mt-6 rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-200/80">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-800">
                 {usage.listings} of {formatLimit(limit)} listings & deals used this month
@@ -166,9 +166,9 @@ export default async function DashboardPage() {
         {/* Stats */}
         <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map(s => (
-            <Link key={s.label} href={s.href} className="group rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:ring-indigo-200 sm:p-5">
+            <Link key={s.label} href={s.href} className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:ring-indigo-200 sm:p-5">
               <s.icon size={20} className={s.tint} />
-              <p className="mt-3 text-2xl font-extrabold tabular-nums text-slate-900 sm:text-3xl">{s.value}</p>
+              <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">{s.value}</p>
               <p className="text-xs font-medium text-slate-500">{s.label}</p>
             </Link>
           ))}
@@ -194,11 +194,11 @@ export default async function DashboardPage() {
 
           {/* Side column */}
           <aside className="space-y-4">
-            <section className="rounded-3xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
+            <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
               <h2 className="text-sm font-bold text-slate-900">Quick actions</h2>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {actions.map(a => (
-                  <Link key={a.href} href={a.href} className="group rounded-2xl bg-slate-50/80 p-3 ring-1 ring-inset ring-slate-100 transition hover:bg-indigo-50/60 hover:ring-indigo-200">
+                  <Link key={a.href} href={a.href} className="group rounded-xl bg-slate-50/80 p-3 ring-1 ring-inset ring-slate-100 transition hover:bg-indigo-50/60 hover:ring-indigo-200">
                     <a.icon size={17} className="text-indigo-600" />
                     <p className="mt-2 text-[13px] font-semibold text-slate-900">{a.label}</p>
                     <p className="truncate text-[11px] text-slate-500">{a.hint}</p>
@@ -207,13 +207,13 @@ export default async function DashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
+            <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-900">Upcoming rentals</h2>
                 <Link href="/bookings" className="text-xs font-semibold text-indigo-700 hover:underline">All bookings</Link>
               </div>
               {upcoming.length === 0 ? (
-                <p className="mt-3 rounded-2xl bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
+                <p className="mt-3 rounded-xl bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
                   No upcoming rentals. <Link href="/listings?type=RENT" className="font-semibold text-indigo-700 hover:underline">Find a vehicle to rent</Link>
                 </p>
               ) : (
@@ -222,13 +222,13 @@ export default async function DashboardPage() {
                     const v = b.rentalId?.listingId ?? b.dealId;
                     return (
                       <li key={String(b._id)}>
-                        <Link href="/bookings" className="flex items-center gap-3 rounded-2xl p-2 transition hover:bg-slate-50">
+                        <Link href="/bookings" className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-slate-50">
                           <span className="relative h-11 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
                             {v?.images?.[0] ? <Image src={v.images[0]} alt="" fill sizes="56px" className="object-cover" /> : <span className="flex h-full items-center justify-center text-slate-300"><Car size={16} /></span>}
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-[13px] font-semibold text-slate-900">
-                              {b.dealId && <span className="theme-static mr-1.5 rounded-full bg-rose-600 px-1.5 py-px align-middle text-[9px] font-extrabold text-white">DEAL</span>}
+                              {b.dealId && <span className="theme-static mr-1.5 rounded-full bg-rose-600 px-1.5 py-px align-middle text-[10px] font-bold text-white">DEAL</span>}
                               {v?.title ?? "Vehicle removed"}
                             </span>
                             <span className="block text-[11px] text-slate-500">{day(b.startDate)} → {day(b.endDate)}</span>
@@ -243,7 +243,7 @@ export default async function DashboardPage() {
             </section>
 
             {business ? (
-              <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-lg shadow-slate-900/20">
+              <section className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-black/20">
                 <p className="relative flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300"><Store size={13} /> Your business</p>
                 <p className="relative mt-1 text-lg font-bold">{business.name}</p>
                 <div className="relative mt-4 flex flex-wrap gap-2">
@@ -256,7 +256,7 @@ export default async function DashboardPage() {
                 </div>
               </section>
             ) : (
-              <section className="relative overflow-hidden rounded-3xl bg-white p-5 ring-1 ring-slate-200/70">
+              <section className="relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200/70">
                 <p className="relative flex items-center gap-1.5 text-sm font-bold text-slate-900"><Sparkles size={15} className="text-indigo-600" /> Sell professionally?</p>
                 <p className="relative mt-1 text-xs leading-relaxed text-slate-500">
                   Open a free business account for a public shop page, customer reviews, deals, a team and booking slips.

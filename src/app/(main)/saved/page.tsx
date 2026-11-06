@@ -44,8 +44,7 @@ export default async function SavedPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6 sm:py-10">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600">Your collection</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Saved</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Saved</h1>
 
         <section className="mt-8">
           <h2 className="mb-1 text-base font-bold text-slate-900">Saved searches</h2>
@@ -58,7 +57,7 @@ export default async function SavedPage() {
             Saved vehicles {listings.length > 0 && <span className="font-medium text-slate-400">({listings.length})</span>}
           </h2>
           {listings.length === 0 ? (
-            <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
               <div className="mx-auto mb-3 flex items-center justify-center text-rose-400">
                 <Heart size={22} strokeWidth={1.75} />
               </div>

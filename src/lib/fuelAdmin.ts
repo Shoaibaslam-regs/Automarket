@@ -13,13 +13,15 @@ type Outcome = { ok: true; update: IFuelPriceUpdate } | { ok: false; status: num
 
 /** Saves the approved prices for one day, replacing any approved earlier for that day (a correction). */
 async function savePrices(p: { petrol: number; diesel: number; effectiveDate: Date }, meta: {
-  admin: Admin; updateId: mongoose.Types.ObjectId; source: string; notificationUrl?: string; notificationDate?: Date;
+  admin: Admin | null; updateId: mongoose.Types.ObjectId; source: string; notificationUrl?: string; notificationDate?: Date;
 }) {
   const now = new Date();
   for (const [fuelType, price] of [["PETROL", p.petrol], ["DIESEL", p.diesel]] as const) {
     await FuelPrice.updateOne(
       { fuelType, effectiveDate: p.effectiveDate },
-      { $set: { price, source: meta.source, notificationUrl: meta.notificationUrl, notificationDate: meta.notificationDate, updateId: meta.updateId, approvedBy: meta.admin._id, approvedAt: now, currency: "PKR", unit: "litre", country: "PK" } },
+      meta.admin
+        ? { $set: { price, source: meta.source, notificationUrl: meta.notificationUrl, notificationDate: meta.notificationDate, updateId: meta.updateId, approvedBy: meta.admin._id, approvedAt: now, currency: "PKR", unit: "litre", country: "PK" }, $unset: { autoPublished: 1 } }
+        : { $set: { price, source: meta.source, notificationUrl: meta.notificationUrl, notificationDate: meta.notificationDate, updateId: meta.updateId, autoPublished: true, approvedAt: now, currency: "PKR", unit: "litre", country: "PK" }, $unset: { approvedBy: 1 } },
       { upsert: true }
     );
   }
@@ -117,7 +119,7 @@ export async function editFuelDay(day: string, admin: Admin, body: Record<string
   for (const [fuelType, price] of [["PETROL", p.petrol], ["DIESEL", p.diesel]] as const) {
     await FuelPrice.updateOne(
       { fuelType, effectiveDate: old.date },
-      { $set: { price, effectiveDate: p.effectiveDate, approvedBy: admin._id, approvedAt: now }, $setOnInsert: { source: "Entered by the AutoGO team from the official notification", currency: "PKR", unit: "litre", country: "PK" } },
+      { $set: { price, effectiveDate: p.effectiveDate, approvedBy: admin._id, approvedAt: now }, $unset: { autoPublished: 1 }, $setOnInsert: { source: "Entered by the AutoGO team from the official notification", currency: "PKR", unit: "litre", country: "PK" } },
       { upsert: true }
     );
   }
@@ -150,4 +152,30 @@ export async function clearFuelReviewHistory(admin: Admin) {
   const r = await FuelPriceUpdate.updateMany({ status: { $in: ["APPROVED", "REJECTED", "SKIPPED"] }, hiddenFromTrail: { $ne: true } }, { $set: { hiddenFromTrail: true } });
   await logAdminAction(admin, "fuel.clearHistory", { type: "FUEL", label: "Fuel review history" }, `${r.modifiedCount} entries cleared`);
   return r.modifiedCount;
+}
+
+/**
+ * Publishes a checked OGRA day without an admin (the checker calls it when autoPublishHold finds nothing to hold).
+ * Taken out of PENDING atomically like an approval, so it can't publish twice; returns whether it went live.
+ */
+export async function publishFuelUpdateAutomatically(id: mongoose.Types.ObjectId): Promise<boolean> {
+  const update = await FuelPriceUpdate.findOneAndUpdate(
+    { _id: id, status: "PENDING", extractedPetrolPrice: { $ne: null }, extractedDieselPrice: { $ne: null }, effectiveDate: { $ne: null } },
+    { $set: { status: "APPROVED", autoPublished: true, reviewedAt: new Date(), reviewNote: "Published automatically from OGRA's publication" } },
+    { returnDocument: "after" }
+  ).lean<IFuelPriceUpdate>();
+  if (!update) return false;
+  await savePrices(
+    { petrol: update.extractedPetrolPrice!, diesel: update.extractedDieselPrice!, effectiveDate: new Date(update.effectiveDate!) },
+    { admin: null, updateId: update._id as mongoose.Types.ObjectId, source: "OGRA price publication", notificationUrl: update.notificationUrl, notificationDate: update.notificationDate }
+  );
+  return true;
+}
+
+/** The approved prices of the latest day before `day`, for autoPublishHold. */
+export async function approvedBefore(day: Date): Promise<{ petrol: number | null; diesel: number | null } | null> {
+  const rows = await FuelPrice.find({ effectiveDate: { $lt: day } }).sort({ effectiveDate: -1 }).limit(2).lean<{ fuelType: string; price: number; effectiveDate: Date }[]>();
+  if (!rows.length) return null;
+  const sameDay = rows.filter(r => r.effectiveDate.getTime() === rows[0].effectiveDate.getTime());
+  return { petrol: sameDay.find(r => r.fuelType === "PETROL")?.price ?? null, diesel: sameDay.find(r => r.fuelType === "DIESEL")?.price ?? null };
 }

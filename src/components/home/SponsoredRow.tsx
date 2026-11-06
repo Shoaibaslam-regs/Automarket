@@ -13,8 +13,8 @@ import type { SponsoredItem } from "@/lib/sponsored";
 /** The gold "Sponsored" ribbon across the photo's top-left corner (smaller on the list layout's small photo). */
 function Ribbon({ small = false }: { small?: boolean }) {
   return (
-    <span className={`theme-static pointer-events-none absolute z-[2] -rotate-45 theme-static bg-amber-400 text-center font-extrabold uppercase text-slate-950 shadow-md ${
-      small ? "-left-7 top-3.5 w-24 py-px text-[7px] tracking-[0.12em]" : "-left-8 top-5 w-32 py-0.5 text-[9px] tracking-[0.14em]"
+    <span className={`theme-static pointer-events-none absolute z-[2] -rotate-45 theme-static bg-amber-400 text-center font-bold uppercase text-slate-950 shadow-md ${
+      small ? "-left-7 top-3.5 w-24 py-px text-[10px] tracking-[0.12em]" : "-left-8 top-5 w-32 py-0.5 text-[10px] tracking-[0.14em]"
     }`}>
       Sponsored
     </span>
@@ -56,7 +56,7 @@ export function SponsoredCard({ item, layout = "grid", highlight = true }: { ite
 
   if (layout === "list") {
     return (
-      <div ref={ref} className={`flex overflow-hidden rounded-2xl bg-white transition ${frame}`}>
+      <div ref={ref} className={`flex overflow-hidden rounded-xl bg-white transition ${frame}`}>
         <Link href={item.href} onClick={tap} className="relative w-32 flex-shrink-0 overflow-hidden bg-slate-100 sm:w-44">
           <span className="block aspect-[4/3] h-full">
             {item.image
@@ -83,7 +83,7 @@ export function SponsoredCard({ item, layout = "grid", highlight = true }: { ite
   }
 
   return (
-    <div ref={ref} className={`group flex h-full flex-col overflow-hidden rounded-2xl bg-white transition hover:shadow-md ${frame}`}>
+    <div ref={ref} className={`group flex h-full flex-col overflow-hidden rounded-xl bg-white transition hover:shadow-md ${frame}`}>
       <Link href={item.href} onClick={tap} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           {item.kind === "SHOP" ? (

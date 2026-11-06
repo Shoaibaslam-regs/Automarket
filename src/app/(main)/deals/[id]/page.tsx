@@ -127,9 +127,9 @@ export default async function DealPage({ params }: Props) {
         {/* On phones: photos, then price and contact, then details. On desktop the price column sits on the right. */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-x-8">
           <div className="lg:col-span-2">
-            <div className="relative overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+            <div className="relative overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
               <ImageGallery images={deal.images} title={deal.title} />
-              <span className="theme-static pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-rose-600 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide text-white shadow-lg">
+              <span className="theme-static pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg">
                 {dealLabel(deal)}
               </span>
             </div>
@@ -137,11 +137,11 @@ export default async function DealPage({ params }: Props) {
 
           {/* Price, contact and business */}
           <div className="space-y-4 lg:col-start-3 lg:row-span-2 lg:row-start-1">
-            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+            <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
               <div className="theme-static relative overflow-hidden bg-rose-600 p-5 text-white">
                 <p className="relative text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75">{deal.make} · {deal.year}</p>
                 <h1 className="relative mt-1 text-xl font-bold leading-snug">{deal.title}</h1>
-                <p className="relative mt-3 text-3xl font-extrabold">PKR {formatLakh(final)}{rent && <span className="text-base font-semibold text-white/80"> /day</span>}</p>
+                <p className="relative mt-3 text-3xl font-bold">PKR {formatLakh(final)}{rent && <span className="text-base font-semibold text-white/80"> /day</span>}</p>
                 <p className="relative mt-0.5 text-sm text-white/80">
                   <span className="line-through">PKR {formatLakh(deal.price)}</span> · You save PKR {saving.toLocaleString("en-PK")}{rent ? " a day" : ""}
                 </p>
@@ -203,7 +203,7 @@ export default async function DealPage({ params }: Props) {
               </div>
             </div>
 
-            <Link href={`/dealers/${business.slug}`} className="group flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 transition hover:ring-slate-300">
+            <Link href={`/dealers/${business.slug}`} className="group flex items-center gap-3 rounded-xl bg-white p-4 ring-1 ring-slate-200/80 transition hover:ring-slate-300">
               <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900 text-lg font-bold text-white">
                 {business.logo ? <Image src={business.logo} alt="" fill sizes="48px" className="object-cover" /> : business.name[0]?.toUpperCase()}
               </span>

@@ -171,7 +171,7 @@ export default function Navbar() {
                   aria-expanded={menuOpen}
                   aria-label="Account menu"
                   // No box around the avatar and name: only a light tint on hover and while the menu is open
-                  className={`flex h-11 min-w-[168px] items-center gap-2.5 rounded-2xl pl-1.5 pr-3 transition duration-200 ${
+                  className={`flex h-11 min-w-[168px] items-center gap-2.5 rounded-xl pl-1.5 pr-3 transition duration-200 ${
                     menuOpen ? "bg-slate-100" : "hover:bg-slate-100"
                   }`}
                 >

@@ -66,7 +66,7 @@ export default function NotificationsPage() {
           ) : error ? (
             <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">{error}</p>
           ) : items === null ? (
-            <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />)}</div>
+            <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-white" />)}</div>
           ) : items.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
               <span className="mx-auto mb-3 flex items-center justify-center text-slate-400"><Bell size={22} /></span>
@@ -75,7 +75,7 @@ export default function NotificationsPage() {
               <Link href="/listings" className="mt-5 inline-flex rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Browse vehicles</Link>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+            <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200/80 bg-white">
               {items.map(n => {
                 const { icon: Icon, tone } = ICON[n.kind];
                 return (

@@ -23,7 +23,7 @@ export default function ListingsLoading() {
       </div>
       <div className="mx-auto max-w-[1280px] px-4 pb-6 pt-4 sm:px-6 sm:py-8">
         <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-8">
-          <aside className="hidden space-y-5 rounded-[22px] border border-slate-200/80 bg-white p-5 lg:block">
+          <aside className="hidden space-y-5 rounded-2xl border border-slate-200/80 bg-white p-5 lg:block">
             <Skeleton className="h-4 w-20" />
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="space-y-2">
@@ -34,7 +34,7 @@ export default function ListingsLoading() {
           </aside>
           <div className="min-w-0">
             {/* Toolbar: on phones [count … Hide sold] then [Filters | sort | view] with no card; one row in a card on wider screens */}
-            <div className="mb-4 space-y-2.5 sm:mb-5 sm:flex sm:items-center sm:gap-2 sm:space-y-0 sm:rounded-2xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 [&>*:first-child]:sm:mr-auto">
+            <div className="mb-4 space-y-2.5 sm:mb-5 sm:flex sm:items-center sm:gap-2 sm:space-y-0 sm:rounded-xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 [&>*:first-child]:sm:mr-auto">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3.5 w-16 sm:hidden" />

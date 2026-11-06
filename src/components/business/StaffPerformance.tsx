@@ -78,7 +78,7 @@ export default function StaffPerformance() {
                       const v = Number(p[m.key]) || 0;
                       const lead = best > 0 && v === best;
                       return (
-                        <td key={p.userId} className={`px-3 py-2.5 text-right tabular-nums ${lead ? "font-extrabold text-[var(--gh-1a7f37)]" : v ? "font-semibold text-[var(--gh-0d1117)]" : "text-[var(--gh-c4c9d0)]"}`}>
+                        <td key={p.userId} className={`px-3 py-2.5 text-right tabular-nums ${lead ? "font-bold text-[var(--gh-1a7f37)]" : v ? "font-semibold text-[var(--gh-0d1117)]" : "text-[var(--gh-c4c9d0)]"}`}>
                           {m.money ? (v ? `PKR ${formatLakh(v)}` : "—") : v || "—"}
                         </td>
                       );

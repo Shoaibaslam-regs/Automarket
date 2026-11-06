@@ -59,7 +59,7 @@ export default function TeamInvites() {
   return (
     <section className="mb-6 space-y-2">
       {invites.map(invite => (
-        <div key={invite._id} className="flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+        <div key={invite._id} className="flex flex-col gap-3 rounded-xl border border-indigo-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-500">
               {invite.organizationId?.logo

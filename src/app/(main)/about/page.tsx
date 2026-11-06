@@ -55,8 +55,7 @@ export default async function AboutPage() {
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-14 pt-12 text-white sm:pt-16">
         <div className="relative mx-auto max-w-[1080px]">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-200">About AutoGO</p>
-          <h1 className="mt-4 max-w-[720px] text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h1 className="max-w-[720px] text-3xl font-bold tracking-tight sm:text-4xl">
             Bringing Pakistan&apos;s vehicle rental businesses online
           </h1>
           <p className="mt-3 max-w-[640px] text-sm leading-relaxed text-slate-400">

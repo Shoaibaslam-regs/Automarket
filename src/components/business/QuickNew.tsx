@@ -70,7 +70,7 @@ export default function QuickNew() {
   return (
     <div ref={box} className="no-print fixed bottom-[calc(72px+env(safe-area-inset-bottom))] right-4 z-[900] flex flex-col items-end gap-2 print:hidden sm:right-5 md:bottom-5">
       {open && (
-        <div role="menu" className="w-52 overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white py-1.5 shadow-2xl">
+        <div role="menu" className="w-52 overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white py-1.5 shadow-2xl">
           {actions.map(a => (
             a.kind ? (
               <button key={a.label} role="menuitem" onClick={() => go(a)}
@@ -87,7 +87,7 @@ export default function QuickNew() {
         </div>
       )}
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-haspopup="menu" aria-label={open ? "Close" : "Create new"}
-        className="theme-static inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-slate-900 text-sm font-bold text-white shadow-lg shadow-slate-900/30 ring-2 ring-white transition hover:bg-slate-800 sm:h-12 sm:w-auto sm:px-5 sm:shadow-xl">
+        className="theme-static inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-slate-900 text-sm font-bold text-white shadow-lg shadow-black/30 ring-2 ring-white transition hover:bg-slate-800 sm:h-12 sm:w-auto sm:px-5 sm:shadow-xl">
         {/* Phones get a small round + button; the "New" label shows from sm up */}
         {open ? <X size={18} /> : <Plus size={20} strokeWidth={2.5} />} <span className="hidden sm:inline">{open ? "Close" : "New"}</span>
       </button>

@@ -636,12 +636,12 @@ export default function BusinessBookingsPage() {
             { label: "Out now", value: stats.out, icon: Car, color: "var(--gh-1a7f37)", hint: stats.overdue ? `${stats.overdue} overdue` : undefined },
             { label: "Completed revenue", value: pkr(stats.revenue), icon: CheckCircle2, color: "var(--gh-0d1117)" },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+            <div key={s.label} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-medium text-[var(--gh-8c959f)]">{s.label}</p>
                 <s.icon size={16} className="flex-shrink-0" style={{ color: s.color }} />
               </div>
-              <p className="mt-2 truncate text-xl font-extrabold tabular-nums" style={{ color: s.color }}>{s.value}</p>
+              <p className="mt-2 truncate text-xl font-bold tabular-nums" style={{ color: s.color }}>{s.value}</p>
               {s.hint && <p className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[var(--gh-cf222e)]"><AlertTriangle size={11} /> {s.hint}</p>}
             </div>
           ))}
@@ -692,7 +692,7 @@ export default function BusinessBookingsPage() {
         {/* List: one column, two on wide screens */}
         <div className="grid items-start gap-3 xl:grid-cols-2">
           {loading ? (
-            [1, 2, 3].map(i => <div key={i} className="h-[132px] animate-pulse rounded-2xl bg-white" />)
+            [1, 2, 3].map(i => <div key={i} className="h-[132px] animate-pulse rounded-xl bg-white" />)
           ) : loadError ? (
             <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)] xl:col-span-2">{loadError}</div>
           ) : filtered.length === 0 ? (
@@ -730,7 +730,7 @@ export default function BusinessBookingsPage() {
             const iconBtn = "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-2.5 text-xs font-semibold transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
             const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
             return (
-              <div key={b._id} className={`overflow-hidden rounded-2xl border bg-white ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
+              <div key={b._id} className={`overflow-hidden rounded-xl border bg-white ${overdue ? "border-[var(--gh-ffcdd2)]" : "border-[var(--gh-e1e4e8)]"}`}>
                 <div className="p-3.5 sm:p-4">
                   {/* Vehicle, reference and dates */}
                   <div className="flex gap-3">
@@ -756,7 +756,7 @@ export default function BusinessBookingsPage() {
                         <span aria-hidden>·</span>
                         {b.source === "WALK_IN" ? <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--gh-4f46e5)]"><Store size={10} /> Walk-in <Tip id="walkIn" size={11} /></span> : <span>Online</span>}
                         {b.dealId && (
-                          <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-rose-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white"><Tag size={9} /> DEAL</span>
+                          <span className="theme-static inline-flex items-center gap-0.5 rounded-full bg-rose-600 px-1.5 py-px text-[10px] font-bold tracking-wide text-white"><Tag size={9} /> DEAL</span>
                         )}
                       </p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-[var(--gh-0d1117)]">
@@ -800,7 +800,7 @@ export default function BusinessBookingsPage() {
                   {/* Money */}
                   <div className="mt-3">
                     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                      <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</p>
+                      <p className="whitespace-nowrap text-base font-bold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</p>
                       {b.status !== "CANCELLED" && <PaymentTag booking={b} onClick={canManage ? () => setPayFor(b) : undefined} />}
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">

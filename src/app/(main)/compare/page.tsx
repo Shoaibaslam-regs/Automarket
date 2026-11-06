@@ -161,13 +161,12 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6 sm:py-10">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600">Side by side</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Compare vehicles</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Compare vehicles</h1>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
           <Trophy size={14} className="text-emerald-600" /> Highlighted cells show the best value in each row.
         </p>
 
-        <div className="mt-6 overflow-x-auto rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <table className="w-full min-w-[640px] table-fixed border-collapse text-sm">
             <colgroup>
               <col className="w-[150px] sm:w-[180px]" />
@@ -180,7 +179,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
                 <th className="sticky left-0 z-10 bg-white" />
                 {cols.map(c => (
                   <th key={c.id} className="p-3 text-left align-top font-normal">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100">
                       {c.l.images?.[0] ? (
                         <Image src={c.l.images[0]} alt={c.l.title} fill sizes="(max-width: 768px) 220px, 330px" className="object-cover" />
                       ) : (

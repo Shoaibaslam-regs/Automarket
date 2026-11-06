@@ -7,7 +7,7 @@ export default function AdminMessagesPage() {
   return (
     <div>
       <PageHeader title="My messages" description="Your own chats. Support requests, plan and badge requests and appeals are in the Support inbox, for the whole team." />
-      <Suspense fallback={<div className="h-[480px] animate-pulse rounded-2xl bg-white ring-1 ring-slate-200" />}>
+      <Suspense fallback={<div className="h-[480px] animate-pulse rounded-xl bg-white ring-1 ring-slate-200" />}>
         <MessagesContent embedded basePath="/admin/messages" />
       </Suspense>
     </div>

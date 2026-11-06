@@ -218,10 +218,10 @@ export default function TermsPage() {
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-14 pt-12 text-white sm:pt-16">
         <div className="relative mx-auto max-w-[1080px]">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300 ring-1 ring-inset ring-white/10">
             <FileText size={13} /> Legal
           </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Terms &amp; Conditions</h1>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Terms &amp; Conditions</h1>
           <p className="mt-2 max-w-[620px] text-sm leading-relaxed text-slate-400">
             The rules for buying, selling and renting on AutoGO. Please read them before you post a listing or make a deal.
           </p>
@@ -251,10 +251,10 @@ export default function TermsPage() {
           {SECTIONS.map((s, i) => (
             <section key={s.id} id={s.id} className="scroll-mt-24 rounded-2xl bg-white p-6 ring-1 ring-slate-200/80 sm:p-7">
               <h2 className="flex items-baseline gap-2.5 text-lg font-bold tracking-tight text-slate-900">
-                <span className="text-sm font-semibold tabular-nums text-indigo-500">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-sm font-semibold tabular-nums text-slate-400">{String(i + 1).padStart(2, "0")}</span>
                 {s.title}
               </h2>
-              <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600 [&_a]:font-semibold [&_a]:text-indigo-600 [&_a:hover]:underline [&_li]:pl-1 [&_strong]:font-semibold [&_strong]:text-slate-800 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
+              <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600 [&_a]:font-medium [&_a]:text-slate-900 [&_a]:underline [&_a]:decoration-slate-300 [&_a]:underline-offset-4 [&_a:hover]:decoration-slate-900 [&_li]:pl-1 [&_strong]:font-semibold [&_strong]:text-slate-800 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
                 {s.body}
               </div>
             </section>

@@ -8,7 +8,7 @@ export default function DealerLoading() {
       <DarkHero>
         <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:gap-x-5">
-            <DarkBar className="h-16 w-16 flex-shrink-0 rounded-2xl sm:h-20 sm:w-20" />
+            <DarkBar className="h-16 w-16 flex-shrink-0 rounded-xl sm:h-20 sm:w-20" />
             <div className="min-w-0 space-y-2.5">
               <DarkBar className="h-8 w-56 max-w-full" />
               <div className="flex flex-wrap items-center gap-2">
@@ -36,7 +36,7 @@ export default function DealerLoading() {
               {Array.from({ length: 3 }).map((_, i) => <VehicleCard key={i} />)}
             </div>
           </div>
-          <Skeleton className="h-56 w-full rounded-2xl" />
+          <Skeleton className="h-56 w-full rounded-xl" />
         </div>
         <aside className="space-y-4">
           <div className="hidden space-y-3 rounded-2xl border border-slate-200/80 bg-white p-5 lg:block">
@@ -46,7 +46,7 @@ export default function DealerLoading() {
             <Skeleton className="h-3 w-36" />
             <Skeleton className="h-10 w-full rounded-xl" />
           </div>
-          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </aside>
       </div>
     </SkeletonPage>

@@ -21,7 +21,7 @@ export default function UsageMeters({ sub, compact = false }: { sub: Subscriptio
         const pct = limit === null ? 0 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
         const full = limit !== null && used >= limit;
         return (
-          <div key={key} className="rounded-2xl bg-white p-4 ring-1 ring-inset ring-slate-200/80">
+          <div key={key} className="rounded-xl bg-white p-4 ring-1 ring-inset ring-slate-200/80">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
                 <Icon size={14} strokeWidth={1.9} /> {label}

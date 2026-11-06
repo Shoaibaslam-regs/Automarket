@@ -108,7 +108,7 @@ export default function AdminAdsPage() {
       </div>
 
       {ads === null ? (
-        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-28 animate-pulse rounded-2xl bg-white" />)}</div>
+        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-28 animate-pulse rounded-xl bg-white" />)}</div>
       ) : ads.length === 0 ? (
         <Panel>
           <div className="px-6 py-14 text-center">
@@ -123,7 +123,7 @@ export default function AdminAdsPage() {
             const state = adState(ad);
             const view = adHref(ad, ad.business?.slug);
             return (
-              <div key={ad._id} className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+              <div key={ad._id} className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

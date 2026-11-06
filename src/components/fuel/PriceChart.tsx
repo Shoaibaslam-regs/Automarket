@@ -92,7 +92,7 @@ export default function PriceChart({ title, subtitle, series, prefix, unit, rise
       <div className="mt-4 min-h-[64px]" aria-live="polite">
         {shown ? (
           <>
-            <p className="text-[28px] font-extrabold leading-none tracking-tight text-slate-900 tabular-nums sm:text-3xl">
+            <p className="text-[28px] font-bold leading-none tracking-tight text-slate-900 tabular-nums sm:text-3xl">
               <span className="mr-1 text-base font-semibold text-slate-400">{prefix}</span>{fmt(shown.value)}
               <span className="ml-1 text-sm font-medium text-slate-400">{unit}</span>
             </p>

@@ -167,11 +167,11 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div ref={frameRef} className="slip-frame mx-auto max-w-[703px]">
-      <article ref={cardRef} style={{ width: SHEET_WIDTH, zoom: fit, "--print-zoom": printZoom } as React.CSSProperties} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
+      <article ref={cardRef} style={{ width: SHEET_WIDTH, zoom: fit, "--print-zoom": printZoom } as React.CSSProperties} className="slip-card overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
         {/* Letterhead */}
         <header className="flex items-start justify-between gap-6 bg-slate-950 px-6 py-5 text-white">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-extrabold text-slate-950">
+            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-bold text-slate-950">
               {org?.name?.[0]?.toUpperCase() || "B"}
             </span>
             <div>
@@ -191,7 +191,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
           <div className="mb-4 flex items-center justify-between gap-3">
             <span className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider" style={{ background: status.bg, color: status.color }}>{status.text}</span>
             <span className="text-xs text-slate-500">
-              {deal && <span className="mr-2 inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
+              {deal && <span className="mr-2 inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">DEAL · {dealLabel(deal)}</span>}
               {b.source === "WALK_IN" ? "Walk-in booking" : "Online booking via AutoGO"} · created {dateTime(b.createdAt)}
               {b.createdBy?.name ? ` by ${b.createdBy.name}` : ""}
             </span>
@@ -209,7 +209,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
               <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>
               <Row label={deal ? "Deal" : "Vehicle"} value={listing?.title || b.offListVehicle?.title || "—"} />
               {deal && (deal.vehicleCount ?? 1) > 1 && <Row label="Cars in package" value={String(deal.vehicleCount)} />}
-              <Row label="Number plate" value={b.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-black tracking-[0.12em] text-slate-900">{b.plateNumber}</span>} />
+              <Row label="Number plate" value={b.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-bold tracking-[0.12em] text-slate-900">{b.plateNumber}</span>} />
               <Row label="Make / model" value={listing ? `${listing.make} ${listing.model} (${listing.year})` : undefined} />
               <Row label="Colour" value={listing?.color} />
               <Row label="Pickup address" value={pickup && <span className="block max-w-[220px] text-right">{pickup}{pickupCity && !pickup.toLowerCase().includes(pickupCity.toLowerCase()) ? `, ${pickupCity}` : ""}</span>} />
@@ -264,7 +264,7 @@ export default function BookingSlipPage({ params }: { params: Promise<{ id: stri
               <tfoot>
                 <tr className="bg-slate-950 text-white">
                   <td className="px-4 py-2.5 font-bold">Total</td>
-                  <td className="px-4 py-2.5 text-right text-base font-extrabold tabular-nums">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</td>
+                  <td className="px-4 py-2.5 text-right text-base font-bold tabular-nums">{pkr(b.totalAmount + b.deposit + (b.lateFee ?? 0) + (b.extraCharges ?? 0))}</td>
                 </tr>
                 {b.status !== "CANCELLED" && (
                   <tr className="border-t border-[var(--gh-e1e4e8)]">

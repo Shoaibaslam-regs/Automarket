@@ -101,7 +101,7 @@ export function InstallmentSetupDialog({ open, onOpenChange, price, paid, buyer,
         {preview.length > 0 && (
           <div className="rounded-xl bg-indigo-50 p-3 ring-1 ring-inset ring-indigo-200">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500">Monthly installment</p>
-            <p className="text-xl font-extrabold tabular-nums text-indigo-900">{pkr(preview[0].amount)}</p>
+            <p className="text-xl font-bold tabular-nums text-indigo-900">{pkr(preview[0].amount)}</p>
             <p className="mt-0.5 text-[11px] text-indigo-700">
               {months} months · {day(preview[0].dueDate)} to {day(preview[preview.length - 1].dueDate)} · {pkr(price - downNum)} on installments
             </p>

@@ -273,6 +273,31 @@ export function parseAdminPrices(body: Record<string, unknown>, now = new Date()
   return { data: { petrol: price2(petrol), diesel: price2(diesel), effectiveDate, sourceUrl: sourceUrl || undefined, note: note || undefined } };
 }
 
+/**
+ * OGRA prices go live without an admin (they are read exactly from the PDF's text) unless something looks off; then
+ * they wait in Admin → Fuel prices with the reason. A move bigger than this from the approved day before is held.
+ */
+export const AUTO_PUBLISH_MAX_PCT = 8;
+
+/**
+ * Why a checked OGRA day must wait for an admin instead of going live by itself, or null when it can be published:
+ * the check raised warnings, there is no earlier approved day to compare with (the very first price), or either fuel
+ * moved more than AUTO_PUBLISH_MAX_PCT from the approved day before it.
+ */
+export function autoPublishHold(
+  next: { petrol: number; diesel: number },
+  previous: { petrol?: number | null; diesel?: number | null } | null,
+  warnings: string[] = []
+): string | null {
+  if (warnings.length) return "The publication raised a warning";
+  if (!previous || previous.petrol == null || previous.diesel == null) return "No earlier approved prices to compare with";
+  for (const [label, now, before] of [["Petrol", next.petrol, previous.petrol], ["Diesel", next.diesel, previous.diesel]] as const) {
+    const pct = Math.abs((now - before) / before) * 100;
+    if (pct > AUTO_PUBLISH_MAX_PCT) return `${label} moved ${Math.round(pct * 10) / 10}% (from ${before} to ${now}); check it before it goes live`;
+  }
+  return null;
+}
+
 /** The change from one price to the next: amount and percent (rounded to 2 places). */
 export function priceChange(previous: number | null | undefined, current: number): { diff: number; pct: number } | null {
   if (previous == null || !Number.isFinite(previous) || previous === 0) return null;

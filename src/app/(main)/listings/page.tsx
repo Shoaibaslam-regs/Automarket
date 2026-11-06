@@ -770,7 +770,7 @@ export default function ListingsPage({
       <div className="mx-auto max-w-[1280px] px-4 pb-6 pt-4 sm:px-6 sm:py-8">
         <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-8">
           {/* Desktop sidebar */}
-          <aside className="sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:block">
+          <aside className="sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:block">
             <div className="mb-5 flex items-center justify-between">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
                 <SlidersHorizontal size={15} strokeWidth={2} />
@@ -790,7 +790,7 @@ export default function ListingsPage({
             <RecentlyViewed compact className="mb-4 sm:mb-5" />
             {/* Phones: two tight rows with no card ([count … Hide sold], then [Filters | sort | view]);
                 wider screens: one row in a card */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 sm:mb-5 sm:rounded-2xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 sm:shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 sm:mb-5 sm:rounded-xl sm:border sm:border-slate-200/80 sm:bg-white sm:px-4 sm:py-2.5 sm:shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex min-w-0 items-center gap-3">
                 <p className="text-sm text-slate-500">
                   <span className="font-bold text-slate-900">{pagination.total.toLocaleString()}</span> vehicle
@@ -933,8 +933,8 @@ export default function ListingsPage({
               {(view === "list" || !viewKnown) && (
               <div className={`flex flex-col gap-3 sm:gap-4 ${viewKnown ? "" : "sm:hidden"}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex gap-3 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:gap-5 sm:rounded-[22px] sm:p-2">
-                    <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-xl sm:w-[260px] sm:rounded-2xl md:w-[300px] lg:w-[320px]" />
+                  <div key={i} className="flex gap-3 rounded-xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:gap-5 sm:p-2">
+                    <PhotoSkeleton className="aspect-[4/3] w-[42%] flex-shrink-0 rounded-lg sm:w-[260px] md:w-[300px] lg:w-[320px]" />
                     <div className="flex-1 space-y-3 py-2 pr-2">
                       <div className="h-2.5 w-1/4 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200/70" />
@@ -948,8 +948,8 @@ export default function ListingsPage({
               {(view === "grid" || !viewKnown) && (
               <div className={`${viewKnown ? "grid" : "hidden sm:grid"} grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-5 md:grid-cols-3`}>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="rounded-2xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:rounded-[22px] sm:p-2">
-                    <PhotoSkeleton className="aspect-[4/3] rounded-xl sm:rounded-2xl" />
+                  <div key={i} className="rounded-xl bg-white p-1.5 ring-1 ring-slate-200/80 sm:p-2">
+                    <PhotoSkeleton className="aspect-[4/3] rounded-lg" />
                     <div className="space-y-2.5 px-1.5 pb-1.5 pt-3 sm:px-2 sm:pb-2 sm:pt-4">
                       <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-200/70" />
                       <div className="h-3.5 w-4/5 animate-pulse rounded bg-slate-200/70" />
@@ -962,7 +962,7 @@ export default function ListingsPage({
               </>
             ) : listings.length === 0 ? (
               // Says which filters to drop (one tap each) instead of only "Clear filters"
-              <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
                 <div className="mx-auto mb-4 flex items-center justify-center text-slate-400">
                   <Search size={24} strokeWidth={1.75} />
                 </div>

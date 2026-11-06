@@ -177,7 +177,7 @@ function SupportInbox() {
       {notice && <p role="status" className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">{notice}</p>}
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* Conversations */}
-        <section className={`flex min-h-[480px] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 lg:h-[calc(100vh-13rem)] ${selected ? "hidden lg:flex" : "flex"}`}>
+        <section className={`flex min-h-[480px] flex-col overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 lg:h-[calc(100vh-13rem)] ${selected ? "hidden lg:flex" : "flex"}`}>
           <div className="space-y-2 border-b border-slate-100 p-3">
             <Segmented<Filter> value={filter} onChange={setFilter}
               options={[{ value: "open", label: `Open${list ? ` (${list.open})` : ""}` }, { value: "priority", label: `Priority${list?.priority ? ` (${list.priority})` : ""}` }, { value: "mine", label: "Mine" }, { value: "done", label: "Done" }, { value: "all", label: "All" }]} />
@@ -230,7 +230,7 @@ function SupportInbox() {
         </section>
 
         {/* Conversation */}
-        <section className={`min-h-[480px] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 lg:flex lg:h-[calc(100vh-13rem)] ${selected ? "flex" : "hidden"}`}>
+        <section className={`min-h-[480px] flex-col overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 lg:flex lg:h-[calc(100vh-13rem)] ${selected ? "flex" : "hidden"}`}>
           {!selected ? (
             <div className="m-auto p-10 text-center text-sm text-slate-500">Choose a conversation.</div>
           ) : !thread ? (
@@ -267,7 +267,7 @@ function SupportInbox() {
                   return (
                     <div key={m._id} className={`flex ${team ? "justify-end" : "justify-start"}`}>
                       <div className="max-w-[80%]">
-                        <div className={`whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-sm ${team ? "rounded-br-md bg-slate-900 text-white" : "rounded-bl-md bg-white text-slate-900 ring-1 ring-slate-200"}`}>
+                        <div className={`whitespace-pre-line break-words rounded-xl px-3.5 py-2 text-sm ${team ? "rounded-br-md bg-slate-900 text-white" : "rounded-bl-md bg-white text-slate-900 ring-1 ring-slate-200"}`}>
                           {m.content}
                         </div>
                         <p className={`mt-1 flex items-center gap-1 text-[11px] text-slate-400 ${team ? "justify-end" : ""}`}>
@@ -305,7 +305,7 @@ function SupportInbox() {
 
 export default function AdminSupportPage() {
   return (
-    <Suspense fallback={<div className="h-[480px] animate-pulse rounded-2xl bg-white ring-1 ring-slate-200" />}>
+    <Suspense fallback={<div className="h-[480px] animate-pulse rounded-xl bg-white ring-1 ring-slate-200" />}>
       <SupportInbox />
     </Suspense>
   );

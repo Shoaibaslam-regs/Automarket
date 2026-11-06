@@ -28,7 +28,7 @@ export default function PushCard({ compact = false }: { compact?: boolean }) {
 
   const on = status === "on";
   return (
-    <div className={`rounded-2xl border p-4 ${on ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200/80 bg-white"}`}>
+    <div className={`rounded-xl border p-4 ${on ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200/80 bg-white"}`}>
       <div className="flex items-start gap-3">
         <span className={`flex flex-shrink-0 items-center justify-center ${on ? "text-emerald-700" : "text-slate-900"}`}>
           {status === "needs-install" ? <Smartphone size={18} /> : on ? <BellRing size={18} /> : <BellOff size={18} />}

@@ -171,7 +171,7 @@ export default function AnnouncementsPage() {
       <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">
         {error && <p role="alert" className="mb-4 rounded-xl bg-[var(--gh-fff0f0)] p-3 text-sm text-[var(--gh-cf222e)]">{error}</p>}
         {!data ? (
-          !error && <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 animate-pulse rounded-2xl bg-white" />)}</div>
+          !error && <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 animate-pulse rounded-xl bg-white" />)}</div>
         ) : live.length === 0 && ended.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
             <Newspaper size={24} className="mx-auto mb-3 text-slate-400" />
@@ -219,7 +219,7 @@ export default function AnnouncementsPage() {
             {ended.length > 0 && (
               <>
                 <h2 className="mb-2 text-sm font-semibold text-slate-900">Ended</h2>
-                <ul className="divide-y divide-slate-100 rounded-2xl bg-white ring-1 ring-inset ring-slate-200">
+                <ul className="divide-y divide-slate-100 rounded-xl bg-white ring-1 ring-inset ring-slate-200">
                   {ended.map(n => (
                     <li key={n._id} className="flex items-center gap-3 px-4 py-3">
                       <span className="min-w-0 flex-1">
@@ -316,7 +316,7 @@ export default function AnnouncementsPage() {
 
               <div>
                 <span className={label}>Preview</span>
-                <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/70">
+                <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-inset ring-slate-200/70">
                   <ShopNoticeCard notice={preview} />
                 </div>
               </div>

@@ -100,10 +100,10 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
       </div>
 
       <div ref={frameRef} className="slip-frame mx-auto max-w-[703px]">
-        <article style={{ width: SHEET_WIDTH, zoom: fit }} className="slip-card overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
+        <article style={{ width: SHEET_WIDTH, zoom: fit }} className="slip-card overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white shadow-sm">
           <header className="flex items-start justify-between gap-6 bg-slate-950 px-6 py-5 text-white">
             <div className="flex items-start gap-4">
-              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-extrabold text-slate-950">
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-bold text-slate-950">
                 {org?.name?.[0]?.toUpperCase() || "B"}
               </span>
               <div>
@@ -140,7 +140,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
                 <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Vehicle</h2>
                 <Row label="Vehicle" value={<span className="block max-w-[200px] text-right">{p.vehicle.title}</span>} />
                 <Row label="Make / model" value={p.vehicle.make ? `${p.vehicle.make} ${p.vehicle.model ?? ""}${p.vehicle.year ? ` (${p.vehicle.year})` : ""}` : undefined} />
-                <Row label="Number plate" value={p.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-black tracking-[0.12em] text-slate-900">{p.plateNumber}</span>} />
+                <Row label="Number plate" value={p.plateNumber && <span className="rounded border-2 border-slate-900 px-1.5 font-mono font-bold tracking-[0.12em] text-slate-900">{p.plateNumber}</span>} />
               </section>
             </div>
 
@@ -164,7 +164,7 @@ export default function SaleSlip({ data, backHref, backLabel, showNotes }: { dat
                 <tfoot>
                   <tr className="bg-slate-950 text-white">
                     <td className="px-4 py-2.5 font-bold">{p.agreedPrice !== undefined ? "Agreed sale price" : "Price"}</td>
-                    <td className="px-4 py-2.5 text-right text-base font-extrabold tabular-nums">{pkr(price)}</td>
+                    <td className="px-4 py-2.5 text-right text-base font-bold tabular-nums">{pkr(price)}</td>
                   </tr>
                   {!closedWithoutSale && (
                     <tr className="border-t border-[var(--gh-e1e4e8)]">

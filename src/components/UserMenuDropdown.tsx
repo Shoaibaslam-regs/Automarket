@@ -105,7 +105,7 @@ export default function UserMenuDropdown({
   return (
     <div
       role="menu"
-      className="absolute right-0 top-[calc(100%+10px)] z-[200] max-h-[calc(100vh-80px)] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-y-auto overscroll-contain rounded-[22px] bg-white shadow-lg ring-1 ring-slate-200/80"
+      className="absolute right-0 top-[calc(100%+10px)] z-[200] max-h-[calc(100vh-80px)] w-[300px] origin-top-right animate-[umIn_0.16s_ease-out] overflow-y-auto overscroll-contain rounded-xl bg-white shadow-lg ring-1 ring-slate-200/80"
     >
       <style>{`@keyframes umIn { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
 
@@ -156,7 +156,7 @@ export default function UserMenuDropdown({
       <div className="space-y-0.5 p-2">
         {hasBusiness && !inBusiness ? (
           <Link href="/business" onClick={onClose} role="menuitem" className="block rounded-xl bg-indigo-600 p-[1.5px]">
-            <span className="flex items-center gap-3 rounded-[10.5px] bg-white px-2 py-1.5">
+            <span className="flex items-center gap-3 rounded-lg bg-white px-2 py-1.5">
               <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-indigo-600 text-sm font-bold text-white">
                 {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="32px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={14} />)}
               </span>
@@ -188,7 +188,7 @@ export default function UserMenuDropdown({
         <Link
           href="/pricing"
           onClick={onClose}
-          className="relative mx-2 mb-2 flex items-center gap-3 overflow-hidden rounded-2xl bg-slate-900 p-3 text-white"
+          className="relative mx-2 mb-2 flex items-center gap-3 overflow-hidden rounded-xl bg-slate-900 p-3 text-white"
         >
           <span className="relative flex flex-shrink-0 items-center justify-center text-amber-500">
             <Sparkles size={15} />

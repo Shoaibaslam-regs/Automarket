@@ -409,7 +409,7 @@ export default function BookingsContent() {
               const trayBtn = "inline-flex items-center gap-1.5 rounded-lg border border-[var(--gh-e1e4e8)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--gh-0d1117)] transition hover:bg-[var(--gh-f6f8fa)] disabled:opacity-50";
               const total = booking.totalAmount + booking.deposit + (booking.lateFee ?? 0) + (booking.extraCharges ?? 0);
               return (
-                <div key={booking._id} className={`overflow-hidden rounded-2xl border bg-white ${look.border}`}>
+                <div key={booking._id} className={`overflow-hidden rounded-xl border bg-white ${look.border}`}>
                   <div className="p-3.5 sm:p-4">
                     {/* Vehicle */}
                     <div className="flex gap-3">
@@ -431,7 +431,7 @@ export default function BookingsContent() {
                         </div>
                         <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-[var(--gh-57606a)]">
                           {isDeal && (
-                            <span className="theme-static inline-flex items-center rounded-full bg-rose-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">
+                            <span className="theme-static inline-flex items-center rounded-full bg-rose-600 px-1.5 py-px text-[10px] font-bold tracking-wide text-white">
                               DEAL{(booking.dealId?.vehicleCount ?? 1) > 1 ? ` · ${booking.dealId!.vehicleCount} CARS` : ""}
                             </span>
                           )}
@@ -504,7 +504,7 @@ export default function BookingsContent() {
                     {/* Money */}
                     <div className="mt-3">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                        <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">PKR {total.toLocaleString()}</p>
+                        <p className="whitespace-nowrap text-base font-bold leading-tight tabular-nums text-[var(--gh-0d1117)]">PKR {total.toLocaleString()}</p>
                         {booking.status !== "CANCELLED" && <PaymentTag booking={booking} onClick={received && !viaBusiness ? () => setPayFor(booking) : undefined} />}
                       </div>
                       <p className="mt-0.5 text-[11px] leading-snug text-[var(--gh-8c959f)]">

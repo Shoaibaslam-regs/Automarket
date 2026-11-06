@@ -51,7 +51,7 @@ export default async function BlogPage({ searchParams }: Props) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10">
             <Newspaper size={13} /> AutoGO Blog
           </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Guides for every drive</h1>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Guides for every drive</h1>
           <p className="mt-2 max-w-[620px] text-sm leading-relaxed text-slate-400">
             Checklists, safety tips and money advice for buying, selling and renting cars and bikes in Pakistan.
           </p>
@@ -60,7 +60,7 @@ export default async function BlogPage({ searchParams }: Props) {
 
       <div className="mx-auto max-w-[1180px] px-4 py-8 sm:py-10">
         {/* Today's approved fuel prices, linking to the full Fuel prices page */}
-        <Link href="/fuel-prices" className="group mb-6 flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:flex-row sm:items-center sm:gap-5 sm:px-5">
+        <Link href="/fuel-prices" className="group mb-6 flex flex-col gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:flex-row sm:items-center sm:gap-5 sm:px-5">
           <span className="flex items-center gap-2 text-sm font-bold text-slate-900"><Fuel size={17} className="text-indigo-600" /> Fuel prices</span>
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-slate-600">
             {petrol && diesel ? (

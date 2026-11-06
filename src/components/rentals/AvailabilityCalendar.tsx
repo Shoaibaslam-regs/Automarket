@@ -171,7 +171,7 @@ export function AvailabilityCard({ source, title = "Availability", bookHref }: {
     });
   }, []);
   return (
-    <div id="availability" className="scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div id="availability" className="scroll-mt-24 rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
         className="flex w-full items-center gap-2.5 px-5 py-4 text-left">
         <CalendarDays size={17} className="flex-shrink-0 text-slate-400" />

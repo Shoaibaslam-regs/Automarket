@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Check, Gift, Headset, Megaphone, Minus, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Gift, Headset, Megaphone, Minus, ShieldCheck } from "lucide-react";
 import StepCards from "@/components/ui/StepCards";
 import PlanCards from "@/components/subscription/PlanCards";
 import UpgradeDialog from "@/components/subscription/UpgradeDialog";
@@ -67,19 +67,12 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-slate-950 pb-40 pt-16 text-center sm:pt-20">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" />
-
-        <div className="relative mx-auto max-w-[760px] px-4">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10">
-            <Sparkles size={13} /> Plans &amp; pricing
-          </span>
-          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Sell more with{" "}
-            <span className="text-white">AutoGO Premium</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-[560px] text-base leading-relaxed text-slate-400">
-            Start free with {PLANS.FREE.limits.listings} listings or deals a month. Upgrade when you need more listings, staff accounts for your team and full showroom management.
+      {/* A plain dark band: the heading and one short line, then the plan cards overlap its bottom */}
+      <section className="relative overflow-hidden bg-slate-950 pb-36 pt-12 text-center sm:pb-40 sm:pt-16">
+        <div className="relative mx-auto max-w-[680px] px-4 lg:max-w-[900px]">
+          <h1 className="text-3xl font-bold tracking-tight text-white [text-wrap:balance] sm:text-4xl lg:text-[44px] lg:leading-tight">Sell more with AutoGO premium</h1>
+          <p className="mx-auto mt-3 max-w-[520px] text-[15px] leading-relaxed text-slate-400 sm:mt-4 sm:text-base">
+            Start free with {PLANS.FREE.limits.listings} listings or deals a month. Upgrade for more listings, a team and the full business console.
           </p>
         </div>
       </section>
@@ -152,7 +145,7 @@ export default function PricingPage() {
 
         {/* Current usage */}
         {sub && current && (
-          <section className="mt-12 rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80 sm:p-7">
+          <section className="mt-12 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/80 sm:p-7">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Your usage</p>
@@ -183,7 +176,7 @@ export default function PricingPage() {
         {/* Comparison */}
         <section className="mt-12">
           <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900">Compare plans</h2>
-          <div className="mt-6 overflow-x-auto rounded-[22px] bg-white ring-1 ring-slate-200/80">
+          <div className="mt-6 overflow-x-auto rounded-xl bg-white ring-1 ring-slate-200/80">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -222,7 +215,7 @@ export default function PricingPage() {
         </section>
 
         {/* Talk to the team */}
-        <section className="relative mt-12 overflow-hidden rounded-[26px] bg-slate-950 p-6 text-white sm:p-10">
+        <section className="relative mt-12 overflow-hidden rounded-2xl bg-slate-950 p-6 text-white sm:p-10">
           <div className="relative grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-white/10">

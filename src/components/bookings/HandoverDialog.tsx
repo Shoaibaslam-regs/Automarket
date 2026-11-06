@@ -24,7 +24,7 @@ export function fmtDateTime(d: Date | string): string {
 /** A number plate styled like a Pakistani registration plate. */
 export function PlateBadge({ plate, className = "" }: { plate: string; className?: string }) {
   return (
-    <span className={`theme-static inline-flex items-center rounded-md border-2 border-slate-900 bg-white px-2 py-0.5 font-mono text-xs font-black tracking-[0.12em] text-slate-900 ${className}`}>
+    <span className={`theme-static inline-flex items-center rounded-md border-2 border-slate-900 bg-white px-2 py-0.5 font-mono text-xs font-bold tracking-[0.12em] text-slate-900 ${className}`}>
       {plate}
     </span>
   );

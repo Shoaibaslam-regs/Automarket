@@ -49,7 +49,7 @@ export default function LaunchAnimation({ title, subtitle, onDone }: { title: st
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1.1] }}
         // Follows the theme (white in light mode, dark slate in dark mode), like the site's dialogs
-        className="relative w-[min(340px,100%)] overflow-hidden rounded-3xl bg-white px-6 pb-5 pt-8 text-center shadow-lg ring-1 ring-slate-200/80"
+        className="relative w-[min(340px,100%)] overflow-hidden rounded-2xl bg-white px-6 pb-5 pt-8 text-center shadow-lg ring-1 ring-slate-200/80"
       >
 
         {/* Tick with a confetti burst */}

@@ -23,7 +23,7 @@ export function ShopNoticeCard({ notice, now = new Date() }: {
     </span>
   );
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <article className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${kind.bar}`} />
       <div className="flex gap-3.5 py-4 pl-5 pr-4 sm:gap-4 sm:py-5 sm:pl-6 sm:pr-5">
         <Icon size={20} strokeWidth={1.9} className={`mt-0.5 flex-shrink-0 ${kind.text}`} aria-hidden />

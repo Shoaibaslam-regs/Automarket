@@ -48,7 +48,7 @@ export function OfficialPostCard({ post }: { post: OfficialPost }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <StatusText color={st.color}>{ANNOUNCEMENT_LABEL[post.kind]}</StatusText>
         {post.pinned && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--gh-57606a)]"><Pin size={10} /> Pinned</span>}
-        {post.unread && <span className="rounded-full bg-indigo-600 px-1.5 py-px text-[9px] font-extrabold tracking-wide text-white">NEW</span>}
+        {post.unread && <span className="rounded-full bg-indigo-600 px-1.5 py-px text-[10px] font-bold tracking-wide text-white">NEW</span>}
         <span className="ml-auto text-[11px] text-[var(--gh-8c959f)]">{day(post.createdAt)}</span>
       </div>
       <h3 className="mt-2 text-[15px] font-bold leading-snug text-[var(--gh-0d1117)]">{post.title}</h3>
@@ -95,14 +95,14 @@ export function OfficialDashboardCard() {
   const latest = unread[0] ?? data.announcements[0];
 
   return (
-    <div className={`mb-5 flex flex-col gap-3 rounded-2xl border bg-slate-50 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:gap-5 ${unread.length ? "border-indigo-200 ring-1 ring-inset ring-indigo-100" : "border-[var(--gh-e1e4e8)]"}`}>
+    <div className={`mb-5 flex flex-col gap-3 rounded-xl border bg-slate-50 px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:gap-5 ${unread.length ? "border-indigo-200 ring-1 ring-inset ring-indigo-100" : "border-[var(--gh-e1e4e8)]"}`}>
       {/* Phones and tablets: the logo and the buttons share one row that never wraps; from lg the row dissolves (contents) and
           its parts take their places in the single line: logo, divider, text, buttons */}
       <div className="flex items-center justify-between gap-2 lg:contents">
         {/* Branding: the same AutoGO Official icon as the Updates page (OfficialAvatar), with the name beside it */}
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-2.5 lg:order-1">
           <OfficialAvatar size={36} />
-          <span className="inline-flex items-center gap-1 whitespace-nowrap text-[15px] font-extrabold tracking-tight text-[var(--gh-0d1117)]">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-[15px] font-bold tracking-tight text-[var(--gh-0d1117)]">
             AutoGO <VerifiedBadge variant="icon" size={14} />
           </span>
         </div>
@@ -128,7 +128,7 @@ export function OfficialDashboardCard() {
       <div className="min-w-0 lg:order-3 lg:flex-1">
         <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-[var(--gh-0d1117)] sm:text-[15px]">
           <span className="truncate">{unread.length ? "New Update Available!" : "Updates from AutoGO"}</span>
-          {unread.length > 1 && <span className="flex-shrink-0 rounded-full bg-indigo-600 px-1.5 py-px text-[10px] font-extrabold text-white">{unread.length} new</span>}
+          {unread.length > 1 && <span className="flex-shrink-0 rounded-full bg-indigo-600 px-1.5 py-px text-[10px] font-bold text-white">{unread.length} new</span>}
         </p>
         <p className="mt-0.5 truncate text-xs text-[var(--gh-57606a)] sm:text-[13px]">
           {latest

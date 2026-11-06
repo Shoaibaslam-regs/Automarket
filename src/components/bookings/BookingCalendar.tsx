@@ -79,7 +79,7 @@ export default function BookingCalendar({ bookings, vehicles, onOpen }: {
   const navBtn = "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--gh-e1e4e8)] bg-white text-[var(--gh-0d1117)]";
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--gh-e1e4e8)] bg-white">
+    <div className="overflow-hidden rounded-xl border border-[var(--gh-e1e4e8)] bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--gh-e1e4e8)] px-4 py-3">
         <div className="flex items-center gap-2">
           <button onClick={() => shift(-1)} aria-label="Previous month" className={navBtn}><ChevronLeft size={16} /></button>
@@ -106,7 +106,7 @@ export default function BookingCalendar({ bookings, vehicles, onOpen }: {
                 const wd = new Date(start + i * DAY).getUTCDay();
                 return (
                   <div key={i} style={{ width: COL }} className={`flex-shrink-0 py-1.5 text-center ${i === todayIdx ? "bg-indigo-600 font-bold text-white" : wd === 0 ? "text-[var(--gh-cf222e)]" : "text-[var(--gh-57606a)]"}`}>
-                    <div className="text-[9px] uppercase">{"SMTWTFS"[wd]}</div>
+                    <div className="text-[10px] uppercase">{"SMTWTFS"[wd]}</div>
                     <div className="font-semibold">{i + 1}</div>
                   </div>
                 );

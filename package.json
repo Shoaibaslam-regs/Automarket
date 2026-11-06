@@ -13,6 +13,7 @@
     "backfill-login-phones": "tsx --env-file-if-exists=.env src/scripts/backfill-login-phones.ts",
     "move-support-messages": "tsx --env-file-if-exists=.env src/scripts/move-support-messages.ts",
     "test": "vitest run",
+    "test:db": "vitest run --config vitest.db.config.ts",
     "test:e2e": "playwright test",
     "perf": "PERF=1 playwright test e2e/perf.spec.ts"
   },

@@ -438,12 +438,12 @@ export default function BusinessSalesPage() {
               { label: "Sold this month", value: `PKR ${formatLakh(stats.revenueThisMonth)}`, hint: `${stats.soldThisMonth} vehicle${stats.soldThisMonth !== 1 ? "s" : ""} · PKR ${formatLakh(stats.revenueTotal)} all time`, icon: BadgeDollarSign, color: "var(--gh-1a7f37)" },
               { label: "Balance still due", value: `PKR ${formatLakh(stats.outstanding)}`, icon: Wallet, color: stats.outstanding ? "var(--gh-cf222e)" : "var(--gh-0d1117)" },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+              <div key={s.label} className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium text-[var(--gh-8c959f)]">{s.label}</p>
                   <s.icon size={16} className="flex-shrink-0" style={{ color: s.color }} />
                 </div>
-                <p className="mt-2 text-lg font-extrabold leading-tight tabular-nums sm:text-xl" style={{ color: s.color }}>{s.value}</p>
+                <p className="mt-2 text-lg font-bold leading-tight tabular-nums sm:text-xl" style={{ color: s.color }}>{s.value}</p>
                 {s.hint && <p className="mt-0.5 truncate text-[11px] text-[var(--gh-8c959f)]">{s.hint}</p>}
               </div>
             ))}
@@ -471,7 +471,7 @@ export default function BusinessSalesPage() {
 
         <div className="grid items-start gap-3 xl:grid-cols-2">
           {loading ? (
-            [1, 2].map(i => <div key={i} className="h-[180px] animate-pulse rounded-2xl bg-white" />)
+            [1, 2].map(i => <div key={i} className="h-[180px] animate-pulse rounded-xl bg-white" />)
           ) : loadError ? (
             <div className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)] xl:col-span-2">{loadError}</div>
           ) : shown.length === 0 ? (
@@ -498,7 +498,7 @@ export default function BusinessSalesPage() {
               : null;
             const itemHref = s.listingId ? `/listings/${s.listingId}` : s.dealId ? `/deals/${s.dealId}` : null;
             return (
-              <div key={s._id} className={`overflow-hidden rounded-2xl border bg-white ${s.status === "REQUESTED" ? "border-[var(--gh-e3b341)]" : "border-[var(--gh-e1e4e8)]"}`}>
+              <div key={s._id} className={`overflow-hidden rounded-xl border bg-white ${s.status === "REQUESTED" ? "border-[var(--gh-e3b341)]" : "border-[var(--gh-e1e4e8)]"}`}>
                 <div className="p-3.5 sm:p-4">
                   <div className="flex gap-3">
                     <div className="relative h-14 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)] sm:h-16 sm:w-20">
@@ -533,7 +533,7 @@ export default function BusinessSalesPage() {
 
                   <div className="mt-3">
                     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                      <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(s))}</p>
+                      <p className="whitespace-nowrap text-base font-bold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(s))}</p>
                       {!closedNoSale && s.status !== "REQUESTED" && <PaymentTag booking={asPayable(s)} onClick={canManage ? () => setPayFor(s) : undefined} />}
                     </div>
                     <p className="mt-0.5 text-[11px] text-[var(--gh-8c959f)]">

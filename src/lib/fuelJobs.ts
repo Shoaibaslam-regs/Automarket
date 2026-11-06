@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
 import { connectDB } from "@/lib/mongodb";
 import { FuelPrice } from "@/models/FuelPrice";
@@ -7,8 +8,10 @@ import { generateCounted } from "@/lib/usageTracker";
 import { hitRateLimit } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
 import { invalidateFuel } from "@/lib/pageCache";
+import { approvedBefore, publishFuelUpdateAutomatically } from "@/lib/fuelAdmin";
 import {
-  FRESH_NOTICE_DAYS, NOTICES_PER_RUN, OGRA_PER_RUN, OGRA_PRICES_URL, PETROLEUM_NOTICES_URL, checkNotice, findNoticeFile, ograUrl,
+  FRESH_NOTICE_DAYS, NOTICES_PER_RUN, OGRA_PER_RUN, OGRA_PRICES_URL, PETROLEUM_NOTICES_URL, autoPublishHold, checkNotice, findNoticeFile,
+  ograUrl,
   parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl, pkDayKey, type RawNotice,
 } from "@/lib/fuelPrices";
 
@@ -196,10 +199,17 @@ async function checkPetroleumNotices(now: Date, budgetMs: number) {
   return counts;
 }
 
-type NoticeCounts = { found: number; pending: number; failed: number; skipped: number; source?: string };
+type NoticeCounts = { found: number; pending: number; failed: number; skipped: number; published?: number; source?: string };
 
-/** Saves one checked release: PENDING for an admin, or SKIPPED when the same prices are already approved for that day. */
-async function saveChecked(base: { notificationUrl: string; listedDay: string; method: "AUTO" }, fileUrl: string, raw: RawNotice, model: string, now: Date, counts: NoticeCounts) {
+/** OGRA days go live by themselves unless held (autoPublishHold); `FUEL_AUTO_PUBLISH=0` sends every day to an admin. */
+const autoPublishOn = () => process.env.FUEL_AUTO_PUBLISH !== "0";
+
+/**
+ * Saves one checked release: PENDING for an admin, or SKIPPED when the same prices are already approved for that day.
+ * With `autoPublish` (OGRA's exact PDF text) a PENDING day goes live straight away unless autoPublishHold finds a
+ * reason to hold it, which is then shown to the admin.
+ */
+async function saveChecked(base: { notificationUrl: string; listedDay: string; method: "AUTO" }, fileUrl: string, raw: RawNotice, model: string, now: Date, counts: NoticeCounts, autoPublish = false) {
   const checked = checkNotice(raw, now);
   if (!checked.data) {
     await FuelPriceUpdate.create({ ...base, fileUrl, status: "FAILED", extractionDetails: { model, error: checked.error, warnings: checked.warnings, raw } });
@@ -209,14 +219,16 @@ async function saveChecked(base: { notificationUrl: string; listedDay: string; m
   const d = checked.data;
   const approved = await approvedFor(d.effectiveDate);
   const same = approved && approved.petrol === d.petrol && approved.diesel === d.diesel;
-  await FuelPriceUpdate.create({
+  const hold = !same && autoPublish ? autoPublishHold({ petrol: d.petrol, diesel: d.diesel }, await approvedBefore(d.effectiveDate), checked.warnings) : null;
+  const created = await FuelPriceUpdate.create({
     ...base, fileUrl, status: same ? "SKIPPED" : "PENDING",
     notificationDate: d.releaseDate ?? undefined, effectiveDate: d.effectiveDate,
     extractedPetrolPrice: d.petrol, extractedDieselPrice: d.diesel,
     previousPetrolPrice: d.previousPetrol ?? undefined, previousDieselPrice: d.previousDiesel ?? undefined,
-    extractionDetails: { model, warnings: checked.warnings, raw, ...(same && { error: "Same prices as the ones already approved for this day" }) },
+    extractionDetails: { model, warnings: checked.warnings, raw, ...(same && { error: "Same prices as the ones already approved for this day" }), ...(hold && { held: hold }) },
   });
   if (same) counts.skipped++;
+  else if (autoPublish && !hold && await publishFuelUpdateAutomatically(created._id as mongoose.Types.ObjectId)) counts.published = (counts.published ?? 0) + 1;
   else counts.pending++;
 }
 
@@ -241,7 +253,7 @@ async function checkOgraNotices(now: Date, budgetMs: number): Promise<NoticeCoun
       const raw = parseOgraPdfText(await pdfText(await fetchOgra(link.url, "pdf")));
       // The PDF must be for the day it is listed under
       if (raw.effectiveDate && raw.effectiveDate !== link.day) raw.isPriceNotice = false;
-      await saveChecked(base, link.url, raw, "OGRA PDF text", now, counts);
+      await saveChecked(base, link.url, raw, "OGRA PDF text", now, counts, autoPublishOn());
     } catch (error) {
       if ((error as { code?: number }).code === 11000) continue;
       reportError("OGRA publication read failed:", link.url, error);
@@ -282,9 +294,9 @@ export async function runFuelJobs(now = new Date()) {
     await setStatus("notices", {
       lastRunAt: at, lastSuccessAt: at,
       lastError: counts.ograError ? `OGRA couldn't be read (${counts.ograError}); used the Petroleum Division page instead` : "",
-      lastResult: `${counts.source}: ${counts.pending} new, ${counts.failed} couldn't be read, ${counts.skipped} unchanged`,
+      lastResult: `${counts.source}: ${counts.published ? `${counts.published} published automatically, ` : ""}${counts.pending} waiting for review, ${counts.failed} couldn't be read, ${counts.skipped} unchanged`,
     });
-    if (counts.pending || counts.failed) invalidateFuel();
+    if (counts.pending || counts.failed || counts.published) invalidateFuel();
   } catch (error) {
     reportError("Fuel notice check failed:", error);
     const message = error instanceof Error ? error.message.slice(0, 300) : "Check failed";

@@ -250,7 +250,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
 
       {/* Preview + actions */}
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <p className="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Preview</p>
           <div className="relative aspect-[4/3] bg-slate-100">
             {form.images[0] ? (
@@ -259,7 +259,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
               <span className="flex h-full flex-col items-center justify-center gap-1 text-xs text-slate-400"><ImageOff size={24} /> Main photo</span>
             )}
             {discount.discountValue > 0 && (
-              <span className="theme-static absolute left-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white">
+              <span className="theme-static absolute left-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase text-white">
                 {dealLabel(discount)}
               </span>
             )}
@@ -269,7 +269,7 @@ export default function DealForm({ initial, dealId }: { initial: DealFormValues;
             <p className="mt-0.5 line-clamp-2 text-[15px] font-semibold text-slate-900">{form.title || "Your deal title"}</p>
             {final > 0 ? (
               <p className="mt-2 flex flex-wrap items-baseline gap-x-2">
-                <span className="text-lg font-extrabold text-rose-600">PKR {formatLakh(final)}{rent && <span className="text-xs font-semibold">/day</span>}</span>
+                <span className="text-lg font-bold text-rose-600">PKR {formatLakh(final)}{rent && <span className="text-xs font-semibold">/day</span>}</span>
                 <span className="text-xs text-slate-400 line-through">{formatLakh(price)}</span>
               </p>
             ) : (

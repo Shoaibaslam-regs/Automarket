@@ -7,7 +7,7 @@ export default function NotificationsLoading() {
     <div className="min-h-screen bg-slate-50" aria-busy="true" aria-label="Loading">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         <TitleBlock lines={2} className="mb-5" />
-        <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4">
+        <div className="mb-4 rounded-xl border border-slate-200/80 bg-white p-4">
           <div className="flex gap-3">
             <Skeleton className="h-5 w-5 flex-shrink-0 rounded" />
             <div className="flex-1 space-y-2">
@@ -20,7 +20,7 @@ export default function NotificationsLoading() {
         </div>
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex gap-3 rounded-2xl border border-slate-200/80 bg-white p-4">
+            <div key={i} className="flex gap-3 rounded-xl border border-slate-200/80 bg-white p-4">
               <Skeleton className="h-5 w-5 flex-shrink-0 rounded-full" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-3.5 w-3/4" />

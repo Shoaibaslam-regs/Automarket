@@ -118,7 +118,7 @@ export default function AdvancedReports() {
             {TOTALS.map(t => (
               <div key={t.key} className={card}>
                 <p className="text-[11px] text-slate-500">{t.label}</p>
-                <p className="mt-1 text-xl font-extrabold tabular-nums text-slate-900">{t.money ? pkr(data.current[t.key]) : data.current[t.key]}</p>
+                <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{t.money ? pkr(data.current[t.key]) : data.current[t.key]}</p>
                 <p className="mt-1 text-[11px]"><Change cur={data.current[t.key]} prev={data.previous[t.key]} /></p>
               </div>
             ))}

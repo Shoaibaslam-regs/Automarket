@@ -10,7 +10,7 @@ export default function BlogCard({ post, featured = false }: { post: Card; featu
   const cat = BLOG_CATEGORY[post.category];
   return (
     <Link href={`/blog/${post.slug}`}
-      className={`group flex overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/5 ${featured ? "flex-col md:flex-row" : "flex-col"}`}>
+      className={`group flex overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5 ${featured ? "flex-col md:flex-row" : "flex-col"}`}>
       <span className={`relative block flex-shrink-0 overflow-hidden ${featured ? "aspect-[16/9] md:aspect-auto md:w-[55%]" : "aspect-[16/9]"}`}>
         <PhotoSkeleton className="absolute inset-0" size={featured ? "lg" : "sm"} />
         {post.coverImage && (

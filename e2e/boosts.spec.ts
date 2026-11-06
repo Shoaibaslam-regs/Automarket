@@ -27,7 +27,7 @@ test("Ultimate boosts and pins a vehicle; Premium can't, and its Money page is l
   // Boost and pin from Inventory
   await page.goto("/business/inventory");
   await expect(page.getByText(`${before.left} of 50`)).toBeVisible();
-  const card = page.locator("div.rounded-2xl").filter({ hasText: "Toyota Land Cruiser ZX 2023" }).filter({ has: page.getByRole("link", { name: "View" }) });
+  const card = page.locator("div.rounded-xl").filter({ hasText: "Toyota Land Cruiser ZX 2023" }).filter({ has: page.getByRole("link", { name: "View" }) });
   await card.getByRole("button", { name: "Boost" }).click();
   await expect(page.getByText(`${before.left - 1} of 50`)).toBeVisible();
   await expect(card.getByRole("button", { name: "Boost" })).toHaveCount(0);

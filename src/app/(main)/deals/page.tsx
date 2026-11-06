@@ -37,7 +37,7 @@ export default async function DealsPage({ searchParams }: Props) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-rose-200 ring-1 ring-inset ring-white/10">
             <Flame size={13} /> Limited-time offers
           </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Hot deals</h1>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Hot deals</h1>
           <p className="mt-2 max-w-[560px] text-sm leading-relaxed text-slate-400">
             Special prices from dealers, showrooms and rental companies across Pakistan: cars for sale, and rental packages you can book for weddings, trips and events.
           </p>

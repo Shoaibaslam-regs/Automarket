@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  checkNotice, findNoticeFile, ograUrl, parseAdminPrices, parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl,
+  autoPublishHold, checkNotice, findNoticeFile, ograUrl, parseAdminPrices, parseNoticeCalendar, parseOgraList, parseOgraPdfText, petroleumUrl,
   priceChange,
 } from "@/lib/fuelPrices";
 
@@ -133,3 +133,17 @@ describe("OGRA price publications", () => {
   });
 });
 
+
+describe("autoPublishHold", () => {
+  const before = { petrol: 369.06, diesel: 391.52 };
+  it("lets a normal day through", () => {
+    expect(autoPublishHold({ petrol: 362, diesel: 387.81 }, before)).toBeNull();
+  });
+  it("holds a warning, the very first price, or a jump over 8%", () => {
+    expect(autoPublishHold({ petrol: 362, diesel: 387.81 }, before, ["Petrol: doesn't add up"])).toMatch(/warning/);
+    expect(autoPublishHold({ petrol: 362, diesel: 387.81 }, null)).toMatch(/No earlier/);
+    expect(autoPublishHold({ petrol: 362, diesel: 387.81 }, { petrol: 369.06, diesel: null })).toMatch(/No earlier/);
+    expect(autoPublishHold({ petrol: 402, diesel: 387.81 }, before)).toMatch(/Petrol moved 8\.9%/);
+    expect(autoPublishHold({ petrol: 362, diesel: 350 }, before)).toMatch(/Diesel moved/);
+  });
+});

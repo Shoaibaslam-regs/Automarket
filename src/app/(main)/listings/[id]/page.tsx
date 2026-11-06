@@ -339,7 +339,7 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Left */}
           <div className="lg:col-span-2 space-y-6">
           {/* Images */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
+            <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
               <ImageGallery images={l.images ?? []} title={l.title} />
             </div>
             {/* Title + price */}

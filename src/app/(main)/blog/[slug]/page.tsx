@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: Props) {
           <span className="text-slate-300" aria-hidden>·</span>
           <span className="inline-flex items-center gap-1 font-medium text-slate-500"><Clock3 size={12} aria-hidden /> {readingMinutes(post.body)} min read</span>
         </p>
-        <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">{post.title}</h1>
+        <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">{post.title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-slate-500">{post.excerpt}</p>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-slate-100 py-3">
           <p className="text-sm text-slate-500">
@@ -86,7 +86,7 @@ export default async function BlogPostPage({ params }: Props) {
           <ShareButton path={`/blog/${post.slug}`} variant="pill" title={post.title} />
         </div>
         {post.coverImage && (
-          <span className="relative mt-6 block aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100">
+          <span className="relative mt-6 block aspect-[16/9] overflow-hidden rounded-xl bg-slate-100">
             <Image src={post.coverImage} alt="" fill sizes="(min-width: 768px) 720px, 100vw" className="object-cover" priority />
           </span>
         )}

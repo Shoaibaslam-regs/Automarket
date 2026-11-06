@@ -73,7 +73,7 @@ export default async function BookingPage({
         <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Summary card: shown first on mobile so the vehicle is in view, beside the form on desktop */}
           <aside className="min-w-0 lg:sticky lg:top-24 lg:order-2">
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex gap-3 p-3 lg:block lg:p-0">
                 <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 lg:h-auto lg:w-full lg:rounded-none lg:aspect-[16/10]">
                   {listing.images?.[0] ? (

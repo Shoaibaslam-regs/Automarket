@@ -9,7 +9,7 @@ export default function DealLoading() {
         <Skeleton className="mb-4 h-4 w-20" />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-x-8">
           <div className="min-w-0 space-y-4 lg:col-span-2">
-            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+            <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
               <Skeleton className="aspect-[16/10] rounded-none" />
             </div>
             <div className="flex gap-2">
@@ -23,7 +23,7 @@ export default function DealLoading() {
             </div>
           </div>
           <aside className="space-y-4">
-            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
+            <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
               <div className="space-y-2.5 bg-slate-200/50 p-5">
                 <Skeleton className="h-2.5 w-24" />
                 <Skeleton className="h-5 w-4/5" />
@@ -38,7 +38,7 @@ export default function DealLoading() {
                 <Skeleton className="h-10 w-full rounded-xl" />
               </div>
             </div>
-            <Skeleton className="h-16 w-full rounded-2xl" />
+            <Skeleton className="h-16 w-full rounded-xl" />
           </aside>
         </div>
       </div>

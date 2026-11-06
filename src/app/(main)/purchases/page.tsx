@@ -124,7 +124,7 @@ export default function PurchasesPage() {
         {error ? (
           <p className="rounded-2xl border border-[var(--gh-ffcdd2)] bg-[var(--gh-fff0f0)] p-6 text-center text-sm text-[var(--gh-cf222e)]">{error}</p>
         ) : purchases === null ? (
-          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-40 animate-pulse rounded-2xl bg-white" />)}</div>
+          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-40 animate-pulse rounded-xl bg-white" />)}</div>
         ) : purchases.length === 0 ? (
           <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white px-6 py-14 text-center">
             <ShoppingBag size={30} strokeWidth={1.5} className="mx-auto mb-3 text-[var(--gh-8c959f)]" />
@@ -142,7 +142,7 @@ export default function PurchasesPage() {
               const itemHref = p.listingId ? `/listings/${p.listingId}` : p.dealId ? `/deals/${p.dealId}` : null;
               const showPayment = p.status === "ACCEPTED" || p.status === "COMPLETED";
               return (
-                <div key={p._id} className={`overflow-hidden rounded-2xl border bg-white ${!p.seenByBuyer ? "border-[var(--gh-56d364)]" : "border-[var(--gh-e1e4e8)]"}`}>
+                <div key={p._id} className={`overflow-hidden rounded-xl border bg-white ${!p.seenByBuyer ? "border-[var(--gh-56d364)]" : "border-[var(--gh-e1e4e8)]"}`}>
                   <div className="p-3.5 sm:p-4">
                     <div className="flex gap-3">
                       <div className="relative h-14 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--gh-f6f8fa)] sm:h-16 sm:w-20">
@@ -179,7 +179,7 @@ export default function PurchasesPage() {
 
                     <div className="mt-3">
                       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                        <p className="whitespace-nowrap text-base font-extrabold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(p))}</p>
+                        <p className="whitespace-nowrap text-base font-bold leading-tight tabular-nums text-[var(--gh-0d1117)]">{pkr(salePrice(p))}</p>
                         {showPayment && <PaymentTag booking={asPayable(p)} />}
                       </div>
                       <p className="mt-0.5 text-[11px] text-[var(--gh-8c959f)]">

@@ -14,7 +14,7 @@ import { CountBadge } from "@/components/NotificationBadge";
 import UserIdBadge from "@/components/UserIdBadge";
 import MenuGroupTitle from "@/components/ui/MenuGroupTitle";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { planInfo } from "@/lib/plans";
+import { PLANS, planInfo } from "@/lib/plans";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { BUSINESS_ROLE_NAME, useMyBusiness } from "@/hooks/useMyBusiness";
 import { InstallAppRow } from "@/components/pwa/InstallBanner";
@@ -23,7 +23,7 @@ import { openFeedback } from "@/components/FeedbackHost";
 
 import AdminBadge from "@/components/AdminBadge";
 /** `action` makes the row a button (e.g. opening a dialog) instead of a link */
-type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string; action?: () => void };
+type Item = { href: string; label: string; icon: LucideIcon; count?: number; hint?: string; action?: () => void; shimmer?: boolean };
 
 
 /**
@@ -86,15 +86,16 @@ export default function MobileNavDrawer({
     { href: "/saved", label: "Saved", icon: Heart },
   ];
   const browse: Item[] = [
-    { href: "/listings", label: "Marketplace", icon: Search },
-    { href: "/blog", label: "Blog & guides", icon: Newspaper },
-    { href: "/help", label: "Help & safety", icon: LifeBuoy },
-    { href: "#feedback", label: "Send feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
-    { href: "/pricing", label: "Plans & pricing", icon: Crown, hint: plan && plan.id === "FREE" ? "Upgrade" : undefined },
+    // The owner asked for a light shimmer on this row (Nov 2026), to draw the eye to the Marketplace
+    { href: "/listings", label: "Marketplace", icon: Search, shimmer: true },
+    { href: "/blog", label: "Blog & Guides", icon: Newspaper },
+    { href: "/help", label: "Help & Safety", icon: LifeBuoy },
+    { href: "#feedback", label: "Send Feedback", icon: MessageSquareHeart, action: () => { onClose(); openFeedback(); } },
+    { href: "/pricing", label: "Plans & Pricing", icon: Crown, hint: plan && plan.id === "FREE" ? "Upgrade" : undefined },
   ];
   const account: Item[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile", label: "Profile & settings", icon: Settings },
+    { href: "/profile", label: "Profile & Settings", icon: Settings },
     // Business accounts get a business card instead (below); others can start one
     ...(hasBusiness && !pathname.startsWith("/business") ? [] : [{
       href: pathname.startsWith("/business") ? "/" : "/business",
@@ -108,10 +109,10 @@ export default function MobileNavDrawer({
     if (item.action) {
       return (
         <button key={item.href} type="button" onClick={item.action}
-          className="group relative flex w-full items-center gap-2.5 rounded-lg py-1.5 pl-5 pr-2 text-left text-[13px] font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-50">
-          <span className="flex flex-shrink-0 items-center justify-center text-slate-500"><Icon size={14} strokeWidth={1.9} /></span>
+          className="group relative flex min-h-10 w-full items-center gap-3 rounded-lg py-2 pl-5 pr-2 text-left text-[14px] font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-50">
+          <span className="flex flex-shrink-0 items-center justify-center text-slate-500"><Icon size={16} strokeWidth={1.8} /></span>
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          <ChevronRight size={13} className="text-slate-300" />
+          <ChevronRight size={14} className="text-slate-300" />
         </button>
       );
     }
@@ -123,27 +124,27 @@ export default function MobileNavDrawer({
         onClick={onClose}
         aria-current={active ? "page" : undefined}
         // The current page: a dot on the left and a faint background; hover is only a light tint
-        className={`group relative flex items-center gap-2.5 rounded-lg py-1.5 pl-5 pr-2 text-[13px] font-medium transition ${
+        className={`group relative flex min-h-10 items-center gap-3 rounded-lg py-2 pl-5 pr-2 text-[14px] font-medium transition ${
           active ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50 active:bg-slate-50"
-        }`}
+        } ${item.shimmer ? "mn-shimmer overflow-hidden" : ""}`}
       >
         {active && <span aria-hidden className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-indigo-600" />}
         <span className={`flex flex-shrink-0 items-center justify-center ${active ? "text-slate-900" : "text-slate-500"}`}>
-          <Icon size={14} strokeWidth={active ? 2.2 : 1.9} />
+          <Icon size={16} strokeWidth={active ? 2.1 : 1.8} />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {item.hint && (
-          <span className="rounded-full theme-static bg-amber-400 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-slate-950">{item.hint}</span>
+          <span className="rounded-full theme-static bg-amber-400 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-slate-950">{item.hint}</span>
         )}
         <CountBadge count={item.count ?? 0} />
-        <ChevronRight size={13} className={active ? "text-slate-400" : "text-slate-300"} />
+        <ChevronRight size={14} className={active ? "text-slate-400" : "text-slate-300"} />
       </Link>
     );
   };
 
   const section = (title: string, items: Item[]) => (
     <div>
-      <MenuGroupTitle className="pl-5 pr-2">{title}</MenuGroupTitle>
+      <MenuGroupTitle className="mb-1 pl-5 pr-2">{title}</MenuGroupTitle>
       <div className="space-y-0.5">{items.map(row)}</div>
     </div>
   );
@@ -156,18 +157,26 @@ export default function MobileNavDrawer({
       <style>{`
         @keyframes mnFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes mnSlide { from { transform: translateX(100%) } to { transform: translateX(0) } }
-        @keyframes mnFlame { 0%, 100% { transform: scale(1) rotate(-4deg) } 50% { transform: scale(1.18) rotate(5deg) } }
-        @media (prefers-reduced-motion: reduce) { .mn-hot, .mn-hot * { animation: none !important } }
+        /* Marketplace row: a glass-like glint (a bright white line with soft grey edges) sweeps across it, then rests */
+        @keyframes mnShimmer { 0% { transform: translateX(-120%) skewX(-20deg) } 35%, 100% { transform: translateX(320%) skewX(-20deg) } }
+        .mn-shimmer { isolation: isolate; }
+        /* z-index -1 inside the isolated row: the glint passes behind the icon and the word, never over them */
+        .mn-shimmer::after { content: ""; position: absolute; inset: 0; z-index: -1; width: 35%; pointer-events: none;
+          background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(148, 163, 184, 0.14) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(148, 163, 184, 0.14) 62%, rgba(148, 163, 184, 0) 100%);
+          animation: mnShimmer 6s ease-in-out infinite; }
+        /* Dark mode: a softer glint, so the light text stays readable as it passes behind */
+        .dark .mn-shimmer::after { background: linear-gradient(90deg, rgba(148, 163, 184, 0) 0%, rgba(148, 163, 184, 0.12) 38%, rgba(255, 255, 255, 0.32) 50%, rgba(148, 163, 184, 0.12) 62%, rgba(148, 163, 184, 0) 100%); }
+        @media (prefers-reduced-motion: reduce) { .mn-hot, .mn-hot *, .mn-shimmer::after { animation: none !important } .mn-shimmer::after { display: none } }
       `}</style>
 
-      <aside className="absolute inset-y-0 right-0 flex w-[min(80vw,300px)] animate-[mnSlide_0.28s_cubic-bezier(0.22,1,0.36,1)] flex-col bg-white shadow-2xl shadow-slate-950/40">
+      <aside className="absolute inset-y-0 right-0 flex w-[min(80vw,300px)] animate-[mnSlide_0.28s_cubic-bezier(0.22,1,0.36,1)] flex-col bg-white shadow-2xl shadow-black/40 dark:shadow-none">
         {/* Header */}
         {/* White in light mode and dark in dark mode (plain neutrals, which the theme inverts) */}
         <div className="relative overflow-hidden border-b border-slate-200 bg-white px-4 pb-3.5 pt-3 text-slate-900">
 
           <div className="relative flex items-center justify-end">
-            <button onClick={onClose} aria-label="Close menu" className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-200">
-              <X size={14} />
+            <button onClick={onClose} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-slate-200">
+              <X size={16} />
             </button>
           </div>
 
@@ -181,12 +190,12 @@ export default function MobileNavDrawer({
                   </span>
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="flex min-w-0 items-center gap-1 text-sm font-semibold leading-tight"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
-                  <p className="mt-0.5 truncate text-[11px] text-slate-500">{user.email}</p>
+                  <p className="flex min-w-0 items-center gap-1 text-[15px] font-semibold leading-tight"><span className="truncate">{user.name}</span><AdminBadge user={user} /></p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{user.email}</p>
                 </div>
               </div>
               {/* Plan, business and ID on their own row with room between them (plain text, no chips) */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] font-semibold">
+              <div className="mt-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-slate-100 pt-3 text-xs font-semibold">
                 {plan && (
                   <span className="inline-flex items-center gap-1 text-amber-700"><Crown size={12} /> {plan.name}</span>
                 )}
@@ -197,7 +206,7 @@ export default function MobileNavDrawer({
                   </>
                 )}
                 <span aria-hidden className="text-slate-300">·</span>
-                <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-[11px] !text-slate-500 !ring-0 hover:!text-slate-900" />
+                <UserIdBadge id={user.id} className="!bg-transparent !px-0 !py-0 !text-xs !text-slate-500 !ring-0 hover:!text-slate-900" />
               </div>
             </div>
           ) : (
@@ -217,12 +226,12 @@ export default function MobileNavDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 space-y-3.5 overflow-y-auto overscroll-contain px-2.5 py-3">
+        <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-4">
           {user && (
             // One plain row of shortcuts: icon over label, no boxes; the current page gets a dot.
             // Items are only as wide as their label and justify-between spreads items and dividers,
             // so every gap between a label and a divider is the same.
-            <div className="flex items-center justify-between border-b border-slate-100 px-1 pb-2.5">
+            <div className="flex items-center justify-between border-b border-slate-100 px-1 pb-3">
               {quick.map(({ href, label, icon: Icon, count }, i) => {
                 const active = isActive(href);
                 return [
@@ -234,11 +243,11 @@ export default function MobileNavDrawer({
                     aria-current={active ? "page" : undefined}
                     // Screen readers hear "Messages, 3 unread"; the badge itself stays silent
                     aria-label={count ? `${label}, ${count} ${href === "/messages" ? "unread" : "new"}` : label}
-                    className={`relative flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition active:scale-95 ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-900"}`}
+                    className={`relative flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition active:scale-95 ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-900"}`}
                   >
                     <span className="relative">
-                      <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                      <CountBadge count={count ?? 0} max={9} hidden className="absolute -right-2.5 -top-1.5 h-4 min-w-4 text-[9px]" />
+                      <Icon size={19} strokeWidth={active ? 2.1 : 1.8} />
+                      <CountBadge count={count ?? 0} max={9} hidden className="absolute -right-2.5 -top-1.5 h-4 min-w-4 text-[10px]" />
                     </span>
                     <span className={active ? "font-semibold" : ""}>{label}</span>
                     <span className={`h-1 w-1 rounded-full ${active ? "bg-slate-900" : "bg-transparent"}`} />
@@ -249,7 +258,7 @@ export default function MobileNavDrawer({
           )}
 
           <div>
-            <MenuGroupTitle className="pl-5 pr-2">Explore</MenuGroupTitle>
+            <MenuGroupTitle className="mb-1 pl-5 pr-2">Explore</MenuGroupTitle>
             {/* Hot deals: highlighted like the province picker's capital card */}
             <Link
               href="/deals"
@@ -257,19 +266,18 @@ export default function MobileNavDrawer({
               aria-current={isActive("/deals") ? "page" : undefined}
               className="mn-hot mb-1 block rounded-lg"
             >
-              <span className="relative flex items-center gap-2.5 overflow-hidden rounded-lg py-1.5 pl-5 pr-2 transition hover:bg-slate-50">
+              <span className="relative flex min-h-10 items-center gap-3 overflow-hidden rounded-lg py-2 pl-5 pr-2 transition hover:bg-slate-50">
                 <span className="relative flex flex-shrink-0 items-center justify-center text-rose-500">
-                  <Flame size={14} className="animate-[mnFlame_1.1s_ease-in-out_infinite]" />
+                  <Flame size={16} />
                 </span>
-                <span className="relative min-w-0 flex-1 truncate text-[13px] font-bold text-slate-900">Hot deals</span>
-                <span className="relative inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-rose-600 ring-1 ring-inset ring-rose-200">
+                <span className="relative min-w-0 flex-1 truncate text-[14px] font-semibold text-slate-900">Hot deals</span>
+                <span className="relative inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-rose-600 ring-1 ring-inset ring-rose-200">
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
                   </span>
                   Hot
                 </span>
-                <ChevronRight size={13} className="relative text-slate-300" />
+                <ChevronRight size={14} className="relative text-slate-300" />
               </span>
             </Link>
             <div className="space-y-0.5">{browse.map(row)}</div>
@@ -282,12 +290,12 @@ export default function MobileNavDrawer({
               onClick={onClose}
               className="block rounded-xl bg-indigo-600 p-[1.5px]"
             >
-              <span className="flex items-center gap-2.5 rounded-[10.5px] bg-white px-2.5 py-2">
+              <span className="flex items-center gap-3 rounded-lg bg-white px-3 py-2.5">
                 <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-indigo-600 text-sm font-bold text-white">
                   {biz?.logo ? <Image src={biz.logo} alt="" fill sizes="36px" className="object-cover" /> : (biz?.name?.[0]?.toUpperCase() ?? <Briefcase size={15} />)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-bold text-slate-900">{biz?.name ?? "Your business"}</span>
+                  <span className="block truncate text-[14px] font-semibold text-slate-900">{biz?.name ?? "Your business"}</span>
                   <span className="block truncate text-[11px] text-slate-500">
                     {biz?.role ? `${BUSINESS_ROLE_NAME[biz.role] ?? biz.role} · ` : ""}Open business console
                   </span>
@@ -316,7 +324,7 @@ export default function MobileNavDrawer({
               className="relative block overflow-hidden rounded-xl bg-slate-900 p-3 text-white"
             >
               <p className="relative flex items-center gap-1.5 text-[13px] font-bold"><Sparkles size={13} className="text-amber-300" /> Go Premium</p>
-              <p className="relative mt-0.5 text-[11px] leading-snug text-slate-300">More listings, a bigger team and full showroom tools from PKR 500 for 30 days.</p>
+              <p className="relative mt-0.5 text-[11px] leading-snug text-slate-300">More listings, a bigger team and full showroom tools from PKR {PLANS.STARTER.price.toLocaleString()} for 30 days.</p>
               <span className="relative mt-2 inline-flex items-center gap-1 rounded-md theme-static bg-amber-400 px-2.5 py-1 text-[11px] font-bold text-slate-950">
                 See plans <ChevronRight size={13} />
               </span>
@@ -325,17 +333,17 @@ export default function MobileNavDrawer({
         </div>
 
         {/* Footer */}
-        <div className="space-y-2 border-t border-slate-100 p-2.5">
+        <div className="space-y-2.5 border-t border-slate-100 p-3">
           <InstallAppRow onDone={onClose} />
           {user && <PushCard compact />}
           <div className="flex items-center justify-between gap-2 px-1">
-            <span className="text-[11px] font-semibold text-slate-500">Theme</span>
+            <span className="text-xs font-medium text-slate-500">Theme</span>
             <ThemeToggle />
           </div>
           {user && (
             <button
               onClick={() => { onClose(); onSignOut(); }}
-              className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-100 transition hover:bg-rose-50"
+              className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg py-2 text-[14px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-100 transition hover:bg-rose-50"
             >
               <LogOut size={14} /> Sign out
             </button>

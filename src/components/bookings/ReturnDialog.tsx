@@ -106,7 +106,7 @@ export default function ReturnDialog({ open, onOpenChange, vehicle, customer, du
                 <p className="flex items-center gap-1.5 text-sm font-bold text-rose-700"><AlertTriangle size={15} /> {lateText(late.lateMinutes)} late</p>
                 <div className="mt-2 flex items-baseline justify-between text-sm text-rose-800">
                   <span>{late.lateDays} extra day{late.lateDays !== 1 ? "s" : ""} × {pkr(dailyRate)}</span>
-                  <span className="text-base font-extrabold tabular-nums">{pkr(late.fee)}</span>
+                  <span className="text-base font-bold tabular-nums">{pkr(late.fee)}</span>
                 </div>
                 <p className="mt-1.5 text-[11px] text-rose-700/80">{LATE_RULE_TEXT} The fee is added to the booking and printed on the slip.</p>
               </div>

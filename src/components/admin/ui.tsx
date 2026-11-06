@@ -117,7 +117,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={`min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${className}`}
+      className={`min-w-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${className}`}
     >
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 sm:px-5">
@@ -411,7 +411,7 @@ export function ConfirmDialog({
     <Dialog.Root open={open} onOpenChange={o => !loading && onOpenChange(o)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[1000] bg-slate-950/50 backdrop-blur-[2px]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl shadow-slate-900/20 focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl shadow-black/20 focus:outline-none">
           <div className="flex gap-4">
             {Icon && (
               <span className={`flex flex-shrink-0 items-center justify-center ${t.icon}`}>

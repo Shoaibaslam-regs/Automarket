@@ -17,7 +17,10 @@ export interface IFuelPrice extends Document {
   source: string;
   notificationUrl?: string;
   updateId?: mongoose.Types.ObjectId;
-  approvedBy: mongoose.Types.ObjectId;
+  /** The admin who approved it; missing when it went live by itself (autoPublished) */
+  approvedBy?: mongoose.Types.ObjectId;
+  /** Published by the checker without an admin (an OGRA day that passed autoPublishHold) */
+  autoPublished?: boolean;
   approvedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -35,7 +38,8 @@ const FuelPriceSchema = new Schema<IFuelPrice>(
     source: { type: String, required: true, maxlength: 200 },
     notificationUrl: { type: String, maxlength: 500 },
     updateId: { type: Schema.Types.ObjectId, ref: "FuelPriceUpdate" },
-    approvedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    approvedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    autoPublished: { type: Boolean },
     approvedAt: { type: Date, required: true },
   },
   { timestamps: true }

@@ -134,22 +134,25 @@ export default async function DealerPage({ params }: Props) {
           {/* The logo beside the name, details (ending with Report) and the rating with Share, vertically centred */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 sm:gap-x-5">
             {org.logo ? (
-              <span className="flex-shrink-0 rounded-2xl bg-white/20 p-[2px]">
-                <span className="relative block h-16 w-16 overflow-hidden rounded-[14px] bg-slate-900 sm:h-20 sm:w-20">
+              <span className="flex-shrink-0 rounded-xl bg-white/20 p-[2px]">
+                <span className="relative block h-16 w-16 overflow-hidden rounded-xl bg-slate-900 sm:h-20 sm:w-20">
                   <Image src={org.logo} alt={org.name} fill sizes="80px" className="object-cover" priority />
                 </span>
               </span>
             ) : (
-              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-white text-2xl font-bold text-slate-950 sm:h-20 sm:w-20 sm:text-3xl">
                 {org.name[0]?.toUpperCase()}
               </span>
             )}
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{org.name}</h1>
+                <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+                  {isVerified(org.verification) ? <NameWithTick name={org.name} /> : org.name}
+                </h1>
                 {isVerified(org.verification) ? (
-                  <VerifiedBadge tone="dark" className="px-2.5 py-1" />
+                  // Phones show the tick glued to the name (above); the pill would wrap onto a line of its own there
+                  <VerifiedBadge tone="dark" className="hidden px-2.5 py-1 sm:inline-flex" />
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-200">
                     <Building2 size={13} /> Business account
@@ -230,12 +233,12 @@ export default async function DealerPage({ params }: Props) {
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <ContactCard org={org} />
           {org.description && (
-            <div className="rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80">
+            <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80">
               <h2 className="text-sm font-semibold text-slate-900">About</h2>
               <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600">{org.description}</p>
             </div>
           )}
-          <div className="flex items-start gap-3 rounded-[22px] bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
+          <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
             <Star size={16} className="mt-0.5 flex-shrink-0 text-amber-500" fill="currentColor" />
             <p>Reviews come only from people this business has rented to, sold to or agreed a deal with. <Link href="#reviews" className="font-semibold underline">Read them</Link>.</p>
           </div>
@@ -259,7 +262,7 @@ export default async function DealerPage({ params }: Props) {
 /** The business's phone, email, address and WhatsApp button, in the right column (below the vehicles and reviews on phones). */
 function ContactCard({ org }: { org: Org }) {
   return (
-    <div className="rounded-[22px] bg-white p-5 ring-1 ring-slate-200/80">
+    <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80">
       <h2 className="text-sm font-semibold text-slate-900">Contact</h2>
       <div className="mt-3 space-y-2.5 text-sm">
         {org.phone && <a href={`tel:${org.phone}`} className="flex items-center gap-2.5 text-slate-700 hover:text-slate-950"><Phone size={15} className="text-slate-400" /> {org.phone}</a>}
@@ -279,5 +282,24 @@ function ContactCard({ org }: { org: Org }) {
         </a>
       )}
     </div>
+  );
+}
+
+/**
+ * The business name with the Verified tick after its last word, kept on the same line as that word (phones only:
+ * from `sm` the "Verified" pill sits beside the name instead), so a long name never leaves the tick alone on a line.
+ */
+function NameWithTick({ name }: { name: string }) {
+  const cut = name.trimEnd().lastIndexOf(" ");
+  const head = cut > 0 ? name.slice(0, cut + 1) : "";
+  const last = cut > 0 ? name.slice(cut + 1).trimEnd() : name.trimEnd();
+  return (
+    <>
+      {head}
+      <span className="whitespace-nowrap">
+        {last}
+        <VerifiedBadge variant="icon" size={20} className="ml-1.5 align-[-3px] sm:hidden" />
+      </span>
+    </>
   );
 }

@@ -48,8 +48,8 @@ export default function EditDealPage() {
           <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700">{error}</div>
         ) : !initial ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="h-96 animate-pulse rounded-2xl bg-white" />
-            <div className="h-80 animate-pulse rounded-2xl bg-white" />
+            <div className="h-96 animate-pulse rounded-xl bg-white" />
+            <div className="h-80 animate-pulse rounded-xl bg-white" />
           </div>
         ) : (
           <DealForm initial={initial} dealId={id} />

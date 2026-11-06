@@ -22,7 +22,7 @@ export interface IFuelPriceUpdate extends Document {
   previousDieselPrice?: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "FAILED" | "SKIPPED";
   method: "AUTO" | "MANUAL";
-  extractionDetails?: { model?: string; warnings?: string[]; error?: string; raw?: unknown };
+  extractionDetails?: { model?: string; warnings?: string[]; error?: string; raw?: unknown; held?: string };
   /** The prices that were approved, when the admin corrected the extracted ones */
   approvedPetrolPrice?: number;
   approvedDieselPrice?: number;
@@ -31,6 +31,8 @@ export interface IFuelPriceUpdate extends Document {
   reviewedAt?: Date;
   /** Cleared from Admin → Fuel prices' "Recently reviewed" card. Kept (not deleted) so the checker never reads the release again */
   hiddenFromTrail?: boolean;
+  /** Went live by itself (an OGRA day that passed autoPublishHold); the admin can still edit or remove the day */
+  autoPublished?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +57,7 @@ const FuelPriceUpdateSchema = new Schema<IFuelPriceUpdate>(
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
     reviewedAt: { type: Date },
     hiddenFromTrail: { type: Boolean },
+    autoPublished: { type: Boolean },
   },
   { timestamps: true }
 );

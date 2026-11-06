@@ -46,7 +46,7 @@ export default async function BookDealPage({ params, searchParams }: {
 
         <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:order-2">
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <div className="flex gap-3 p-3 lg:block lg:p-0">
                 <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 lg:aspect-[16/10] lg:h-auto lg:w-full lg:rounded-none">
                   {deal.images[0] ? (
@@ -54,7 +54,7 @@ export default async function BookDealPage({ params, searchParams }: {
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-400"><ImageOff size={20} strokeWidth={1.5} /></div>
                   )}
-                  <span className="theme-static absolute left-2 top-2 hidden rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-extrabold uppercase text-white lg:inline-block">
+                  <span className="theme-static absolute left-2 top-2 hidden rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase text-white lg:inline-block">
                     {dealLabel(deal)}
                   </span>
                 </div>

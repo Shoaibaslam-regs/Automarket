@@ -51,7 +51,7 @@ export default function UpdatesPage() {
       <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
         {error && <p role="alert" className="mb-4 rounded-xl bg-[var(--gh-fff0f0)] p-3 text-sm text-[var(--gh-cf222e)]">{error}</p>}
         {!feed ? (
-          !error && <div className="h-48 animate-pulse rounded-2xl bg-white" />
+          !error && <div className="h-48 animate-pulse rounded-xl bg-white" />
         ) : (
           <>
             {/* Channel card */}

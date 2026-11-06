@@ -18,7 +18,7 @@ export default function BusinessDashboardLoading() {
         </div>
       </div>
       <div className="space-y-4 px-4 py-5 sm:px-6">
-        <div className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-4">
+        <div className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-3 w-12" />

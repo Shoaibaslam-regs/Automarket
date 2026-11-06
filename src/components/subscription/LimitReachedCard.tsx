@@ -25,7 +25,7 @@ export default function LimitReachedCard({
   // The request goes out for the next plan up, which is the natural upgrade from here
   const nextPlan = PLAN_LIST[PLAN_LIST.findIndex(p => p.id === plan.id) + 1] ?? null;
   return (
-    <div className="relative overflow-hidden rounded-[22px] bg-slate-950 p-6 text-white shadow-sm sm:p-8">
+    <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-6 text-white shadow-sm sm:p-8">
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-4">
           <span className="flex flex-shrink-0 items-center justify-center text-amber-300">

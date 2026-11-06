@@ -61,7 +61,7 @@ export default function LiveStats({ initial }: { initial: PublicStats }) {
 
   return (
     // A plain dark panel like the closing call to action (bg-slate-950 keeps it dark in both themes)
-    <section aria-label="AutoGO today" className="relative overflow-hidden rounded-3xl bg-slate-950 px-5 py-7 sm:px-10 sm:py-10">
+    <section aria-label="AutoGO today" className="relative overflow-hidden rounded-2xl bg-slate-950 px-5 py-7 sm:px-10 sm:py-10">
       <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-white/10" />
 
       <div className="relative flex flex-col items-center text-center">
@@ -75,7 +75,7 @@ export default function LiveStats({ initial }: { initial: PublicStats }) {
         {TILES.map(({ key, label, icon: Icon }) => (
           <div key={key} className="relative flex w-[118px] flex-shrink-0 snap-start flex-col items-center text-center before:absolute before:left-0 before:top-1/2 before:h-10 before:w-px before:-translate-y-1/2 before:bg-white/15 first:before:hidden sm:w-1/4 sm:[&:nth-child(5)]:before:hidden lg:w-[14.2857%] lg:[&:nth-child(5)]:before:block">
             <Icon size={16} strokeWidth={1.75} className="text-indigo-300" />
-            <p className="mt-3 text-white text-3xl font-extrabold tabular-nums tracking-tight text-transparent sm:text-[34px]">
+            <p className="mt-3 text-white text-3xl font-bold tabular-nums tracking-tight text-transparent sm:text-[34px]">
               <CountUp value={stats[key]} />
             </p>
             <p className="mt-1 text-xs font-medium text-slate-400">{label}</p>
