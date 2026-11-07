@@ -197,7 +197,7 @@ export default function AdminRequestsPage() {
 
       <PlanGiftDialog target={planTarget || null} onClose={() => setPlanFor(null)} onSave={savePlan} />
       <VerifyBadgeDialog
-        target={badgeFor?.organizationId ? { name: badgeFor.organizationId.name, ownerLabel: who(badgeFor.userId), verification: badgeFor.organizationId.verification ?? null } : null}
+        target={badgeFor?.organizationId ? { id: badgeFor.organizationId._id, name: badgeFor.organizationId.name, ownerLabel: who(badgeFor.userId), verification: badgeFor.organizationId.verification ?? null } : null}
         onClose={() => setBadgeFor(null)}
         onSave={saveBadge}
       />

@@ -710,7 +710,7 @@ export default function AdminPage() {
           <MessageBusinessDialog business={messageFor} onClose={() => setMessageFor(null)} />
           <AccountManagerDialog business={managerFor} admins={admins} onClose={() => setManagerFor(null)} onSaved={reloadOrganizations} />
           <VerifyBadgeDialog
-            target={badgeFor && { name: badgeFor.name, ownerLabel: badgeFor.ownerId?.name || badgeFor.ownerId?.email, verification: badgeFor.verification }}
+            target={badgeFor && { id: String(badgeFor._id), name: badgeFor.name, ownerLabel: badgeFor.ownerId?.name || badgeFor.ownerId?.email, verification: badgeFor.verification }}
             onClose={() => setBadgeFor(null)}
             onSave={saveBadge}
           />

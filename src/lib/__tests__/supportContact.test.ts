@@ -33,4 +33,10 @@ describe("paymentInstructionsText", () => {
     expect(text).toContain("Use your Business ID as the reference");
     expect(text.split("\n").at(-1)).toMatch(/send the payment receipt/);
   });
+  it("words the Verified badge as a monthly badge", () => {
+    const text = paymentInstructionsText("Verified badge", 499, { iban: "PK36" }, "badge");
+    expect(text).toContain("Thanks for choosing the Verified badge");
+    expect(text).toContain("pay PKR 499 for one month");
+    expect(text.split("\n").at(-1)).toContain("turn your badge on");
+  });
 });

@@ -6,7 +6,8 @@ import { Organization } from "@/models/Organization";
 import { User } from "@/models/User";
 import { getMembership } from "@/lib/business";
 import { getSupportAdmin, sendChatMessage } from "@/lib/support";
-import { badgeRequestText } from "@/lib/supportContact";
+import { badgeRequestText, paymentInstructionsText } from "@/lib/supportContact";
+import { getPaymentDetails } from "@/lib/paymentSettings";
 import { VERIFIED_BADGE, badgeState, type BadgeVerification } from "@/lib/plans";
 import { rateLimitResponse } from "@/lib/rateLimit";
 import { reportError } from "@/lib/errorLog";
@@ -81,6 +82,10 @@ export async function POST() {
     const supportUserId = admin._id.toString();
     // One open request at a time; clicking again just reopens the conversation
     if (org.verification?.requestedAt) return NextResponse.json({ supportUserId, alreadyRequested: true });
+    // Ultimate includes the badge (verification.source PLAN, synced by syncPlanBadge): nothing to buy while it runs
+    if (org.verification?.source === "PLAN" && badgeState(org.verification) === "VERIFIED") {
+      return NextResponse.json({ error: "Your plan already includes the Verified badge.", code: "INCLUDED" }, { status: 400 });
+    }
 
     await Organization.updateOne(
       { _id: member.organizationId },
@@ -94,6 +99,10 @@ export async function POST() {
       badgeRequestText(org.name, VERIFIED_BADGE.price, { id: session.user.id, email: me?.email, business: { id: String(member.organizationId), name: org.name } }),
       session.user.name
     );
+    // AutoGO Support answers at once with the amount and the account, so the details are on record in the chat
+    // (like plan requests); without saved payment details nothing is sent and an admin replies by hand
+    const details = await getPaymentDetails().catch(() => null);
+    if (details) await sendChatMessage(supportUserId, session.user.id, paymentInstructionsText(VERIFIED_BADGE.name, VERIFIED_BADGE.price, details, "badge"), "AutoGO Support");
     await routeToAccountManager(session.user.id);
     return NextResponse.json({ supportUserId }, { status: 201 });
   } catch (error) {

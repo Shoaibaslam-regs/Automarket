@@ -47,7 +47,7 @@ export const GH = {
   "#ffe7a3": "#4a3b14", "#ffd666": "#6b5414",
   "#953800": "#f0883e", "#ffdfb6": "#3d2412",
   "#8250df": "#b392f0", "#fbefff": "#271b3a", "#6e40c9": "#a371f7",
-  "#4f46e5": "#818cf8", "#eef2ff": "#1b1f3a",
+  "#4f46e5": "#7b9cff", "#eef2ff": "#18223f",
 };
 
 export const STATIC_SELECTORS = [
@@ -67,9 +67,19 @@ for (const fam of NEUTRALS) {
     dark.push(`--tw-c-${fam}-${shade}: ${trip(DARK_NEUTRAL[shade])};`);
   }
 }
+// Indigo is the one accent. Tailwind's light indigos (#818cf8, #a5b4fc) lean violet on dark surfaces, so every
+// indigo icon, link and dot read as purple in dark mode; the dark theme uses this bluer ramp instead (hue ~225°,
+// #7b9cff is about 6:1 on cards). DARK_ACCENT is also what charts use in dark mode (PriceChart, Reports).
+export const DARK_ACCENT = "#7b9cff";
+const DARK_INDIGO = { 300: "#9db4ff", 400: DARK_ACCENT, 700: "#9db4ff", 800: "#c3d1ff", 900: "#dfe6ff", 950: "#eef2ff" };
+
 for (const fam of HUES) {
   const c = colors[fam];
-  const darkOf = {
+  const darkOf = fam === "indigo" ? {
+    50: mix(DARK_BASE, DARK_ACCENT, 0.12), 100: mix(DARK_BASE, DARK_ACCENT, 0.18), 200: mix(DARK_BASE, DARK_ACCENT, 0.3),
+    300: trip(DARK_INDIGO[300]), 400: trip(DARK_INDIGO[400]), 500: trip(DARK_ACCENT), 600: trip(DARK_ACCENT),
+    700: trip(DARK_INDIGO[700]), 800: trip(DARK_INDIGO[800]), 900: trip(DARK_INDIGO[900]), 950: trip(DARK_INDIGO[950]),
+  } : {
     50: mix(DARK_BASE, c[500], 0.12), 100: mix(DARK_BASE, c[500], 0.18), 200: mix(DARK_BASE, c[500], 0.3),
     300: trip(c[300]), 400: trip(c[400]), 500: trip(c[400]), 600: trip(c[400]),
     700: trip(c[300]), 800: trip(c[200]), 900: trip(c[100]), 950: trip(c[50]),

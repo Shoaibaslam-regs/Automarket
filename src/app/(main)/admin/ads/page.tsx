@@ -86,7 +86,7 @@ export default function AdminAdsPage() {
   return (
     <div>
       <PageHeader title="Ad requests"
-        description={`Businesses pay PKR ${SPONSORED_AD.pricePerWeek.STANDARD.toLocaleString()} (Standard) or ${SPONSORED_AD.pricePerWeek.TOP.toLocaleString()} (Top) a week. Ads are shown in their business's city first; Standard ads rotate, Top ads are first (${SPONSORED_AD.topPerCity} per city). ${counts.running} running now. Check the payment arrived, then approve.`} />
+        description={`Businesses pay PKR ${SPONSORED_AD.pricePerWeek.STANDARD.toLocaleString()} (Standard) or ${SPONSORED_AD.pricePerWeek.TOP.toLocaleString()} (Top) a week. Ads are shown in their business's city first; Standard ads rotate, Top ads are first (${SPONSORED_AD.topPerCity} per city, one per business, only for businesses with a city). ${counts.running} running now. Check the payment arrived, then approve.`} />
 
       <ConfirmDialog open={clearing} onOpenChange={setClearing} title="Clear ad history?" tone="danger" icon={Trash2}
         description="Removes every finished ad (ended, refused, cancelled or stopped) from the Past tab. Businesses keep their own copy until they clear it, and approvals stay in the activity log."

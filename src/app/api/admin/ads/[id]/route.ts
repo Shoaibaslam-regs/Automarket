@@ -8,7 +8,7 @@ import { logAdminAction } from "@/lib/adminLog";
 import { sendAsSupport } from "@/lib/support";
 import { SPONSORED_AD } from "@/lib/plans";
 import { AD_KIND_LABEL, DAY_MS, type AdKind } from "@/lib/ads";
-import { topBlockedUntil } from "@/lib/sponsored";
+import { topPlaceProblem } from "@/lib/sponsored";
 import { reportError } from "@/lib/errorLog";
 
 const day = (d: Date) => d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Karachi" });
@@ -48,9 +48,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!start) return NextResponse.json({ error: "Pick a valid start date" }, { status: 400 });
       const end = new Date(start.getTime() + ad.weeks * 7 * DAY_MS);
       // Standard ads rotate, so any number can run; Top ads are first in their city, so only a few at once there
+      // (and one per business, and only in a city: topPlaceProblem)
       if (ad.tier === "TOP") {
-        const free = await topBlockedUntil(ad.city, start, ad.weeks, String(ad._id));
-        if (free) return NextResponse.json({ error: `${SPONSORED_AD.topPerCity} Top ads are already booked in ${ad.city} for those dates. Start it on ${day(free)} or later.` }, { status: 400 });
+        const problem = await topPlaceProblem({ organizationId: ad.organizationId, city: ad.city, start, weeks: ad.weeks, ignoreAdId: String(ad._id) });
+        if (problem?.code === "NO_CITY") return NextResponse.json({ error: "This business has no city, so it can't have a Top place. Refuse it and ask them to add their city, or to ask for Standard." }, { status: 400 });
+        if (problem?.code === "OWN_TOP") return NextResponse.json({ error: `This business already has a Top place in ${ad.city} until ${day(problem.until)}. Start this one on ${day(problem.until)} or later.` }, { status: 400 });
+        if (problem) return NextResponse.json({ error: `${SPONSORED_AD.topPerCity} Top ads are already booked in ${ad.city} for those dates. Start it on ${day(problem.until)} or later.` }, { status: 400 });
       }
       Object.assign(ad, { status: "APPROVED", startsAt: start, endsAt: end, handledBy: gate.admin._id, handledAt: now });
       message = `Your ${ad.tier === "TOP" ? "Top " : ""}sponsored ad for ${what} is approved. It runs from ${day(start)} to ${day(end)}${ad.city ? `, shown first to visitors in ${ad.city}` : ""}. You can see its views and taps in Business → Promote. Thank you!`;

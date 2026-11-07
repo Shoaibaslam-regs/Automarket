@@ -10,14 +10,16 @@ import PaymentDetailsCard from "@/components/subscription/PaymentDetailsCard";
 import { useRateLock } from "@/hooks/useRateLock";
 import { AD_DISCOUNT_PCT, AD_TIER_LABEL, SPONSORED_AD, adPrice, standardShare, type AdTier } from "@/lib/plans";
 import { useSubscription } from "@/components/subscription/useSubscription";
-import { AD_KIND_LABEL, AD_STATE_LABEL, AD_STATE_TONE, adHref, adState, type AdKind } from "@/lib/ads";
+import { AD_KIND_LABEL, AD_STATE_LABEL, AD_STATE_TONE, adHref, adState, type AdKind, type AdPreviewTip } from "@/lib/ads";
+import type { SponsoredItem } from "@/lib/sponsored";
+import AdPreview from "@/components/business/AdPreview";
 
 type Ad = {
   _id: string; kind: AdKind; targetId?: string; targetLabel: string; weeks: number; price: number;
   paymentRef: string; status: string; startsAt?: string; endsAt?: string; reason?: string; createdAt: string;
   tier?: AdTier; city?: string; views?: number; taps?: number;
 };
-type Reach = { city: string; standard: number; top: number; topFreeFrom: string | null };
+type Reach = { city: string; standard: number; top: number; topFreeFrom: string | null; ownTopUntil: string | null };
 type Option = { _id: string; title: string };
 type Data = { ads: Ad[]; business: { name: string; slug: string } | null; options: { deals: Option[]; listings: Option[] }; canPromote: boolean; reach: Reach };
 
@@ -46,6 +48,22 @@ export default function PromotePage() {
   // Premium Plus and Ultimate get a discount on ads (AD_DISCOUNT_PCT); the server charges the same price
   const planId = useSubscription().data?.planId;
   const discount = planId ? AD_DISCOUNT_PCT[planId] ?? 0 : 0;
+
+  // The card the chosen business page, deal or vehicle would get (GET /api/business/ads/preview), kept with the
+  // choice it belongs to so a slow answer for an earlier choice is never shown for the current one
+  const [preview, setPreview] = useState<{ key: string; item: SponsoredItem | null; tips: AdPreviewTip[] } | null>(null);
+  const previewKey = kind === "SHOP" ? "SHOP" : targetId ? `${kind}:${targetId}` : "";
+  const canPromote = !!data?.canPromote;
+  useEffect(() => {
+    if (!previewKey || !canPromote) return;
+    const ctrl = new AbortController();
+    fetch(`/api/business/ads/preview?kind=${kind}&targetId=${encodeURIComponent(targetId)}`, { signal: ctrl.signal })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setPreview({ key: previewKey, item: d?.item ?? null, tips: d?.tips ?? [] }))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [previewKey, kind, targetId, canPromote]);
+  const shown = previewKey && preview?.key === previewKey ? preview : null;
 
   function load() {
     return fetch("/api/business/ads")
@@ -96,6 +114,13 @@ export default function PromotePage() {
   const FINISHED = ["ENDED", "REJECTED", "CANCELLED", "STOPPED"];
   const finished = data?.ads.filter(a => FINISHED.includes(adState(a))).length ?? 0;
   const choices = kind === "DEAL" ? data?.options.deals ?? [] : kind === "LISTING" ? data?.options.listings ?? [] : [];
+  const previewProps = {
+    item: shown?.item ?? null,
+    tips: shown?.tips ?? [],
+    loading: !!previewKey && !shown,
+    emptyText: kind === "DEAL" ? "Choose a deal to see its card" : "Choose a vehicle to see its card",
+    city: data?.reach.city ?? "",
+  };
 
   return (
     <div className="min-h-screen bg-[var(--gh-f6f8fa)]">
@@ -112,7 +137,7 @@ export default function PromotePage() {
         <p className="mt-0.5 text-xs text-[var(--gh-57606a)]">Show your business, a deal or a vehicle to buyers in your city, on the home page and between Browse results</p>
       </div>
 
-      <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:px-6">
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6">
         {error && <p role="alert" className="rounded-xl bg-[var(--gh-fff0f0)] p-3 text-sm text-[var(--gh-cf222e)]">{error}</p>}
 
         <ol className="grid gap-2 text-[13px] text-[var(--gh-57606a)] sm:grid-cols-3">
@@ -135,6 +160,7 @@ export default function PromotePage() {
         ) : (
           <>
             {data.canPromote ? (
+              <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
               <form onSubmit={send} className="rounded-2xl border border-[var(--gh-e1e4e8)] bg-white p-5">
                 <p className="text-sm font-bold text-[var(--gh-0d1117)]">New ad request</p>
 
@@ -162,24 +188,36 @@ export default function PromotePage() {
                       className="h-10 rounded-lg border-[var(--gh-d0d7de)] text-[13px] font-normal" />
                   </div>
                 )}
+                {/* Phones and tablets: the preview right under the choice it shows (beside the form from lg) */}
+                {(kind === "SHOP" || choices.length > 0) && (
+                  <div className="mt-4 lg:hidden"><AdPreview {...previewProps} phone /></div>
+                )}
 
                 <p className={label}>Placement *</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {(["STANDARD", "TOP"] as AdTier[]).map(t => (
-                    <button key={t} type="button" onClick={() => setTier(t)}
-                      className={`rounded-lg px-3 py-2 text-left ring-1 ring-inset transition ${tier === t ? "bg-[var(--gh-0d1117)] text-white ring-[var(--gh-0d1117)]" : "bg-white text-[var(--gh-0d1117)] ring-[var(--gh-d0d7de)] hover:bg-[var(--gh-f6f8fa)]"}`}>
-                      <span className="block text-[13px] font-semibold">{AD_TIER_LABEL[t]} · PKR {SPONSORED_AD.pricePerWeek[t].toLocaleString()}/week</span>
-                      <span className="block text-[11px] opacity-75">{t === "TOP" ? `Always first in your city (${SPONSORED_AD.topPerCity} per city)` : "Shares the places in your city"}</span>
-                    </button>
-                  ))}
+                  {(["STANDARD", "TOP"] as AdTier[]).map(t => {
+                    // Top places belong to a city, so they need the business's city (the server refuses too)
+                    const off = t === "TOP" && !data.reach.city;
+                    return (
+                      <button key={t} type="button" onClick={() => setTier(t)} disabled={off}
+                        className={`rounded-lg px-3 py-2 text-left ring-1 ring-inset transition disabled:cursor-not-allowed disabled:opacity-50 ${tier === t ? "bg-[var(--gh-0d1117)] text-white ring-[var(--gh-0d1117)]" : "bg-white text-[var(--gh-0d1117)] ring-[var(--gh-d0d7de)] hover:bg-[var(--gh-f6f8fa)] disabled:hover:bg-white"}`}>
+                        <span className="block text-[13px] font-semibold">{AD_TIER_LABEL[t]} · PKR {SPONSORED_AD.pricePerWeek[t].toLocaleString()}/week</span>
+                        <span className="block text-[11px] opacity-75">
+                          {t === "TOP" ? (off ? "Needs your city in Settings" : `Shown first in your city (${SPONSORED_AD.topPerCity} places, one per business)`) : "Takes turns with other ads in your city"}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-[var(--gh-57606a)]">
                   {!data.reach.city
-                    ? <>Your business has no city, so the ad is shown everywhere. <Link href="/business/settings" className="font-semibold text-[var(--gh-0d1117)] underline">Add your city</Link> to reach local buyers first.</>
+                    ? <>Your business has no city, so the ad is shown everywhere and Top isn&apos;t available. <Link href="/business/settings" className="font-semibold text-[var(--gh-0d1117)] underline">Add your city</Link> to reach local buyers first.</>
                     : tier === "TOP"
-                      ? data.reach.topFreeFrom
+                      ? data.reach.ownTopUntil
+                        ? <>You already have a Top place in {data.reach.city} until {day(data.reach.ownTopUntil)}. A business holds one at a time, so a new Top ad would start after it.</>
+                        : data.reach.topFreeFrom
                         ? <>Both Top places in {data.reach.city} are taken until {day(data.reach.topFreeFrom)}. The team will start yours then, or choose Standard to start sooner.</>
-                        : <>A Top place in {data.reach.city} is free: your ad shows first to every visitor there.</>
+                        : <>A Top place in {data.reach.city} is free: your ad shows first to buyers browsing {data.reach.city}.</>
                       : (() => {
                         const n = standardShare(data.reach.standard + 1, data.reach.top);
                         return n <= 1
@@ -215,6 +253,12 @@ export default function PromotePage() {
                   <Send size={14} /> {lock.locked ? lock.text : sending ? "Sending…" : `Send request · PKR ${adPrice(weeks, tier, planId).toLocaleString()}`}
                 </button>
               </form>
+              <aside className="hidden lg:sticky lg:top-6 lg:block">
+                {kind === "SHOP" || choices.length > 0
+                  ? <AdPreview {...previewProps} />
+                  : <AdPreview {...previewProps} emptyText={kind === "DEAL" ? "Create a deal to see how its ad looks" : "List a vehicle to see how its ad looks"} />}
+              </aside>
+              </div>
             ) : (
               <p className="rounded-xl border border-[var(--gh-e1e4e8)] bg-white p-4 text-[13px] text-[var(--gh-57606a)]">Ask your owner or a manager to promote the business.</p>
             )}

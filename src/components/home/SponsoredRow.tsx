@@ -22,30 +22,31 @@ function Ribbon({ small = false }: { small?: boolean }) {
 }
 
 /** Counts a view once at least half the card has been on screen, at most once per ad per session (trackAds). */
-function useViewTracking(adId: string) {
+function useViewTracking(adId: string, enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (!enabled || !el || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(entries => {
       if (entries.some(e => e.isIntersecting)) { trackAds([adId], "view"); observer.disconnect(); }
     }, { threshold: 0.5 });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [adId]);
+  }, [adId, enabled]);
   return ref;
 }
 
 /**
  * A compact sponsored card (with a thin gold border among listings, `highlight`): photo with the ribbon, title and price, and a link to the business's shop page. Counts its views and taps. `layout="list"`
- * is the Browse list view's row: a small photo beside the details.
+ * is the Browse list view's row: a small photo beside the details. `preview` (Business → Promote) counts nothing;
+ * the preview also wraps it in `inert`, so its links can't be followed.
  */
-export function SponsoredCard({ item, layout = "grid", highlight = true }: { item: SponsoredItem; layout?: "grid" | "list"; highlight?: boolean }) {
+export function SponsoredCard({ item, layout = "grid", highlight = true, preview = false }: { item: SponsoredItem; layout?: "grid" | "list"; highlight?: boolean; preview?: boolean }) {
   // The gold border marks an ad among listings (Browse); the home row is all ads, so it keeps the plain border there
   const frame = highlight ? "ring-[1.5px] ring-amber-300/80 hover:ring-amber-400" : "ring-1 ring-slate-200/80 hover:ring-slate-300";
   const shop = `/dealers/${item.business.slug}`;
-  const ref = useViewTracking(item.adId);
-  const tap = () => trackAds([item.adId], "tap");
+  const ref = useViewTracking(item.adId, !preview);
+  const tap = () => { if (!preview) trackAds([item.adId], "tap"); };
   const price = item.price != null && (
     <p className="mt-0.5 text-sm font-bold text-slate-900">
       <span className="mr-1 text-[10px] font-semibold text-slate-400">PKR</span>

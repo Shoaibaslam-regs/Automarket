@@ -51,6 +51,31 @@ function shortBlurb(text?: string) {
 export type SponsoredQuery = { city?: string; make?: string; type?: "SALE" | "RENT" | ""; limit?: number };
 
 type OrgRow = { _id: Oid; name: string; slug: string; logo?: string; type?: string; city?: string; description?: string; verification?: BadgeVerification };
+type DealRow = { _id: Oid; title: string; images: string[]; price: number; discountType: "PERCENT" | "AMOUNT"; discountValue: number; dealType?: string; make?: string };
+type ListingRow = { _id: Oid; title: string; images: string[]; price: number; type: string; make?: string };
+type Sells = "SALE" | "RENT" | "BOTH";
+type CardFields = Pick<SponsoredItem, "kind" | "href" | "image" | "title" | "price" | "perDay" | "caption" | "blurb"> & { sells: Sells; make?: string };
+
+const ORG_FIELDS = "name slug logo type city description verification.verifiedAt verification.expiresAt";
+const DEAL_FIELDS = "title images price discountType discountValue dealType make";
+const LISTING_FIELDS = "title images price type make";
+
+// What each kind of ad puts on its card. The live ads (loadCandidates) and the Promote page's preview
+// (sponsoredPreview) both build their cards here, so the preview is exactly what buyers get.
+const businessOf = (org: OrgRow) => ({ name: org.name, slug: org.slug, logo: org.logo, verified: isVerified(org.verification) });
+function shopCard(org: OrgRow): CardFields {
+  const type = org.type ?? "BOTH";
+  const caption = [SHOP_KIND[type] ?? "Business", org.city?.trim()].filter(Boolean).join(" · ");
+  const blurb = shortBlurb(org.description) ?? SHOP_BLURB[type] ?? SHOP_BLURB.BOTH;
+  const sells = org.type === "RENTAL" ? "RENT" : org.type === "DEALER" ? "SALE" : "BOTH";
+  return { kind: "SHOP", href: `/dealers/${org.slug}`, image: org.logo, title: org.name, caption, blurb, sells };
+}
+function dealCard(d: DealRow): CardFields {
+  return { kind: "DEAL", href: `/deals/${d._id}`, image: d.images[0], title: d.title, price: dealPrice(d.price, d), perDay: d.dealType === "RENT", make: d.make, sells: d.dealType === "RENT" ? "RENT" : "SALE" };
+}
+function listingCard(l: ListingRow): CardFields {
+  return { kind: "LISTING", href: `/listings/${l._id}`, image: l.images[0], title: l.title, price: l.price, perDay: l.type === "RENT", make: l.make, sells: l.type === "RENT" ? "RENT" : l.type === "BOTH" ? "BOTH" : "SALE" };
+}
 
 /** Exact, case-insensitive match for a stored city ("Lahore" finds "lahore "). */
 export const cityQuery = (city: string) => new RegExp(`^\\s*${city.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
@@ -88,6 +113,36 @@ export async function topBlockedUntil(city: string | undefined, start: Date, wee
   return overlapping[overlapping.length - SPONSORED_AD.topPerCity].endsAt;
 }
 
+export type TopPlaceProblem = { code: "NO_CITY" } | { code: "OWN_TOP" | "CITY_FULL"; until: Date };
+
+/**
+ * Whether a Top ad can run from `start` for `weeks`: Top places belong to a city, so a business without one can't
+ * have one (NO_CITY); a business holds at most one Top place in its city at a time (OWN_TOP, with the day its own
+ * ends), so two businesses really get the two places; and at most SPONSORED_AD.topPerCity run there at once
+ * (CITY_FULL, with the first day one frees up). Checked when an admin approves (and the city part when asking).
+ */
+export async function topPlaceProblem(ad: { organizationId: Oid; city?: string | null; start: Date; weeks: number; ignoreAdId?: string }): Promise<TopPlaceProblem | null> {
+  if (!ad.city?.trim()) return { code: "NO_CITY" };
+  await connectDB();
+  const end = new Date(ad.start.getTime() + ad.weeks * WEEK_MS);
+  const own = await Ad.findOne({
+    organizationId: ad.organizationId, status: "APPROVED", tier: "TOP", city: cityQuery(ad.city), startsAt: { $lt: end }, endsAt: { $gt: ad.start },
+    ...(ad.ignoreAdId ? { _id: { $ne: ad.ignoreAdId } } : {}),
+  }).sort({ endsAt: -1 }).select("endsAt").lean<{ endsAt: Date }>();
+  if (own) return { code: "OWN_TOP", until: own.endsAt };
+  const full = await topBlockedUntil(ad.city, ad.start, ad.weeks, ad.ignoreAdId);
+  return full ? { code: "CITY_FULL", until: full } : null;
+}
+
+/** The last day of this business's running or upcoming Top place in its city, if it has one (Business → Promote). */
+export async function ownTopUntil(organizationId: Oid, city?: string | null): Promise<Date | null> {
+  if (!city?.trim()) return null;
+  await connectDB();
+  const own = await Ad.findOne({ organizationId, status: "APPROVED", tier: "TOP", city: cityQuery(city), endsAt: { $gt: new Date() } })
+    .sort({ endsAt: -1 }).select("endsAt").lean<{ endsAt: Date }>();
+  return own?.endsAt ?? null;
+}
+
 /** A random order where heavier items tend to come first (weighted shuffle: key = random^(1/weight)). */
 function weightedShuffle<T>(items: T[], weight: (t: T) => number): T[] {
   return items
@@ -116,12 +171,9 @@ async function loadCandidates(): Promise<Candidate[]> {
 
   const ids = (k: string) => ads.filter(a => a.kind === k && a.targetId).map(a => a.targetId!);
   const [orgs, deals, listings] = await Promise.all([
-    Organization.find({ _id: { $in: ads.map(a => a.organizationId) }, isActive: { $ne: false } })
-      .select("name slug logo type city description verification.verifiedAt verification.expiresAt").lean<OrgRow[]>(),
-    Deal.find({ _id: { $in: ids("DEAL") }, ...liveQuery(now) }).select("title images price discountType discountValue dealType make")
-      .lean<Array<{ _id: Oid; title: string; images: string[]; price: number; discountType: "PERCENT" | "AMOUNT"; discountValue: number; dealType?: string; make?: string }>>(),
-    Listing.find({ _id: { $in: ids("LISTING") }, status: "ACTIVE" }).select("title images price type make")
-      .lean<Array<{ _id: Oid; title: string; images: string[]; price: number; type: string; make?: string }>>(),
+    Organization.find({ _id: { $in: ads.map(a => a.organizationId) }, isActive: { $ne: false } }).select(ORG_FIELDS).lean<OrgRow[]>(),
+    Deal.find({ _id: { $in: ids("DEAL") }, ...liveQuery(now) }).select(DEAL_FIELDS).lean<DealRow[]>(),
+    Listing.find({ _id: { $in: ids("LISTING") }, status: "ACTIVE" }).select(LISTING_FIELDS).lean<ListingRow[]>(),
   ]);
   const orgById = new Map(orgs.map(o => [String(o._id), o]));
   const dealById = new Map(deals.map(d => [String(d._id), d]));
@@ -131,20 +183,14 @@ async function loadCandidates(): Promise<Candidate[]> {
   for (const a of ads) {
     const org = orgById.get(String(a.organizationId));
     if (!org) continue;
-    const business = { name: org.name, slug: org.slug, logo: org.logo, verified: isVerified(org.verification) };
-    const base = { adId: String(a._id), tier: a.tier ?? "STANDARD", city: a.city, business } as const;
-    if (a.kind === "SHOP") {
-      const sells = org.type === "RENTAL" ? "RENT" : org.type === "DEALER" ? "SALE" : "BOTH";
-      const type = org.type ?? "BOTH";
-      const caption = [SHOP_KIND[type] ?? "Business", org.city?.trim()].filter(Boolean).join(" · ");
-      const blurb = shortBlurb(org.description) ?? SHOP_BLURB[type] ?? SHOP_BLURB.BOTH;
-      candidates.push({ ...base, kind: "SHOP", href: `/dealers/${org.slug}`, image: org.logo, title: org.name, caption, blurb, sells });
-    } else if (a.kind === "DEAL") {
+    const base = { adId: String(a._id), tier: a.tier ?? "STANDARD", city: a.city, business: businessOf(org) } as const;
+    if (a.kind === "SHOP") candidates.push({ ...base, ...shopCard(org) });
+    else if (a.kind === "DEAL") {
       const d = dealById.get(String(a.targetId));
-      if (d) candidates.push({ ...base, kind: "DEAL", href: `/deals/${d._id}`, image: d.images[0], title: d.title, price: dealPrice(d.price, d), perDay: d.dealType === "RENT", make: d.make, sells: d.dealType === "RENT" ? "RENT" : "SALE" });
+      if (d) candidates.push({ ...base, ...dealCard(d) });
     } else {
       const l = listingById.get(String(a.targetId));
-      if (l) candidates.push({ ...base, kind: "LISTING", href: `/listings/${l._id}`, image: l.images[0], title: l.title, price: l.price, perDay: l.type === "RENT", make: l.make, sells: l.type === "RENT" ? "RENT" : l.type === "BOTH" ? "BOTH" : "SALE" });
+      if (l) candidates.push({ ...base, ...listingCard(l) });
     }
   }
   return candidates;
@@ -177,4 +223,34 @@ export async function getSponsored(q: SponsoredQuery = {}): Promise<SponsoredIte
   return ordered.slice(0, Math.max(1, Math.min(48, q.limit ?? SPONSORED_AD.slotsShown)))
     // Only what a card needs reaches the page
     .map((c): SponsoredItem => ({ adId: c.adId, kind: c.kind, tier: c.tier, href: c.href, image: c.image, title: c.title, price: c.price, perDay: c.perDay, caption: c.caption, blurb: c.blurb, business: c.business }));
+}
+
+/**
+ * Business → Promote's preview: the card an ad for this business page, deal or vehicle would show, built by the
+ * same code as the live ads, with nothing saved. Only the business's own live deals and its team's active vehicles
+ * (`sellerIds`) can be previewed, like they can be promoted. Also returns what the tips need (adPreviewTips).
+ */
+export async function sponsoredPreview(orgId: Oid, sellerIds: Oid[], kind: "SHOP" | "DEAL" | "LISTING", targetId?: string) {
+  await connectDB();
+  const org = await Organization.findById(orgId).select(ORG_FIELDS).lean<OrgRow>();
+  if (!org) return null;
+  const business = businessOf(org);
+  const facts = { kind, verified: business.verified, hasLogo: !!org.logo, hasDescription: !!org.description?.trim(), hasCity: !!org.city?.trim() };
+  let card: CardFields | null = null;
+  let photos = 0;
+  if (kind === "SHOP") card = shopCard(org);
+  else if (targetId && mongoose.isValidObjectId(targetId)) {
+    if (kind === "DEAL") {
+      const d = await Deal.findOne({ _id: targetId, organizationId: orgId, ...liveQuery(new Date()) }).select(DEAL_FIELDS).lean<DealRow>();
+      if (d) { card = dealCard(d); photos = d.images.length; }
+    } else {
+      const l = await Listing.findOne({ _id: targetId, sellerId: { $in: sellerIds }, status: "ACTIVE" }).select(LISTING_FIELDS).lean<ListingRow>();
+      if (l) { card = listingCard(l); photos = l.images.length; }
+    }
+  }
+  if (!card) return null;
+  const { sells: _sells, make: _make, ...shown } = card;
+  void _sells; void _make;
+  const item: SponsoredItem = { adId: "preview", tier: "STANDARD", ...shown, business };
+  return { item, facts: { ...facts, photos, title: card.title } };
 }

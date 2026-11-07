@@ -185,7 +185,8 @@ export const VERIFIED_BADGE = {
     "Blue Verified tick on your business page",
     "Verified label on every listing your team posts",
     "Checked by the AutoGO team, so buyers trust you faster",
-    "Works with any plan, Free included",
+    "More turns for your Standard sponsored ads",
+    "Works with any plan, Free included, and comes free with Ultimate",
   ],
 };
 

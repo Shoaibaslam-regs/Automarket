@@ -31,7 +31,7 @@ function CopyValue({ value }: { value: string }) {
  * Shows nothing until they are set. Used on the pricing page, the upgrade dialog, Business → Promote and support.
  */
 /** `amount` adds what to pay ("Premium: PKR 499 for 30 days") above the account, where someone just picked a plan. */
-export default function PaymentDetailsCard({ className = "", compact = false, amount }: { className?: string; compact?: boolean; amount?: { label: string; price: number } }) {
+export default function PaymentDetailsCard({ className = "", compact = false, amount }: { className?: string; compact?: boolean; amount?: { label: string; price: number; period?: string } }) {
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   useEffect(() => { loadDetails().then(setDetails); }, []);
   if (!details) return null;
@@ -44,7 +44,7 @@ export default function PaymentDetailsCard({ className = "", compact = false, am
       </p>
       {amount && (
         <p className="mt-2 text-sm text-slate-700">
-          {amount.label}: <strong className="font-semibold tabular-nums text-slate-900">PKR {amount.price.toLocaleString("en-PK")}</strong> for 30 days
+          {amount.label}: <strong className="font-semibold tabular-nums text-slate-900">PKR {amount.price.toLocaleString("en-PK")}</strong> for {amount.period ?? "30 days"}
         </p>
       )}
       <p className="mt-1 text-xs leading-relaxed text-slate-500">

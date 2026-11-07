@@ -416,16 +416,16 @@
   --tw-c-blue-800: 191 219 254;
   --tw-c-blue-900: 219 234 254;
   --tw-c-blue-950: 239 246 255;
-  --tw-c-indigo-50: 29 37 69;
-  --tw-c-indigo-100: 33 41 81;
-  --tw-c-indigo-200: 43 50 105;
-  --tw-c-indigo-300: 165 180 252;
-  --tw-c-indigo-400: 129 140 248;
-  --tw-c-indigo-500: 129 140 248;
-  --tw-c-indigo-600: 129 140 248;
-  --tw-c-indigo-700: 165 180 252;
-  --tw-c-indigo-800: 199 210 254;
-  --tw-c-indigo-900: 224 231 255;
+  --tw-c-indigo-50: 31 43 71;
+  --tw-c-indigo-100: 38 51 84;
+  --tw-c-indigo-200: 50 66 109;
+  --tw-c-indigo-300: 157 180 255;
+  --tw-c-indigo-400: 123 156 255;
+  --tw-c-indigo-500: 123 156 255;
+  --tw-c-indigo-600: 123 156 255;
+  --tw-c-indigo-700: 157 180 255;
+  --tw-c-indigo-800: 195 209 255;
+  --tw-c-indigo-900: 223 230 255;
   --tw-c-indigo-950: 238 242 255;
   --tw-c-violet-50: 33 36 70;
   --tw-c-violet-100: 41 40 82;
@@ -534,8 +534,8 @@
   --gh-8250df: #b392f0;
   --gh-fbefff: #271b3a;
   --gh-6e40c9: #a371f7;
-  --gh-4f46e5: #818cf8;
-  --gh-eef2ff: #1b1f3a;
+  --gh-4f46e5: #7b9cff;
+  --gh-eef2ff: #18223f;
 }
 
 /* Same in both themes: dark-by-design sections, gold buttons, photo overlays, printable pages */

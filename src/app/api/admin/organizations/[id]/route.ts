@@ -119,6 +119,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (action === "verify") {
       if (months !== null && !BADGE_MONTHS.includes(months)) return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
       if (source !== "PAID" && source !== "ADMIN_GRANT") return NextResponse.json({ error: "Say whether it was paid or a gift" }, { status: 400 });
+      // A paid badge runs for what was paid, like paid plans; only a gift may have no end date
+      if (months === null && source === "PAID") return NextResponse.json({ error: "A paid badge needs an end date. Choose how many months were paid, or mark it as a gift." }, { status: 400 });
       const now = new Date();
       const current = org.verification;
       const renewing = isVerified(current);

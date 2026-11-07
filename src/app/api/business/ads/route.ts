@@ -11,7 +11,7 @@ import { Organization } from "@/models/Organization";
 import { getMembership, getOrgUserIds, can } from "@/lib/business";
 import { liveQuery } from "@/lib/publicDeals";
 import { SPONSORED_AD, adPrice, type AdTier } from "@/lib/plans";
-import { cityAdLoad, topBlockedUntil } from "@/lib/sponsored";
+import { cityAdLoad, ownTopUntil, topBlockedUntil } from "@/lib/sponsored";
 import { AD_KIND_LABEL, type AdKind } from "@/lib/ads";
 import { getSupportAdmin, sendChatMessage } from "@/lib/support";
 import { logBusinessAction } from "@/lib/businessLog";
@@ -49,10 +49,10 @@ export async function GET() {
       promotable(member.organizationId),
     ]);
     const city = org?.city?.trim() || "";
-    const [load, topBlocked] = await Promise.all([cityAdLoad(city), topBlockedUntil(city, new Date(), 1)]);
+    const [load, topBlocked, ownTop] = await Promise.all([cityAdLoad(city), topBlockedUntil(city, new Date(), 1), ownTopUntil(member.organizationId, city)]);
     return NextResponse.json({
       ads, business: org, options, canPromote: can(member.role, "promote"),
-      reach: { city, standard: load.standard, top: load.top, topFreeFrom: topBlocked },
+      reach: { city, standard: load.standard, top: load.top, topFreeFrom: topBlocked, ownTopUntil: ownTop },
     });
   } catch (error) {
     reportError("Business ads GET error:", error);
@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
     if (open >= 5) return NextResponse.json({ error: "You already have 5 requests waiting. Wait for the team to answer them first." }, { status: 400 });
 
     const city = org.city?.trim() || undefined;
+    // A Top place is first in a city, so a business without one can't have it (topPlaceProblem)
+    if (tier === "TOP" && !city) return NextResponse.json({ error: "Add your city in Business settings to choose Top, or choose Standard.", code: "NO_CITY" }, { status: 400 });
     // Premium Plus and Ultimate pay less (AD_DISCOUNT_PCT); the price is worked out here, never taken from the form
     const price = adPrice(weeks, tier, (await getSubscription(session.user.id)).planId);
     const ad = await Ad.create({

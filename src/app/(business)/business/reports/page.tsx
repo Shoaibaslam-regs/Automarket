@@ -66,7 +66,7 @@ export default function ReportsPage() {
   // Chart colours are SVG attributes, which can't read the CSS theme variables, so pick them per theme
   const { resolved } = useTheme();
   const chart = resolved === "dark"
-    ? { ink: "#eef2f8", grid: "#263248", tick: "#7d8ba1", cursor: "#1a2436", revenue: "#818cf8" }
+    ? { ink: "#eef2f8", grid: "#263248", tick: "#7d8ba1", cursor: "#1a2436", revenue: "#7b9cff" }
     : { ink: "#0d1117", grid: "#f0f0f0", tick: "#8c959f", cursor: "#f6f8fa", revenue: "#4f46e5" };
   // Sales bars beside rental income: sky, the other half of the AutoGO indigo → sky
   const salesColor = resolved === "dark" ? "#38bdf8" : "#0ea5e9";
@@ -157,7 +157,7 @@ export default function ReportsPage() {
       name: "Available",
       value: stats?.inventory.available || 0,
       // AutoGO indigo, like the dashboard's Available bar
-      color: "#6366f1",
+      color: chart.revenue,
     },
     {
       name: "Sold",

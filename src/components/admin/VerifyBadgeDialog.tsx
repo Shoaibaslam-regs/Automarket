@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Check, X } from "lucide-react";
+import { badgeChecks, type BadgeFacts } from "@/lib/badgeChecks";
 import { VERIFIED_BADGE, badgeState, type BadgeVerification } from "@/lib/plans";
 import { fmtPlanDate } from "./PlanGiftDialog";
 
-export type BadgeTarget = { name: string; ownerLabel?: string; verification?: BadgeVerification | null };
+export type BadgeTarget = { id?: string; name: string; ownerLabel?: string; verification?: BadgeVerification | null };
 
 export type BadgeAction =
   | { action: "verify"; months: number | null; source: "PAID" | "ADMIN_GRANT" }
@@ -18,6 +19,7 @@ const DURATIONS: { value: number | null; label: string }[] = [
   { value: 3, label: "3 months" },
   { value: 6, label: "6 months" },
   { value: 12, label: "1 year" },
+  // Gifts only: a paid badge runs for what was paid (the server refuses a paid one without an end)
   { value: null, label: "No end date" },
 ];
 
@@ -36,6 +38,19 @@ export default function VerifyBadgeDialog({ target, onClose, onSave }: {
   const [months, setMonths] = useState<number | null>(1);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  // What to look at before approving (src/lib/badgeChecks.ts), read when the dialog opens for a business
+  const [facts, setFacts] = useState<{ id: string; facts: BadgeFacts } | null>(null);
+  const targetId = target?.id;
+  useEffect(() => {
+    if (!targetId) return;
+    const ctrl = new AbortController();
+    fetch(`/api/admin/organizations/${targetId}/checks`, { signal: ctrl.signal })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => d?.facts && setFacts({ id: targetId, facts: d.facts }))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [targetId]);
+  const checks = facts && facts.id === targetId ? badgeChecks(facts.facts) : null;
 
   const v = target?.verification ?? null;
   const state = badgeState(v);
@@ -105,18 +120,38 @@ export default function VerifyBadgeDialog({ target, onClose, onSave }: {
 
               {current === "approve" && (
                 <>
-                  <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Payment</p>
+                  <div className="mt-5 rounded-xl border border-slate-200 p-3.5">
+                    <p className="text-[13px] font-semibold text-slate-900">
+                      Check the business first
+                      {checks && <span className="ml-1.5 font-normal text-slate-500">{checks.filter(c => c.ok).length} of {checks.length} pass</span>}
+                    </p>
+                    {!checks ? (
+                      <p className="mt-2 text-xs text-slate-500">{target.id ? "Loading the checks…" : "Open the business in Admin → Businesses to see its checks."}</p>
+                    ) : (
+                      <ul className="mt-2 space-y-1.5">
+                        {checks.map(c => (
+                          <li key={c.label} className="flex items-start gap-2 text-xs">
+                            {c.ok ? <Check size={14} className="mt-px flex-shrink-0 text-emerald-600" /> : <X size={14} className="mt-px flex-shrink-0 text-rose-600" />}
+                            <span className={c.ok ? "text-slate-700" : "text-slate-900"}>
+                              {c.label}{c.detail && <span className="text-slate-500"> · {c.detail}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <p className="mt-5 text-xs font-semibold text-slate-900">Payment</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setSource("PAID")} aria-pressed={source === "PAID"} className={chip(source === "PAID")}>
+                    <button type="button" onClick={() => { setSource("PAID"); if (months === null) setMonths(1); }} aria-pressed={source === "PAID"} className={chip(source === "PAID")}>
                       Paid · PKR {VERIFIED_BADGE.price.toLocaleString()}/month
                     </button>
                     <button type="button" onClick={() => setSource("ADMIN_GRANT")} aria-pressed={source === "ADMIN_GRANT"} className={chip(source === "ADMIN_GRANT")}>
                       Gift (free)
                     </button>
                   </div>
-                  <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">Duration</p>
+                  <p className="mt-5 text-xs font-semibold text-slate-900">Duration</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {DURATIONS.map(d => (
+                    {DURATIONS.filter(d => d.value !== null || source === "ADMIN_GRANT").map(d => (
                       <button key={d.label} type="button" onClick={() => setMonths(d.value)} aria-pressed={months === d.value} className={chip(months === d.value)}>
                         {d.label}
                       </button>

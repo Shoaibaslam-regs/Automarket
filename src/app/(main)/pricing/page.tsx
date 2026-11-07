@@ -115,7 +115,7 @@ export default function PricingPage() {
             <div>
               <h3 className="text-[15px] font-semibold text-slate-900">Top · PKR {SPONSORED_AD.pricePerWeek.TOP.toLocaleString("en-PK")} / week</h3>
               <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                Get premium priority placement at the top of your city. Limited to just {SPONSORED_AD.topPerCity} top-sponsored businesses per city.
+                Shown first to buyers browsing your city, before every Standard ad. Only {SPONSORED_AD.topPerCity} Top places per city, one per business, so your business needs its city set.
               </p>
             </div>
           </div>

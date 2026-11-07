@@ -37,7 +37,7 @@ export default function PriceChart({ title, subtitle, series, prefix, unit, rise
   const id = useId().replace(/:/g, "");
   const dark = useTheme().resolved === "dark";
   const c = dark
-    ? { from: "#818cf8", to: "#818cf8", tick: "#64748b", cursor: "#475569" }
+    ? { from: "#7b9cff", to: "#7b9cff", tick: "#64748b", cursor: "#475569" }
     : { from: "#4f46e5", to: "#4f46e5", tick: "#94a3b8", cursor: "#cbd5e1" };
 
   const [active, setActive] = useState(series[0]?.key ?? "");

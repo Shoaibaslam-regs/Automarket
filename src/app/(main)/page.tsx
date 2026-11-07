@@ -220,11 +220,12 @@ export default async function HomePage() {
                 key={title}
                 className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md sm:p-6"
               >
-                <div className="flex items-center justify-center text-indigo-600">
-                  <Icon size={20} strokeWidth={1.9} />
-                </div>
-                <p className="mt-4 text-[15px] font-semibold text-slate-900">{title}</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{desc}</p>
+                {/* The icon sits on the heading's line, so the card reads as one block */}
+                <p className="flex items-center gap-2.5 text-[15px] font-semibold text-slate-900">
+                  <Icon size={19} strokeWidth={1.9} className="flex-shrink-0 text-indigo-600" aria-hidden />
+                  {title}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">{desc}</p>
               </div>
             ))}
           </div>

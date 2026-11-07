@@ -36,15 +36,15 @@ export function whatsappLink(text: string): string | null {
  * Overview, `PaymentDetails`), so the details are on record in the chat and the team doesn't have to type them.
  * Only the fields that are filled in are listed.
  */
-export function paymentInstructionsText(planName: string, price: number, details: Partial<Record<"accountTitle" | "bankName" | "iban" | "accountNumber" | "jazzcash" | "easypaisa" | "note", string>>) {
+export function paymentInstructionsText(planName: string, price: number, details: Partial<Record<"accountTitle" | "bankName" | "iban" | "accountNumber" | "jazzcash" | "easypaisa" | "note", string>>, what: "plan" | "badge" = "plan") {
   const lines = [
     ["Account title", details.accountTitle], ["Bank", details.bankName], ["IBAN", details.iban], ["Account number", details.accountNumber],
     ["JazzCash", details.jazzcash], ["EasyPaisa", details.easypaisa],
   ].filter(([, v]) => v && v.trim()).map(([k, v]) => `${k}: ${v!.trim()}`);
   return [
-    `Thanks for choosing ${planName}. To switch it on, please pay PKR ${price.toLocaleString("en-PK")} for 30 days to:`,
+    `Thanks for choosing ${what === "badge" ? `the ${planName}` : planName}. To switch it on, please pay PKR ${price.toLocaleString("en-PK")} for ${what === "badge" ? "one month" : "30 days"} to:`,
     ...lines,
     ...(details.note?.trim() ? [details.note.trim()] : []),
-    "Then send the payment receipt or transaction ID here, and we'll activate your plan.",
+    `Then send the payment receipt or transaction ID here, and we'll ${what === "badge" ? "turn your badge on" : "activate your plan"}.`,
   ].join("\n");
 }
