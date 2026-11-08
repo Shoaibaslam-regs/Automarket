@@ -8,8 +8,8 @@
 }
 
 .dark {
-  --background: #0b1120;
-  --foreground: #e6ebf2;
+  --background: #18191a;
+  --foreground: #e4e6eb;
 }
 
 /* Form fields with no background of their own would get the browser's grey dark-mode fill;

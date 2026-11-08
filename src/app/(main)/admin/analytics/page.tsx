@@ -28,7 +28,7 @@ const SINGLE = "#2a78d6";
 
 // Chart colours are SVG attributes (no CSS variables), so they're chosen per theme in the page
 const CHART_LIGHT = { axis: "#94a3b8", grid: "#eef2f6", cursorLine: "#cbd5e1", cursorFill: "#f1f5f9" };
-const CHART_DARK = { axis: "#7d8ba1", grid: "#263248", cursorLine: "#475569", cursorFill: "#1a2436" };
+const CHART_DARK = { axis: "#8a8d91", grid: "#3a3b3c", cursorLine: "#4e4f50", cursorFill: "#2d2e2f" };
 
 type AnalyticsData = {
   [key: string]: string | number;

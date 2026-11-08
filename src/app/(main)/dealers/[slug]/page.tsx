@@ -162,7 +162,6 @@ export default async function DealerPage({ params }: Props) {
                   <span className="underline-offset-2 hover:underline">{count} review{count !== 1 ? "s" : ""}</span>
                 </a>
                 <span className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> On AutoGO since {since}</span>
-                {isVerified(org.verification) && <VerifiedBadge tone="dark" className="hidden px-2.5 py-1 sm:inline-flex" />}
               </div>
             </div>
 
@@ -297,7 +296,7 @@ function NameWithTick({ name }: { name: string }) {
       {head}
       <span className="whitespace-nowrap">
         {last}
-        <VerifiedBadge variant="icon" size={20} className="ml-1.5 align-[-3px] sm:hidden" />
+        <VerifiedBadge variant="icon" size={20} className="ml-1.5 align-[-3px] sm:ml-2 sm:align-[-2px] sm:[&_svg]:h-6 sm:[&_svg]:w-6" />
       </span>
     </>
   );

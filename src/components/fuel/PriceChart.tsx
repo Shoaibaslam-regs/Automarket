@@ -21,7 +21,7 @@ const shortDay = (d: string) => new Date(`${d}T00:00:00+05:00`).toLocaleDateStri
 
 /**
  * A crypto-style price chart: one series at a time (tabs), a big price that follows the finger or mouse along the
- * line (the latest price otherwise) with the change over the chosen range, a solid indigo line with a faint fade
+ * line (the latest price otherwise) with the change over the chosen range, a solid indigo line (white in dark mode) with a faint fade
  * under it, a dashed crosshair, prices on the right and 7D / 30D / 2M.
  */
 export default function PriceChart({ title, subtitle, series, prefix, unit, riseIsBad = false }: {
@@ -37,7 +37,7 @@ export default function PriceChart({ title, subtitle, series, prefix, unit, rise
   const id = useId().replace(/:/g, "");
   const dark = useTheme().resolved === "dark";
   const c = dark
-    ? { from: "#7b9cff", to: "#7b9cff", tick: "#64748b", cursor: "#475569" }
+    ? { from: "#e4e6eb", to: "#e4e6eb", tick: "#8a8d91", cursor: "#4e4f50" }
     : { from: "#4f46e5", to: "#4f46e5", tick: "#94a3b8", cursor: "#cbd5e1" };
 
   const [active, setActive] = useState(series[0]?.key ?? "");

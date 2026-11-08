@@ -140,7 +140,7 @@ export default async function HomePage() {
               <button
                 type="submit"
                 aria-label="Search"
-                className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:px-6"
+                className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:px-6"
               >
                 <span className="hidden sm:inline">Search</span>
                 <ArrowRight size={17} />

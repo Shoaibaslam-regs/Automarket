@@ -12,7 +12,7 @@ const DONE_MS = 2700;
 const REDUCED_MS = 1500;
 
 // A light sprinkle in the home hero's colours: indigo, sky and emerald
-const CONFETTI = ["#7b9cff", "#4f46e5", "#38bdf8", "#34d399"];
+const CONFETTI = ["#818cf8", "#4f46e5", "#38bdf8", "#34d399"];
 
 /**
  * The launch moment after publishing a vehicle or a deal, or creating a business (requests use the quieter

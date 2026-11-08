@@ -49,7 +49,7 @@ function PkCard({ type, p, today }: { type: "PETROL" | "DIESEL"; p?: PkPrice; to
             <div><dt className="inline">Verified </dt><dd className="inline">{fuelTime(p.approvedAt)}</dd></div>
             <div>
               <dt className="inline">Source: </dt>
-              <dd className="inline">{p.notificationUrl ? <a href={p.notificationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-indigo-600 hover:underline">{p.source} <ExternalLink size={11} /></a> : p.source}</dd>
+              <dd className="inline">{p.notificationUrl ? <a href={p.notificationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900">{p.source} <ExternalLink size={11} /></a> : p.source}</dd>
             </div>
           </dl>
           {stale && <p className="mt-2 text-xs font-medium text-amber-700">This is the last verified price. A newer official price may have been announced.</p>}
@@ -73,7 +73,7 @@ export default async function FuelPricesPage() {
     <div className="min-h-screen bg-slate-50">
       <section className="relative overflow-hidden bg-slate-950 px-4 pb-12 pt-12 text-white sm:pt-16">
         <div className="relative mx-auto max-w-[1180px]">
-          <Link href="/blog" className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-white/10 hover:bg-white/10">
+          <Link href="/blog" className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-inset ring-white/10 hover:bg-white/10">
             <Newspaper size={13} /> AutoGO Blog
           </Link>
           <h1 className="mt-4 flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl"><Fuel size={30} className="text-sky-300" /> Fuel prices</h1>
@@ -115,7 +115,7 @@ export default async function FuelPricesPage() {
                       <div className="min-w-0 sm:w-44">
                         <p className="text-sm font-semibold text-slate-900">From {fuelDate(n.date)}</p>
                         {n.notificationUrl && (
-                          <a href={n.notificationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline">Official release <ExternalLink size={11} /></a>
+                          <a href={n.notificationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900">Official release <ExternalLink size={11} /></a>
                         )}
                       </div>
                       <div className="grid flex-1 gap-1.5 text-[13px] sm:grid-cols-2">
@@ -141,7 +141,7 @@ export default async function FuelPricesPage() {
               <Info size={15} className="mt-0.5 flex-shrink-0 text-slate-400" />
               <span>
                 Pakistani prices are taken from OGRA&apos;s daily price publications at{" "}
-                <a href="https://ogra.org.pk/index.php/price-publications" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">ogra.org.pk</a>{" "}
+                <a href="https://ogra.org.pk/index.php/price-publications" target="_blank" rel="noopener noreferrer" className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900">ogra.org.pk</a>{" "}
                 (the Petroleum Division&apos;s releases when OGRA can&apos;t be reached){" "}
                 and updated daily; unusual changes are checked by the AutoGO team before they appear. Pump prices can differ slightly by city and company.
               </span>

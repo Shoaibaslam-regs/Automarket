@@ -25,20 +25,22 @@ const hex = h => {
 const trip = h => hex(h).join(" ");
 const mix = (a, b, t) => { const x = hex(a), y = hex(b); return x.map((v, i) => Math.round(v * (1 - t) + y[i] * t)).join(" "); };
 
-// Dark neutral ramp: light slate index -> dark colour (cards = "white", page = slate-50)
+// Dark neutral ramp: light slate index -> dark colour (cards = "white", page = slate-50). Plain greys with no blue
+// in them, like Facebook's and YouTube's dark modes (page #18191a, cards #242526, borders #3a3b3c, text #e4e6eb):
+// the earlier navy slate (#0b1120, #131c2e) with a lavender accent read as "AI-made" (Nov 2026).
 const DARK_NEUTRAL = {
-  white: "#131c2e", 50: "#0b1120", 100: "#1a2436", 200: "#263248", 300: "#35425a", 400: "#64748b",
-  500: "#8b9ab0", 600: "#b4c0d1", 700: "#d3dbe6", 800: "#e6ebf2", 900: "#f1f4f9", 950: "#ffffff",
+  white: "#242526", 50: "#18191a", 100: "#2d2e2f", 200: "#3a3b3c", 300: "#4e4f50", 400: "#8a8d91",
+  500: "#a8abaf", 600: "#b0b3b8", 700: "#d0d2d6", 800: "#e4e6eb", 900: "#f0f2f5", 950: "#ffffff",
 };
 const DARK_BASE = DARK_NEUTRAL.white;
 
 // Inline palette (hex used in style={{}} and arbitrary classes) -> dark value
 export const GH = {
-  "#ffffff": "#131c2e", "#0d1117": "#eef2f8", "#24292f": "#dbe3ee", "#57606a": "#a3b0c2", "#8c959f": "#7d8ba1",
-  "#d0d7de": "#35425a", "#e1e4e8": "#263248", "#f6f8fa": "#0b1120", "#fafbfc": "#0e1526",
-  "#eef1f4": "#1a2436", "#f0f2f4": "#1a2436", "#f0f0f0": "#1a2436", "#eef2f6": "#1a2436", "#edf0f2": "#1a2436",
-  "#e9edf0": "#1a2436", "#f1f5f9": "#1a2436", "#f8fafc": "#0e1526",
-  "#c4c9d0": "#475569", "#cbd5e1": "#475569", "#d1d5db": "#475569", "#94a3b8": "#7d8ba1", "#9ca3af": "#7d8ba1",
+  "#ffffff": "#242526", "#0d1117": "#e4e6eb", "#24292f": "#d0d2d6", "#57606a": "#b0b3b8", "#8c959f": "#8a8d91",
+  "#d0d7de": "#3e4042", "#e1e4e8": "#3a3b3c", "#f6f8fa": "#18191a", "#fafbfc": "#1c1d1e",
+  "#eef1f4": "#2d2e2f", "#f0f2f4": "#2d2e2f", "#f0f0f0": "#2d2e2f", "#eef2f6": "#2d2e2f", "#edf0f2": "#2d2e2f",
+  "#e9edf0": "#2d2e2f", "#f1f5f9": "#2d2e2f", "#f8fafc": "#1c1d1e",
+  "#c4c9d0": "#4e4f50", "#cbd5e1": "#4e4f50", "#d1d5db": "#4e4f50", "#94a3b8": "#8a8d91", "#9ca3af": "#8a8d91",
   "#cf222e": "#ff7b72", "#dc2626": "#f87171", "#fff0f0": "#2a1518", "#ffcdd2": "#5c2b2f", "#ffe3e3": "#3a1b1f", "#82071e": "#ffaba8",
   "#1a7f37": "#3fb950", "#dafbe1": "#12261e", "#56d364": "#2f6f40", "#2da44e": "#3fb950", "#2c974b": "#46c35a",
   "#0550ae": "#6cb6ff", "#ddf4ff": "#10233d",
@@ -46,8 +48,8 @@ export const GH = {
   "#bf8700": "#d29922", "#d4a72c": "#8a6d1c", "#fffbeb": "#2b2410", "#fffbe6": "#2b2410", "#fff1b8": "#3d3214",
   "#ffe7a3": "#4a3b14", "#ffd666": "#6b5414",
   "#953800": "#f0883e", "#ffdfb6": "#3d2412",
-  "#8250df": "#b392f0", "#fbefff": "#271b3a", "#6e40c9": "#a371f7",
-  "#4f46e5": "#7b9cff", "#eef2ff": "#18223f",
+  "#8250df": "#e4e6eb", "#fbefff": "#2d2e2f", "#6e40c9": "#e4e6eb",
+  "#4f46e5": "#e4e6eb", "#eef2ff": "#2d2e2f",
 };
 
 export const STATIC_SELECTORS = [
@@ -67,16 +69,17 @@ for (const fam of NEUTRALS) {
     dark.push(`--tw-c-${fam}-${shade}: ${trip(DARK_NEUTRAL[shade])};`);
   }
 }
-// Indigo is the one accent. Tailwind's light indigos (#818cf8, #a5b4fc) lean violet on dark surfaces, so every
-// indigo icon, link and dot read as purple in dark mode; the dark theme uses this bluer ramp instead (hue ~225°,
-// #7b9cff is about 6:1 on cards). DARK_ACCENT is also what charts use in dark mode (PriceChart, Reports).
-export const DARK_ACCENT = "#7b9cff";
-const DARK_INDIGO = { 300: "#9db4ff", 400: DARK_ACCENT, 700: "#9db4ff", 800: "#c3d1ff", 900: "#dfe6ff", 950: "#eef2ff" };
+// Indigo is the one accent. In dark mode it is plain white, like YouTube's and Facebook's dark themes: any coloured
+// accent (Tailwind's #818cf8, then a bluer #7b9cff) read as purple on dark surfaces. So indigo icons, links, dots,
+// bars and the fuel chart's line are white-grey there, and an indigo button is a light button with dark text.
+// DARK_ACCENT is also what charts use in dark mode (PriceChart, Reports).
+export const DARK_ACCENT = "#e4e6eb";
+const DARK_INDIGO = { 300: "#8a8d91", 400: "#d0d2d6", 700: "#f0f2f5", 800: "#f0f2f5", 900: "#ffffff", 950: "#ffffff" };
 
 for (const fam of HUES) {
   const c = colors[fam];
   const darkOf = fam === "indigo" ? {
-    50: mix(DARK_BASE, DARK_ACCENT, 0.12), 100: mix(DARK_BASE, DARK_ACCENT, 0.18), 200: mix(DARK_BASE, DARK_ACCENT, 0.3),
+    50: mix(DARK_BASE, "#ffffff", 0.06), 100: mix(DARK_BASE, "#ffffff", 0.1), 200: mix(DARK_BASE, "#ffffff", 0.18),
     300: trip(DARK_INDIGO[300]), 400: trip(DARK_INDIGO[400]), 500: trip(DARK_ACCENT), 600: trip(DARK_ACCENT),
     700: trip(DARK_INDIGO[700]), 800: trip(DARK_INDIGO[800]), 900: trip(DARK_INDIGO[900]), 950: trip(DARK_INDIGO[950]),
   } : {
@@ -110,6 +113,12 @@ ${ind(dark)}
 /* Same in both themes: dark-by-design sections, gold buttons, photo overlays, printable pages */
 ${STATIC_SELECTORS.map(s => `.dark ${s}`).join(",\n")} {
 ${ind(light)}
+}
+
+/* Dark-by-design sections (bg-slate-950 heroes) are a plain near-black in dark mode, not slate's navy #020617 */
+.dark [class~="bg-slate-950"],
+.dark [class*="bg-slate-950/"] {
+  --tw-c-slate-950: 15 15 16;
 }
 `;
 writeFileSync(new URL("../src/app/theme.css", import.meta.url), css);
