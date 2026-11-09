@@ -8,14 +8,19 @@ import "./globals.css";
 import "./theme.css";
 import { Providers } from "@/components/providers";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
-import { themeInitScript } from "@/lib/theme";
+import { THEME_BAR, themeInitScript } from "@/lib/theme";
 import PwaRegister from "@/components/pwa/PwaRegister";
 
 const geist = Geist({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
-  // Colours the phone's status bar and the installed app's title bar
-  themeColor: "#0f172a",
+  // Colours the phone's status bar and the installed app's title bar: the navbar's colour in each theme. The media
+  // queries cover the device setting before any script runs; themeInitScript and ThemeProvider then follow the
+  // theme picked in the app (setThemeBar)
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: THEME_BAR.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_BAR.dark },
+  ],
 };
 
 export const metadata: Metadata = {

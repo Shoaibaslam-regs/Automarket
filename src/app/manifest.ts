@@ -15,7 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait",
     background_color: "#ffffff",
-    theme_color: "#0f172a",
+    // The app opens on white (the splash and the first bar colour); the page then sets the bar to its theme
+    theme_color: "#ffffff",
     categories: ["shopping", "lifestyle"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

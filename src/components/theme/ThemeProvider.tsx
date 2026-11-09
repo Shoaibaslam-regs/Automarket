@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { THEME_STORAGE_KEY, type ThemeChoice } from "@/lib/theme";
+import { THEME_STORAGE_KEY, setThemeBar, type ThemeChoice } from "@/lib/theme";
 
 type ThemeState = { theme: ThemeChoice; resolved: "light" | "dark"; setTheme: (t: ThemeChoice) => void };
 
@@ -12,6 +12,7 @@ const prefersDark = () => typeof window !== "undefined" && window.matchMedia("(p
 function apply(theme: ThemeChoice): "light" | "dark" {
   const resolved = theme === "dark" || (theme === "system" && prefersDark()) ? "dark" : "light";
   document.documentElement.classList.toggle("dark", resolved === "dark");
+  setThemeBar(resolved);
   return resolved;
 }
 
